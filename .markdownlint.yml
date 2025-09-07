@@ -1,0 +1,33 @@
+# Markdown lint configuration for HIPs
+
+# Default state for all rules
+default: true
+
+# Line length
+MD013:
+  line_length: 120
+  code_blocks: false
+  tables: false
+
+# Headers
+MD003:
+  style: "atx"
+
+MD025:
+  front_matter_title: ""
+
+# Lists
+MD004:
+  style: "dash"
+
+MD029:
+  style: "ordered"
+
+# Code blocks
+MD046:
+  style: "fenced"
+
+# Disable some rules for proposal format
+MD033: false  # Allow inline HTML
+MD034: false  # Allow bare URLs
+MD041: false  # First line doesn't need to be header (we have frontmatter)

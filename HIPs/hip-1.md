@@ -1,6 +1,6 @@
 ---
 hip: 1
-title: Hanzo Multimodal Models (HMMs) Specification
+title: Hamiltonian Multimodal Models (HMMs) Specification
 author: Hanzo AI Team
 type: Standards Track
 category: Core
@@ -8,11 +8,11 @@ status: Draft
 created: 2024-12-20
 ---
 
-# HIP-1: Hanzo Multimodal Models (HMMs) Specification & HANZO Tokenomics
+# HIP-1: Hamiltonian Large Language Models (HLLMs) Specification & HANZO Tokenomics
 
 ## Abstract
 
-This proposal defines the architecture, capabilities, and standards for Hanzo Multimodal Models (HMMs), along with the HANZO token economics that power the AI infrastructure. HMMs are multimodal AI models with per-user fine-tuning, where every user owns their personalized model fork. The HANZO token incentivizes training, compute provision, and model development.
+This proposal defines the architecture, capabilities, and standards for Hamiltonian Large Language Models (HLLMs), along with the HANZO token economics that power the AI infrastructure. HLLMs are multimodal AI models with per-user fine-tuning, where every user owns their personalized model fork. The HANZO token incentivizes training, compute provision, and model development.
 
 ## Motivation
 
@@ -24,15 +24,15 @@ Current AI models are typically specialized for single modalities or use separat
 4. **No User Ownership**: Users can't own their personalized AI
 5. **Privacy Violations**: User data pooled for domain training
 
-HMMs address these limitations by providing unified multimodal understanding with per-user fine-tuning where every interaction creates a personalized model fork.
+HLLMs address these limitations by providing unified multimodal understanding with per-user fine-tuning where every interaction creates a personalized model fork, integrated with Active Inference principles for principled decision-making.
 
 ## Specification
 
 ### Model Architecture
 
-#### Unified Transformer Architecture
+#### Unified Transformer Architecture with Hamiltonian Dynamics
 ```python
-class HMMArchitecture:
+class HLLMArchitecture:
     modalities = ["text", "vision", "audio", "3d"]
     hidden_dim = 4096  # Base model
     num_layers = 48
@@ -53,10 +53,10 @@ class HMMArchitecture:
 
 | Model | Parameters | Context | Modalities | Use Case |
 |-------|------------|---------|------------|----------|
-| HMM-7B | 7B | 8K | Text, Vision | Edge deployment, personal devices |
-| HMM-32B | 32B | 32K | Text, Vision, Audio | Standard per-user models |
-| HMM-175B | 175B | 128K | All | Advanced personal assistants |
-| HMM-1T | 1T | 256K | All + specialized | Research & collective intelligence |
+| HLLM-7B | 7B | 8K | Text, Vision | Edge deployment, personal devices |
+| HLLM-32B | 32B | 32K | Text, Vision, Audio | Standard per-user models |
+| HLLM-175B | 175B | 128K | All | Advanced personal assistants |
+| HLLM-1T | 1T | 256K | All + specialized | Research & collective intelligence |
 
 **Note**: These are BASE models only. Every user interaction creates a personalized fork with user-specific LoRA adapters, making each user's model unique.
 
@@ -109,7 +109,7 @@ class HMMArchitecture:
     }
   ],
   "metadata": {
-    "model": "HMM-32B",
+    "model": "HLLM-32B",
     "tokens_used": 1547,
     "latency_ms": 234,
     "modalities_processed": ["text", "vision"]
@@ -159,9 +159,9 @@ class HMMArchitecture:
 5. **Batching**: Dynamic batching for different modalities
 
 #### Performance Targets
-- **Latency**: <100ms for first token (HMM-32B)
+- **Latency**: <100ms for first token (HLLM-32B)
 - **Throughput**: >1000 tokens/second (batched)
-- **Memory**: <16GB for HMM-7B inference
+- **Memory**: <16GB for HLLM-7B inference
 
 ### Safety and Alignment
 
@@ -196,14 +196,14 @@ Text, vision, audio, and 3D cover the primary human senses and most digital cont
 ### Why Multiple Model Sizes?
 
 Different applications have different requirements:
-- **Edge**: HMM-7B for mobile and embedded
-- **Cloud**: HMM-32B for standard applications
-- **Enterprise**: HMM-175B for complex tasks
-- **Research**: HMM-1T for pushing boundaries
+- **Edge**: HLLM-7B for mobile and embedded
+- **Cloud**: HLLM-32B for standard applications
+- **Enterprise**: HLLM-175B for complex tasks
+- **Research**: HLLM-1T for pushing boundaries
 
 ## Backwards Compatibility
 
-HMMs maintain compatibility with existing standards:
+HLLMs maintain compatibility with existing standards:
 - **OpenAI API**: Compatible request/response format
 - **Hugging Face**: Transformers library support
 - **ONNX**: Export for cross-platform deployment
@@ -271,9 +271,9 @@ contract TrainingRewards {
 #### 2. Compute Pricing
 ```yaml
 Inference Costs:
-  - HMM-7B: 0.001 HANZO per 1K tokens
-  - HMM-32B: 0.01 HANZO per 1K tokens
-  - HMM-175B: 0.1 HANZO per 1K tokens
+  - HLLM-7B: 0.001 HANZO per 1K tokens
+  - HLLM-32B: 0.01 HANZO per 1K tokens
+  - HLLM-175B: 0.1 HANZO per 1K tokens
   
 Training Costs:
   - Per-user fine-tuning: 0.0001 HANZO per interaction
@@ -338,24 +338,28 @@ def calculate_emission(year):
 ## Implementation
 
 ### Phase 1: Foundation (Q1 2025)
-- HMM-7B with per-user forking
+- HLLM-7B with per-user forking
 - HANZO token launch
 - Basic training rewards
+- Active Inference planner integration
 
 ### Phase 2: Token Economy (Q2 2025)
 - Full tokenomics activation
 - Model NFT marketplace
 - Staking mechanisms
+- IEEE 2874 HSML/HSTP support
 
 ### Phase 3: Expansion (Q3 2025)
-- HMM-32B and HMM-175B
+- HLLM-32B and HLLM-175B
 - Advanced reward algorithms
 - Cross-chain bridges
+- Renormalizable world models
 
 ### Phase 4: Maturity (Q4 2025)
-- HMM-1T collective intelligence
+- HLLM-1T collective intelligence
 - DAO governance
 - Sustainable economics
+- Full VERSES architecture integration
 
 ## Security Considerations
 

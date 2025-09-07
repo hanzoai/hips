@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-hips:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Validate HIP format
+      run: |
+        echo "Validating HIP proposal format..."
+        for file in HIPs/*.md; do
+          echo "Checking $file"
+          # Check for required frontmatter
+          if ! grep -q "^hip:" "$file"; then
+            echo "Error: Missing 'hip:' field in $file"
+            exit 1
+          fi
+          if ! grep -q "^title:" "$file"; then
+            echo "Error: Missing 'title:' field in $file"
+            exit 1
+          fi
+          if ! grep -q "^author:" "$file"; then
+            echo "Error: Missing 'author:' field in $file"
+            exit 1
+          fi
+          if ! grep -q "^status:" "$file"; then
+            echo "Error: Missing 'status:' field in $file"
+            exit 1
+          fi
+        done
+        echo "All HIPs validated successfully!"
+    
+    - name: Check markdown formatting
+      run: |
+        npm install -g markdownlint-cli
+        markdownlint HIPs/*.md --config .markdownlint.yml || true
+    
+    - name: Check for broken links
+      run: |
+        npm install -g markdown-link-check
+        find HIPs -name "*.md" -exec markdown-link-check {} \; || true
+    
+    - name: Generate HIP index
+      run: |
+        echo "# HIP Index" > hip-index.md
+        echo "" >> hip-index.md
+        echo "| HIP | Title | Status | Author |" >> hip-index.md
+        echo "|-----|-------|--------|--------|" >> hip-index.md
+        
+        for file in HIPs/*.md; do
+          hip=$(grep "^hip:" "$file" | cut -d' ' -f2)
+          title=$(grep "^title:" "$file" | cut -d' ' -f2-)
+          status=$(grep "^status:" "$file" | cut -d' ' -f2)
+          author=$(grep "^author:" "$file" | cut -d' ' -f2-)
+          echo "| $hip | $title | $status | $author |" >> hip-index.md
+        done
+        
+        cat hip-index.md
+
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run security checks
+      run: |
+        echo "Checking for sensitive data..."
+        # Check for potential secrets
+        if grep -r "sk-" HIPs/ 2>/dev/null; then
+          echo "Warning: Potential API key found"
+        fi
+        if grep -r "private_key" HIPs/ 2>/dev/null; then
+          echo "Warning: Potential private key reference found"
+        fi
+        echo "Security check complete"
+    
+    - name: License check
+      run: |
+        if [ ! -f LICENSE ]; then
+          echo "Warning: No LICENSE file found"
+        fi
+
+  technical-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Validate code blocks
+      run: |
+        echo "Checking code block syntax..."
+        python3 -c "
+import re
+import sys
+import os
+
+errors = []
+for root, dirs, files in os.walk('HIPs'):
+    for file in files:
+        if file.endswith('.md'):
+            filepath = os.path.join(root, file)
+            with open(filepath, 'r') as f:
+                content = f.read()
+                # Find code blocks
+                code_blocks = re.findall(r'\`\`\`(\w+)(.*?)\`\`\`', content, re.DOTALL)
+                for lang, code in code_blocks:
+                    if lang in ['python', 'py']:
+                        try:
+                            compile(code, filepath, 'exec')
+                        except SyntaxError as e:
+                            errors.append(f'{filepath}: Python syntax error in code block')
+                    # Add more language validators as needed
+
+if errors:
+    for error in errors:
+        print(error)
+    sys.exit(1)
+else:
+    print('All code blocks validated successfully!')
+"
+
+  build-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        pip install mkdocs mkdocs-material
+    
+    - name: Build documentation
+      run: |
+        if [ -f mkdocs.yml ]; then
+          mkdocs build
+        else
+          echo "No mkdocs.yml found, skipping docs build"
+        fi
