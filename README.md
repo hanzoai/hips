@@ -1,14 +1,14 @@
 # Hanzo Improvement Proposals (HIPs)
 
-Hanzo Improvement Proposals (HIPs) are the primary mechanism for proposing new features, gathering community input, and documenting design decisions for the [Hanzo AI](https://hanzo.ai) ecosystem. This process ensures that changes to the Hanzo platform are transparently reviewed and achieve community consensus before implementation.
+Hanzo Improvement Proposals (HIPs) are the primary mechanism for proposing new features, gathering community input, and documenting design decisions for the [Hanzo AI](https://hanzo.ai) ecosystem featuring Hamiltonian Large Language Models (HLLMs). This process ensures that changes to the Hanzo platform are transparently reviewed and achieve community consensus before implementation.
 
 ## What is a HIP?
 
 A Hanzo Improvement Proposal (HIP) is a design document that provides information to the Hanzo community about a proposed change to the system. HIPs serve as the formal pathway to introduce improvements and build agreement on their adoption. They are used for:
-- Proposing new AI models and architectures
-- Defining standards for agent frameworks
+- Proposing new Hamiltonian LLM architectures and Active Inference integration
+- Defining standards for agent frameworks with Expected Free Energy minimization
 - Collecting community input on AI infrastructure
-- Documenting design decisions for multimodal systems
+- Documenting design decisions for multimodal systems with IEEE 2874 interoperability
 
 ## Quick Start
 
@@ -22,11 +22,10 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | Number | Title | Author(s) | Type | Category | Status |
 |:-------|:------|:----------|:-----|:---------|:-------|
 | [HIP-0](./HIPs/hip-0.md) | Hanzo AI Architecture & Framework | Hanzo AI Team | Meta | - | Final |
-| [HIP-1](./HIPs/hip-1.md) | Hanzo Multimodal Models (HMMs) Specification | Hanzo AI Team | Standards Track | Core | Draft |
-| [HIP-2](./HIPs/hip-2.md) | Agent Framework Standard | Hanzo AI Team | Standards Track | Core | Draft |
-| [HIP-3](./HIPs/hip-3.md) | Model Context Protocol (MCP) Integration | Hanzo AI Team | Standards Track | Interface | Draft |
-| [HIP-4](./HIPs/hip-4.md) | Tool Orchestration Framework | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-1](./HIPs/hip-1.md) | Hamiltonian Large Language Models (HLLMs) Specification | Hanzo AI Team | Standards Track | Core | Draft |
 | [HIP-5](./HIPs/hip-5.md) | Post-Quantum Security for AI Infrastructure | Hanzo AI Team | Standards Track | Security | Final |
+| [HIP-6](./HIPs/hip-6.md) | Per-User Fine-Tuning Architecture | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-7](./HIPs/hip-7.md) | Active Inference Integration for HLLMs | Hanzo AI Team | Standards Track | Core | Draft |
 
 ## HIP Process
 
