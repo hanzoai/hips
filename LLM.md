@@ -74,10 +74,10 @@ hips/
 ### Zoo Ecosystem (ZIPs)
 - **Repository**: github.com/zooai/ZIPs
 - **Architecture**: EVM L2 on Lux Network (not sovereign L1)
-- **Model**: Eco-1 with z-JEPA (Qwen3 ⊕ V-JEPA 2) hyper-modal architecture
+- **Model**: Eco-1 with z-JEPA hyper-modal architecture
 - **Focus**: DeFi, gaming, NFTs under 501(c)(3) non-profit
 - **Genesis**: 100% airdrop to Logan Paul CryptoZoo victims
-- **Key Innovation**: z-JEPA extends V-JEPA 2 with cross-modal prediction and BitDelta personalization
+- **Key Innovation**: z-JEPA performs cross-modal prediction with BitDelta personalization
 
 ### Lux Protocol (LPs)
 - **LP-25**: Sovereign appchain launching (enables HIP-0)
