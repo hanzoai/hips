@@ -1,14 +1,16 @@
 # Hanzo AI - Comprehensive Summary
 
 ## Overview
-Hanzo AI evolved from hanzo.ai (Web2.0) to hanzo.network (Web3), now operating as a Layer 2 on Lux Network specialized for AI infrastructure and model ownership, featuring Hamiltonian Large Language Models (HLLMs) with Active Inference integration and the HMM native DEX for AI compute resources.
+Hanzo AI evolved from hanzo.ai (Web2.0) to hanzo.network (Web3), currently operating as an L2 EVM chain on Lux Network (live) with the HMM chain and sovereign L1 upgrade launching next. Features full quantum safety via Lux Network Q-Chain quantum rollups, Hamiltonian Large Language Models (HLLMs) with Active Inference integration, and the HMM native DEX for AI compute resources.
 
 ## Key Components
 
 ### 1. Architecture (HIP-0)
-- **Chain Type**: Layer 2 on Lux Network
-- **Evolution**: hanzo.ai (Web2.0) → hanzo.network (Web3)
-- **Consensus**: Inherited from Lux with AI validation layer
+- **Current Status**: L2 EVM chain on Lux Network (Live)
+- **Next Phase**: HMM chain launch → Sovereign L1 upgrade
+- **Evolution**: hanzo.ai (Web2.0) → hanzo.network L2 (Live) → Sovereign L1 (Next)
+- **Consensus**: AI-optimized Proof of Intelligence (PoI)
+- **Quantum Safety**: Full protection via Lux Q-Chain quantum rollups
 - **Block Time**: 2 seconds with instant finality
 - **Validators**: AI nodes with GPU requirements
 - **Native Token**: HANZO for governance, compute, and training

@@ -13,7 +13,7 @@ requires: HIP-0, HIP-1
 
 ## Abstract
 
-This proposal specifies the HMM (Hanzo Market Maker), a native decentralized exchange built on Hanzo's Layer 2 network for trading AI compute resources. HMM enables a liquid marketplace for GPU time, model inference, training slots, and other AI resources with dynamic pricing, instant settlement, and cross-chain accessibility.
+This proposal specifies the HMM (Hanzo Market Maker), a native decentralized exchange built on Hanzo's sovereign L1 blockchain (launching as L2 on Lux) for trading AI compute resources. HMM enables a liquid marketplace for GPU time, model inference, training slots, and other AI resources with dynamic pricing, instant settlement, and cross-chain accessibility.
 
 ## Motivation
 

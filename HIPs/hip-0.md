@@ -17,36 +17,64 @@ This document outlines the Hanzo AI architecture, development framework, and the
 
 ### Evolution: From Web2.0 to Blockchain AI
 
-Hanzo began as **hanzo.ai** in the Web2.0 era, pioneering AI infrastructure and services. We've now evolved to **hanzo.network**, operating as a Layer 2 on Lux Network, bringing our AI expertise to the blockchain ecosystem.
+Hanzo began as **hanzo.ai** in the Web2.0 era, pioneering AI infrastructure and services. We've now evolved to **hanzo.network**, launching initially as L2 on Lux Network with a clear path to sovereign L1 status, bringing our AI expertise to the blockchain ecosystem.
 
 **Timeline:**
 - **Web2.0 Era (hanzo.ai)**: AI infrastructure, enterprise services, and foundational model development
-- **Blockchain Era (hanzo.network)**: L2 on Lux Network with native AI compute marketplace
+- **Blockchain Launch (hanzo.network)**: Initial L2 deployment on Lux Network
+- **Sovereignty Upgrade**: Forthcoming transition to full sovereign L1
 - **Current Architecture**: Hybrid web2/web3 with progressive decentralization
 
 ### Current Architecture
 
-Hanzo operates as a Layer 2 blockchain on Lux Network, specialized for AI infrastructure and model ownership:
+Hanzo is operating as an L2 on Lux Network with imminent sovereign L1 upgrade:
 
-1. **L2 on Lux Network**: Leveraging Lux's security and consensus
-2. **AI-Native Chain**: Optimized for model training and inference
-3. **HMM Native DEX**: Decentralized exchange for AI compute resources
-4. **Multimodal AI Models**: Text, vision, audio, and 3D understanding
-5. **Per-User Model Ownership**: Every user owns their AI as an asset
-6. **Quantum-Secure**: Inherited PQC from Lux Network
-7. **Native Token**: HANZO for governance, compute, and training rewards
+**Phase 1 (Live Now)**: 
+- Initial EVM chain deployed as L2 on Lux Network
+- Basic AI infrastructure and tokenomics active
+
+**Phase 2 (Next)**: 
+- Launch of HMM chain with native DEX functionality
+- Sovereign L1 upgrade with full independence
+
+1. **Current Status**: Operating as L2 EVM chain on Lux Network
+2. **Next Upgrade**: HMM chain launch → Sovereign L1 transition
+3. **AI-Native Chain**: Optimized for model training and inference
+4. **HMM Native DEX**: Decentralized exchange for AI compute resources
+5. **Multimodal AI Models**: Text, vision, audio, and 3D understanding
+6. **Per-User Model Ownership**: Every user owns their AI as an asset
+7. **Quantum-Secure**: Full quantum safety via Lux Network Q-Chain quantum rollups
+8. **Native Token**: HANZO for governance, compute, and training rewards
 
 ### Technical Architecture
 
 ```yaml
-Chain Type: Layer 2 on Lux Network
-Consensus: Inherited from Lux with AI validation layer
+Current Status: L2 EVM chain on Lux Network (Live)
+Next Phase: HMM chain launch with sovereign L1 upgrade
+Consensus: AI-optimized Proof of Intelligence (PoI)
 Block Time: 2 seconds
 Finality: Instant (single-slot)
 Validators: AI nodes with GPU requirements
 Native Token: HANZO
-Settlement: Lux Network mainnet
+Quantum Safety: Lux Network Q-Chain quantum rollups
 Compute DEX: HMM (Hanzo Market Maker) for AI resources
+
+Upgrade Path:
+  Phase 1 (Live): L2 EVM chain on Lux
+  Phase 2 (Next): HMM chain + Sovereign L1
+```
+
+### Quantum Safety via Q-Chain
+
+Hanzo achieves full quantum safety through Lux Network's Q-Chain quantum rollups:
+
+```yaml
+Q-Chain Integration:
+  - Quantum Rollups: All transactions quantum-resistant
+  - PQC Algorithms: NIST-approved ML-KEM/ML-DSA
+  - Cross-Chain Security: Quantum safety across EVM and HMM chains
+  - Future-Proof: Ready for quantum computing era
+  - Zero-Knowledge: Optional ZK proofs for privacy
 ```
 
 ### HMM Native DEX
@@ -61,6 +89,7 @@ HMM Features:
   - Instant Settlement: Sub-second compute allocation
   - Quality Metrics: Performance-based pricing adjustments
   - Cross-Chain Bridge: Access compute from Lux, Ethereum, and other chains
+  - Quantum-Safe: All transactions protected by Q-Chain
 ```
 
 ## Architecture Components
