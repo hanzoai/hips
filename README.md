@@ -26,6 +26,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-5](./HIPs/hip-5.md) | Post-Quantum Security for AI Infrastructure | Hanzo AI Team | Standards Track | Security | Final |
 | [HIP-6](./HIPs/hip-6.md) | Per-User Fine-Tuning Architecture | Hanzo AI Team | Standards Track | Core | Draft |
 | [HIP-7](./HIPs/hip-7.md) | Active Inference Integration for HLLMs | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-8](./HIPs/hip-8.md) | HMM Native DEX for AI Compute Resources | Hanzo AI Team | Standards Track | Core | Draft |
 
 ## HIP Process
 

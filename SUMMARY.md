@@ -1,16 +1,18 @@
 # Hanzo AI - Comprehensive Summary
 
 ## Overview
-Hanzo AI is a sovereign Layer 1 blockchain launched from Lux Network, specialized for AI infrastructure and model ownership, featuring Hamiltonian Large Language Models (HLLMs) with Active Inference integration.
+Hanzo AI evolved from hanzo.ai (Web2.0) to hanzo.network (Web3), now operating as a Layer 2 on Lux Network specialized for AI infrastructure and model ownership, featuring Hamiltonian Large Language Models (HLLMs) with Active Inference integration and the HMM native DEX for AI compute resources.
 
 ## Key Components
 
 ### 1. Architecture (HIP-0)
-- **Chain Type**: Sovereign L1 via Lux Protocol (LP-25)
-- **Consensus**: AI-optimized Proof of Intelligence (PoI)
+- **Chain Type**: Layer 2 on Lux Network
+- **Evolution**: hanzo.ai (Web2.0) → hanzo.network (Web3)
+- **Consensus**: Inherited from Lux with AI validation layer
 - **Block Time**: 2 seconds with instant finality
 - **Validators**: AI nodes with GPU requirements
 - **Native Token**: HANZO for governance, compute, and training
+- **HMM DEX**: Native decentralized exchange for AI compute resources
 
 ### 2. Hamiltonian LLMs (HIP-1)
 - **Architecture**: Unified multimodal transformers
@@ -77,8 +79,18 @@ hanzo/
 ├── jin/        # Multimodal framework
 ├── search/     # AI-powered search
 ├── platform/   # PaaS infrastructure
-└── node/       # Hanzo Node with PQC
+├── node/       # Hanzo Node with PQC
+└── hmm/        # HMM DEX for AI compute marketplace
 ```
+
+### 9. HMM DEX Features
+
+- **Compute Trading**: GPU time, inference, training slots
+- **Dynamic Pricing**: Market-based AI resource pricing
+- **Resource Pools**: Liquidity for different compute types
+- **Instant Settlement**: Sub-second allocation
+- **Quality Metrics**: Performance-based pricing
+- **Cross-Chain**: Bridge from Lux, Ethereum, other chains
 
 ## Technical Implementation
 

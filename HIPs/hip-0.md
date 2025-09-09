@@ -15,25 +15,52 @@ This document outlines the Hanzo AI architecture, development framework, and the
 
 ## Hanzo AI Overview
 
-Hanzo AI is a sovereign Layer 1 blockchain launched from Lux Network, specialized for AI infrastructure and model ownership:
+### Evolution: From Web2.0 to Blockchain AI
 
-1. **Sovereign L1 Blockchain**: Independent consensus and validation
+Hanzo began as **hanzo.ai** in the Web2.0 era, pioneering AI infrastructure and services. We've now evolved to **hanzo.network**, operating as a Layer 2 on Lux Network, bringing our AI expertise to the blockchain ecosystem.
+
+**Timeline:**
+- **Web2.0 Era (hanzo.ai)**: AI infrastructure, enterprise services, and foundational model development
+- **Blockchain Era (hanzo.network)**: L2 on Lux Network with native AI compute marketplace
+- **Current Architecture**: Hybrid web2/web3 with progressive decentralization
+
+### Current Architecture
+
+Hanzo operates as a Layer 2 blockchain on Lux Network, specialized for AI infrastructure and model ownership:
+
+1. **L2 on Lux Network**: Leveraging Lux's security and consensus
 2. **AI-Native Chain**: Optimized for model training and inference
-3. **Multimodal AI Models**: Text, vision, audio, and 3D understanding
-4. **Per-User Model Ownership**: Every user owns their AI as an asset
-5. **Quantum-Secure**: Inherited PQC from Lux Network
-6. **Native Token**: HANZO for governance, compute, and training rewards
+3. **HMM Native DEX**: Decentralized exchange for AI compute resources
+4. **Multimodal AI Models**: Text, vision, audio, and 3D understanding
+5. **Per-User Model Ownership**: Every user owns their AI as an asset
+6. **Quantum-Secure**: Inherited PQC from Lux Network
+7. **Native Token**: HANZO for governance, compute, and training rewards
 
-### Sovereignty Architecture
+### Technical Architecture
 
 ```yaml
-Chain Type: Sovereign L1 (launched from Lux)
-Consensus: AI-optimized Proof of Intelligence (PoI)
+Chain Type: Layer 2 on Lux Network
+Consensus: Inherited from Lux with AI validation layer
 Block Time: 2 seconds
 Finality: Instant (single-slot)
 Validators: AI nodes with GPU requirements
 Native Token: HANZO
-Launch Method: Lux Sovereign Chain Protocol (LP-25)
+Settlement: Lux Network mainnet
+Compute DEX: HMM (Hanzo Market Maker) for AI resources
+```
+
+### HMM Native DEX
+
+The **HMM (Hanzo Market Maker)** is our native decentralized exchange specifically designed for AI compute resources:
+
+```yaml
+HMM Features:
+  - Compute Resource Trading: Buy/sell GPU time, model inference, training slots
+  - Dynamic Pricing: Market-based pricing for AI compute
+  - Resource Pools: Liquidity pools for different compute types
+  - Instant Settlement: Sub-second compute allocation
+  - Quality Metrics: Performance-based pricing adjustments
+  - Cross-Chain Bridge: Access compute from Lux, Ethereum, and other chains
 ```
 
 ## Architecture Components
