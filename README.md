@@ -22,11 +22,26 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | Number | Title | Author(s) | Type | Category | Status |
 |:-------|:------|:----------|:-----|:---------|:-------|
 | [HIP-0](./HIPs/hip-0.md) | Hanzo AI Architecture & Framework | Hanzo AI Team | Meta | - | Final |
-| [HIP-1](./HIPs/hip-1.md) | Hamiltonian Large Language Models (HLLMs) Specification | Hanzo AI Team | Standards Track | Core | Draft |
-| [HIP-5](./HIPs/hip-5.md) | Post-Quantum Security for AI Infrastructure | Hanzo AI Team | Standards Track | Security | Final |
-| [HIP-6](./HIPs/hip-6.md) | Per-User Fine-Tuning Architecture | Hanzo AI Team | Standards Track | Core | Draft |
-| [HIP-7](./HIPs/hip-7.md) | Active Inference Integration for HLLMs | Hanzo AI Team | Standards Track | Core | Draft |
-| [HIP-8](./HIPs/hip-8.md) | HMM Native DEX for AI Compute Resources | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-1](./HIPs/hip-1.md) | AI Token - Hanzo's Native Currency | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-2](./HIPs/hip-2.md) | Hamiltonian Large Language Models (HLLMs) | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-3](./HIPs/hip-3.md) | Jin Multimodal AI Architecture | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-4](./HIPs/hip-4.md) | LLM Gateway Standard | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-5](./HIPs/hip-5.md) | Post-Quantum Security | Hanzo AI Team | Standards Track | Security | Final |
+| [HIP-6](./HIPs/hip-6.md) | Per-User Fine-Tuning | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-7](./HIPs/hip-7.md) | Active Inference Integration | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-8](./HIPs/hip-8.md) | HMM DEX for AI Compute | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-9](./HIPs/hip-9.md) | Agent SDK Standard | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-10](./HIPs/hip-10.md) | MCP Tool Protocol | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-11](./HIPs/hip-11.md) | Chat Interface Standard | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-12](./HIPs/hip-12.md) | Search Interface Standard | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-13](./HIPs/hip-13.md) | Workflow Execution Standard | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-14](./HIPs/hip-14.md) | Application Deployment Standard | Hanzo AI Team | Standards Track | Infrastructure | Draft |
+| [HIP-15](./HIPs/hip-15.md) | Computer Control Standard | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-16](./HIPs/hip-16.md) | Document Processing Standard | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-17](./HIPs/hip-17.md) | Analytics Event Standard | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-18](./HIPs/hip-18.md) | Payment Processing Standard | Hanzo AI Team | Standards Track | Interface | Draft |
+| [HIP-19](./HIPs/hip-19.md) | Tensor Operations Standard | Hanzo AI Team | Standards Track | Core | Draft |
+| [HIP-20](./HIPs/hip-20.md) | Blockchain Node Standard | Hanzo AI Team | Standards Track | Core | Draft |
 
 ## HIP Process
 

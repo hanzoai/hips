@@ -27,41 +27,65 @@ Hanzo began as **hanzo.ai** in the Web2.0 era, pioneering AI infrastructure and 
 
 ### Current Architecture
 
-Hanzo is operating as an L2 on Lux Network with imminent sovereign L1 upgrade:
+Hanzo operates as an L2 on Lux Network with a sovereign L1 upgrade path:
 
 **Phase 1 (Live Now)**: 
-- Initial EVM chain deployed as L2 on Lux Network
-- Basic AI infrastructure and tokenomics active
+- L2 EVM chain deployed on Lux Network
+- AI infrastructure and $AI tokenomics active
+- Integration with Lux infrastructure services
 
 **Phase 2 (Next)**: 
-- Launch of HMM chain with native DEX functionality
-- Sovereign L1 upgrade with full independence
+- HMM chain launch with native DEX functionality
+- Sovereign L1 upgrade maintaining Lux integration
 
-1. **Current Status**: Operating as L2 EVM chain on Lux Network
-2. **Next Upgrade**: HMM chain launch → Sovereign L1 transition
-3. **AI-Native Chain**: Optimized for model training and inference
-4. **HMM Native DEX**: Decentralized exchange for AI compute resources
-5. **Multimodal AI Models**: Text, vision, audio, and 3D understanding
-6. **Per-User Model Ownership**: Every user owns their AI as an asset
-7. **Quantum-Secure**: Full quantum safety via Lux Network Q-Chain quantum rollups
-8. **Native Token**: HANZO for governance, compute, and training rewards
+**Key Components:**
+1. **Blockchain**: L2 on Lux Network → Sovereign L1 (next)
+2. **HMM DEX**: Native exchange for AI compute resources
+3. **AI Models**: Multimodal (text/vision/audio/3D)
+4. **Ownership**: Per-user model forks as assets
+5. **Security**: Quantum-safe via Lux Q-Chain rollups
+6. **Token**: $AI for governance, compute, training
+
+**Lux Infrastructure** (see [Lux LIPs](https://github.com/luxfi/LIPs)):
+- **Wallet**: Multi-sig via Lux Safe (LIP-1)
+- **Exchange**: $AI trading on lux.exchange (LIP-2)
+- **Bridge**: Cross-chain via Lux Bridge (LIP-3)
+- **Identity**: SSO via Lux ID (LIP-4)
+- **Consensus**: Quasar photonic selection (LIP-5)
 
 ### Technical Architecture
 
 ```yaml
 Current Status: L2 EVM chain on Lux Network (Live)
 Next Phase: HMM chain launch with sovereign L1 upgrade
-Consensus: AI-optimized Proof of Intelligence (PoI)
+Consensus: Proof of Compute (PoC) - miners provide compute
 Block Time: 2 seconds
 Finality: Instant (single-slot)
-Validators: AI nodes with GPU requirements
-Native Token: HANZO
+Validators: Compute providers with GPU resources
+Native Token: $AI
 Quantum Safety: Lux Network Q-Chain quantum rollups
 Compute DEX: HMM (Hanzo Market Maker) for AI resources
 
 Upgrade Path:
   Phase 1 (Live): L2 EVM chain on Lux
   Phase 2 (Next): HMM chain + Sovereign L1
+```
+
+### Proof of Compute (PoC) Consensus
+
+Hanzo uses Proof of Compute where miners provide AI compute resources to secure the network:
+
+```yaml
+PoC Protocol:
+  - Compute Mining: Miners provide GPU/TPU resources for AI tasks
+  - Work Validation: Cryptographic proof of computation performed
+  - Rewards: $AI tokens for validated compute contributions
+  - Quality Metrics: Performance-based reward adjustments
+  - Resource Types:
+    - Model training compute
+    - Inference serving
+    - Fine-tuning operations
+    - Embedding generation
 ```
 
 ### Quantum Safety via Q-Chain

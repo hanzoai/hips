@@ -1,386 +1,332 @@
 ---
 hip: 1
-title: Hamiltonian Multimodal Models (HMMs) Specification
+title: AI Token - Hanzo's Native Currency
 author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Draft
 created: 2024-12-20
+updated: 2025-01-09
 ---
 
-# HIP-1: Hamiltonian Large Language Models (HLLMs) Specification & HANZO Tokenomics
+# HIP-1: $AI Token - Hanzo's Native Currency
 
 ## Abstract
 
-This proposal defines the architecture, capabilities, and standards for Hamiltonian Large Language Models (HLLMs), along with the HANZO token economics that power the AI infrastructure. HLLMs are multimodal AI models with per-user fine-tuning, where every user owns their personalized model fork. The HANZO token incentivizes training, compute provision, and model development.
+This proposal defines the $AI token, Hanzo's native cryptocurrency that powers the AI compute economy. The $AI token incentivizes compute providers, rewards model training, enables AI service payments, and governs the Hanzo network through a Proof of Compute consensus mechanism.
+
+**Trading**: [$AI on Lux Exchange](https://lux.exchange/trade/AI)
 
 ## Motivation
 
-Current AI models are typically specialized for single modalities or use separate encoders for different modalities. Additionally, they use domain-specific fine-tuning which fundamentally fails users:
+Current AI infrastructure lacks proper economic incentives:
 
-1. **Information Loss**: Separate models lose cross-modal relationships
-2. **Inefficiency**: Multiple models increase computational overhead
-3. **No Personalization**: Domain-specific models (medical, legal, etc.) still generic for individuals
-4. **No User Ownership**: Users can't own their personalized AI
-5. **Privacy Violations**: User data pooled for domain training
+1. **No Compute Markets**: GPU resources are locked in centralized providers
+2. **No Training Rewards**: Users who improve models get nothing
+3. **No Ownership**: Users can't own their AI contributions
+4. **Centralized Pricing**: Oligopolistic control over AI costs
+5. **No Quality Metrics**: All compute treated equally regardless of performance
 
-HLLMs address these limitations by providing unified multimodal understanding with per-user fine-tuning where every interaction creates a personalized model fork, integrated with Active Inference principles for principled decision-making.
+The $AI token creates a decentralized economy for AI compute and training.
 
 ## Specification
 
-### Model Architecture
+### Token Parameters
 
-#### Unified Transformer Architecture with Hamiltonian Dynamics
-```python
-class HLLMArchitecture:
-    modalities = ["text", "vision", "audio", "3d"]
-    hidden_dim = 4096  # Base model
-    num_layers = 48
-    num_heads = 64
-    context_length = 32768
-    
-    # Modality-specific encoders
-    text_encoder: "Byte-level BPE"
-    vision_encoder: "Vision Transformer patches"
-    audio_encoder: "Mel-spectrogram transformer"
-    3d_encoder: "Point cloud transformer"
-    
-    # Unified decoder
-    decoder: "Autoregressive transformer"
+```yaml
+Token Name: AI
+Token Symbol: $AI
+Total Supply: 1,000,000,000 $AI
+Decimals: 18
+Network: Hanzo L2 (EVM-compatible)
+Contract: 0x... (TBD at deployment)
+Exchange: lux.exchange/trade/AI
 ```
-
-### Model Variants
-
-| Model | Parameters | Context | Modalities | Use Case |
-|-------|------------|---------|------------|----------|
-| HLLM-7B | 7B | 8K | Text, Vision | Edge deployment, personal devices |
-| HLLM-32B | 32B | 32K | Text, Vision, Audio | Standard per-user models |
-| HLLM-175B | 175B | 128K | All | Advanced personal assistants |
-| HLLM-1T | 1T | 256K | All + specialized | Research & collective intelligence |
-
-**Note**: These are BASE models only. Every user interaction creates a personalized fork with user-specific LoRA adapters, making each user's model unique.
-
-### Input/Output Specifications
-
-#### Input Format
-```json
-{
-  "inputs": [
-    {
-      "type": "text",
-      "content": "Describe this image"
-    },
-    {
-      "type": "image",
-      "content": "base64_encoded_image",
-      "encoding": "jpeg"
-    },
-    {
-      "type": "audio",
-      "content": "base64_encoded_audio",
-      "encoding": "wav",
-      "sample_rate": 16000
-    }
-  ],
-  "parameters": {
-    "max_tokens": 2048,
-    "temperature": 0.7,
-    "modality_weights": {
-      "text": 1.0,
-      "vision": 1.0,
-      "audio": 0.8
-    }
-  }
-}
-```
-
-#### Output Format
-```json
-{
-  "outputs": [
-    {
-      "type": "text",
-      "content": "Generated text response"
-    },
-    {
-      "type": "image",
-      "content": "base64_encoded_image",
-      "encoding": "png"
-    }
-  ],
-  "metadata": {
-    "model": "HLLM-32B",
-    "tokens_used": 1547,
-    "latency_ms": 234,
-    "modalities_processed": ["text", "vision"]
-  }
-}
-```
-
-### Capabilities
-
-#### Core Capabilities
-1. **Cross-modal Understanding**: Understand relationships between modalities
-2. **Any-to-Any Generation**: Generate any modality from any input
-3. **Zero-shot Transfer**: Apply learning across modalities
-4. **Compositional Reasoning**: Combine modalities for complex reasoning
-
-#### Specific Tasks
-- **Vision-Language**: Image captioning, VQA, visual reasoning
-- **Audio-Language**: Speech recognition, audio description
-- **3D-Language**: 3D scene understanding, spatial reasoning
-- **Multimodal Generation**: Create images from text+audio, etc.
-
-### Training Infrastructure
-
-#### Base Model Training
-- **Text**: 10T tokens from web, books, code
-- **Images**: 5B image-text pairs
-- **Audio**: 100K hours of audio with transcripts
-- **3D**: 10M 3D scenes with annotations
-- **Synthetic**: Generated multimodal data for alignment
-
-#### Per-User Fine-Tuning (Automatic)
-- **Data**: User's own interactions (encrypted)
-- **Compute**: ~35ms per interaction for gradient update
-- **Storage**: ~100MB per user for LoRA adapters
-- **Privacy**: All training data stays encrypted with user's key
-- **Ledger**: Every training operation recorded on-chain
-
-**Key Difference**: Base models are trained once. Per-user models continuously evolve with every interaction, creating billions of unique models.
-
-### Inference Optimization
-
-#### Techniques
-1. **Modality Routing**: Process only relevant modalities
-2. **Sparse Attention**: Reduce computation for long contexts
-3. **Quantization**: INT8/INT4 for edge deployment
-4. **Caching**: KV-cache across modalities
-5. **Batching**: Dynamic batching for different modalities
-
-#### Performance Targets
-- **Latency**: <100ms for first token (HLLM-32B)
-- **Throughput**: >1000 tokens/second (batched)
-- **Memory**: <16GB for HLLM-7B inference
-
-### Safety and Alignment
-
-#### Safety Measures
-1. **Content Filtering**: Multi-modal content moderation
-2. **Watermarking**: Invisible watermarks in generated content
-3. **Attribution**: Track training data influence
-4. **Bias Mitigation**: Cross-modal debiasing techniques
-
-#### Alignment Techniques
-- **RLHF**: Reinforcement Learning from Human Feedback
-- **Constitutional AI**: Rule-based constraints
-- **Multimodal Alignment**: Cross-modal consistency checks
-
-## Rationale
-
-### Why Unified Architecture?
-
-A unified architecture enables:
-- **Shared Representations**: Learn common patterns across modalities
-- **Efficient Scaling**: Single model scales better than multiple
-- **Emergent Capabilities**: Cross-modal understanding emerges naturally
-
-### Why These Modalities?
-
-Text, vision, audio, and 3D cover the primary human senses and most digital content:
-- **Text**: Foundation of human knowledge
-- **Vision**: Rich visual understanding
-- **Audio**: Speech and environmental sounds
-- **3D**: Spatial reasoning and robotics
-
-### Why Multiple Model Sizes?
-
-Different applications have different requirements:
-- **Edge**: HLLM-7B for mobile and embedded
-- **Cloud**: HLLM-32B for standard applications
-- **Enterprise**: HLLM-175B for complex tasks
-- **Research**: HLLM-1T for pushing boundaries
-
-## Backwards Compatibility
-
-HLLMs maintain compatibility with existing standards:
-- **OpenAI API**: Compatible request/response format
-- **Hugging Face**: Transformers library support
-- **ONNX**: Export for cross-platform deployment
-- **MCP**: Model Context Protocol integration
-
-## Test Cases
-
-### Unit Tests
-- Modality encoder/decoder functionality
-- Cross-attention mechanisms
-- Input/output formatting
-
-### Integration Tests
-- End-to-end multimodal generation
-- API compatibility tests
-- Performance benchmarks
-
-### Evaluation Benchmarks
-- **MMLU**: Multitask language understanding
-- **VQA2.0**: Visual question answering
-- **COCO**: Image captioning
-- **LibriSpeech**: Speech recognition
-- **ScanNet**: 3D scene understanding
-
-## HANZO Tokenomics
 
 ### Token Distribution
+
 ```yaml
-Total Supply: 1,000,000,000 HANZO
 Initial Distribution:
-  - Training Rewards: 30% (300M)
-  - Compute Providers: 20% (200M)
-  - Model Developers: 15% (150M)
-  - Community Treasury: 15% (150M)
-  - Team & Advisors: 10% (100M, 4-year vest)
-  - Public Sale: 5% (50M)
-  - Liquidity: 5% (50M)
+  Compute Mining: 30% (300M $AI)
+    - Released via Proof of Compute mining
+    - Rewards for GPU/TPU providers
+    
+  Training Rewards: 20% (200M $AI)
+    - User interaction rewards
+    - Model improvement incentives
+    
+  Ecosystem Fund: 15% (150M $AI)
+    - Developer grants
+    - Partnership incentives
+    
+  Community Treasury: 15% (150M $AI)
+    - DAO-controlled funds
+    - Community initiatives
+    
+  Team & Advisors: 10% (100M $AI)
+    - 4-year vesting with 1-year cliff
+    - 25% unlock annually after cliff
+    
+  Public Sale: 5% (50M $AI)
+    - Initial token offering
+    - Price discovery mechanism
+    
+  Liquidity: 5% (50M $AI)
+    - DEX liquidity pools
+    - HMM initial liquidity
 ```
 
 ### Token Utility
 
-#### 1. Training Rewards
+#### 1. Compute Payments
+
+```solidity
+contract ComputePayments {
+    uint256 constant BASE_RATE = 0.001 ether; // 0.001 $AI per GPU-second
+    
+    function payForCompute(
+        address provider,
+        uint256 computeUnits,
+        uint8 qualityTier
+    ) external {
+        uint256 cost = BASE_RATE * computeUnits * qualityTier;
+        require(AI.transferFrom(msg.sender, provider, cost));
+        
+        emit ComputePurchased(msg.sender, provider, computeUnits, cost);
+    }
+}
+```
+
+#### 2. Training Rewards
+
 ```solidity
 contract TrainingRewards {
-    uint256 constant REWARD_PER_INTERACTION = 0.01 HANZO;
-    uint256 constant QUALITY_MULTIPLIER = 1-10x;
+    uint256 constant REWARD_PER_INTERACTION = 0.01 ether; // 0.01 $AI
     
     function rewardTraining(
         address user,
-        bytes32 modelId,
-        TrainingOp memory op
+        bytes32 trainingHash,
+        uint256 qualityScore
     ) external {
-        uint256 quality = assessQuality(op);
-        uint256 reward = REWARD_PER_INTERACTION * quality;
+        require(qualityScore <= 100, "Invalid quality score");
         
-        // User gets 70% for providing data
-        mint(user, reward * 70 / 100);
+        uint256 reward = REWARD_PER_INTERACTION * qualityScore / 100;
         
-        // Model improvers get 30%
-        mint(modelId.owner, reward * 30 / 100);
+        // 70% to user providing data
+        AI.mint(user, reward * 70 / 100);
+        
+        // 30% to compute provider
+        AI.mint(msg.sender, reward * 30 / 100);
+        
+        emit TrainingRewarded(user, trainingHash, reward);
     }
 }
 ```
 
-#### 2. Compute Pricing
+#### 3. Model Access Fees
+
 ```yaml
-Inference Costs:
-  - HLLM-7B: 0.001 HANZO per 1K tokens
-  - HLLM-32B: 0.01 HANZO per 1K tokens
-  - HLLM-175B: 0.1 HANZO per 1K tokens
+Inference Pricing (per 1K tokens):
+  Small Models (7B): 0.001 $AI
+  Medium Models (32B): 0.01 $AI
+  Large Models (175B): 0.1 $AI
   
 Training Costs:
-  - Per-user fine-tuning: 0.0001 HANZO per interaction
-  - Base model training: 1000 HANZO per epoch
+  Fine-tuning: 0.1 $AI per epoch
+  Custom training: 10 $AI per run
+  Embeddings: 0.0001 AI per vector
 ```
 
-#### 3. Model Ownership NFTs
-```solidity
-interface IModelNFT {
-    // Mint cost increases with model performance
-    function mintCost(uint256 performance) view returns (uint256) {
-        return 10 HANZO * (1 + performance / 100);
-    }
-    
-    // Staking for enhanced features
-    function stakeForBoost(uint256 modelId, uint256 amount) external {
-        require(HANZO.transferFrom(msg.sender, address(this), amount));
-        modelBoosts[modelId] += calculateBoost(amount);
-    }
-}
-```
+#### 4. Governance Rights
 
-#### 4. Governance
 ```solidity
-contract HANZOGovernance {
-    // Voting power based on staked HANZO
+contract AIGovernance {
+    mapping(address => uint256) public stakedAI;
     mapping(address => uint256) public votingPower;
     
-    // Proposal thresholds
-    uint256 constant PROPOSAL_THRESHOLD = 100000 HANZO;
-    uint256 constant QUORUM = 10000000 HANZO;
+    function stake(uint256 amount) external {
+        AI.transferFrom(msg.sender, address(this), amount);
+        stakedAI[msg.sender] += amount;
+        
+        // Voting power = sqrt(staked AI) for quadratic voting
+        votingPower[msg.sender] = sqrt(stakedAI[msg.sender]);
+    }
     
-    struct Proposal {
-        ProposalType pType; // ModelUpgrade, TokenomicsChange, etc.
-        bytes data;
-        uint256 forVotes;
-        uint256 againstVotes;
+    function propose(ProposalType pType, bytes calldata data) external {
+        require(votingPower[msg.sender] >= 1000, "Insufficient voting power");
+        // Create proposal logic
     }
 }
+```
+
+### Proof of Compute Mining
+
+```python
+class ProofOfCompute:
+    """
+    Mining mechanism where providers earn AI for compute contributions
+    """
+    def mine_block(self, provider, compute_proof):
+        # Verify compute was performed
+        if self.verify_compute(compute_proof):
+            # Calculate reward based on difficulty
+            reward = self.calculate_reward(
+                compute_proof.operations,
+                compute_proof.quality,
+                self.current_difficulty
+            )
+            
+            # Mint AI tokens to provider
+            self.mint_tokens(provider, reward)
+            
+            # Adjust difficulty for next epoch
+            self.adjust_difficulty()
 ```
 
 ### Emission Schedule
-```python
-def calculate_emission(year):
-    # Halving every 4 years
-    initial_rate = 100_000_000  # HANZO per year
-    halvings = year // 4
-    return initial_rate / (2 ** halvings)
 
-# Year 1-4: 100M HANZO/year
-# Year 5-8: 50M HANZO/year
-# Year 9-12: 25M HANZO/year
-# etc.
+```python
+def calculate_annual_emission(year):
+    """
+    Deflationary emission with 4-year halving cycles
+    """
+    initial_emission = 100_000_000  # 100M $AI first year
+    halvings = year // 4
+    
+    if halvings >= 5:
+        return 6_250_000  # Minimum emission after 20 years
+    
+    return initial_emission / (2 ** halvings)
+
+# Year 1-4: 100M $AI/year
+# Year 5-8: 50M $AI/year  
+# Year 9-12: 25M $AI/year
+# Year 13-16: 12.5M AI/year
+# Year 17-20: 6.25M $AI/year
+# Year 21+: 6.25M $AI/year (terminal emission)
 ```
 
 ### Burn Mechanisms
-1. **Training Burn**: 10% of training rewards burned
-2. **Model Minting**: 50% of mint fees burned
-3. **Governance**: Failed proposals burn staked HANZO
-4. **Quality Control**: Low-quality training burns rewards
 
-## Implementation
+```solidity
+contract AIBurn {
+    uint256 public totalBurned;
+    
+    // Automatic burns
+    uint256 constant TRAINING_BURN_RATE = 10; // 10% of training rewards
+    uint256 constant COMPUTE_BURN_RATE = 5;   // 5% of compute payments
+    uint256 constant GOVERNANCE_BURN_RATE = 100; // 100% of failed proposals
+    
+    function burnFromTraining(uint256 amount) internal {
+        uint256 burnAmount = amount * TRAINING_BURN_RATE / 100;
+        AI.burn(burnAmount);
+        totalBurned += burnAmount;
+    }
+    
+    function burnFromCompute(uint256 amount) internal {
+        uint256 burnAmount = amount * COMPUTE_BURN_RATE / 100;
+        AI.burn(burnAmount);
+        totalBurned += burnAmount;
+    }
+}
+```
 
-### Phase 1: Foundation (Q1 2025)
-- HLLM-7B with per-user forking
-- HANZO token launch
-- Basic training rewards
-- Active Inference planner integration
+### Staking Rewards
 
-### Phase 2: Token Economy (Q2 2025)
-- Full tokenomics activation
-- Model NFT marketplace
-- Staking mechanisms
-- IEEE 2874 HSML/HSTP support
+```yaml
+Staking Tiers:
+  Bronze (100 $AI):
+    - APY: 5%
+    - Compute discount: 5%
+    - Governance weight: 1x
+    
+  Silver (1,000 $AI):
+    - APY: 10%
+    - Compute discount: 10%
+    - Governance weight: 1.5x
+    
+  Gold (10,000 $AI):
+    - APY: 15%
+    - Compute discount: 15%
+    - Governance weight: 2x
+    
+  Platinum (100,000 $AI):
+    - APY: 20%
+    - Compute discount: 20%
+    - Governance weight: 3x
+```
 
-### Phase 3: Expansion (Q3 2025)
-- HLLM-32B and HLLM-175B
-- Advanced reward algorithms
+## Economic Model
+
+### Supply and Demand
+
+**Demand Drivers:**
+- Compute purchases for AI inference/training
+- Model access fees
+- Governance participation
+- Staking for rewards
+- Speculation and investment
+
+**Supply Controls:**
+- Fixed maximum supply
+- Deflationary emission schedule
+- Multiple burn mechanisms
+- Staking locks supply
+- Vesting schedules
+
+### Price Stability Mechanisms
+
+1. **HMM DEX**: Native liquidity pools
+2. **Treasury Reserves**: DAO can provide liquidity
+3. **Dynamic Fees**: Adjust based on network usage
+4. **Burn Rate**: Increases with usage
+
+## Implementation Roadmap
+
+### Phase 1: Token Launch (Q1 2025)
+- Deploy AI token contract
+- Initial distribution
+- Basic staking mechanism
+- HMM DEX integration
+
+### Phase 2: Mining Activation (Q2 2025)
+- Launch Proof of Compute mining
+- Training reward system
+- Quality metrics oracle
+- Governance framework
+
+### Phase 3: Ecosystem Growth (Q3 2025)
 - Cross-chain bridges
-- Renormalizable world models
+- CEX listings
+- Advanced staking tiers
+- Treasury management
 
 ### Phase 4: Maturity (Q4 2025)
-- HLLM-1T collective intelligence
-- DAO governance
+- Full DAO control
 - Sustainable economics
-- Full VERSES architecture integration
+- Global compute marketplace
+- Institutional adoption
 
 ## Security Considerations
 
-### Model Security
-- **Adversarial Robustness**: Defense against attacks
-- **Privacy**: No training data memorization
-- **Access Control**: API key authentication
-- **Rate Limiting**: Prevent abuse
+### Smart Contract Security
+- Multi-sig treasury
+- Time locks on critical functions
+- Audit by top firms
+- Bug bounty program
 
-### Infrastructure Security
-- **Post-Quantum Cryptography**: Quantum-resistant security
-- **TEE Deployment**: Secure enclaves for sensitive data
-- **Encrypted Inference**: End-to-end encryption
+### Economic Security
+- Anti-whale mechanisms
+- Gradual emission release
+- Governance safeguards
+- Circuit breakers
 
 ## References
 
-1. [Flamingo: a Visual Language Model](https://arxiv.org/abs/2204.14198)
-2. [CLIP: Learning Transferable Visual Models](https://arxiv.org/abs/2103.00020)
-3. [Gemini: A Family of Multimodal Models](https://arxiv.org/abs/2312.11805)
-4. [HIP-0: Hanzo AI Architecture](./hip-0.md)
-5. [HIP-5: Post-Quantum Security](./hip-5.md)
+1. [HIP-0: Hanzo Architecture](./hip-0.md)
+2. [HIP-8: HMM DEX Specification](./hip-8.md)
+3. [Ethereum ERC-20 Standard](https://eips.ethereum.org/EIPS/eip-20)
+4. [Proof of Work vs Proof of Stake](https://ethereum.org/en/developers/docs/consensus-mechanisms/)
 
 ## Copyright
 
