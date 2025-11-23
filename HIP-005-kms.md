@@ -295,16 +295,25 @@ func (h *HMM) CreateSettlement(
 
 ### Production AI Infrastructure
 
-**Recommended**: Google Cloud KMS or AWS CloudHSM
+**Recommended**: Zymbit HSM6 (Edge AI & Raspberry Pi Deployments) ⭐
+- **Why**: Optimal for edge AI with Raspberry Pi compatibility, one-time cost, tamper-resistant
+- **Cost**: $125-155 one-time (99.7% cost savings vs cloud HSMs)
+- **Performance**: 100-300 signatures/sec
+- **Flexibility**: I2C/SPI interface, works with Pi, NVIDIA Jetson, industrial SBCs
+- **Use case**: Edge inference nodes, distributed AI networks, IoT AI deployments
+
+**Alternative 1**: Google Cloud KMS or AWS CloudHSM (Cloud-Native AI)
 - **Why**: Pay-per-use pricing scales with inference volume
 - **Cost**: $30-3,000/month (10M-100M inferences)
 - **Performance**: 200-3,000 signatures/sec
 - **Integration**: Native cloud integration
+- **Use case**: Centralized cloud AI infrastructure
 
-**Alternative**: YubiHSM 2 FIPS (small/medium deployments)
-- **Why**: One-time $650 cost, no recurring fees
+**Alternative 2**: YubiHSM 2 FIPS (Small/Medium Deployments)
+- **Why**: USB-based, FIPS 140-2 Level 3 certified, one-time cost
+- **Cost**: $650 one-time
 - **Performance**: 100-300 signatures/sec
-- **Use case**: < 10M inferences/month
+- **Use case**: < 10M inferences/month, x86 servers
 
 ### Development & Testing
 
