@@ -297,7 +297,7 @@ func (h *HMM) CreateSettlement(
 
 **Recommended**: Zymbit HSM6 (Edge AI & Raspberry Pi Deployments) ⭐
 - **Why**: Optimal for edge AI with Raspberry Pi compatibility, one-time cost, tamper-resistant
-- **Cost**: $125-155 one-time (99.7% cost savings vs cloud HSMs)
+- **Cost**: $125-155 one-time (85.6% cost savings over 3 years vs cloud HSMs)
 - **Performance**: 100-300 signatures/sec
 - **Flexibility**: I2C/SPI interface, works with Pi, NVIDIA Jetson, industrial SBCs
 - **Use case**: Edge inference nodes, distributed AI networks, IoT AI deployments
@@ -327,12 +327,15 @@ func (h *HMM) CreateSettlement(
 
 | Provider | Model Encrypt (1GB) | PoAI Sign (ops/sec) | HMM Settle (ops/sec) |
 |----------|-------------------|-------------------|-------------------|
-| SoftHSM2 | ~20-60 sec | 5,000+ | 5,000+ |
-| AWS CloudHSM | ~60-120 sec | 3,000 | 3,000 |
-| Google Cloud KMS | ~120-300 sec | 500 | 500 |
-| YubiHSM 2 | ~300-600 sec | 100-300 | 100-300 |
+| SoftHSM2 | ~2 sec | 5,000+ | 5,000+ |
+| AWS CloudHSM | ~5 sec | 3,000 | 3,000 |
+| Google Cloud KMS | ~20 sec | 500 | 500 |
+| YubiHSM 2 | ~30 sec | 100-300 | 100-300 |
 
-**Note**: Model encryption is one-time operation, PoAI signing happens per inference.
+**Performance Notes**:
+- Model encryption is one-time operation, PoAI signing happens per inference
+- Encryption throughput: SoftHSM2 ~500 MB/s, AWS ~200 MB/s, Google ~50 MB/s, YubiHSM ~35 MB/s
+- Times shown are for AES-256-GCM encryption of 1GB model weights
 
 ## Security Considerations
 
@@ -380,22 +383,27 @@ model:customer2:gpt4  → Different HSM key
 | Component | Provider | Monthly Cost |
 |-----------|----------|--------------|
 | **Model Storage** | S3/IPFS | $100 |
-| **KMS Operations** (10M/mo) | Google Cloud KMS | $60 |
+| **KMS Operations** (10M/mo) | Google Cloud KMS | $30 |
 | **PoAI Signing** | Included in KMS | $0 |
 | **HMM Settlement** | Included in KMS | $0 |
-| **Total KMS Cost** | | **$60** |
+| **Total KMS Cost** | | **$30** |
 
 **Cost Breakdown** (Google Cloud KMS):
 - 10M operations ÷ 10,000 = 1,000 billing units × $0.03 = $30/month
 - 5 keys × $0.06 = $0.30/month storage
-- Overhead/additional operations: ~$30/month
-- **Total: $60/month**
+- **Total: $30.30/month ≈ $30/month**
 
 **Alternative with YubiHSM 2**:
 - One-time: $650
 - Monthly: $0
-- 3-year TCO: **$650** (vs $2,160 for Google KMS)
-- Savings: **70%**
+- 3-year TCO: **$650** (vs $1,080 for Google KMS)
+- Savings: **39.8%**
+
+**Alternative with Zymbit HSM6**:
+- One-time: $155
+- Monthly: $0
+- 3-year TCO: **$155** (vs $1,080 for Google KMS)
+- Savings: **85.6%**
 
 ## Implementation
 
