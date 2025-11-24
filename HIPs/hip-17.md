@@ -72,6 +72,25 @@ Analytics stores events in time-series database:
 Event → Analytics (HIP-17) → TimescaleDB → Metrics
 ```
 
+## Reference Implementation
+
+**Repository**: [hanzoai/analytics](https://github.com/hanzoai/analytics)
+
+**Key Files**:
+- `/src/ingestion/event-collector.ts` - Event ingestion pipeline
+- `/src/storage/timeseries.ts` - TimescaleDB integration
+- `/src/query/metrics-engine.ts` - Metrics query processor
+- `/src/api/routes.ts` - Analytics API endpoints
+- `/tests/integration/analytics.test.ts` - Integration tests
+
+**Status**: Implemented
+
+**Database**: TimescaleDB for time-series event storage
+
+**API Endpoints**:
+- `POST /api/events` - Ingest analytics events
+- `POST /api/metrics/query` - Query aggregated metrics
+
 ## Copyright
 
 Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).

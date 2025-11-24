@@ -71,6 +71,31 @@ Payment Request → Pay (HIP-18) → $AI Contract (HIP-1)
                           Stripe (fiat)
 ```
 
+## Reference Implementation
+
+**Repository**: [hanzoai/pay](https://github.com/hanzoai/pay)
+
+**Key Files**:
+- `/src/payment/processor.ts` - Payment processing engine
+- `/src/blockchain/ai-token.ts` - $AI token integration
+- `/src/fiat/stripe.ts` - Stripe fiat payment gateway
+- `/src/subscriptions/manager.ts` - Subscription management
+- `/src/api/routes.ts` - Payment API endpoints
+- `/tests/payment/integration.test.ts` - Payment flow tests
+
+**Status**: Implemented
+
+**Port**: 4242
+
+**Integrations**:
+- $AI Token contract (HIP-1)
+- Stripe for fiat payments
+- Web3 wallet providers
+
+**API Endpoints**:
+- `POST /api/payments/create` - Create payment request
+- `GET /api/payments/:id/status` - Check payment status
+
 ## References
 
 1. [HIP-1: $AI Token](./hip-1.md)

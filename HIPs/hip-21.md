@@ -253,6 +253,42 @@ From OpenHands to Hanzo IDE:
 4. **Personalization**: Enable continuous learning
 5. **Deploy**: Launch on ide.hanzo.ai
 
+## Reference Implementation
+
+**Repository**: [hanzo-ai/ide](https://github.com/hanzo-ai/ide)
+
+**Production URL**: [ide.hanzo.ai](https://ide.hanzo.ai)
+
+**Key Files**:
+- `/frontend/src/app/` - Next.js 14 application
+- `/backend/api/main.py` - FastAPI backend server
+- `/backend/mcp/client.py` - Model Context Protocol client
+- `/backend/runtime/` - Multi-runtime execution engines
+- `/backend/compute/node.py` - Hanzo Node integration
+- `/docker/compose.prod.yml` - Production deployment config
+- `/tests/integration/` - Integration test suite
+
+**Status**: Deployed to Production
+
+**Tech Stack**:
+- **Frontend**: Next.js 14, @hanzo/ui, Socket.IO
+- **Backend**: FastAPI, asyncio, Docker/K8s
+- **MCP**: Enhanced client with SSE/HTTP/stdio
+- **Storage**: MinIO/S3, PostgreSQL, Redis
+
+**Runtimes Supported**:
+- Native (Rust)
+- Docker containers
+- Kubernetes orchestration
+- Deno (TypeScript)
+- Python (data science)
+- MCP tools
+- WebAssembly
+
+**Privacy Tiers**: 0 (open) → 4 (TEE + I/O protection)
+
+**Monitoring**: Prometheus metrics + Grafana dashboards
+
 ## References
 
 1. [HIP-0: Architecture](./hip-0.md)

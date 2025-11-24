@@ -68,6 +68,29 @@ Candle provides backend for Jin models:
 Jin Model (HIP-3) → Candle (HIP-19) → Hardware (CPU/GPU)
 ```
 
+## Reference Implementation
+
+**Repository**: [hanzoai/candle](https://github.com/hanzoai/candle)
+
+**Key Files**:
+- `/candle-core/src/tensor.rs` - Core tensor operations
+- `/candle-core/src/device.rs` - Device abstraction (CPU/CUDA/Metal)
+- `/candle-nn/src/lib.rs` - Neural network layers
+- `/candle-examples/examples/llm.rs` - LLM inference examples
+- `/candle-kernels/src/` - Optimized CUDA/Metal kernels
+- `/tests/tensor_ops.rs` - Tensor operation tests
+
+**Status**: Implemented
+
+**Hardware Support**:
+- CPU (native Rust)
+- CUDA (NVIDIA GPUs)
+- Metal (Apple Silicon)
+
+**Integration**: Backend for Jin multimodal models (HIP-3)
+
+**Performance**: Optimized tensor operations with hardware acceleration
+
 ## References
 
 1. [HIP-3: Jin Architecture](./hip-3.md)

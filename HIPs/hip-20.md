@@ -86,6 +86,35 @@ Node participates in Proof of Compute consensus:
 GPU Resources → Node (HIP-20) → PoC Consensus → Block Production
 ```
 
+## Reference Implementation
+
+**Repository**: [luxfi/node](https://github.com/luxfi/node)
+
+**Key Files**:
+- `/node/node.go` - Main node implementation
+- `/chains/manager.go` - Chain management
+- `/network/network.go` - P2P networking layer
+- `/consensus/snowman/` - Snowman consensus engine
+- `/vms/platformvm/` - Platform chain VM
+- `/vms/evm/` - EVM-compatible chain
+- `/api/server/` - RPC API server
+- `/tests/e2e/` - End-to-end node tests
+
+**Status**: Implemented
+
+**Network Ports**:
+- 9651 - P2P networking
+- 9650 - RPC API
+
+**Consensus**: Proof of Compute with GPU resource validation
+
+**Chain Support**:
+- Platform Chain (P-Chain) - validator management
+- Contract Chain (C-Chain) - EVM-compatible smart contracts
+- Custom VMs for specialized workloads
+
+**Note**: This is a Lux Network node, integrated with Hanzo AI for compute validation
+
 ## References
 
 1. [HIP-0: Architecture](./hip-0.md)

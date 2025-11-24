@@ -69,6 +69,24 @@ Document processing uses LLM Gateway (HIP-4) for AI extraction:
 Document → Az2 (HIP-16) → LLM Gateway (HIP-4) → Structured Data
 ```
 
+## Reference Implementation
+
+**Repository**: [hanzoai/az2](https://github.com/hanzoai/az2)
+
+**Key Files**:
+- `/src/processors/document.ts` - Core document processing engine
+- `/src/extractors/financial.ts` - Financial data extraction
+- `/src/api/routes.ts` - API endpoint handlers
+- `/tests/processors/document.test.ts` - Test suite
+
+**Status**: Implemented
+
+**API Endpoints**:
+- `POST /api/documents/process` - Process documents (port 8000)
+- `GET /api/documents/:id/status` - Check processing status
+
+**UI**: Available on port 5173
+
 ## References
 
 1. [HIP-4: LLM Gateway](./hip-4.md)
