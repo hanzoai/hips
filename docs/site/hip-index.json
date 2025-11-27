@@ -1,0 +1,269 @@
+{
+  "hip_count": 24,
+  "hips": [
+    {
+      "number": 0,
+      "file": "hip-000-hanzo-ai-architecture-framework.md",
+      "title": "Hanzo AI Architecture & Framework",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Final",
+      "type": "Meta",
+      "category": "",
+      "created": "2024-12-20"
+    },
+    {
+      "number": 1,
+      "file": "hip-001-ai-coin-hanzos-native-currency.md",
+      "title": "AI Token - Hanzo's Native Currency",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2024-12-20"
+    },
+    {
+      "number": 2,
+      "file": "hip-002-hamiltonian-large-language-models-hllms-specification.md",
+      "title": "Hamiltonian Large Language Models (HLLMs) Specification",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2024-12-20"
+    },
+    {
+      "number": 3,
+      "file": "hip-003-jin-multimodal-ai-architecture.md",
+      "title": "Jin Multimodal AI Architecture",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 4,
+      "file": "hip-004-llm-gateway-unified-ai-provider-interface.md",
+      "title": "LLM Gateway - Unified AI Provider Interface",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 5,
+      "file": "hip-005-post-quantum-security-for-ai-infrastructure.md",
+      "title": "Post-Quantum Security for AI Infrastructure",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Final",
+      "type": "Standards Track",
+      "category": "Security",
+      "created": "2024-12-20"
+    },
+    {
+      "number": 6,
+      "file": "hip-006-per-user-fine-tuning-architecture-for-personalized-ai.md",
+      "title": "Per-User Fine-Tuning Architecture for Personalized AI",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2024-12-20"
+    },
+    {
+      "number": 7,
+      "file": "hip-007-active-inference-integration-for-hamiltonian-llms.md",
+      "title": "Active Inference Integration for Hamiltonian LLMs",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2024-12-20"
+    },
+    {
+      "number": 8,
+      "file": "hip-008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md",
+      "title": "HMM (Hanzo Market Maker) - Native DEX for AI Compute Resources",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 9,
+      "file": "hip-009-agent-sdk-multi-agent-orchestration-framework.md",
+      "title": "Agent SDK - Multi-Agent Orchestration Framework",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 10,
+      "file": "hip-010-model-context-protocol-mcp-integration-standards.md",
+      "title": "Model Context Protocol (MCP) Integration Standards",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 11,
+      "file": "hip-011-chat-interface-standard.md",
+      "title": "Chat Interface Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 12,
+      "file": "hip-012-search-interface-standard.md",
+      "title": "Search Interface Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 13,
+      "file": "hip-013-workflow-execution-standard.md",
+      "title": "Workflow Execution Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 14,
+      "file": "hip-014-application-deployment-standard.md",
+      "title": "Application Deployment Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 15,
+      "file": "hip-015-computer-control-standard.md",
+      "title": "Computer Control Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 16,
+      "file": "hip-016-document-processing-standard.md",
+      "title": "Document Processing Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 17,
+      "file": "hip-017-analytics-event-standard.md",
+      "title": "Analytics Event Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 18,
+      "file": "hip-018-payment-processing-standard.md",
+      "title": "Payment Processing Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 19,
+      "file": "hip-019-tensor-operations-standard.md",
+      "title": "Tensor Operations Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 20,
+      "file": "hip-020-blockchain-node-standard.md",
+      "title": "Blockchain Node Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 21,
+      "file": "hip-021-hanzo-ide-integrated-development-environment.md",
+      "title": "Hanzo IDE - Integrated Development Environment",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-20"
+    },
+    {
+      "number": 22,
+      "file": "hip-022-personalized-ai-own-your-ai.md",
+      "title": "Personalized AI - Own Your AI",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2025-01-20"
+    },
+    {
+      "number": 101,
+      "file": "hip-101-hanzo-lux-bridge-protocol-integration.md",
+      "title": "Hanzo-Lux Bridge Protocol Integration",
+      "description": "Integration protocol between Hanzo's AI/commerce infrastructure and Lux blockchain",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Bridge",
+      "created": "2025-01-15"
+    }
+  ]
+}

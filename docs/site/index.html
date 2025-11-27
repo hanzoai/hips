@@ -262,167 +262,17 @@
     <script>
       let allProposals = [];
 
-      // Fetch and parse HIPs
+      // Fetch and parse HIPs from generated JSON index
       async function loadProposals() {
         try {
-          // Static list of HIPs based on repository content
-          allProposals = [
-            {
-              number: 1,
-              title: "Hanzo AI Ecosystem Genesis",
-              description: "Foundational framework for Hanzo AI governance and development",
-              status: "Final",
-              type: "Meta",
-              category: "Infrastructure",
-              author: "Hanzo Foundation",
-              created: "2024-09-01"
-            },
-            {
-              number: 2,
-              title: "Model Context Protocol (MCP) Specification",
-              description: "Protocol for managing context windows and memory in LLMs",
-              status: "Final",
-              type: "Standards Track",
-              category: "MCP",
-              author: "MCP Team",
-              created: "2024-09-02"
-            },
-            {
-              number: 3,
-              title: "Jin Multimodal Architecture",
-              description: "Unified framework for vision-language-audio AI models",
-              status: "Review",
-              type: "Standards Track",
-              category: "AI Models",
-              author: "Jin Team",
-              created: "2024-09-03"
-            },
-            {
-              number: 4,
-              title: "Agent Orchestration Framework",
-              description: "Standards for multi-agent coordination and tool use",
-              status: "Review",
-              type: "Standards Track",
-              category: "Agent Systems",
-              author: "Agents Team",
-              created: "2024-09-04"
-            },
-            {
-              number: 5,
-              title: "AI Chain (ACI) Infrastructure",
-              description: "Blockchain infrastructure for decentralized AI operations",
-              status: "Draft",
-              type: "Standards Track",
-              category: "Infrastructure",
-              author: "ACI Team",
-              created: "2024-09-05"
-            },
-            {
-              number: 6,
-              title: "Candle ML Framework Standards",
-              description: "Rust-based machine learning framework specifications",
-              status: "Review",
-              type: "Standards Track",
-              category: "AI Models",
-              author: "Candle Team",
-              created: "2024-09-06"
-            },
-            {
-              number: 7,
-              title: "AI Safety and Alignment Guidelines",
-              description: "Comprehensive safety protocols for AI model deployment",
-              status: "Final",
-              type: "Informational",
-              category: "Safety",
-              author: "Safety Team",
-              created: "2024-09-07"
-            },
-            {
-              number: 8,
-              title: "Distributed Training Protocol",
-              description: "Standards for distributed model training across clusters",
-              status: "Review",
-              type: "Standards Track",
-              category: "Infrastructure",
-              author: "Training Team",
-              created: "2024-09-08"
-            },
-            {
-              number: 9,
-              title: "Model Verification and Testing Framework",
-              description: "Comprehensive testing standards for AI models",
-              status: "Draft",
-              type: "Standards Track",
-              category: "Safety",
-              author: "QA Team",
-              created: "2024-09-09"
-            },
-            {
-              number: 10,
-              title: "Inference Optimization Guidelines",
-              description: "Best practices for optimizing model inference performance",
-              status: "Review",
-              type: "Informational",
-              category: "AI Models",
-              author: "Performance Team",
-              created: "2024-09-10"
-            },
-            {
-              number: 11,
-              title: "MCP Tool Integration Standard",
-              description: "Standards for integrating external tools with MCP",
-              status: "Draft",
-              type: "Standards Track",
-              category: "MCP",
-              author: "Integration Team",
-              created: "2024-09-11"
-            },
-            {
-              number: 12,
-              title: "Foundational Model Architecture",
-              description: "Reference architecture for Hanzo foundational models",
-              status: "Review",
-              type: "Standards Track",
-              category: "AI Models",
-              author: "Research Team",
-              created: "2024-09-12"
-            },
-            {
-              number: 13,
-              title: "Agent Memory Systems",
-              description: "Specifications for persistent memory in AI agents",
-              status: "Draft",
-              type: "Standards Track",
-              category: "Agent Systems",
-              author: "Memory Team",
-              created: "2024-09-13"
-            },
-            {
-              number: 14,
-              title: "GPU Cluster Management",
-              description: "Standards for managing GPU clusters for AI workloads",
-              status: "Final",
-              type: "Informational",
-              category: "Infrastructure",
-              author: "Infrastructure Team",
-              created: "2024-09-14"
-            },
-            {
-              number: 15,
-              title: "Model Benchmarking Standards",
-              description: "Comprehensive benchmarking framework for AI models",
-              status: "Review",
-              type: "Standards Track",
-              category: "AI Models",
-              author: "Benchmarking Team",
-              created: "2024-09-15"
-            }
-          ];
-
+          const response = await fetch('hip-index.json');
+          if (!response.ok) throw new Error('Failed to load HIP index');
+          const data = await response.json();
+          allProposals = data.hips;
           renderProposals(allProposals);
           updateStats();
         } catch (error) {
-          document.querySelector('.loading').innerHTML = 
+          document.querySelector('.loading').innerHTML =
             '<div class="error">Error loading proposals: ' + error.message + '</div>';
         }
       }
@@ -436,19 +286,19 @@
         }
 
         container.innerHTML = proposals.map(p => `
-          <div class="proposal-card" onclick="window.open('https://github.com/hanzoai/HIPs/blob/main/HIPs/hip-${p.number}.md', '_blank')">
+          <div class="proposal-card" onclick="window.open('https://github.com/hanzoai/HIPs/blob/main/HIPs/${p.file}', '_blank')">
             <div class="proposal-header">
-              <span class="proposal-number">HIP-${p.number}</span>
+              <span class="proposal-number">HIP-${String(p.number).padStart(3, '0')}</span>
               <span class="proposal-status status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span>
             </div>
             <h3 class="proposal-title">${p.title}</h3>
-            <p class="proposal-description">${p.description}</p>
+            <p class="proposal-description">${p.description || ''}</p>
             <div class="proposal-meta">
               <span class="meta-item">
                 <span class="tag">${p.type}</span>
               </span>
               <span class="meta-item">
-                <span class="tag category-${p.category.toLowerCase().replace(' ', '-')}">${p.category}</span>
+                <span class="tag category-${(p.category || '').toLowerCase().replace(' ', '-')}">${p.category || ''}</span>
               </span>
               <span class="meta-item">by ${p.author}</span>
             </div>
