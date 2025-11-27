@@ -1,7 +1,15 @@
-# HIP-101: Hanzo-Lux Bridge Protocol Integration
+---
+hip: 101
+title: Hanzo-Lux Bridge Protocol Integration
+description: Integration protocol between Hanzo's AI/commerce infrastructure and Lux blockchain
+author: Hanzo AI Team
+type: Standards Track
+category: Bridge
+status: Draft
+created: 2025-01-15
+---
 
-## Status
-**Active Research**
+# HIP-101: Hanzo-Lux Bridge Protocol Integration
 
 ## Abstract
 This proposal defines the integration protocol between Hanzo's AI/commerce infrastructure and Lux's blockchain platform, enabling seamless interoperability for decentralized commerce applications.
