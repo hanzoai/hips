@@ -22,6 +22,11 @@ jobs:
       run: |
         echo "Validating HIP proposal format..."
         for file in HIPs/*.md; do
+          # Skip non-HIP files (LLM.md, etc)
+          if [[ "$(basename "$file")" != hip-* ]]; then
+            echo "Skipping non-HIP file: $file"
+            continue
+          fi
           echo "Checking $file"
           # Check for required frontmatter
           if ! grep -q "^hip:" "$file"; then
@@ -59,15 +64,15 @@ jobs:
         echo "" >> hip-index.md
         echo "| HIP | Title | Status | Author |" >> hip-index.md
         echo "|-----|-------|--------|--------|" >> hip-index.md
-        
-        for file in HIPs/*.md; do
+
+        for file in HIPs/hip-*.md; do
           hip=$(grep "^hip:" "$file" | cut -d' ' -f2)
           title=$(grep "^title:" "$file" | cut -d' ' -f2-)
           status=$(grep "^status:" "$file" | cut -d' ' -f2)
           author=$(grep "^author:" "$file" | cut -d' ' -f2-)
           echo "| $hip | $title | $status | $author |" >> hip-index.md
         done
-        
+
         cat hip-index.md
 
   security-check:
