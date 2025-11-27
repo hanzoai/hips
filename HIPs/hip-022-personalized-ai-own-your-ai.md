@@ -1,5 +1,5 @@
 ---
-hip: 22
+hip: 022
 title: Personalized AI - Own Your AI
 author: Hanzo AI Team
 type: Standards Track

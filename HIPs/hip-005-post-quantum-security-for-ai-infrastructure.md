@@ -1,5 +1,5 @@
 ---
-hip: 5
+hip: 005
 title: Post-Quantum Security for AI Infrastructure
 author: Hanzo AI Team
 type: Standards Track

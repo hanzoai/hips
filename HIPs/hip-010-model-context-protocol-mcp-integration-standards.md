@@ -1,5 +1,5 @@
 ---
-hip: 10
+hip: 010
 title: Model Context Protocol (MCP) Integration Standards
 author: Hanzo AI Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 7
+hip: 007
 title: Active Inference Integration for Hamiltonian LLMs
 author: Hanzo AI Team
 type: Standards Track

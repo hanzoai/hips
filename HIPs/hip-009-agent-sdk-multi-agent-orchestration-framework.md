@@ -1,5 +1,5 @@
 ---
-hip: 9
+hip: 009
 title: Agent SDK - Multi-Agent Orchestration Framework
 author: Hanzo AI Team
 type: Standards Track

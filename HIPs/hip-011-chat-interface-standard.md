@@ -1,5 +1,5 @@
 ---
-hip: 11
+hip: 011
 title: Chat Interface Standard
 author: Hanzo AI Team
 type: Standards Track

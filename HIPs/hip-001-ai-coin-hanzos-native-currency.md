@@ -1,5 +1,5 @@
 ---
-hip: 1
+hip: 001
 title: AI Token - Hanzo's Native Currency
 author: Hanzo AI Team
 type: Standards Track

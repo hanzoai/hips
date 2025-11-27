@@ -1,5 +1,5 @@
 ---
-hip: 18
+hip: 018
 title: Payment Processing Standard
 author: Hanzo AI Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 20
+hip: 020
 title: Blockchain Node Standard
 author: Hanzo AI Team
 type: Standards Track

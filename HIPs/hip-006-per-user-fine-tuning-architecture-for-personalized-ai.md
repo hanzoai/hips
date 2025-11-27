@@ -1,5 +1,5 @@
 ---
-hip: 6
+hip: 006
 title: Per-User Fine-Tuning Architecture for Personalized AI
 author: Hanzo AI Team
 type: Standards Track

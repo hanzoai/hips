@@ -1,5 +1,5 @@
 ---
-hip: 16
+hip: 016
 title: Document Processing Standard
 author: Hanzo AI Team
 type: Standards Track

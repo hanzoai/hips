@@ -1,5 +1,5 @@
 ---
-hip: 4
+hip: 004
 title: LLM Gateway - Unified AI Provider Interface
 author: Hanzo AI Team
 type: Standards Track

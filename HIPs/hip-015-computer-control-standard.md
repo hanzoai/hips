@@ -1,5 +1,5 @@
 ---
-hip: 15
+hip: 015
 title: Computer Control Standard
 author: Hanzo AI Team
 type: Standards Track
