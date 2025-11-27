@@ -1,5 +1,5 @@
 ---
-hip: 101
+hip: 0101
 title: Hanzo-Lux Bridge Protocol Integration
 description: Integration protocol between Hanzo's AI/commerce infrastructure and Lux blockchain
 author: Hanzo AI Team

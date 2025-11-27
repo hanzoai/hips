@@ -1,5 +1,5 @@
 ---
-hip: 017
+hip: 0017
 title: Analytics Event Standard
 author: Hanzo AI Team
 type: Standards Track

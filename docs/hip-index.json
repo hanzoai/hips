@@ -3,7 +3,7 @@
   "hips": [
     {
       "number": 0,
-      "file": "hip-000-hanzo-ai-architecture-framework.md",
+      "file": "hip-0000-hanzo-ai-architecture-framework.md",
       "title": "Hanzo AI Architecture & Framework",
       "description": "",
       "author": "Hanzo AI Team",
@@ -14,7 +14,7 @@
     },
     {
       "number": 1,
-      "file": "hip-001-ai-coin-hanzos-native-currency.md",
+      "file": "hip-0001-ai-coin-hanzos-native-currency.md",
       "title": "AI Token - Hanzo's Native Currency",
       "description": "",
       "author": "Hanzo AI Team",
@@ -25,7 +25,7 @@
     },
     {
       "number": 2,
-      "file": "hip-002-hamiltonian-large-language-models-hllms-specification.md",
+      "file": "hip-0002-hamiltonian-large-language-models-hllms-specification.md",
       "title": "Hamiltonian Large Language Models (HLLMs) Specification",
       "description": "",
       "author": "Hanzo AI Team",
@@ -36,7 +36,7 @@
     },
     {
       "number": 3,
-      "file": "hip-003-jin-multimodal-ai-architecture.md",
+      "file": "hip-0003-jin-multimodal-ai-architecture.md",
       "title": "Jin Multimodal AI Architecture",
       "description": "",
       "author": "Hanzo AI Team",
@@ -47,7 +47,7 @@
     },
     {
       "number": 4,
-      "file": "hip-004-llm-gateway-unified-ai-provider-interface.md",
+      "file": "hip-0004-llm-gateway-unified-ai-provider-interface.md",
       "title": "LLM Gateway - Unified AI Provider Interface",
       "description": "",
       "author": "Hanzo AI Team",
@@ -58,7 +58,7 @@
     },
     {
       "number": 5,
-      "file": "hip-005-post-quantum-security-for-ai-infrastructure.md",
+      "file": "hip-0005-post-quantum-security-for-ai-infrastructure.md",
       "title": "Post-Quantum Security for AI Infrastructure",
       "description": "",
       "author": "Hanzo AI Team",
@@ -69,7 +69,7 @@
     },
     {
       "number": 6,
-      "file": "hip-006-per-user-fine-tuning-architecture-for-personalized-ai.md",
+      "file": "hip-0006-per-user-fine-tuning-architecture-for-personalized-ai.md",
       "title": "Per-User Fine-Tuning Architecture for Personalized AI",
       "description": "",
       "author": "Hanzo AI Team",
@@ -80,7 +80,7 @@
     },
     {
       "number": 7,
-      "file": "hip-007-active-inference-integration-for-hamiltonian-llms.md",
+      "file": "hip-0007-active-inference-integration-for-hamiltonian-llms.md",
       "title": "Active Inference Integration for Hamiltonian LLMs",
       "description": "",
       "author": "Hanzo AI Team",
@@ -91,7 +91,7 @@
     },
     {
       "number": 8,
-      "file": "hip-008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md",
+      "file": "hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md",
       "title": "HMM (Hanzo Market Maker) - Native DEX for AI Compute Resources",
       "description": "",
       "author": "Hanzo AI Team",
@@ -102,7 +102,7 @@
     },
     {
       "number": 9,
-      "file": "hip-009-agent-sdk-multi-agent-orchestration-framework.md",
+      "file": "hip-0009-agent-sdk-multi-agent-orchestration-framework.md",
       "title": "Agent SDK - Multi-Agent Orchestration Framework",
       "description": "",
       "author": "Hanzo AI Team",
@@ -113,7 +113,7 @@
     },
     {
       "number": 10,
-      "file": "hip-010-model-context-protocol-mcp-integration-standards.md",
+      "file": "hip-0010-model-context-protocol-mcp-integration-standards.md",
       "title": "Model Context Protocol (MCP) Integration Standards",
       "description": "",
       "author": "Hanzo AI Team",
@@ -124,7 +124,7 @@
     },
     {
       "number": 11,
-      "file": "hip-011-chat-interface-standard.md",
+      "file": "hip-0011-chat-interface-standard.md",
       "title": "Chat Interface Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -135,7 +135,7 @@
     },
     {
       "number": 12,
-      "file": "hip-012-search-interface-standard.md",
+      "file": "hip-0012-search-interface-standard.md",
       "title": "Search Interface Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -146,7 +146,7 @@
     },
     {
       "number": 13,
-      "file": "hip-013-workflow-execution-standard.md",
+      "file": "hip-0013-workflow-execution-standard.md",
       "title": "Workflow Execution Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -157,7 +157,7 @@
     },
     {
       "number": 14,
-      "file": "hip-014-application-deployment-standard.md",
+      "file": "hip-0014-application-deployment-standard.md",
       "title": "Application Deployment Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -168,7 +168,7 @@
     },
     {
       "number": 15,
-      "file": "hip-015-computer-control-standard.md",
+      "file": "hip-0015-computer-control-standard.md",
       "title": "Computer Control Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -179,7 +179,7 @@
     },
     {
       "number": 16,
-      "file": "hip-016-document-processing-standard.md",
+      "file": "hip-0016-document-processing-standard.md",
       "title": "Document Processing Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -190,7 +190,7 @@
     },
     {
       "number": 17,
-      "file": "hip-017-analytics-event-standard.md",
+      "file": "hip-0017-analytics-event-standard.md",
       "title": "Analytics Event Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -201,7 +201,7 @@
     },
     {
       "number": 18,
-      "file": "hip-018-payment-processing-standard.md",
+      "file": "hip-0018-payment-processing-standard.md",
       "title": "Payment Processing Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -212,7 +212,7 @@
     },
     {
       "number": 19,
-      "file": "hip-019-tensor-operations-standard.md",
+      "file": "hip-0019-tensor-operations-standard.md",
       "title": "Tensor Operations Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -223,7 +223,7 @@
     },
     {
       "number": 20,
-      "file": "hip-020-blockchain-node-standard.md",
+      "file": "hip-0020-blockchain-node-standard.md",
       "title": "Blockchain Node Standard",
       "description": "",
       "author": "Hanzo AI Team",
@@ -234,7 +234,7 @@
     },
     {
       "number": 21,
-      "file": "hip-021-hanzo-ide-integrated-development-environment.md",
+      "file": "hip-0021-hanzo-ide-integrated-development-environment.md",
       "title": "Hanzo IDE - Integrated Development Environment",
       "description": "",
       "author": "Hanzo AI Team",
@@ -245,7 +245,7 @@
     },
     {
       "number": 22,
-      "file": "hip-022-personalized-ai-own-your-ai.md",
+      "file": "hip-0022-personalized-ai-own-your-ai.md",
       "title": "Personalized AI - Own Your AI",
       "description": "",
       "author": "Hanzo AI Team",
@@ -256,7 +256,7 @@
     },
     {
       "number": 101,
-      "file": "hip-101-hanzo-lux-bridge-protocol-integration.md",
+      "file": "hip-0101-hanzo-lux-bridge-protocol-integration.md",
       "title": "Hanzo-Lux Bridge Protocol Integration",
       "description": "Integration protocol between Hanzo's AI/commerce infrastructure and Lux blockchain",
       "author": "Hanzo AI Team",

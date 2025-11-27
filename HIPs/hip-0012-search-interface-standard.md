@@ -1,5 +1,5 @@
 ---
-hip: 012
+hip: 0012
 title: Search Interface Standard
 author: Hanzo AI Team
 type: Standards Track

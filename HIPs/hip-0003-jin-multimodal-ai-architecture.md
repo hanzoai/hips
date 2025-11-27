@@ -1,5 +1,5 @@
 ---
-hip: 003
+hip: 0003
 title: Jin Multimodal AI Architecture
 author: Hanzo AI Team
 type: Standards Track

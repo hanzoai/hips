@@ -1,5 +1,5 @@
 ---
-hip: 002
+hip: 0002
 title: Hamiltonian Large Language Models (HLLMs) Specification
 author: Hanzo AI Team
 type: Standards Track

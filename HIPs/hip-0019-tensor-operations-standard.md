@@ -1,5 +1,5 @@
 ---
-hip: 019
+hip: 0019
 title: Tensor Operations Standard
 author: Hanzo AI Team
 type: Standards Track

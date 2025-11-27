@@ -1,5 +1,5 @@
 ---
-hip: 000
+hip: 0000
 title: Hanzo AI Architecture & Framework
 author: Hanzo AI Team
 type: Meta

@@ -288,7 +288,7 @@
         container.innerHTML = proposals.map(p => `
           <div class="proposal-card" onclick="window.open('https://github.com/hanzoai/HIPs/blob/main/HIPs/${p.file}', '_blank')">
             <div class="proposal-header">
-              <span class="proposal-number">HIP-${String(p.number).padStart(3, '0')}</span>
+              <span class="proposal-number">HIP-${String(p.number).padStart(4, '0')}</span>
               <span class="proposal-status status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span>
             </div>
             <h3 class="proposal-title">${p.title}</h3>
