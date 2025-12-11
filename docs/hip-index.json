@@ -1,5 +1,5 @@
 {
-  "hip_count": 24,
+  "hip_count": 25,
   "hips": [
     {
       "number": 0,
@@ -253,6 +253,17 @@
       "type": "Standards Track",
       "category": "Core",
       "created": "2025-01-20"
+    },
+    {
+      "number": 23,
+      "file": "hip-0023-decentralized-ai-compute-swarm-protocol.md",
+      "title": "Decentralized AI Compute Swarm Protocol",
+      "description": "BitTorrent-inspired protocol for distributing AI compute tasks across a decentralized peer network",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2024-11-30"
     },
     {
       "number": 101,
