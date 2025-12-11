@@ -1,14 +1,16 @@
-# HIP-0023: Decentralized AI Compute Swarm Protocol
+---
+hip: 0023
+title: Decentralized AI Compute Swarm Protocol
+description: BitTorrent-inspired protocol for distributing AI compute tasks across a decentralized peer network
+author: Hanzo AI Team
+status: Draft
+type: Standards Track
+category: Core
+created: 2024-11-30
+requires: 0001, 0005
+---
 
-| HIP | 0023 |
-|-----|------|
-| Title | Decentralized AI Compute Swarm Protocol |
-| Author | Hanzo AI Team |
-| Status | Draft |
-| Type | Standards Track |
-| Category | Core |
-| Created | 2024-11-30 |
-| Requires | HIP-0001 (AI Coin), HIP-0005 (PQC) |
+# HIP-0023: Decentralized AI Compute Swarm Protocol
 
 ## Abstract
 
