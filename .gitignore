@@ -1,0 +1,6 @@
+# Build outputs
+docs/.next/
+node_modules/
+.turbo/
+*.tsbuildinfo
+

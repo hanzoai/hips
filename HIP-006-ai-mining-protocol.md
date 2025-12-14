@@ -219,6 +219,21 @@ The same GPU can mine for Hanzo, Lux, Zoo simultaneously, but:
 | H100-001 | nonce: 0x1a... | nonce: 0x2b... | nonce: 0x3c... |
 | H100-001 | Receipt A | Receipt B | Receipt C |
 
+**Key Invariant:** The same AI work can't be minted on Hanzo, Lux, AND Zoo - only on the chain specified in the pre-committed `WorkContext.chain_id`.
+
+#### Supported GPUs for NVTrust
+
+| GPU Model | CC Support | Trust Score |
+|-----------|------------|-------------|
+| H100 | Full NVTrust | 95 |
+| H200 | Full NVTrust | 95 |
+| B100 | Full NVTrust + TEE-I/O | 100 |
+| B200 | Full NVTrust + TEE-I/O | 100 |
+| GB200 | Full NVTrust + TEE-I/O | 100 |
+| RTX PRO 6000 | NVTrust | 85 |
+| RTX 5090 | No CC | Software only (60) |
+| RTX 4090 | No CC | Software only (60) |
+
 **Source:** [`hanzo-mining/src/ledger.rs`](https://github.com/hanzoai/node/blob/main/hanzo-libs/hanzo-mining/src/ledger.rs)
 **Source:** [`hanzo-node/src/security/tee_attestation.rs`](https://github.com/hanzoai/node/blob/main/hanzo-bin/hanzo-node/src/security/tee_attestation.rs)
 
