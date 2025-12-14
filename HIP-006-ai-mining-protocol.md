@@ -96,7 +96,133 @@ pub struct AIWorkProof {
 }
 ```
 
-### 3. Reward Distribution
+### 3. NVTrust Chain-Binding (Double-Spend Prevention)
+
+The core mechanism preventing AI work from being claimed on multiple chains.
+
+#### Design Principle
+
+We avoid double-spend by **binding each unit of AI work to a specific chain BEFORE the compute runs**, and having the GPU's NVTrust enclave sign an attested receipt including that chain ID.
+
+#### Work Context (Pre-Compute Commitment)
+
+```rust
+/// Miner commits to target chain before GPU execution
+pub struct WorkContext {
+    pub chain_id: ChainId,       // HANZO (36963) / ZOO (200200) / LUX (96369)
+    pub job_id: [u8; 32],        // Workload or block height
+    pub model_hash: [u8; 32],    // Model identity
+    pub input_hash: [u8; 32],    // Prompt/data identity
+    pub device_id: [u8; 32],     // GPU hardware ID
+    pub nonce: [u8; 32],         // Unique per job (replay protection)
+    pub timestamp: u64,          // Unix timestamp
+}
+
+impl WorkContext {
+    /// Create context for Hanzo mining
+    pub fn for_hanzo(job_id: [u8; 32], model: &[u8], input: &[u8]) -> Self {
+        Self {
+            chain_id: ChainId::HanzoEVM,  // 36963
+            job_id,
+            model_hash: blake3::hash(model).into(),
+            input_hash: blake3::hash(input).into(),
+            device_id: get_gpu_device_id(),
+            nonce: generate_nonce(),
+            timestamp: unix_timestamp(),
+        }
+    }
+}
+```
+
+#### GPU TEE Receipt (NVTrust Signed)
+
+```rust
+/// Receipt signed by GPU's NVTrust enclave
+pub struct AttestedReceipt {
+    pub context: WorkContext,         // Pre-committed context
+    pub result_hash: [u8; 32],        // Hash of AI output
+    pub work_metrics: WorkMetrics,    // FLOPs, tokens, time
+    pub nvtrust_signature: Vec<u8>,   // NVIDIA hardware attestation
+    pub spdm_evidence: SPDMEvidence,  // SPDM measurement response
+}
+
+pub struct WorkMetrics {
+    pub flops: u64,              // Floating point operations
+    pub tokens_processed: u64,   // LLM inference tokens
+    pub compute_time_ms: u64,    // Execution time
+    pub memory_used_mb: u64,     // Peak VRAM
+}
+
+/// SPDM evidence from GPU firmware
+pub struct SPDMEvidence {
+    pub version: u8,
+    pub measurement_hash: [u8; 48],   // GPU firmware/config
+    pub nonce: [u8; 32],              // Replay protection
+    pub signature: Vec<u8>,           // GPU signature
+    pub certificate_chain: Vec<u8>,   // Chain to NVIDIA root
+}
+```
+
+#### Chain Verification and Minting
+
+```rust
+impl MiningLedger {
+    /// Verify receipt and mint reward (double-spend protected)
+    pub async fn verify_and_mint(
+        &self,
+        receipt: &AttestedReceipt,
+    ) -> Result<u64, MiningError> {
+        // Step 1: Verify NVTrust signature
+        self.verify_nvtrust_signature(receipt)?;
+
+        // Step 2: Verify chain_id matches THIS chain (Hanzo)
+        if receipt.context.chain_id != ChainId::HanzoEVM {
+            return Err(MiningError::WrongChain {
+                expected: ChainId::HanzoEVM,
+                got: receipt.context.chain_id,
+            });
+        }
+
+        // Step 3: Compute unique spent key
+        let spent_key = blake3::hash(&[
+            &receipt.context.device_id[..],
+            &receipt.context.nonce[..],
+            &(receipt.context.chain_id as u32).to_le_bytes()[..],
+        ]);
+
+        // Step 4: Check spent set (DOUBLE-SPEND PREVENTION)
+        let mut spent = self.spent_set.write().await;
+        if spent.contains(&spent_key.into()) {
+            return Err(MiningError::AlreadyMinted);
+        }
+
+        // Step 5: Mark as spent and mint
+        spent.insert(spent_key.into());
+        let reward = self.calculate_reward(&receipt.work_metrics);
+        self.mint_to_miner(&receipt.context.device_id, reward).await?;
+
+        Ok(reward)
+    }
+}
+```
+
+#### Multi-Chain Mining (Same GPU)
+
+The same GPU can mine for Hanzo, Lux, Zoo simultaneously, but:
+- Each chain requires a **separate job** with a **different chain_id**
+- Each job produces a **unique attested receipt**
+- No "copy-paste" mining - you can't cash in one workload on three chains
+
+| GPU | Hanzo Job | Zoo Job | Lux Job |
+|-----|-----------|---------|---------|
+| H100-001 | chain_id: 36963 | chain_id: 200200 | chain_id: 96369 |
+| H100-001 | nonce: 0x1a... | nonce: 0x2b... | nonce: 0x3c... |
+| H100-001 | Receipt A | Receipt B | Receipt C |
+
+**Source:** [`hanzo-mining/src/ledger.rs`](https://github.com/hanzoai/node/blob/main/hanzo-libs/hanzo-mining/src/ledger.rs)
+**Source:** [`hanzo-node/src/security/tee_attestation.rs`](https://github.com/hanzoai/node/blob/main/hanzo-bin/hanzo-node/src/security/tee_attestation.rs)
+
+### 4. Reward Distribution
 
 Mining rewards follow this formula:
 
@@ -109,7 +235,7 @@ Where:
 - `compute_units`: Verified AI compute performed
 - `difficulty_adjustment`: Dynamic based on network hash rate
 
-### 4. Teleport Integration
+### 5. Teleport Integration
 
 The Mining Bridge connects wallets to Teleport:
 
@@ -141,7 +267,7 @@ impl MiningBridge {
 
 **Source:** [`hanzo-mining/src/bridge.rs`](https://github.com/hanzoai/node/blob/main/hanzo-libs/hanzo-mining/src/bridge.rs)
 
-### 5. EVM Precompile
+### 6. EVM Precompile
 
 The AI Mining precompile at `0x0300` enables EVM integration:
 
