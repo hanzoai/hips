@@ -15,9 +15,39 @@ requires: HIP-2, HIP-9
 
 This proposal defines the Model Context Protocol (MCP) integration standards for the Hanzo ecosystem. MCP enables seamless tool use, context management, and extensibility for AI models through a standardized protocol for connecting models to external tools and data sources.
 
-**Repository**: [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp)  
-**NPM**: `@hanzoai/mcp`  
-**CLI**: `hanzo-mcp`
+## Implementations
+
+| Language | Repository | Package | Status |
+|----------|------------|---------|--------|
+| **Python** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `hanzo-mcp` (PyPI) | ✅ Production |
+| **TypeScript** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `@hanzoai/mcp` (NPM) | ✅ Production |
+| **Rust** | [github.com/hanzoai/mcp/rust](https://github.com/hanzoai/mcp/tree/main/rust) | `hanzo-mcp` (crates.io) | ✅ Production |
+| **Go** | [github.com/hanzoai/mcp-go](https://github.com/hanzoai/mcp-go) | `github.com/hanzoai/mcp-go` | 🚧 In Progress |
+
+**CLI**: `hanzo-mcp` (available via `pip install hanzo-mcp` or `cargo install hanzo-mcp`)
+
+### Core Tools (All Implementations)
+
+| Tool | Python | Rust | TypeScript | Description |
+|------|--------|------|------------|-------------|
+| **proc** | ✅ | ✅ | ✅ | Process execution (shell, ps, kill) |
+| **fs** | ✅ | ✅ | ✅ | Filesystem (read, write, edit, search) |
+| **think** | ✅ | ✅ | ✅ | Reasoning (think, critic, review) |
+| **memory** | ✅ | ✅ | ✅ | Persistent memory & knowledge bases |
+| **browser** | ✅ | ⚠️ | ✅ | Browser automation (90+ Playwright actions) |
+| **ui** | ✅ | ✅ | ⚠️ | Native UI automation (click, type, screenshot) |
+| **mode** | ✅ | ✅ | ✅ | Developer personality modes |
+| **plan** | ✅ | ✅ | ✅ | Task/plan management |
+
+### Rust-Specific Features
+
+- **Tree-sitter AST search**: 8 languages (Rust, JS, TS, Python, Go, Java, C, C++)
+- **Native macOS UI**: Quartz backend for high-performance automation
+- **Process auto-backgrounding**: Commands exceeding 45s auto-background
+- **Unified search**: Multi-modal search (Text, AST, Symbol, Vector, Memory, File)
+- **Zero-copy parsing**: Efficient JSON-RPC handling
+
+See [HIP-0300](./hip-0300-unified-mcp-tools-architecture.md) for unified tools architecture.
 
 ## Motivation
 
@@ -443,6 +473,71 @@ client.registerTool({
 const result = await client.executeTool('web_search', {
   query: 'Hanzo AI'
 });
+```
+
+#### Rust SDK
+```rust
+use hanzo_mcp::{MCPServer, Config};
+use hanzo_mcp::tools::{ShellTool, FsTool, ThinkTool, MemoryTool};
+
+// Initialize server with tools
+let config = Config::default();
+let mut server = MCPServer::new(config);
+
+// Add built-in tools
+server.add_tool(ShellTool::new());
+server.add_tool(FsTool::new());
+server.add_tool(ThinkTool::new());
+server.add_tool(MemoryTool::new());
+
+// Start server
+server.serve("127.0.0.1:3000").await?;
+```
+
+**Using tools directly:**
+```rust
+use hanzo_mcp::tools::{ShellTool, ProcToolArgs};
+use serde_json::Value;
+
+// Execute shell command
+let tool = ShellTool::new();
+let args = ProcToolArgs {
+    action: "exec".to_string(),
+    command: Some(Value::String("echo hello".to_string())),
+    ..Default::default()
+};
+
+let result = tool.execute(args).await?;
+let json: serde_json::Value = serde_json::from_str(&result)?;
+println!("stdout: {}", json["stdout"]);
+```
+
+**Search with modality detection:**
+```rust
+use hanzo_mcp::search::{detect_modalities, SearchModality, AstSearcher};
+
+// Auto-detect search modalities
+let modalities = detect_modalities("class UserService");
+assert!(modalities.contains(&SearchModality::Ast));
+assert!(modalities.contains(&SearchModality::Text));
+
+// AST search with tree-sitter
+let searcher = AstSearcher::new();
+let results = searcher
+    .search("handleClick", path, Some("typescript"), 10)
+    .await?;
+```
+
+**Cargo.toml:**
+```toml
+[dependencies]
+hanzo-mcp = "0.12"
+
+# Optional features
+[features]
+default = []
+vector-store = ["qdrant-client"]
+computer-control = ["enigo", "screenshots"]
 ```
 
 ## Implementation Roadmap

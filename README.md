@@ -19,6 +19,20 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 ## HIP Index
 
+### Core Protocol HIPs
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-001](./HIP-001.md) | Post-Quantum Cryptography Standard | Standards Track | Security | Implemented |
+| [HIP-002](./HIP-002.md) | AI/Blockchain Convergence Architecture | Standards Track | Core | In Development |
+| [HIP-003](./HIP-003.md) | Model Context Protocol (MCP) Integration | Standards Track | Interface | Active |
+| [HIP-004](./HIP-004-hmm.md) | Hanzo HMM (Hamiltonian Market Maker) | Standards Track | Core | Active |
+| [HIP-005](./HIP-005-kms.md) | KMS Hardware Security Module Integration | Standards Track | Infrastructure | Active |
+| [HIP-006](./HIP-006-ai-mining-protocol.md) | Hanzo AI Mining Protocol | Standards Track | Core | Draft |
+| [HIP-007](./HIP-007-zap.md) | ZAP - Zero-copy Agent Protocol | Standards Track | Interface | Draft |
+
+### Extended HIPs
+
 | Number | Title | Type | Category | Status |
 |:-------|:------|:-----|:---------|:-------|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | Hanzo AI Architecture & Framework | Meta | - | Final |
