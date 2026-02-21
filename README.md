@@ -59,6 +59,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0021](./HIPs/hip-0021-hanzo-ide-integrated-development-environment.md) | Hanzo IDE - Integrated Development Environment | Standards Track | Interface | Draft |
 | [HIP-0022](./HIPs/hip-0022-personalized-ai-own-your-ai.md) | Personalized AI - Own Your AI | Standards Track | Core | Draft |
 | [HIP-0023](./HIPs/hip-0023-decentralized-ai-compute-swarm-protocol.md) | Decentralized AI Compute Swarm Protocol | Standards Track | Core | Draft |
+| [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | Hanzo Sovereign L1 Chain Architecture | Standards Track | Core | Final |
+| [HIP-0025](./HIPs/hip-0025-bot-agent-wallet-rpc-billing-protocol.md) | Bot Agent Wallet & RPC Billing Protocol | Standards Track | Core | Draft |
 | [HIP-0101](./HIPs/hip-0101-hanzo-lux-bridge-protocol-integration.md) | Hanzo-Lux Bridge Protocol Integration | Standards Track | Bridge | Draft |
 
 ## HIP Process
