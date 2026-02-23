@@ -86,6 +86,19 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0038](./HIPs/hip-0038-admin-console-standard.md) | Admin Console Standard | Standards Track | Interface | Draft |
 | [HIP-0039](./HIPs/hip-0039-zen-model-architecture.md) | Zen Model Architecture | Standards Track | Core | Draft |
 
+### Developer Tools & SDKs (HIP-0040 — HIP-0049)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0040](./HIPs/hip-0040-multi-language-sdk-standard.md) | Multi-Language SDK Standard | Standards Track | Interface | Draft |
+| [HIP-0041](./HIPs/hip-0041-cli-standard.md) | CLI Standard | Standards Track | Interface | Draft |
+| [HIP-0042](./HIPs/hip-0042-vector-search-standard.md) | Vector Search Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | LLM Inference Engine Standard | Standards Track | Core | Draft |
+| [HIP-0044](./HIPs/hip-0044-api-gateway-standard.md) | API Gateway Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0045](./HIPs/hip-0045-documentation-framework-standard.md) | Documentation Framework Standard | Standards Track | Interface | Draft |
+| [HIP-0046](./HIPs/hip-0046-embeddings-standard.md) | Embeddings Standard | Standards Track | Interface | Draft |
+| [HIP-0047](./HIPs/hip-0047-analytics-datastore-standard.md) | Analytics Datastore Standard | Standards Track | Infrastructure | Draft |
+
 ### Cross-Chain (HIP-0100+)
 
 | Number | Title | Type | Category | Status |

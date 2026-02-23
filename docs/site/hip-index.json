@@ -1,5 +1,5 @@
 {
-  "hip_count": 55,
+  "hip_count": 63,
   "hips": [
     {
       "number": 0,
@@ -440,6 +440,94 @@
       "type": "Standards Track",
       "category": "Core",
       "created": "2025-01-15"
+    },
+    {
+      "number": 40,
+      "file": "hip-0040-multi-language-sdk-standard.md",
+      "title": "Multi-Language SDK Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2025-01-09"
+    },
+    {
+      "number": 41,
+      "file": "hip-0041-cli-standard.md",
+      "title": "CLI Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 42,
+      "file": "hip-0042-vector-search-standard.md",
+      "title": "Vector Search Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 43,
+      "file": "hip-0043-llm-inference-engine-standard.md",
+      "title": "LLM Inference Engine Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 44,
+      "file": "hip-0044-api-gateway-standard.md",
+      "title": "API Gateway Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 45,
+      "file": "hip-0045-documentation-framework-standard.md",
+      "title": "Documentation Framework Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 46,
+      "file": "hip-0046-embeddings-standard.md",
+      "title": "Embeddings Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 47,
+      "file": "hip-0047-analytics-datastore-standard.md",
+      "title": "Analytics Datastore Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
     },
     {
       "number": 101,
