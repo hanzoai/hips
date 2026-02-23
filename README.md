@@ -1,21 +1,20 @@
 # Hanzo Improvement Proposals (HIPs)
 
-Hanzo Improvement Proposals (HIPs) are the primary mechanism for proposing new features, gathering community input, and documenting design decisions for the [Hanzo AI](https://hanzo.ai) ecosystem featuring Hamiltonian Large Language Models (HLLMs). This process ensures that changes to the Hanzo platform are transparently reviewed and achieve community consensus before implementation.
+Hanzo Improvement Proposals (HIPs) are the primary mechanism for proposing new features, gathering community input, and documenting design decisions for the [Hanzo AI](https://hanzo.ai) ecosystem. This process ensures that changes to the Hanzo platform are transparently reviewed and achieve community consensus before implementation.
 
 ## What is a HIP?
 
 A Hanzo Improvement Proposal (HIP) is a design document that provides information to the Hanzo community about a proposed change to the system. HIPs serve as the formal pathway to introduce improvements and build agreement on their adoption. They are used for:
-- Proposing new Hamiltonian LLM architectures and Active Inference integration
-- Defining standards for agent frameworks with Expected Free Energy minimization
-- Collecting community input on AI infrastructure
-- Documenting design decisions for multimodal systems with IEEE 2874 interoperability
+- Proposing new AI architectures, models, and infrastructure
+- Defining standards for agent frameworks, protocols, and interfaces
+- Collecting community input on platform design
+- Documenting design decisions with pedagogical context (why we built what we built)
 
 ## Quick Start
 
-- 📖 New to HIPs? Begin with HIP-0, which provides an overview of the Hanzo AI architecture
-- 🚀 Create a new HIP: Use the provided template to scaffold a proposal draft
-- 📋 View all HIPs: See [docs/INDEX.md](./docs/INDEX.md) for a complete list
-- 🔍 Check status: See [docs/STATUS.md](./docs/STATUS.md) for current status
+- New to HIPs? Begin with [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md), the Hanzo AI Architecture overview
+- Create a new HIP: Use the provided template to scaffold a proposal draft
+- View all HIPs: See the complete index below
 
 ## HIP Index
 
@@ -25,13 +24,14 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 |:-------|:------|:-----|:---------|:-------|
 | [HIP-001](./HIP-001.md) | Post-Quantum Cryptography Standard | Standards Track | Security | Implemented |
 | [HIP-002](./HIP-002.md) | AI/Blockchain Convergence Architecture | Standards Track | Core | In Development |
+| [HIP-002-ASO](./HIP-002-aso.md) | Active Semantic Optimization Protocol | Standards Track | Core | Active |
 | [HIP-003](./HIP-003.md) | Model Context Protocol (MCP) Integration | Standards Track | Interface | Active |
 | [HIP-004](./HIP-004-hmm.md) | Hanzo HMM (Hamiltonian Market Maker) | Standards Track | Core | Active |
 | [HIP-005](./HIP-005-kms.md) | KMS Hardware Security Module Integration | Standards Track | Infrastructure | Active |
 | [HIP-006](./HIP-006-ai-mining-protocol.md) | Hanzo AI Mining Protocol | Standards Track | Core | Draft |
 | [HIP-007](./HIP-007-zap.md) | ZAP - Zero-copy Agent Protocol | Standards Track | Interface | Draft |
 
-### Extended HIPs
+### Foundation & Models (HIP-0000 — HIP-0010)
 
 | Number | Title | Type | Category | Status |
 |:-------|:------|:-----|:---------|:-------|
@@ -43,9 +43,14 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | Post-Quantum Security for AI Infrastructure | Standards Track | Security | Final |
 | [HIP-0006](./HIPs/hip-0006-per-user-fine-tuning-architecture-for-personalized-ai.md) | Per-User Fine-Tuning Architecture for Personalized AI | Standards Track | Core | Draft |
 | [HIP-0007](./HIPs/hip-0007-active-inference-integration-for-hamiltonian-llms.md) | Active Inference Integration for Hamiltonian LLMs | Standards Track | Core | Draft |
-| [HIP-0008](./HIPs/hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md) | HMM (Hanzo Market Maker) - Native DEX for AI Compute... | Standards Track | Core | Draft |
+| [HIP-0008](./HIPs/hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md) | HMM - Native DEX for AI Compute Resources | Standards Track | Core | Draft |
 | [HIP-0009](./HIPs/hip-0009-agent-sdk-multi-agent-orchestration-framework.md) | Agent SDK - Multi-Agent Orchestration Framework | Standards Track | Core | Draft |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | Model Context Protocol (MCP) Integration Standards | Standards Track | Interface | Draft |
+
+### Application Interfaces (HIP-0011 — HIP-0025)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
 | [HIP-0011](./HIPs/hip-0011-chat-interface-standard.md) | Chat Interface Standard | Standards Track | Interface | Draft |
 | [HIP-0012](./HIPs/hip-0012-search-interface-standard.md) | Search Interface Standard | Standards Track | Interface | Draft |
 | [HIP-0013](./HIPs/hip-0013-workflow-execution-standard.md) | Workflow Execution Standard | Standards Track | Core | Draft |
@@ -61,33 +66,83 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0023](./HIPs/hip-0023-decentralized-ai-compute-swarm-protocol.md) | Decentralized AI Compute Swarm Protocol | Standards Track | Core | Draft |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | Hanzo Sovereign L1 Chain Architecture | Standards Track | Core | Final |
 | [HIP-0025](./HIPs/hip-0025-bot-agent-wallet-rpc-billing-protocol.md) | Bot Agent Wallet & RPC Billing Protocol | Standards Track | Core | Draft |
+
+### Infrastructure Services (HIP-0026 — HIP-0039)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | Identity & Access Management Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0027](./HIPs/hip-0027-secrets-management-standard.md) | Secrets Management Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0028](./HIPs/hip-0028-key-value-store-standard.md) | Key-Value Store Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0029](./HIPs/hip-0029-relational-database-standard.md) | Relational Database Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0030](./HIPs/hip-0030-event-streaming-standard.md) | Event Streaming Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0031](./HIPs/hip-0031-observability-metrics-standard.md) | Observability & Metrics Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0032](./HIPs/hip-0032-object-storage-standard.md) | Object Storage Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0033](./HIPs/hip-0033-container-registry-standard.md) | Container Registry Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0034](./HIPs/hip-0034-automation-platform-standard.md) | Automation Platform Standard | Standards Track | Interface | Draft |
+| [HIP-0035](./HIPs/hip-0035-image-video-generation-standard.md) | Image & Video Generation Standard | Standards Track | Interface | Draft |
+| [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | CI/CD Build System Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0037](./HIPs/hip-0037-ai-cloud-platform-standard.md) | AI Cloud Platform Standard | Standards Track | Core | Draft |
+| [HIP-0038](./HIPs/hip-0038-admin-console-standard.md) | Admin Console Standard | Standards Track | Interface | Draft |
+| [HIP-0039](./HIPs/hip-0039-zen-model-architecture.md) | Zen Model Architecture | Standards Track | Core | Draft |
+
+### Cross-Chain (HIP-0100+)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
 | [HIP-0101](./HIPs/hip-0101-hanzo-lux-bridge-protocol-integration.md) | Hanzo-Lux Bridge Protocol Integration | Standards Track | Bridge | Draft |
+
+### Responsible AI & Governance (HIP-0200+)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
+| [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
+| [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
+| [HIP-0220](./HIPs/hip-0220-bias-detection-mitigation.md) | Bias Detection & Mitigation | Meta | - | Draft |
+| [HIP-0230](./HIPs/hip-0230-ai-transparency-explainability.md) | AI Transparency & Explainability | Meta | - | Draft |
+| [HIP-0240](./HIPs/hip-0240-ai-incident-response.md) | AI Incident Response | Meta | - | Draft |
+| [HIP-0250](./HIPs/hip-0250-sustainability-standards-alignment.md) | Sustainability Standards Alignment Matrix | Meta | - | Draft |
+| [HIP-0251](./HIPs/hip-0251-ai-compute-carbon-footprint.md) | AI Compute Carbon Footprint | Meta | - | Draft |
+| [HIP-0260](./HIPs/hip-0260-efficient-model-practices.md) | Efficient Model Practices | Meta | - | Draft |
+| [HIP-0270](./HIPs/hip-0270-ai-supply-chain-responsibility.md) | AI Supply Chain Responsibility | Meta | - | Draft |
+| [HIP-0280](./HIPs/hip-0280-ai-for-sustainability.md) | AI for Sustainability | Meta | - | Draft |
+| [HIP-0290](./HIPs/hip-0290-evidence-locker-index.md) | Evidence Locker Index | Meta | - | Draft |
+| [HIP-0295](./HIPs/hip-0295-hanzo-ai-impact-thesis.md) | Hanzo AI Impact Thesis | Meta | - | Draft |
+
+### Architecture (HIP-0300+)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0300](./HIPs/hip-0300-unified-mcp-tools-architecture.md) | Unified MCP Tools Architecture | Standards Track | Interface | Draft |
 
 ## HIP Process
 
-1. 💡 **Have an idea** – Discuss with the community
-2. 📝 **Draft your HIP** – Use the template provided
-3. 🔄 **Submit a Pull Request** – To the hanzoai/hips repository
-4. 👥 **Get reviewed** – HIP editors review for completeness
-5. 🤝 **Build consensus** – Community discussion and feedback
-6. ⏰ **Last Call** – Final 14-day review period
-7. ✅ **Final** – Accepted as standard
+1. **Have an idea** - Discuss with the community
+2. **Draft your HIP** - Use the template provided
+3. **Submit a Pull Request** - To the hanzoai/hips repository
+4. **Get reviewed** - HIP editors review for completeness
+5. **Build consensus** - Community discussion and feedback
+6. **Last Call** - Final 14-day review period
+7. **Final** - Accepted as standard
 
 ## Types of HIPs
 
 - **Standards Track**: Technical changes affecting Hanzo AI
   - Core: AI models, consensus, infrastructure
   - Interface: APIs, protocols, standards
-  - HAC (Hanzo AI Comments): Application-layer standards
-- **Meta**: Process proposals
+  - Infrastructure: Databases, storage, networking
+  - Bridge: Cross-chain integrations
+  - Security: Cryptography and access control
+- **Meta**: Process proposals, governance, responsible AI
 - **Informational**: Guidelines and best practices
 
 ## Resources
 
-- 🌐 Forum: [forum.hanzo.ai](https://forum.hanzo.ai)
-- 📚 Documentation: [docs.hanzo.ai](https://docs.hanzo.ai)
-- 💬 Discord: [discord.gg/hanzoai](https://discord.gg/hanzoai)
-- 🐦 Twitter: [@hanzoai](https://twitter.com/hanzoai)
+- Documentation: [docs.hanzo.ai](https://docs.hanzo.ai)
+- Discord: [discord.gg/hanzoai](https://discord.gg/hanzoai)
+- GitHub: [github.com/hanzoai](https://github.com/hanzoai)
+- Twitter: [@hanzoai](https://twitter.com/hanzoai)
 
 ## License
 
