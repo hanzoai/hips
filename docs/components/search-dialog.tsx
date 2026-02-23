@@ -18,6 +18,7 @@ interface SearchResult {
     status?: string;
     type?: string;
     category?: string;
+    tags?: string[];
   };
 }
 
@@ -35,6 +36,7 @@ export function SearchDialog() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchIndex, setSearchIndex] = useState<SearchResult[]>([]);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -171,28 +173,37 @@ export function SearchDialog() {
 
   const quickActions = getQuickActions();
 
-  // Search functionality
+  // Load search index on first open
+  useEffect(() => {
+    if (open && searchIndex.length === 0) {
+      fetch('/search-index.json')
+        .then(res => res.json())
+        .then(data => setSearchIndex(data))
+        .catch(err => console.error('Failed to load search index:', err));
+    }
+  }, [open, searchIndex.length]);
+
+  // Client-side search
   useEffect(() => {
     if (!query || query.length < 2) {
       setResults([]);
       return;
     }
 
-    const searchTimeout = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        setResults(data);
-      } catch (error) {
-        console.error('Search error:', error);
-        setResults([]);
-      }
-      setLoading(false);
-    }, 200);
+    setLoading(true);
+    const q = query.toLowerCase();
+    const filtered = searchIndex.filter(item => {
+      return (
+        item.title.toLowerCase().includes(q) ||
+        (item.description || '').toLowerCase().includes(q) ||
+        (item.structuredData?.hip?.toString() || '').includes(q) ||
+        (item.structuredData?.tags || []).some((t: string) => t.toLowerCase().includes(q))
+      );
+    }).slice(0, 10);
 
-    return () => clearTimeout(searchTimeout);
-  }, [query]);
+    setResults(filtered);
+    setLoading(false);
+  }, [query, searchIndex]);
 
   // Keyboard shortcut to open
   useEffect(() => {

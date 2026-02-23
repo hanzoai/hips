@@ -1,8 +1,10 @@
 # Build outputs
 docs/.next/
+docs/.docs/
+docs/out/
+docs/public/search-index.json
 node_modules/
 .turbo/
 *.tsbuildinfo
-
 
 CLAUDE.md

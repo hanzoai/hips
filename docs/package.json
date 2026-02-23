@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3003",
-    "prebuild": "hanzo-mdx",
+    "prebuild": "hanzo-mdx && node scripts/generate-search-index.mjs",
     "build": "pnpm run prebuild && TURBOPACK=0 next build",
     "start": "next start",
     "lint": "next lint",
