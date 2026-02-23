@@ -1,33 +1,34 @@
 'use client';
 
+import { getMenuBarSVG, getWhiteSVG, getMonoSVG, getColorSVG } from '@hanzo/logo';
+
 interface LogoProps {
   size?: number;
   className?: string;
+  variant?: 'default' | 'white' | 'mono' | 'color';
 }
 
-// Hanzo H mark SVG
-function HanzoMark({ size = 24, className = '' }: LogoProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-    >
-      <path
-        d="M4 4h4v7h8V4h4v16h-4v-5H8v5H4V4z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
+export function Logo({ size = 24, className = '', variant = 'default' }: LogoProps) {
+  let svg: string;
+  switch (variant) {
+    case 'white':
+      svg = getWhiteSVG();
+      break;
+    case 'mono':
+      svg = getMonoSVG();
+      break;
+    case 'color':
+      svg = getColorSVG();
+      break;
+    default:
+      svg = getMenuBarSVG();
+  }
 
-export function Logo({ size = 24, className = '' }: LogoProps) {
   return (
-    <HanzoMark
-      size={size}
-      className={`transition-transform duration-200 ${className}`}
+    <div
+      className={`logo-container inline-block ${className}`}
+      style={{ width: size, height: size }}
+      dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
 }
@@ -37,7 +38,7 @@ export function LogoWithText({ size = 24 }: { size?: number }) {
     <div className="flex items-center gap-2 group logo-with-text">
       <Logo
         size={size}
-        className="group-hover:scale-110"
+        className="transition-transform duration-200 group-hover:scale-110"
       />
       <div className="relative h-6">
         <span className="font-bold text-lg inline-block transition-all duration-300 ease-out group-hover:opacity-0 group-hover:-translate-y-full">

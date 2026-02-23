@@ -14,6 +14,9 @@ importers:
       '@hanzo/docs':
         specifier: 16.2.7
         version: 16.2.7(a6848f2b11809debb6809a4f2da606bc)
+      '@hanzo/logo':
+        specifier: ^1.0.5
+        version: 1.0.5(react@19.2.0)
       '@hanzo/mdx':
         specifier: ^14.2.5
         version: 14.2.5(@hanzo/ui@5.3.34(@hanzo/docs-core@16.2.6(@types/react@19.2.14)(lucide-react@0.468.0(react@19.2.0))(next@16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-router@7.13.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(zod@4.3.6))(@hookform/resolvers@3.10.0(react-hook-form@7.71.2(react@19.2.0)))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(embla-carousel@8.6.0)(lucide-react@0.468.0(react@19.2.0))(mobx@6.15.0)(next-themes@0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(next@16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-hook-form@7.71.2(react@19.2.0))(react@19.2.0)(tailwindcss@4.2.1)(validator@13.15.26))(next@16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(vite@7.3.1(@types/node@22.19.11)(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.8.2))
@@ -754,6 +757,14 @@ packages:
       react-dom: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
       next:
+        optional: true
+
+  '@hanzo/logo@1.0.5':
+    resolution: {integrity: sha512-1xqOCkUDBw28ApxZoIj1XBIoPGjUUab//I6P1i46qSSCiJ+5S/M4hGP1VwRJLYwpJ9oJ9MOTkG6If0kWf+sj5g==}
+    peerDependencies:
+      react: '>=16.8.0'
+    peerDependenciesMeta:
+      react:
         optional: true
 
   '@hanzo/mdx-remote@1.4.3':
@@ -4247,6 +4258,12 @@ snapshots:
       - yaml
       - zod
 
+  '@hanzo/logo@1.0.5(react@19.2.0)':
+    dependencies:
+      sharp: 0.34.5
+    optionalDependencies:
+      react: 19.2.0
+
   '@hanzo/mdx-remote@1.4.3(@hanzo/docs-core@16.2.6(@types/react@19.2.14)(lucide-react@0.468.0(react@19.2.0))(next@16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-router@7.13.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(zod@4.3.6))(@types/react@19.2.14)(react@19.2.0)':
     dependencies:
       '@hanzo/docs-core': 16.2.6(@types/react@19.2.14)(lucide-react@0.468.0(react@19.2.0))(next@16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react-router@7.13.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(zod@4.3.6)
@@ -4361,8 +4378,7 @@ snapshots:
     dependencies:
       react-hook-form: 7.71.2(react@19.2.0)
 
-  '@img/colour@1.0.0':
-    optional: true
+  '@img/colour@1.0.0': {}
 
   '@img/sharp-darwin-arm64@0.34.5':
     optionalDependencies:
@@ -7089,8 +7105,7 @@ snapshots:
 
   semver@6.3.1: {}
 
-  semver@7.7.4:
-    optional: true
+  semver@7.7.4: {}
 
   serialize-javascript@6.0.2:
     dependencies:
@@ -7128,7 +7143,6 @@ snapshots:
       '@img/sharp-win32-arm64': 0.34.5
       '@img/sharp-win32-ia32': 0.34.5
       '@img/sharp-win32-x64': 0.34.5
-    optional: true
 
   shiki@3.22.0:
     dependencies:

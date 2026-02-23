@@ -10,7 +10,9 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return source.generateParams();
+  const params = source.generateParams();
+  // Add empty slug for index page
+  return [{ slug: [] }, ...params];
 }
 
 export async function generateMetadata({ params }: PageProps) {

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hanzo/docs": "16.2.7",
+    "@hanzo/logo": "^1.0.5",
     "@hanzo/mdx": "^14.2.5",
     "@hanzo/ui": "^5.3.28",
     "@radix-ui/react-dialog": "^1.1.15",
