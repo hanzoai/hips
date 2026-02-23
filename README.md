@@ -116,6 +116,55 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0058](./HIPs/hip-0058-unified-database-standard.md) | Unified Database Abstraction Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0059](./HIPs/hip-0059-timeseries-database-standard.md) | Timeseries Database Standard | Standards Track | Infrastructure | Draft |
 
+### Platform Services (HIP-0060 — HIP-0067)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) | Serverless Functions (FaaS) Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0061](./HIPs/hip-0061-notification-service-standard.md) | Notification & Messaging Service Standard | Standards Track | Interface | Draft |
+| [HIP-0062](./HIPs/hip-0062-scheduler-standard.md) | Cron & Job Scheduler Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) | Feature Flags & Experimentation Standard | Standards Track | Interface | Draft |
+| [HIP-0064](./HIPs/hip-0064-log-aggregation-standard.md) | Log Aggregation & Search Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0065](./HIPs/hip-0065-backup-disaster-recovery-standard.md) | Backup & Disaster Recovery Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0066](./HIPs/hip-0066-data-governance-standard.md) | Data Governance & Lineage Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0067](./HIPs/hip-0067-federated-learning-standard.md) | Federated Learning Standard | Standards Track | Core | Draft |
+
+### Quantum Computing (HIP-0070 — HIP-0073)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0070](./HIPs/hip-0070-quantum-computing-integration-standard.md) | Quantum Computing Integration Standard | Standards Track | Core | Draft |
+| [HIP-0071](./HIPs/hip-0071-quantum-key-distribution-standard.md) | Quantum Key Distribution Standard | Standards Track | Security | Draft |
+| [HIP-0072](./HIPs/hip-0072-quantum-machine-learning-standard.md) | Quantum Machine Learning Standard | Standards Track | Core | Draft |
+| [HIP-0073](./HIPs/hip-0073-quantum-random-number-generation-standard.md) | Quantum Random Number Generation Standard | Standards Track | Security | Draft |
+
+### Governance & Supply Chain (HIP-0074 — HIP-0076)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0074](./HIPs/hip-0074-software-bill-of-materials-standard.md) | Software Bill of Materials & Git Stamp Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0075](./HIPs/hip-0075-oss-contributor-payout-standard.md) | Open Source Contributor Tracking & Payout Standard | Standards Track | Core | Draft |
+| [HIP-0076](./HIPs/hip-0076-open-ai-protocol-standard.md) | Open AI Protocol & Decentralized Inference Standard | Standards Track | Core | Draft |
+
+### Robotics & Physical AI (HIP-0080 — HIP-0083)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0080](./HIPs/hip-0080-robotics-integration-standard.md) | Robotics & Embodied AI Integration Standard | Standards Track | Core | Draft |
+| [HIP-0081](./HIPs/hip-0081-computer-vision-pipeline-standard.md) | Computer Vision Pipeline Standard | Standards Track | Core | Draft |
+| [HIP-0082](./HIPs/hip-0082-digital-twin-simulation-standard.md) | Digital Twin & Simulation Standard | Standards Track | Core | Draft |
+| [HIP-0083](./HIPs/hip-0083-sensor-fusion-slam-standard.md) | Sensor Fusion & SLAM Standard | Standards Track | Core | Draft |
+
+### Biotech & Life Sciences (HIP-0090 — HIP-0094)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0090](./HIPs/hip-0090-brain-computer-interface-standard.md) | Brain-Computer Interface (BCI) Standard | Standards Track | Core | Draft |
+| [HIP-0091](./HIPs/hip-0091-genomics-pipeline-standard.md) | Genomics & Bioinformatics Pipeline Standard | Standards Track | Core | Draft |
+| [HIP-0092](./HIPs/hip-0092-drug-discovery-ai-standard.md) | Drug Discovery AI Pipeline Standard | Standards Track | Core | Draft |
+| [HIP-0093](./HIPs/hip-0093-synthetic-biology-standard.md) | Synthetic Biology & DNA Data Storage Standard | Standards Track | Core | Draft |
+| [HIP-0094](./HIPs/hip-0094-medical-ai-standard.md) | Medical AI & Clinical Decision Support Standard | Standards Track | Core | Draft |
+
 ### Cross-Chain (HIP-0100+)
 
 | Number | Title | Type | Category | Status |
