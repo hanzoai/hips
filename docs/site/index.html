@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hanzo AI Improvement Proposals Explorer</title>
+    <meta name="description" content="The Official Hanzo AI Standards for Frontier AI and Foundational Models" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        min-height: 100vh;
+        color: #1a202c;
+      }
+      header {
+        background: rgba(255, 255, 255, 0.98);
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      header h1 {
+        font-size: 2rem;
+        background: linear-gradient(135deg, #0f2027, #2c5364);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+      header p {
+        color: #718096;
+      }
+      nav {
+        margin-top: 1rem;
+      }
+      nav a {
+        color: #2c5364;
+        text-decoration: none;
+        margin-right: 2rem;
+        font-weight: 500;
+      }
+      nav a:hover {
+        color: #0f2027;
+      }
+      #controls {
+        background: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      #controls input, #controls select {
+        padding: 0.5rem 1rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+      }
+      #controls input {
+        flex: 1;
+        min-width: 300px;
+      }
+      #stats {
+        background: white;
+        padding: 1rem 2rem;
+        display: flex;
+        gap: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .stat-label {
+        color: #718096;
+        font-size: 0.875rem;
+      }
+      .stat-value {
+        font-weight: 600;
+        color: #2d3748;
+      }
+      main {
+        background: white;
+        min-height: calc(100vh - 300px);
+        padding: 2rem;
+      }
+      .proposals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+      }
+      .proposal-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: all 0.3s;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+      }
+      .proposal-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #0f2027, #2c5364);
+        transform: scaleX(0);
+        transition: transform 0.3s;
+      }
+      .proposal-card:hover::before {
+        transform: scaleX(1);
+      }
+      .proposal-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+      .proposal-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .proposal-number {
+        background: linear-gradient(135deg, #0f2027, #2c5364);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+      }
+      .proposal-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .status-draft { background: #fef2c7; color: #92400e; }
+      .status-review { background: #dbeafe; color: #1e40af; }
+      .status-last-call { background: #fed7aa; color: #9a3412; }
+      .status-final { background: #d1fae5; color: #065f46; }
+      .status-withdrawn { background: #e5e7eb; color: #374151; }
+      .proposal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+      }
+      .proposal-description {
+        color: #4a5568;
+        margin-bottom: 1rem;
+        line-height: 1.6;
+      }
+      .proposal-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #718096;
+        flex-wrap: wrap;
+      }
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      .tag {
+        background: #f7fafc;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        color: #4a5568;
+        border: 1px solid #e2e8f0;
+      }
+      .category-ai { background: #e0f2fe; border-color: #0284c7; color: #0c4a6e; }
+      .category-mcp { background: #fce7f3; border-color: #ec4899; color: #831843; }
+      .category-infrastructure { background: #f3e8ff; border-color: #a855f7; color: #581c87; }
+      footer {
+        background: rgba(255, 255, 255, 0.98);
+        padding: 2rem;
+        text-align: center;
+        color: #718096;
+      }
+      .loading {
+        text-align: center;
+        padding: 4rem;
+        color: #718096;
+      }
+      .error {
+        background: #fed7d7;
+        color: #9b2c2c;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Hanzo AI Improvement Proposals (HIPs)</h1>
+      <p>Standards and Specifications for Frontier AI and Foundational Models</p>
+      <nav>
+        <a href="https://github.com/hanzoai/HIPs" target="_blank">GitHub Repository</a>
+        <a href="https://hanzo.ai" target="_blank">Hanzo AI Platform</a>
+        <a href="https://docs.hanzo.ai" target="_blank">Documentation</a>
+      </nav>
+    </header>
+
+    <section id="controls">
+      <input 
+        id="search" 
+        type="search" 
+        placeholder="Search HIPs by title, author, or description..." 
+      />
+      <select id="typeFilter">
+        <option value="">All Types</option>
+        <option>Standards Track</option>
+        <option>Meta</option>
+        <option>Informational</option>
+      </select>
+      <select id="categoryFilter">
+        <option value="">All Categories</option>
+        <option>Core</option>
+        <option>Interface</option>
+        <option>Infrastructure</option>
+        <option>Security</option>
+        <option>Bridge</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">All Statuses</option>
+        <option>Draft</option>
+        <option>Review</option>
+        <option>Last Call</option>
+        <option>Final</option>
+        <option>Withdrawn</option>
+      </select>
+    </section>
+
+    <section id="stats">
+      <div class="stat">
+        <span class="stat-label">Total HIPs:</span>
+        <span class="stat-value" id="totalCount">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Final:</span>
+        <span class="stat-value" id="finalCount">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">In Progress:</span>
+        <span class="stat-value" id="progressCount">0</span>
+      </div>
+    </section>
+
+    <main>
+      <div class="loading">Loading HIPs...</div>
+      <div id="proposals" class="proposals-grid" style="display: none;"></div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Hanzo AI. Building Frontier AI and Foundational Models.</p>
+    </footer>
+
+    <script>
+      let allProposals = [];
+
+      // Fetch and parse HIPs from generated JSON index
+      async function loadProposals() {
+        try {
+          const response = await fetch('hip-index.json');
+          if (!response.ok) throw new Error('Failed to load HIP index');
+          const data = await response.json();
+          allProposals = data.hips;
+          renderProposals(allProposals);
+          updateStats();
+        } catch (error) {
+          document.querySelector('.loading').innerHTML =
+            '<div class="error">Error loading proposals: ' + error.message + '</div>';
+        }
+      }
+
+      function renderProposals(proposals) {
+        const container = document.getElementById('proposals');
+        
+        if (proposals.length === 0) {
+          container.innerHTML = '<div class="loading">No proposals found matching your filters.</div>';
+          return;
+        }
+
+        container.innerHTML = proposals.map(p => `
+          <div class="proposal-card" onclick="window.open('https://github.com/hanzoai/HIPs/blob/main/HIPs/${p.file}', '_blank')">
+            <div class="proposal-header">
+              <span class="proposal-number">HIP-${String(p.number).padStart(4, '0')}</span>
+              <span class="proposal-status status-${p.status.toLowerCase().replace(' ', '-')}">${p.status}</span>
+            </div>
+            <h3 class="proposal-title">${p.title}</h3>
+            <p class="proposal-description">${p.description || ''}</p>
+            <div class="proposal-meta">
+              <span class="meta-item">
+                <span class="tag">${p.type}</span>
+              </span>
+              <span class="meta-item">
+                <span class="tag category-${(p.category || '').toLowerCase().replace(' ', '-')}">${p.category || ''}</span>
+              </span>
+              <span class="meta-item">by ${p.author}</span>
+            </div>
+          </div>
+        `).join('');
+
+        document.querySelector('.loading').style.display = 'none';
+        container.style.display = 'grid';
+      }
+
+      function updateStats() {
+        document.getElementById('totalCount').textContent = allProposals.length;
+        document.getElementById('finalCount').textContent = 
+          allProposals.filter(p => p.status === 'Final').length;
+        document.getElementById('progressCount').textContent = 
+          allProposals.filter(p => ['Draft', 'Review', 'Last Call'].includes(p.status)).length;
+      }
+
+      function filterProposals() {
+        const searchTerm = document.getElementById('search').value.toLowerCase();
+        const typeFilter = document.getElementById('typeFilter').value;
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        const filtered = allProposals.filter(p => {
+          const matchesSearch = !searchTerm || 
+            p.title.toLowerCase().includes(searchTerm) ||
+            p.description.toLowerCase().includes(searchTerm) ||
+            p.author.toLowerCase().includes(searchTerm);
+          
+          const matchesType = !typeFilter || p.type === typeFilter;
+          const matchesCategory = !categoryFilter || p.category === categoryFilter;
+          const matchesStatus = !statusFilter || p.status === statusFilter;
+
+          return matchesSearch && matchesType && matchesCategory && matchesStatus;
+        });
+
+        renderProposals(filtered);
+      }
+
+      // Event listeners
+      document.getElementById('search').addEventListener('input', filterProposals);
+      document.getElementById('typeFilter').addEventListener('change', filterProposals);
+      document.getElementById('categoryFilter').addEventListener('change', filterProposals);
+      document.getElementById('statusFilter').addEventListener('change', filterProposals);
+
+      // Load proposals on page load
+      loadProposals();
+    </script>
+  </body>
+</html>

@@ -1,16 +1,15 @@
-# HIP-0024: Hanzo Sovereign L1 Chain Architecture
-
-| Field | Value |
-|-------|-------|
-| HIP | 0024 |
-| Title | Hanzo Sovereign L1 Chain Architecture |
-| Author | Hanzo AI |
-| Status | Final |
-| Type | Standards Track (Core) |
-| Created | 2025-12-27 |
-| Requires | LP-0011 |
-
 ---
+hip: 0024
+title: Hanzo Sovereign L1 Chain Architecture
+author: Hanzo AI
+type: Standards Track
+category: Core
+status: Final
+created: 2025-12-27
+requires: LP-0011
+---
+
+# HIP-0024: Hanzo Sovereign L1 Chain Architecture
 
 ## Abstract
 

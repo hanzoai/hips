@@ -1,8 +1,14 @@
-# HIP-0300: Unified MCP Tools Architecture
+---
+hip: 0300
+title: Unified MCP Tools Architecture
+author: Hanzo AI Team
+type: Standards Track
+category: Interface
+status: Draft
+created: 2025-01-21
+---
 
-| HIP | Title | Status | Author | Created |
-|-----|-------|--------|--------|---------|
-| 0300 | Unified MCP Tools Architecture | Draft | Hanzo AI Team | 2025-01-21 |
+# HIP-0300: Unified MCP Tools Architecture
 
 ## Abstract
 
