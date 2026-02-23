@@ -1,5 +1,5 @@
 {
-  "hip_count": 63,
+  "hip_count": 75,
   "hips": [
     {
       "number": 0,
@@ -522,6 +522,138 @@
       "number": 47,
       "file": "hip-0047-analytics-datastore-standard.md",
       "title": "Analytics Datastore Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 48,
+      "file": "hip-0048-decentralized-identity-standard.md",
+      "title": "Decentralized Identity (DID) Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 49,
+      "file": "hip-0049-dns-service-standard.md",
+      "title": "DNS Service Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 50,
+      "file": "hip-0050-edge-computing-standard.md",
+      "title": "Edge Computing Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 51,
+      "file": "hip-0051-guard-security-standard.md",
+      "title": "Guard Security Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Security",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 52,
+      "file": "hip-0052-nexus-integration-hub-standard.md",
+      "title": "Nexus Integration Hub Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 53,
+      "file": "hip-0053-visor-monitoring-standard.md",
+      "title": "Visor Monitoring & Supervision Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 54,
+      "file": "hip-0054-zero-trust-architecture-standard.md",
+      "title": "Zero Trust Architecture Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Security",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 55,
+      "file": "hip-0055-message-queue-standard.md",
+      "title": "Message Queue Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 56,
+      "file": "hip-0056-pubsub-standard.md",
+      "title": "PubSub Real-Time Messaging Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 57,
+      "file": "hip-0057-ml-pipeline-standard.md",
+      "title": "ML Pipeline & Training Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 58,
+      "file": "hip-0058-unified-database-standard.md",
+      "title": "Unified Database Abstraction Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 59,
+      "file": "hip-0059-timeseries-database-standard.md",
+      "title": "Timeseries Database Standard",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Draft",

@@ -98,6 +98,23 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0045](./HIPs/hip-0045-documentation-framework-standard.md) | Documentation Framework Standard | Standards Track | Interface | Draft |
 | [HIP-0046](./HIPs/hip-0046-embeddings-standard.md) | Embeddings Standard | Standards Track | Interface | Draft |
 | [HIP-0047](./HIPs/hip-0047-analytics-datastore-standard.md) | Analytics Datastore Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0048](./HIPs/hip-0048-decentralized-identity-standard.md) | Decentralized Identity (DID) Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0049](./HIPs/hip-0049-dns-service-standard.md) | DNS Service Standard | Standards Track | Infrastructure | Draft |
+
+### Cloud Infrastructure (HIP-0050 — HIP-0059)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0050](./HIPs/hip-0050-edge-computing-standard.md) | Edge Computing Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0051](./HIPs/hip-0051-guard-security-standard.md) | Guard Security Standard | Standards Track | Security | Draft |
+| [HIP-0052](./HIPs/hip-0052-nexus-integration-hub-standard.md) | Nexus Integration Hub Standard | Standards Track | Interface | Draft |
+| [HIP-0053](./HIPs/hip-0053-visor-monitoring-standard.md) | Visor Monitoring & Supervision Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0054](./HIPs/hip-0054-zero-trust-architecture-standard.md) | Zero Trust Architecture Standard | Standards Track | Security | Draft |
+| [HIP-0055](./HIPs/hip-0055-message-queue-standard.md) | Message Queue Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0056](./HIPs/hip-0056-pubsub-standard.md) | PubSub Real-Time Messaging Standard | Standards Track | Interface | Draft |
+| [HIP-0057](./HIPs/hip-0057-ml-pipeline-standard.md) | ML Pipeline & Training Standard | Standards Track | Core | Draft |
+| [HIP-0058](./HIPs/hip-0058-unified-database-standard.md) | Unified Database Abstraction Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0059](./HIPs/hip-0059-timeseries-database-standard.md) | Timeseries Database Standard | Standards Track | Infrastructure | Draft |
 
 ### Cross-Chain (HIP-0100+)
 
