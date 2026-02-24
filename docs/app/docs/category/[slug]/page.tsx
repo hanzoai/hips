@@ -1,17 +1,26 @@
 import { source } from '@/lib/source';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Brain, Layout, Database, Link2, Cpu, Bot, Shield, Coins } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Brain, Layers, Database, Link2, Cpu, Bot, Shield, Coins, Code, Cloud, Atom, Globe, Zap } from 'lucide-react';
 
 const iconMap: Record<string, React.ReactNode> = {
-  cpu: <Cpu className="size-6" />,
   brain: <Brain className="size-6" />,
-  layout: <Layout className="size-6" />,
-  database: <Database className="size-6" />,
-  bot: <Bot className="size-6" />,
+  layout: <Layers className="size-6" />,
+  server: <Database className="size-6" />,
+  code: <Code className="size-6" />,
+  cloud: <Cloud className="size-6" />,
+  layers: <Layers className="size-6" />,
+  atom: <Atom className="size-6" />,
   shield: <Shield className="size-6" />,
-  coins: <Coins className="size-6" />,
+  'shield-check': <Shield className="size-6" />,
+  cpu: <Cpu className="size-6" />,
+  dna: <Zap className="size-6" />,
   link: <Link2 className="size-6" />,
+  globe: <Globe className="size-6" />,
+  blocks: <Layers className="size-6" />,
+  bot: <Bot className="size-6" />,
+  coins: <Coins className="size-6" />,
+  database: <Database className="size-6" />,
 };
 
 const colorMap: Record<string, { bg: string; text: string; border: string }> = {
@@ -23,6 +32,10 @@ const colorMap: Record<string, { bg: string; text: string; border: string }> = {
   red: { bg: 'bg-red-500/10', text: 'text-red-500', border: 'border-red-500/20' },
   orange: { bg: 'bg-orange-500/10', text: 'text-orange-500', border: 'border-orange-500/20' },
   cyan: { bg: 'bg-cyan-500/10', text: 'text-cyan-500', border: 'border-cyan-500/20' },
+  violet: { bg: 'bg-violet-500/10', text: 'text-violet-500', border: 'border-violet-500/20' },
+  teal: { bg: 'bg-teal-500/10', text: 'text-teal-500', border: 'border-teal-500/20' },
+  sky: { bg: 'bg-sky-500/10', text: 'text-sky-500', border: 'border-sky-500/20' },
+  slate: { bg: 'bg-slate-500/10', text: 'text-slate-500', border: 'border-slate-500/20' },
 };
 
 export default async function CategoryPage({
@@ -149,6 +162,7 @@ export default async function CategoryPage({
                     hip.data.frontmatter.status === 'Final' ? 'bg-green-500/10 text-green-500' :
                     hip.data.frontmatter.status === 'Draft' ? 'bg-yellow-500/10 text-yellow-500' :
                     hip.data.frontmatter.status === 'Review' ? 'bg-blue-500/10 text-blue-500' :
+                    hip.data.frontmatter.status === 'Superseded' ? 'bg-purple-500/10 text-purple-500' :
                     'bg-gray-500/10 text-gray-500'
                   }`}>
                     {hip.data.frontmatter.status}

@@ -64,6 +64,7 @@ function StatusBadge({ status }: { status: string }) {
     Final: 'bg-green-500/10 text-green-500',
     Withdrawn: 'bg-red-500/10 text-red-500',
     Stagnant: 'bg-gray-500/10 text-gray-500',
+    Superseded: 'bg-purple-500/10 text-purple-500',
   };
 
   return (
@@ -211,7 +212,7 @@ export default function HomePage() {
               return (
                 <Link
                   key={category.slug}
-                  href="/docs"
+                  href={`/docs/category/${category.slug}`}
                   className="group rounded-xl border border-border bg-card p-6 hover:border-foreground/20 transition-colors"
                 >
                   <div className="flex items-start gap-4">
