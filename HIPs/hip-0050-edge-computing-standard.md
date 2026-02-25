@@ -1,655 +1,494 @@
 ---
 hip: 0050
-title: Edge Computing Standard
+title: Hanzo Edge — Edge AI Runtime Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-02-23
+updated: 2026-02-24
+requires: HIP-0019, HIP-0043
 ---
 
-# HIP-50: Edge Computing Standard
+# HIP-50: Hanzo Edge — Edge AI Runtime Standard
 
 ## Abstract
 
-This proposal defines the Edge Computing standard for the Hanzo ecosystem. The Edge layer deploys lightweight AI inference, response caching, and request routing to globally distributed Points of Presence (PoPs), reducing round-trip latency for AI workloads from hundreds of milliseconds to single-digit milliseconds.
+This proposal defines Hanzo Edge, the on-device AI inference runtime for mobile, web, and embedded platforms. Edge is the lightweight counterpart to Hanzo Engine (HIP-0043): where Engine runs on cloud/datacenter GPUs, Edge runs on end-user hardware -- iPhones, Android phones, web browsers, and embedded ARM devices.
 
-The runtime is built on **workerd**, Cloudflare's open-source JavaScript/Wasm runtime, which uses V8 isolates for multi-tenant execution. It exposes a Cloudflare Workers-compatible API surface, meaning any existing Workers script runs unmodified on Hanzo Edge. The control plane manages isolate scheduling, model deployment, KV replication, and health across all PoPs.
+Edge is built on the same Rust ML framework (Candle, at `~/work/hanzo/ml`) as Engine. Both share the same model format and quantization pipeline. A model quantized for Engine can be further compressed for Edge deployment. This shared foundation means a single model development workflow produces artifacts for both cloud and on-device inference.
 
-Edge workers handle four classes of work: (1) request routing and authentication at the edge, (2) semantic caching of AI responses, (3) inference of small models (embeddings, classification, tokenization), and (4) WebSocket termination for real-time AI streaming. Everything else is proxied to origin services via the API Gateway (HIP-0044).
+Edge is optimized for small Zen models: zen3-nano (4B parameters) and zen4-mini (8B parameters) at 4-bit quantization. It provides streaming inference within fixed memory budgets, local MCP tool execution, and platform-native SDKs for Swift (iOS), Kotlin (Android), JavaScript/WASM (Web), and Rust (embedded).
 
-**Repository**: [github.com/hanzoai/edge](https://github.com/hanzoai/edge)
-**Port**: 8050 (control plane), 8051 (worker runtime)
-**Docker**: `ghcr.io/hanzoai/edge:latest`
+**Repository**: [github.com/hanzoai/edge](https://github.com/hanzoai/edge) (Rust, built on Engine + ML)
+**ML Framework**: [github.com/hanzoai/ml](https://github.com/hanzoai/ml) (Candle, Rust)
+**Engine**: [github.com/hanzoai/engine](https://github.com/hanzoai/engine) (cloud counterpart)
+**Target Models**: zen3-nano (4B), zen4-mini (8B), zen3-embedding, zen3-guard
 **Binary**: `hanzo-edge`
 
 ## Motivation
 
-### The Latency Problem for AI Agents
+### The On-Device Inference Problem
 
-AI agents operate in tight loops: observe, think, act, observe again. Each loop iteration involves at least one LLM call. When agents are deployed in interactive settings -- copilots, customer service, real-time coding assistants -- the total loop latency determines whether the experience feels instantaneous or sluggish.
+Cloud inference works well when the user has a reliable, low-latency network connection. But many critical use cases cannot depend on network availability:
 
-A user in Tokyo making an inference request to a Hanzo origin in New York experiences ~180ms of network round-trip time before the first token is generated. For a multi-step agent that makes 5 sequential calls per user interaction, that is 900ms of pure network overhead on top of inference time. This overhead is invisible for batch workloads but devastating for interactive AI.
+1. **Offline operation**: A field technician using an AI assistant in a factory with no cell signal. A soldier operating in a communications-denied environment. A developer on an airplane.
 
-The solution is to move computation closer to the user. Not all computation -- full LLM inference requires GPUs that cannot be economically deployed at every PoP. But a surprising amount of AI-adjacent work can run at the edge:
+2. **Privacy-sensitive workloads**: Medical data that cannot leave a hospital's network. Legal documents that cannot be sent to third-party servers. Personal conversations that users do not want processed in the cloud.
 
-1. **Authentication and routing**: Validate JWTs, resolve API keys, and route to the nearest origin. Saves one full round-trip for every request.
-2. **Semantic caching**: If the same (or semantically similar) query was answered recently, return the cached response. Eliminates inference entirely for cache hits.
-3. **Small model inference**: Embeddings, text classification, tokenization, and intent detection run on CPU in <10ms. These do not need GPUs.
-4. **WebSocket termination**: Edge-terminated WebSockets reduce connection setup latency and enable server-sent events (SSE) streaming from the nearest PoP.
-5. **Request coalescing**: Multiple identical in-flight requests to the same model with the same prompt are collapsed into one origin call.
+3. **Latency-critical interaction**: Voice assistants that must respond in <200ms. Real-time code completion in an IDE. Augmented reality overlays that must track in real-time.
 
-### The Multi-Region Cost Problem
+4. **Cost at scale**: An app with 10 million daily active users making 10 inference calls each costs $1M+/month at cloud inference prices. On-device inference is free after the initial model download.
 
-The naive approach to latency reduction is deploying full origin stacks in multiple regions. For Hanzo, this would mean running IAM, LLM Gateway, KV, PostgreSQL, and 20+ other services in Tokyo, Frankfurt, Sao Paulo, and Sydney. The operational cost is multiplicative: 4 regions means 4x the infrastructure, 4x the monitoring, 4x the database replication complexity, and 4x the attack surface.
+5. **Regulatory requirements**: GDPR data residency rules, HIPAA requirements for protected health information, government classified data handling -- all scenarios where data must not leave the device.
 
-Edge computing inverts this economics. A single-binary edge worker consumes ~50MB of memory per isolate. Deploying 200 edge workers across 50 PoPs costs less than deploying one additional full origin stack. The edge handles the latency-sensitive fast path; the origin handles the compute-intensive slow path.
+### Why Not Just Use llama.cpp or ONNX Runtime
 
-### The Vendor Lock-in Problem
+Existing on-device inference solutions have significant limitations:
 
-Cloudflare Workers is the dominant edge compute platform, but deploying on Cloudflare means accepting their pricing, their execution limits (10ms CPU time on free tier, 50ms on paid), and their proprietary control plane. For a platform like Hanzo that runs its own infrastructure, this creates an unacceptable dependency.
+**llama.cpp** is the most popular on-device LLM runtime. It is C/C++, which means manual memory management, platform-specific build systems, and no memory safety guarantees. Integrating llama.cpp into an iOS or Android app requires maintaining C/C++ FFI bindings, which are fragile and platform-specific. Its model format (GGUF) is optimized for desktop CPU inference, not for mobile GPU accelerators.
 
-workerd -- Cloudflare's open-source Workers runtime -- gives us the same V8 isolate execution model without the vendor dependency. We run workerd on our own infrastructure, at our own PoPs, with our own limits. Scripts written for Cloudflare Workers run on Hanzo Edge unmodified. Scripts written for Hanzo Edge run on Cloudflare Workers unmodified. Portability in both directions.
+**ONNX Runtime** supports mobile deployment but is designed for traditional ML models (classification, detection, embeddings), not autoregressive LLM inference. It lacks KV cache management, continuous generation, and the streaming token output that LLM applications require.
+
+**Core ML / TensorFlow Lite** are platform-locked. A model deployed on Core ML does not run on Android. A TFLite model does not run in a web browser. Each platform requires a separate model conversion, optimization, and testing pipeline.
+
+Hanzo Edge solves all three problems by building on the same Rust ML framework (Candle) used by Engine. Rust compiles to all target platforms (iOS, Android, WASM, ARM Linux) from a single codebase. The `ModelPipeline` trait from Engine is reused directly. Platform-specific GPU acceleration (Metal on iOS, Vulkan on Android, WebGPU in browsers) is implemented behind a unified backend interface.
+
+### Relationship to Engine
+
+Engine and Edge are two deployment targets from the same codebase:
+
+```
+                    Hanzo ML Framework (Candle)
+                    ~/work/hanzo/ml
+                            |
+              +-------------+-------------+
+              |                           |
+       Hanzo Engine                 Hanzo Edge
+       (HIP-0043)                  (HIP-0050)
+              |                           |
+    Cloud/Datacenter GPUs        On-Device Hardware
+    CUDA, multi-GPU              Metal, Vulkan, WASM, CPU
+    60+ architectures            Small models (4B-8B)
+    FP16/FP8/INT4                4-bit quantization (AFQ)
+    llm.hanzo.ai                 Local inference
+```
+
+The key difference is the optimization target. Engine maximizes throughput per dollar on datacenter GPUs. Edge maximizes quality per watt on consumer hardware with fixed memory budgets.
 
 ## Design Philosophy
 
-### Why Edge Compute for AI
+### Why Rust for On-Device
 
-The traditional edge compute use case is serving static assets and running simple request transformations. AI seems like the opposite -- enormous models, GPU-bound, latency measured in seconds. Why put AI at the edge?
+The same constraints that make Rust ideal for Engine (HIP-0043) -- deterministic memory, no GC, no runtime -- are even more critical on mobile:
 
-Because "AI" is not a single operation. A modern AI request pipeline looks like this:
+1. **Fixed memory budget**: A phone has 4-8GB of RAM shared with the OS and all apps. The edge runtime must guarantee its peak memory usage at model load time. Rust's ownership model makes this possible. A GC-based runtime (Python, Java, JavaScript) cannot make this guarantee.
 
-```
-User Request
-  --> Authenticate (5ms at edge, 200ms at origin)
-  --> Check semantic cache (2ms at edge, 200ms at origin)
-  --> Classify intent (8ms at edge with small model)
-  --> Route to correct model/provider (1ms at edge)
-  --> Forward to origin for inference (unavoidable)
-  --> Stream response via edge WebSocket (saves connection setup)
-```
+2. **No runtime dependency**: Edge ships as a static library linked into the host application. No Python interpreter, no JVM, no V8. On iOS, this means a `.framework` bundle. On Android, a `.so` via JNI. On Web, a `.wasm` module.
 
-Four of the six steps can run at the edge. The single most expensive step (inference) cannot, but every other step saves a full round-trip. For a request that hits the semantic cache, the entire response is served from the edge in <10ms.
+3. **Cross-compilation**: `cargo build --target aarch64-apple-ios` produces an iOS binary. `cargo build --target aarch64-linux-android` produces an Android binary. `cargo build --target wasm32-unknown-unknown` produces a WASM module. One codebase, four platforms.
 
-The principle: **move everything except GPU inference to the edge.** This is not about running LLaMA at the edge. It is about running everything around LLaMA at the edge.
+4. **GPU backend abstraction**: Rust's trait system allows a `GpuBackend` trait with implementations for Metal (iOS/macOS), Vulkan (Android), WebGPU (browsers), and CPU fallback. The inference pipeline is written once against the trait; GPU-specific code is isolated to backend implementations.
 
-### Why V8 Isolates Over Containers
+### Why AFQ Quantization for Mobile
 
-The competing approaches for multi-tenant edge execution are containers (Docker/Firecracker), WebAssembly (Wasm), and V8 isolates. Each has different tradeoffs.
+Standard quantization formats (GPTQ, AWQ, GGUF) are optimized for desktop/server hardware with wide SIMD units and large caches. Mobile hardware is different:
 
-**Containers** provide strong isolation via Linux namespaces and cgroups. Cold start time is 50-500ms for Firecracker microVMs. Memory overhead is 5-30MB per instance. This is acceptable for long-running services but prohibitive for per-request execution at the edge. If each incoming request spawns a container, the cold start alone exceeds our latency budget.
+- **Apple Neural Engine (ANE)**: Operates on fixed-point arithmetic. INT4 quantized to ANE-aligned block sizes runs 3-5x faster than naive INT4.
+- **Qualcomm Hexagon DSP**: Optimized for per-channel quantization with specific alignment requirements.
+- **ARM NEON/SVE**: SIMD widths vary by generation; quantization must adapt.
 
-**WebAssembly** provides near-native execution speed and ~1ms cold start. However, the Wasm ecosystem for AI workloads is immature. There is no production-quality Wasm runtime for ONNX model inference. The Wasm-WASI interface for networking, file I/O, and crypto is still stabilizing. Building on Wasm today means building on shifting sand.
+**AFQ (Adaptive Fixed-point Quantization)** is a quantization format designed for these constraints:
 
-**V8 isolates** provide sub-millisecond cold start (~0.5ms), ~2MB memory overhead per isolate, and access to the entire Web API surface (fetch, crypto, streams, WebSocket). The JavaScript ecosystem has mature libraries for tokenization (tiktoken-js), embeddings (transformers.js), and classification. V8's JIT compiler produces near-native performance for numeric workloads after warmup.
+| Property | GGUF Q4_K_M | AFQ-4 |
+|----------|-------------|-------|
+| Block size | 256 | Hardware-aligned (32-256) |
+| Scale format | FP16 | FP8 or fixed-point |
+| Zero-point | Per-block | Per-channel |
+| ANE compatible | No | Yes |
+| Vulkan compatible | Partial | Yes |
+| WebGPU compatible | No | Yes |
+| Quality (perplexity) | Baseline | -0.1 to +0.2 vs baseline |
 
-| Factor | Containers | Wasm | V8 Isolates |
-|--------|-----------|------|-------------|
-| Cold start | 50-500ms | ~1ms | ~0.5ms |
-| Memory per tenant | 5-30MB | ~1MB | ~2MB |
-| AI library ecosystem | Excellent | Immature | Good |
-| Isolation model | OS-level | Sandboxed | Sandboxed |
-| API surface | Full Linux | WASI (limited) | Web APIs |
-| Network I/O | Native | Via WASI | fetch/WebSocket |
-| Portability | OCI images | .wasm modules | JS/TS scripts |
+AFQ models are converted from the same SafeTensors/GGUF weights used by Engine. The conversion pipeline is part of the shared ML framework.
 
-V8 isolates win for edge AI because they combine fast startup, low overhead, and a mature ecosystem. The tradeoff is weaker isolation compared to containers -- a V8 sandbox escape is a security incident. We mitigate this with defense-in-depth (see Security Considerations).
+### Why Small Models Are Sufficient
 
-### Why Cloudflare-Compatible API Surface
+On-device inference targets different tasks than cloud inference:
 
-There are three edge compute API standards competing for developer adoption: Cloudflare Workers, Deno Deploy, and Vercel Edge Runtime. All three implement subsets of the Web Worker API with platform-specific extensions.
+| Task | Cloud Model | Edge Model | Rationale |
+|------|------------|------------|-----------|
+| Open-ended conversation | zen4 (744B) | zen4-mini (8B) | Quality matters more than speed |
+| Code completion | zen4-coder (480B) | zen3-nano (4B) | Single-line completions, latency-critical |
+| Text classification | zen3-guard (4B) | zen3-guard (4B) | Same model, same task |
+| Embeddings | zen3-embedding | zen3-embedding | Same model, same task |
+| Safety filtering | zen3-guard (4B) | zen3-guard (4B) | Must run locally for privacy |
+| Summarization | zen4-pro (80B) | zen4-mini (8B) | Adequate for short documents |
 
-Cloudflare Workers has the largest ecosystem: 500,000+ deployed workers, extensive documentation, and the broadest third-party library support. By implementing the Workers API surface -- `fetch` event handler, `Request`/`Response` objects, `KV` namespace, `Durable Objects`, `WebSocket` pairs -- we gain immediate access to this ecosystem.
-
-A practical example: `tiktoken-js` (the JavaScript port of OpenAI's tokenizer) runs on Cloudflare Workers. It runs on Hanzo Edge without modification. If we had invented a proprietary API, we would need to port every such library ourselves.
-
-The Workers API is also the thinnest viable abstraction. A worker is a function that takes a `Request` and returns a `Response`. There is no framework, no dependency injection, no lifecycle hooks. This simplicity maps directly to the edge execution model: receive HTTP request, do work, return HTTP response.
-
-### Why Not Just Use Cloudflare Workers Directly
-
-Three reasons: cost, control, and integration.
-
-**Cost**: Cloudflare Workers charges $0.50 per million requests on the paid plan, with a $5/month base fee per account. At 100M edge requests/month (a modest number for a platform serving AI workloads globally), the cost is $50/month for Cloudflare vs. ~$0 marginal cost on our own PoP infrastructure.
-
-**Control**: Cloudflare imposes CPU time limits (10ms free, 50ms paid) that are insufficient for small model inference. An embedding generation that takes 30ms of CPU would fail on the free tier. On our own infrastructure, we set our own limits.
-
-**Integration**: Cloudflare Workers cannot directly access Hanzo's internal services (IAM, KV, LLM Gateway) without going over the public internet. Hanzo Edge runs inside our network, with direct access to origin services via private peering.
+For tasks where the 4B/8B model is insufficient, Edge falls back to cloud inference via Engine (HIP-0043) through the Hanzo Gateway (HIP-0044). The SDK handles this transparently: try local, fall back to cloud, cache the result locally.
 
 ## Specification
 
 ### Architecture
 
 ```
-                     Global Anycast DNS
-                            |
-              +-------------+-------------+
-              |             |             |
-         +----+----+  +----+----+  +----+----+
-         |  PoP    |  |  PoP    |  |  PoP    |
-         | Tokyo   |  | London  |  | NYC     |
-         |         |  |         |  |         |
-         | workerd |  | workerd |  | workerd |
-         | :8051   |  | :8051   |  | :8051   |
-         +----+----+  +----+----+  +----+----+
-              |             |             |
-              +-------------+-------------+
-                            |
-                   +--------+--------+
-                   |  Control Plane  |
-                   |   :8050         |
-                   +--------+--------+
-                            |
-              +-------------+-------------+
-              |             |             |
-         +----+----+  +----+----+  +----+----+
-         |   API   |  |   LLM   |  |   KV    |
-         | Gateway |  | Gateway |  | (Valkey) |
-         | HIP-44  |  | HIP-04  |  | HIP-28  |
-         +---------+  +---------+  +---------+
++------------------------------------------+
+|            Host Application               |
+|  (iOS App / Android App / Web App / CLI)  |
++------------------------------------------+
+|         Platform SDK Layer                |
+|  Swift / Kotlin / JS-WASM / Rust          |
++------------------------------------------+
+|         Hanzo Edge Core (Rust)            |
+|  +----------+  +----------+  +---------+ |
+|  | Model    |  | Inference|  | MCP     | |
+|  | Loader   |  | Pipeline |  | Client  | |
+|  +----------+  +----------+  +---------+ |
+|  +----------+  +----------+  +---------+ |
+|  | KV Cache |  | Sampler  |  | Cloud   | |
+|  | Manager  |  |          |  | Fallback| |
+|  +----------+  +----------+  +---------+ |
++------------------------------------------+
+|         GPU Backend Abstraction           |
+|  Metal / Vulkan / WebGPU / CPU            |
++------------------------------------------+
+|         Hanzo ML (Candle)                 |
+|  Tensor ops, GPU kernels, BLAS            |
++------------------------------------------+
 ```
 
-The architecture has three layers:
+### Supported Platforms
 
-1. **PoP Layer**: workerd instances at each Point of Presence, running edge workers. Each PoP is stateless; all persistent state lives in the edge KV store or origin services.
-2. **Control Plane**: Centralized management of worker deployments, model registry, KV replication, and PoP health. Runs alongside origin services.
-3. **Origin Layer**: Full Hanzo service stack (API Gateway, LLM Gateway, IAM, KV, PostgreSQL).
+| Platform | GPU Backend | Quantization | Memory Budget | SDK |
+|----------|------------|--------------|---------------|-----|
+| iOS 17+ | Metal (+ ANE) | AFQ-4, AFQ-8 | 2-4 GB | Swift |
+| Android 12+ | Vulkan / CPU | AFQ-4, GGUF Q4 | 2-4 GB | Kotlin (JNI) |
+| Web (modern browsers) | WebGPU / WASM SIMD | AFQ-4 | 2 GB | JavaScript/TypeScript |
+| Embedded (ARM64 Linux) | CPU (NEON/SVE) | GGUF Q4, AFQ-4 | 512 MB - 4 GB | Rust |
+| macOS 14+ | Metal | AFQ-4, AFQ-8 | 4-8 GB | Swift / Rust |
 
-### Worker API
+### Model Registry
 
-Edge workers implement the standard Workers API:
+Edge supports a curated subset of Zen models optimized for on-device deployment:
+
+| Model | Params | Quantized Size | Min Memory | Tasks |
+|-------|--------|----------------|------------|-------|
+| zen3-nano | 4B | 2.3 GB (AFQ-4) | 3 GB | Chat, code, summarization |
+| zen4-mini | 8B | 4.5 GB (AFQ-4) | 6 GB | Chat, code, reasoning |
+| zen3-guard | 4B | 2.3 GB (AFQ-4) | 3 GB | Safety classification |
+| zen3-embedding | 0.3B | 350 MB (FP16) | 512 MB | Text embeddings (3072 dim) |
+
+Models are downloaded from Hanzo Object Storage (HIP-0032) on first use and cached on device. Incremental updates (LoRA patches) are supported to avoid full re-downloads.
+
+### Inference Pipeline
+
+The on-device inference pipeline follows the same six stages as Engine (HIP-0043), with mobile-specific optimizations:
+
+```
+Input → Tokenize → KV Cache Alloc → Prefill → Decode → Sample → Output
+                        |                |         |
+                   Fixed budget     GPU accel   Streaming
+                   (pre-allocated)  (Metal/     (token-by-
+                                    Vulkan/     token callback)
+                                    WebGPU)
+```
+
+**Key differences from Engine:**
+
+1. **Fixed memory budget**: KV cache is pre-allocated at model load time based on a configured `max_context_tokens`. No dynamic allocation during inference. If the context exceeds the budget, older tokens are evicted (sliding window) rather than OOM-killing the process.
+
+2. **Single-sequence optimization**: Mobile typically runs one inference at a time. The pipeline is optimized for single-sequence throughput rather than batch throughput.
+
+3. **Power-aware scheduling**: On battery-powered devices, the pipeline monitors thermal state and reduces batch size or switches to CPU fallback when the device is throttling.
+
+### Memory Management
+
+```yaml
+Memory Budget Calculation (zen3-nano, AFQ-4, 4K context):
+  Model Weights: 2.3 GB (4B params * 4 bits / 8 + overhead)
+  KV Cache: 256 MB (32 layers * 2 * 32 heads * 128 dim * 4096 tokens * 2 bytes)
+  Scratch: 128 MB (activation buffers, temporary tensors)
+  Total: ~2.7 GB
+
+  Fits in: iPhone 15 (6GB), Pixel 8 (8GB), modern web browser (2GB WASM limit)
+
+Memory Budget Calculation (zen4-mini, AFQ-4, 4K context):
+  Model Weights: 4.5 GB (8B params * 4 bits / 8 + overhead)
+  KV Cache: 512 MB (64 layers * 2 * 32 heads * 128 dim * 4096 tokens * 2 bytes)
+  Scratch: 256 MB (activation buffers, temporary tensors)
+  Total: ~5.3 GB
+
+  Fits in: iPhone 15 Pro (8GB), Pixel 8 Pro (12GB), high-end tablets
+```
+
+The runtime enforces a hard memory ceiling. If the configured `max_memory_bytes` is exceeded during model loading, the load fails with a clear error rather than triggering an OS-level kill.
+
+### Platform SDKs
+
+#### Swift SDK (iOS/macOS)
+
+```swift
+import HanzoEdge
+
+let edge = try HanzoEdge(
+    model: .zen3Nano,
+    quantization: .afq4,
+    maxContextTokens: 4096,
+    maxMemoryBytes: 3 * 1024 * 1024 * 1024  // 3 GB
+)
+
+// Streaming inference
+for try await token in edge.chat([
+    .system("You are a helpful assistant."),
+    .user("What is the capital of France?")
+]) {
+    print(token, terminator: "")
+}
+
+// Cloud fallback for complex tasks
+let response = try await edge.chatWithFallback(
+    messages: messages,
+    localModel: .zen3Nano,
+    cloudModel: "zen4",
+    fallbackThreshold: .complexity(0.8)
+)
+```
+
+#### Kotlin SDK (Android)
+
+```kotlin
+import ai.hanzo.edge.HanzoEdge
+
+val edge = HanzoEdge.Builder()
+    .model(Model.ZEN3_NANO)
+    .quantization(Quantization.AFQ_4)
+    .maxContextTokens(4096)
+    .maxMemoryBytes(3L * 1024 * 1024 * 1024)
+    .build()
+
+// Streaming inference
+edge.chat(
+    messages = listOf(
+        Message.system("You are a helpful assistant."),
+        Message.user("Explain recursion.")
+    ),
+    onToken = { token -> print(token) },
+    onComplete = { response -> /* handle completion */ }
+)
+```
+
+#### JavaScript/WASM SDK (Web)
 
 ```javascript
-export default {
-  async fetch(request, env, ctx) {
-    // env.AI      - Edge AI inference bindings
-    // env.KV      - Edge KV store (HIP-0028 compatible)
-    // env.CACHE   - Semantic cache API
-    // env.ORIGIN  - Origin fetch with automatic routing
+import { HanzoEdge } from '@hanzo/edge';
 
-    const url = new URL(request.url)
+const edge = await HanzoEdge.init({
+  model: 'zen3-nano',
+  quantization: 'afq-4',
+  maxContextTokens: 2048,
+  wasmUrl: '/hanzo-edge.wasm',  // Self-hosted WASM binary
+});
 
-    if (url.pathname.startsWith('/v1/embeddings')) {
-      return env.AI.run('bge-small-en-v1.5', {
-        input: await request.json()
-      })
-    }
+// Streaming inference
+const stream = edge.chat([
+  { role: 'system', content: 'You are a helpful assistant.' },
+  { role: 'user', content: 'Hello!' },
+]);
 
-    // Proxy to origin via API Gateway
-    return env.ORIGIN.fetch(request)
-  }
+for await (const token of stream) {
+  document.getElementById('output').textContent += token;
 }
 ```
 
-#### Environment Bindings
+#### Rust SDK (Embedded)
 
-| Binding | Type | Description |
-|---------|------|-------------|
-| `env.AI` | `EdgeAI` | Small model inference (embeddings, classification) |
-| `env.KV` | `KVNamespace` | Edge-replicated key-value store |
-| `env.CACHE` | `SemanticCache` | AI response semantic cache |
-| `env.ORIGIN` | `OriginFetcher` | Authenticated fetch to origin services |
-| `env.AUTH` | `EdgeAuth` | JWT validation and API key resolution |
-| `env.METRICS` | `MetricsReporter` | Prometheus-compatible metrics |
+```rust
+use hanzo_edge::{Edge, EdgeConfig, Model, Message};
 
-### Edge AI Model Registry
+let edge = Edge::new(EdgeConfig {
+    model: Model::Zen3Nano,
+    quantization: Quantization::Afq4,
+    max_context_tokens: 4096,
+    max_memory_bytes: 3 * 1024 * 1024 * 1024,
+    backend: Backend::Cpu,  // or Backend::Metal, Backend::Vulkan
+})?;
 
-Not all models can run at the edge. The Edge AI Model Registry maintains the subset of models that are small enough for CPU inference at PoPs.
+let mut stream = edge.chat(vec![
+    Message::user("Summarize this document."),
+])?;
 
-#### Registry Schema
-
-```json
-{
-  "models": [
-    {
-      "id": "bge-small-en-v1.5",
-      "task": "embedding",
-      "format": "onnx",
-      "size_mb": 130,
-      "max_tokens": 512,
-      "dimensions": 384,
-      "languages": ["en"],
-      "p99_latency_ms": 8,
-      "deployed_pops": ["*"]
-    },
-    {
-      "id": "distilbert-intent",
-      "task": "classification",
-      "format": "onnx",
-      "size_mb": 260,
-      "max_tokens": 512,
-      "classes": ["question", "command", "statement", "search"],
-      "p99_latency_ms": 12,
-      "deployed_pops": ["*"]
-    },
-    {
-      "id": "tiktoken-cl100k",
-      "task": "tokenization",
-      "format": "native",
-      "size_mb": 5,
-      "deployed_pops": ["*"]
-    }
-  ]
+while let Some(token) = stream.next().await {
+    print!("{}", token?);
 }
 ```
 
-#### Model Deployment Rules
+### Local MCP Support
 
-- **Maximum model size**: 500MB per model. Larger models belong on GPU-equipped origin servers (HIP-0043).
-- **Inference runtime**: ONNX Runtime compiled to Wasm, executed within the V8 isolate. No native extensions.
-- **Model distribution**: Models are pulled from Hanzo Object Storage (HIP-0032) on PoP startup and cached locally. Updates propagate via control plane push.
-- **Warm pool**: Each PoP maintains loaded instances of all registered models. Cold inference is not acceptable; the first request to any model must be as fast as the thousandth.
+Edge implements a local MCP client (HIP-0010) that enables on-device tool use without network access:
 
-### Edge KV Store
-
-Each PoP maintains a local read replica of designated KV namespaces from the origin Valkey instance (HIP-0028). Writes go to origin and propagate to edge replicas asynchronously.
-
-#### Consistency Model
-
-Edge KV provides **eventual consistency** with a configurable staleness bound:
-
-```javascript
-// Read from edge KV with 60-second staleness tolerance
-const value = await env.KV.get('user:session:abc123', {
-  cacheTtl: 60   // Accept values up to 60s stale
-})
-
-// Write-through to origin (synchronous)
-await env.KV.put('rate:user:abc123', count, {
-  writeThrough: true,
-  expiration: 3600
-})
+```yaml
+Local MCP Tools:
+  - file_read: Read files from the app sandbox
+  - file_write: Write files to the app sandbox
+  - clipboard: Read/write system clipboard
+  - calendar: Query local calendar events (with permission)
+  - contacts: Search local contacts (with permission)
+  - location: Get current GPS coordinates (with permission)
+  - camera: Capture photo/video (with permission)
+  - sensor: Read device sensors (accelerometer, gyroscope, etc.)
 ```
 
-| Operation | Latency | Consistency |
-|-----------|---------|-------------|
-| `get` (cache hit) | <1ms | Eventual (bounded staleness) |
-| `get` (cache miss) | 50-200ms | Strong (fetched from origin) |
-| `put` (write-through) | 50-200ms | Strong (written to origin) |
-| `put` (fire-and-forget) | <1ms | Eventual |
-| `delete` | 50-200ms | Strong (propagated to origin) |
-| `list` | 50-200ms | Eventual |
+Tools are permission-gated by the host application. The Edge runtime never accesses device capabilities without explicit SDK-level authorization.
 
-#### Replication Protocol
+### Cloud Fallback
 
-The control plane maintains a change stream from origin KV. Each PoP subscribes to the namespaces it needs. Changes are batched and shipped every 500ms (configurable). PoPs acknowledge receipt; the control plane retries unacknowledged batches.
-
-Key namespaces replicated to edge by default:
-
-| Namespace | Use Case | TTL |
-|-----------|----------|-----|
-| `iam:jwks:*` | JWT validation keys | 3600s |
-| `iam:apikey:*` | API key -> org mapping | 300s |
-| `llm:rate:*` | Rate limit counters | 60s |
-| `edge:config:*` | Worker configuration | 0 (persistent) |
-| `edge:model:*` | Model registry metadata | 300s |
-
-### Semantic Cache
-
-The semantic cache stores AI responses keyed by a hash of the prompt and model parameters. It operates at two levels: exact match and semantic similarity.
-
-#### Exact Match Cache
+When a task exceeds the on-device model's capability, Edge transparently falls back to cloud inference:
 
 ```
-key = SHA-256(model || temperature || max_tokens || system_prompt || user_prompt)
+User Request
+  --> Local inference attempt
+  --> If confidence < threshold OR context > local_max:
+      --> Forward to Hanzo Gateway (HIP-0044) --> Engine (HIP-0043)
+  --> Cache cloud response locally for future reference
 ```
 
-Exact cache hits return in <1ms. This catches identical requests from different users or repeated requests from the same user.
+Fallback triggers:
+- Context length exceeds local `max_context_tokens`
+- Model outputs low-confidence tokens (high entropy)
+- User explicitly requests a cloud model
+- Device is thermally throttled and latency would be unacceptable
 
-#### Semantic Similarity Cache
+### API Specification
 
-For requests that do not match exactly, the edge computes an embedding of the user prompt using the local `bge-small-en-v1.5` model and searches a local vector index for similar cached prompts. If a cached prompt has cosine similarity > 0.95, the cached response is returned.
-
-```
-User prompt: "What is the capital of France?"
-Cached prompt: "What's France's capital city?"
-Similarity: 0.97 --> Cache hit
-```
-
-This is configurable per endpoint. Semantic caching is appropriate for factual queries and retrieval-augmented generation but not for creative tasks where identical prompts should produce different outputs.
-
-```javascript
-// Worker configuration for semantic cache
-const cacheConfig = {
-  exact: { enabled: true, ttl: 3600 },
-  semantic: {
-    enabled: true,
-    ttl: 1800,
-    threshold: 0.95,
-    model: 'bge-small-en-v1.5',
-    exclude_paths: ['/v1/images/*', '/v1/audio/*']
-  }
-}
-```
-
-#### Cache Metrics
-
-```
-hanzo_edge_cache_hits_total{type="exact|semantic", pop}
-hanzo_edge_cache_misses_total{pop}
-hanzo_edge_cache_latency_seconds{type="exact|semantic", pop}
-hanzo_edge_cache_size_bytes{pop}
-hanzo_edge_cache_evictions_total{pop}
-```
-
-### WebSocket and SSE Streaming
-
-Edge PoPs terminate WebSocket connections and Server-Sent Events (SSE) streams, proxying to origin via persistent connections.
-
-#### Streaming Architecture
-
-```
-Client <--WebSocket--> Edge PoP <--HTTP/2 stream--> Origin (LLM Gateway)
-```
-
-The edge PoP establishes a pool of persistent HTTP/2 connections to origin. When a client opens a WebSocket for streaming completions, the edge:
-
-1. Authenticates the connection (JWT or API key via `env.AUTH`)
-2. Opens a streaming request to origin via the connection pool
-3. Forwards tokens from origin to client as they arrive
-4. Buffers tokens for potential semantic cache storage
-5. Closes the origin stream when the client disconnects (prevents wasted inference)
-
-Client disconnection detection is critical. Without edge termination, a user who closes their browser tab continues consuming GPU time at origin until the full response is generated. Edge-terminated connections detect the disconnect immediately and cancel the origin request.
-
-### Request Routing
-
-Edge workers perform intelligent routing before forwarding to origin:
-
-```javascript
-async function routeRequest(request, env) {
-  const auth = await env.AUTH.validate(request)
-  if (!auth.valid) return new Response('Unauthorized', { status: 401 })
-
-  // Check semantic cache first
-  const cached = await env.CACHE.match(request)
-  if (cached) return cached
-
-  // Classify intent for routing
-  const intent = await env.AI.run('distilbert-intent', {
-    input: await request.clone().text()
-  })
-
-  // Route to nearest healthy origin
-  const origin = env.ORIGIN.nearest({
-    service: intentToService(intent.label),
-    headers: {
-      'X-User-ID': auth.userId,
-      'X-Org-ID': auth.orgId,
-      'X-Edge-Pop': env.POP_ID,
-      'X-Edge-Latency': Date.now() - request.startTime
-    }
-  })
-
-  return origin.fetch(request)
-}
-```
-
-### Control Plane API
-
-The control plane runs on port 8050 and manages all PoPs.
+Edge exposes an OpenAI-compatible local API for applications that prefer HTTP over native SDK calls:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/v1/edge/pops` | GET | List all PoPs with health status |
-| `/v1/edge/pops/{id}` | GET | PoP detail (workers, models, KV lag) |
-| `/v1/edge/workers` | GET | List deployed workers |
-| `/v1/edge/workers` | POST | Deploy a new worker to all PoPs |
-| `/v1/edge/workers/{id}` | PUT | Update worker code (rolling deploy) |
-| `/v1/edge/workers/{id}` | DELETE | Remove worker from all PoPs |
-| `/v1/edge/models` | GET | List edge model registry |
-| `/v1/edge/models` | POST | Register a model for edge deployment |
-| `/v1/edge/cache/purge` | POST | Purge semantic cache (global or per-PoP) |
-| `/v1/edge/metrics` | GET | Aggregated metrics across all PoPs |
-| `/health` | GET | Control plane health |
+| `/v1/chat/completions` | POST | Chat completions (streaming via SSE) |
+| `/v1/completions` | POST | Text completions |
+| `/v1/embeddings` | POST | Text embeddings (when embedding model loaded) |
+| `/v1/models` | GET | List loaded models |
+| `/health` | GET | Runtime health, model status, memory usage |
 
-### PoP Health and Failover
-
-Each PoP reports health to the control plane every 10 seconds:
-
-```json
-{
-  "pop_id": "nrt-1",
-  "region": "ap-northeast-1",
-  "status": "healthy",
-  "workers_active": 12,
-  "models_loaded": 3,
-  "kv_lag_ms": 450,
-  "requests_per_second": 1200,
-  "cpu_utilization": 0.45,
-  "memory_utilization": 0.62,
-  "uptime_seconds": 864000
-}
-```
-
-If a PoP fails to report for 30 seconds, the control plane removes it from DNS rotation. Anycast routing automatically directs traffic to the next-nearest PoP. When the PoP recovers and reports healthy for three consecutive intervals, it is re-added.
+The local HTTP server binds to `127.0.0.1` only and is optional (disabled by default on mobile, enabled on embedded/desktop).
 
 ### Prometheus Metrics
 
-Metrics exported on port 9052 with namespace `hanzo_edge`:
+Metrics exported on the local health endpoint with namespace `hanzo_edge`:
 
 | Metric | Type | Description |
 |--------|------|-------------|
-| `hanzo_edge_requests_total` | Counter | Requests by PoP, worker, status |
-| `hanzo_edge_request_duration_seconds` | Histogram | End-to-end latency at edge |
-| `hanzo_edge_inference_duration_seconds` | Histogram | Edge AI model inference time |
-| `hanzo_edge_cache_hit_rate` | Gauge | Semantic cache hit ratio per PoP |
-| `hanzo_edge_kv_replication_lag_seconds` | Gauge | KV staleness per PoP |
-| `hanzo_edge_websocket_connections` | Gauge | Active WebSocket connections |
-| `hanzo_edge_origin_latency_seconds` | Histogram | Edge-to-origin round-trip |
-| `hanzo_edge_isolate_count` | Gauge | Active V8 isolates per PoP |
+| `hanzo_edge_tokens_generated_total` | Counter | Total output tokens |
+| `hanzo_edge_inference_duration_seconds` | Histogram | Per-request latency |
+| `hanzo_edge_time_to_first_token_seconds` | Histogram | TTFT distribution |
+| `hanzo_edge_tokens_per_second` | Gauge | Current throughput |
+| `hanzo_edge_memory_used_bytes` | Gauge | Current memory usage |
+| `hanzo_edge_gpu_utilization` | Gauge | GPU utilization (0-1) |
+| `hanzo_edge_thermal_state` | Gauge | Device thermal state (0=nominal, 3=critical) |
+| `hanzo_edge_cloud_fallback_total` | Counter | Cloud fallback invocations |
 | `hanzo_edge_model_load_duration_seconds` | Histogram | Model loading time |
 
-## Implementation
+### Performance Targets
 
-### Runtime Binary
+Benchmarks on target hardware with zen3-nano (4B, AFQ-4):
 
-The `hanzo-edge` binary embeds workerd and the control plane:
+| Device | TTFT | Tokens/sec | Memory | Battery Impact |
+|--------|------|-----------|--------|---------------|
+| iPhone 15 Pro (A17 Pro, Metal) | 120ms | 28 | 2.8 GB | ~15% per hour continuous |
+| Pixel 8 Pro (Tensor G3, Vulkan) | 180ms | 18 | 2.9 GB | ~20% per hour continuous |
+| MacBook Pro M3 (Metal) | 45ms | 52 | 2.7 GB | N/A |
+| Chrome (WebGPU, M3 Mac) | 200ms | 15 | 2.0 GB | N/A |
+| Raspberry Pi 5 (CPU, NEON) | 800ms | 4 | 2.8 GB | N/A |
 
-```bash
-# Start edge worker runtime (PoP mode)
-hanzo-edge serve --config edge.toml --pop-id nrt-1
+Benchmarks with zen4-mini (8B, AFQ-4):
 
-# Start control plane
-hanzo-edge control --config control.toml --listen :8050
+| Device | TTFT | Tokens/sec | Memory |
+|--------|------|-----------|--------|
+| iPhone 15 Pro (A17 Pro, Metal) | 250ms | 14 | 5.4 GB |
+| Pixel 8 Pro (Tensor G3, Vulkan) | 380ms | 9 | 5.5 GB |
+| MacBook Pro M3 (Metal) | 90ms | 32 | 5.3 GB |
 
-# Deploy a worker
-hanzo-edge deploy --worker ./ai-cache.js --name ai-cache
+## Implementation Roadmap
 
-# Check PoP status
-hanzo-edge status --pop nrt-1
-```
+### Phase 1: Core Runtime (Q1 2026)
+- Rust core with CPU backend (NEON/SSE)
+- zen3-nano and zen3-embedding model loading (GGUF, SafeTensors)
+- OpenAI-compatible local HTTP API
+- Basic streaming inference with fixed memory budget
+- macOS/Linux desktop builds
 
-### Configuration
+### Phase 2: Mobile SDKs (Q2 2026)
+- Metal backend for iOS/macOS
+- Swift SDK with async/await streaming
+- Vulkan backend for Android
+- Kotlin SDK with coroutine-based streaming
+- AFQ quantization format support
+- Model download and caching from Hanzo Object Storage
 
-```toml
-# edge.toml (PoP configuration)
+### Phase 3: Web and Embedded (Q2 2026)
+- WASM build with WebGPU backend
+- JavaScript/TypeScript SDK (`@hanzo/edge`)
+- Embedded ARM64 Linux builds (Raspberry Pi, Jetson)
+- Rust SDK for embedded integration
 
-[pop]
-id = "nrt-1"
-region = "ap-northeast-1"
-control_plane = "https://edge-control.hanzo.ai:8050"
-
-[runtime]
-port = 8051
-max_isolates = 200
-isolate_memory_limit = "128MB"
-isolate_cpu_limit = "100ms"
-warmup_workers = true
-
-[kv]
-origin = "redis-master.hanzo.svc:6379"
-replication_interval = "500ms"
-max_cache_size = "1GB"
-namespaces = ["iam:*", "llm:rate:*", "edge:*"]
-
-[ai]
-model_store = "s3://hanzo-models/edge/"
-models = ["bge-small-en-v1.5", "distilbert-intent", "tiktoken-cl100k"]
-inference_threads = 4
-
-[cache]
-semantic_enabled = true
-semantic_threshold = 0.95
-max_entries = 1_000_000
-max_size = "2GB"
-ttl = 3600
-
-[origin]
-gateway = "https://api.hanzo.ai"
-pool_size = 50
-keepalive = "90s"
-```
-
-### Kubernetes Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: hanzo-edge
-  namespace: hanzo
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: hanzo-edge
-  template:
-    spec:
-      containers:
-      - name: edge
-        image: ghcr.io/hanzoai/edge:latest
-        args: ["serve", "--config", "/etc/edge/edge.toml"]
-        ports:
-        - containerPort: 8051
-          name: worker
-        - containerPort: 9052
-          name: metrics
-        resources:
-          requests: { cpu: "500m", memory: "512Mi" }
-          limits: { cpu: "4000m", memory: "4Gi" }
-        volumeMounts:
-        - name: config
-          mountPath: /etc/edge
-        - name: models
-          mountPath: /var/edge/models
-      volumes:
-      - name: config
-        configMap:
-          name: edge-config
-      - name: models
-        emptyDir:
-          sizeLimit: 2Gi
-```
-
-### Docker Development
-
-```yaml
-# compose.yml
-services:
-  edge:
-    image: ghcr.io/hanzoai/edge:latest
-    ports:
-      - "8050:8050"
-      - "8051:8051"
-      - "9052:9052"
-    volumes:
-      - ./edge.toml:/etc/edge/edge.toml
-      - ./workers:/etc/edge/workers
-    environment:
-      - ORIGIN_URL=http://gateway:8080
-      - KV_URL=redis://redis-master:6379
-```
-
-### Implementation Roadmap
-
-#### Phase 1: Core Runtime (Q1 2026)
-- workerd integration with Hanzo control plane
-- Edge KV with origin replication
-- JWT validation and API key resolution at edge
-- Request proxying to origin via API Gateway (HIP-0044)
-
-#### Phase 2: Edge AI (Q2 2026)
-- ONNX Runtime in V8 isolates for small model inference
-- Edge embedding generation (bge-small-en-v1.5)
-- Intent classification at edge
-- Tokenization at edge (tiktoken)
-
-#### Phase 3: Semantic Cache (Q2 2026)
-- Exact match AI response cache
-- Semantic similarity cache with local vector index
-- Cache analytics and purge API
-
-#### Phase 4: Global PoP Network (Q3 2026)
-- Deploy to 10+ PoPs across NA, EU, APAC
-- Anycast DNS integration
-- Automated PoP health management and failover
-- WebSocket termination and streaming optimization
+### Phase 4: Advanced Features (Q3 2026)
+- Local MCP tool execution
+- Cloud fallback with transparent routing
+- zen4-mini (8B) support on high-memory devices
+- LoRA adapter loading for fine-tuned models
+- Speculative decoding with zen3-embedding as draft model
+- Power-aware inference scheduling
+- zen3-guard integration for on-device safety filtering
 
 ## Security Considerations
 
-### V8 Isolate Security
+### Model Weight Protection
 
-V8 isolates provide process-level sandboxing: each worker runs in its own isolate with no shared memory, no file system access, and no network access beyond the `fetch` API. However, V8 isolate escapes have occurred historically (CVE-2021-21224, CVE-2023-2033). Defense-in-depth measures:
+Model weights on device are stored encrypted at rest using platform key storage (iOS Keychain, Android Keystore, Web Crypto API). Weights are decrypted into GPU memory only during inference. The decryption key is bound to the device and cannot be extracted.
 
-- **OS-level sandboxing**: Each workerd process runs under seccomp-bpf with a minimal syscall allowlist.
-- **Memory limits**: Per-isolate memory caps prevent a compromised isolate from exhausting host memory.
-- **Network egress filtering**: Isolates can only `fetch` to allowlisted origins (Hanzo services, configured external APIs).
-- **Automatic V8 updates**: workerd is rebuilt weekly with the latest V8 security patches.
+### Sandboxed Execution
 
-### Edge Authentication
+On mobile platforms, the Edge runtime runs within the host application's sandbox. It has no access to files, network, or sensors beyond what the host application explicitly provides via the SDK.
 
-Edge PoPs validate JWTs using cached JWKS from IAM (HIP-0026). The JWKS is replicated to edge KV with a 3600-second TTL and refreshed proactively before expiry. API keys are validated against a local replica of the key-to-org mapping.
+### Privacy by Design
 
-A compromised PoP could theoretically serve stale authentication data for up to the JWKS TTL (1 hour). To mitigate this, the control plane can force-push JWKS rotations to all PoPs within seconds via the replication protocol.
+On-device inference is private by default. No inference data is sent to any server unless:
+1. The user explicitly triggers cloud fallback.
+2. The application opts into telemetry (disabled by default).
+3. The user initiates a model update check.
 
-### Data Residency
+Telemetry, when enabled, reports only aggregate metrics (tokens/sec, model load time, fallback rate) -- never prompt content or generated text.
 
-Edge caching may store AI responses at PoPs in jurisdictions subject to data residency regulations (GDPR, CCPA). The control plane supports per-namespace geographic restrictions:
+### Supply Chain Security
 
-```toml
-[cache.geo_restrictions]
-"eu-only" = ["fra-1", "ams-1", "cdg-1"]    # EU PoPs only
-"us-only" = ["iad-1", "lax-1", "ord-1"]    # US PoPs only
-```
-
-Requests tagged with `X-Data-Residency: eu` are cached only at EU PoPs.
-
-### Model Security
-
-Edge models are downloaded from Hanzo Object Storage over TLS with SHA-256 integrity verification. Models are stored on ephemeral local disk (not persistent volumes) and re-downloaded on PoP restart. A compromised model artifact is detected by checksum mismatch and rejected.
-
-### DDoS Mitigation
-
-Edge PoPs are the first point of contact for all traffic, making them natural DDoS mitigation points:
-
-- Per-IP rate limiting at the edge (before any origin traffic)
-- Connection limits per PoP (max 10,000 concurrent connections)
-- Automatic challenge pages for suspected bot traffic
-- Geographic blocking configurable via control plane
+Edge binaries are signed with Hanzo's code signing keys. Model weights are distributed with SHA-256 checksums verified on download. The update pipeline uses certificate pinning to prevent MITM attacks on model distribution.
 
 ## Relationship to Other HIPs
 
 | HIP | Relationship |
 |-----|-------------|
-| **HIP-4** (LLM Gateway) | Origin backend for AI inference. Edge proxies streaming responses from LLM Gateway. |
-| **HIP-26** (IAM) | Edge validates JWTs using cached JWKS from IAM. |
-| **HIP-28** (KV Store) | Edge KV is a read-replica subset of origin Valkey. |
-| **HIP-43** (Inference Engine) | GPU inference stays at origin. Edge runs only CPU-compatible small models. |
-| **HIP-44** (API Gateway) | Edge routes requests to origin via the API Gateway. |
-| **HIP-46** (Embeddings) | Edge generates embeddings locally for semantic cache; full embedding API served via origin. |
+| **HIP-19** (Tensor Operations) | Edge is built on the same Candle ML framework. Tensor ops are shared. |
+| **HIP-43** (Engine) | Engine is the cloud counterpart. Shared model format, shared quantization pipeline, shared `ModelPipeline` trait. Edge targets on-device; Engine targets datacenter. |
+| **HIP-44** (Gateway) | Edge uses Gateway for cloud fallback when local inference is insufficient. |
+| **HIP-4** (LLM Gateway) | Cloud fallback requests route through LLM Gateway for provider selection. |
+| **HIP-10** (MCP) | Edge implements local MCP for on-device tool use. |
+| **HIP-32** (Object Storage) | Models are downloaded from Hanzo Object Storage. |
+| **HIP-39** (Zen Architecture) | Edge serves Zen models (zen3-nano, zen4-mini, zen3-guard, zen3-embedding). |
 
 ## References
 
-1. [workerd: Cloudflare's Open-Source Workers Runtime](https://github.com/cloudflare/workerd)
-2. [Cloudflare Workers API Reference](https://developers.cloudflare.com/workers/runtime-apis/)
-3. [V8 Isolates and Security Model](https://v8.dev/docs/embed)
-4. [ONNX Runtime Web](https://onnxruntime.ai/docs/tutorials/web/)
-5. [BGE Small Embedding Model](https://huggingface.co/BAAI/bge-small-en-v1.5)
-6. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
-7. [HIP-28: Key-Value Store Standard](./hip-0028-key-value-store-standard.md)
-8. [HIP-44: API Gateway Standard](./hip-0044-api-gateway-standard.md)
-9. [HIP-46: Embeddings Standard](./hip-0046-embeddings-standard.md)
-10. [Semantic Caching for LLMs (GPTCache)](https://github.com/zilliztech/GPTCache)
+1. [Hanzo Edge Repository](https://github.com/hanzoai/edge)
+2. [Hanzo Engine (HIP-0043)](./hip-0043-llm-inference-engine-standard.md)
+3. [Hanzo ML Framework (Candle)](https://github.com/hanzoai/ml)
+4. [Metal Performance Shaders](https://developer.apple.com/documentation/metalperformanceshaders)
+5. [Vulkan Compute](https://www.khronos.org/vulkan/)
+6. [WebGPU Specification](https://www.w3.org/TR/webgpu/)
+7. [WASM SIMD](https://github.com/WebAssembly/simd)
+8. [AWQ: Activation-aware Weight Quantization](https://arxiv.org/abs/2306.00978)
+9. [GPTQ: Accurate Post-Training Quantization](https://arxiv.org/abs/2210.17323)
+10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
+11. [HIP-0044: Hanzo Gateway Standard](./hip-0044-api-gateway-standard.md)
+12. [HIP-0010: MCP Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 
 ## Copyright
 

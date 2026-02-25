@@ -93,8 +93,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0040](./HIPs/hip-0040-multi-language-sdk-standard.md) | Multi-Language SDK Standard | Standards Track | Interface | Draft |
 | [HIP-0041](./HIPs/hip-0041-cli-standard.md) | CLI Standard | Standards Track | Interface | Draft |
 | [HIP-0042](./HIPs/hip-0042-vector-search-standard.md) | Vector Search Standard | Standards Track | Infrastructure | Draft |
-| [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | LLM Inference Engine Standard | Standards Track | Core | Draft |
-| [HIP-0044](./HIPs/hip-0044-api-gateway-standard.md) | API Gateway Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | Hanzo Engine — LLM Inference Engine Standard | Standards Track | Core | Active |
+| [HIP-0044](./HIPs/hip-0044-api-gateway-standard.md) | Hanzo Gateway — API Gateway Standard | Standards Track | Infrastructure | Active |
 | [HIP-0045](./HIPs/hip-0045-documentation-framework-standard.md) | Documentation Framework Standard | Standards Track | Interface | Draft |
 | [HIP-0046](./HIPs/hip-0046-embeddings-standard.md) | Embeddings Standard | Standards Track | Interface | Draft |
 | [HIP-0047](./HIPs/hip-0047-analytics-datastore-standard.md) | Analytics Datastore Standard | Standards Track | Infrastructure | Draft |
@@ -105,7 +105,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | Number | Title | Type | Category | Status |
 |:-------|:------|:-----|:---------|:-------|
-| [HIP-0050](./HIPs/hip-0050-edge-computing-standard.md) | Edge Computing Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0050](./HIPs/hip-0050-edge-computing-standard.md) | Hanzo Edge — Edge AI Runtime Standard | Standards Track | Infrastructure | Active |
 | [HIP-0051](./HIPs/hip-0051-guard-security-standard.md) | Guard Security Standard | Standards Track | Security | Draft |
 | [HIP-0052](./HIPs/hip-0052-nexus-integration-hub-standard.md) | Nexus Integration Hub Standard | Standards Track | Interface | Draft |
 | [HIP-0053](./HIPs/hip-0053-visor-monitoring-standard.md) | Visor Monitoring & Supervision Standard | Standards Track | Infrastructure | Draft |
@@ -129,7 +129,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0066](./HIPs/hip-0066-data-governance-standard.md) | Data Governance & Lineage Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0067](./HIPs/hip-0067-federated-learning-standard.md) | Federated Learning Standard | Standards Track | Core | Draft |
 
-### Networking & Routing (HIP-0068 — HIP-0069)
+### Networking & Inference Stack (HIP-0068 — HIP-0070)
 
 | Number | Title | Type | Category | Status |
 |:-------|:------|:-----|:---------|:-------|

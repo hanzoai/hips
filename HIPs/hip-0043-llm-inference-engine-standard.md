@@ -711,6 +711,9 @@ The engine does not modify model weights or tokenizers. A model loaded in the en
 11. [Orca: A Distributed Serving System for Transformer-Based Models](https://www.usenix.org/conference/osdi22/presentation/yu)
 12. [Zen LM Documentation](https://zenlm.org)
 13. [Hanzo Engine Repository](https://github.com/hanzoai/engine)
+14. [Hanzo ML Framework (Candle)](https://github.com/hanzoai/ml)
+15. [HIP-0050: Edge AI Runtime Standard](./hip-0050-edge-computing-standard.md)
+16. [HIP-0068: Ingress Standard](./hip-0068-ingress-standard.md)
 
 ## Copyright
 
