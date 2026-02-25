@@ -1,26 +1,34 @@
 ---
 hip: 0043
-title: LLM Inference Engine Standard
+title: Hanzo Engine — LLM Inference Engine Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Active
 created: 2026-02-23
+updated: 2026-02-24
 requires: HIP-0004, HIP-0019, HIP-0039
 ---
 
-# HIP-43: LLM Inference Engine Standard
+# HIP-43: Hanzo Engine — LLM Inference Engine Standard
 
 ## Abstract
 
-This proposal defines the LLM Inference Engine, Hanzo's high-performance model serving runtime for Zen models (HIP-0039). The engine is a Rust-based inference server forked from mistral.rs, extended with Hanzo-specific optimizations for PagedAttention, in-situ quantization (ISQ), speculative decoding, and continuous batching. It exposes an OpenAI-compatible API on port 8080 and serves as the execution backend for the LLM Gateway (HIP-0004) and Zen Gateway.
+This proposal defines Hanzo Engine, the high-performance LLM inference runtime for cloud and datacenter GPU deployment. The engine serves Zen models (HIP-0039) and powers `llm.hanzo.ai` cloud inference.
 
-The engine supports GGUF, SafeTensors, AWQ, and GPTQ model formats across all Zen model architectures. It is designed for deterministic memory management, sub-millisecond scheduling latency, and zero-downtime model swaps -- properties that are difficult or impossible to achieve with Python-based serving frameworks.
+The engine is a Rust-based inference server forked from mistral.rs ([github.com/hanzoai/engine](https://github.com/hanzoai/engine)), extended with Hanzo-specific optimizations for PagedAttention, FlashAttention, in-situ quantization (ISQ), speculative decoding, and continuous batching. It supports **60+ model architectures** across CUDA, Metal, and CPU backends. It exposes an OpenAI-compatible HTTP API, a Rust SDK, a Python SDK (via PyO3), and an MCP interface, and serves as the execution backend for the LLM Gateway (HIP-0004) and Zen Gateway.
 
-**Repository**: [github.com/hanzoai/engine](https://github.com/hanzoai/engine)
+The engine supports GGUF, SafeTensors, AWQ, GPTQ, HQQ, FP8, and AFQ model formats. Quantization options include ISQ (in-situ), GGUF, GPTQ, AWQ, HQQ, FP8, and AFQ. It is designed for deterministic memory management, sub-millisecond scheduling latency, and zero-downtime model swaps -- properties that are difficult or impossible to achieve with Python-based serving frameworks.
+
+The engine is built on the Hanzo ML framework (Candle, at `~/work/hanzo/ml`) for core tensor operations and GPU kernel dispatch.
+
+**Repository**: [github.com/hanzoai/engine](https://github.com/hanzoai/engine) (mistral.rs fork, Rust)
+**ML Framework**: [github.com/hanzoai/ml](https://github.com/hanzoai/ml) (Candle, Rust)
+**Production**: `llm.hanzo.ai` (cloud inference)
 **Port**: 8080
 **Binary**: `hanzo-engine`
 **Container**: `hanzoai/engine:latest`
+**APIs**: OpenAI-compatible HTTP, Rust SDK, Python SDK (PyO3), MCP
 
 ## Motivation
 
@@ -101,10 +109,13 @@ Different deployment environments have different constraints:
 | SafeTensors (FP16/BF16) | Research, maximum quality | 2 bytes/param, highest accuracy |
 | GPTQ (INT8/INT4) | Datacenter inference | Pre-quantized, fast load, ~99% quality |
 | AWQ (INT4) | Memory-constrained datacenter | Activation-aware, better quality than naive INT4 |
+| HQQ (INT4/INT2) | Ultra-low memory datacenter | Half-quadratic quantization, no calibration data needed |
+| FP8 (E4M3/E5M2) | Hopper/Blackwell GPUs | Native FP8 tensor cores, near-FP16 quality at half memory |
+| AFQ (Adaptive Fixed-point) | Edge/mobile inference | Hardware-aligned fixed-point for Metal/ARM, used by Hanzo Edge (HIP-0050) |
 | GGUF (Q4_K_M to Q8_0) | Consumer hardware, CPU, edge | Flexible bit widths, CPU-optimized |
 | ISQ (In-Situ Quantization) | Dynamic precision selection | Quantize at load time, no pre-quantized weights needed |
 
-ISQ is unique to the engine: load FP16 weights, then quantize to any target precision at startup. This eliminates the need to maintain separate quantized weight files for each precision level. A single SafeTensors checkpoint can serve at FP16, INT8, or INT4 depending on available GPU memory.
+ISQ is unique to the engine: load FP16 weights, then quantize to any target precision at startup. This eliminates the need to maintain separate quantized weight files for each precision level. A single SafeTensors checkpoint can serve at FP16, INT8, INT4, or FP8 depending on available GPU memory and hardware capabilities.
 
 ## Specification
 
@@ -161,7 +172,7 @@ Model loading is staged: first load the configuration and tokenizer (millisecond
 
 ### Supported Model Architectures
 
-The engine supports all architectures used by the Zen model family:
+The engine supports **60+ model architectures** across the Zen model family and broader open-source ecosystem. Key architectures include:
 
 | Architecture | Zen Models | Key Features |
 |-------------|------------|--------------|
@@ -172,6 +183,13 @@ The engine supports all architectures used by the Zen model family:
 | MixtralForCausalLM | zen-32b, zen-72b | MoDE with top-k routing |
 | ZenMoEForCausalLM | zen-235b, zen-480b | Large-scale MoDE |
 | GemmaForCausalLM | zen-3b-code | Code-optimized variant |
+| Qwen2ForCausalLM | zen4-mini, zen4-pro | Dense/MoE, long-context |
+| Qwen2MoeForCausalLM | zen4, zen4-max | MoDE, 1T+ params |
+| DeepseekV2ForCausalLM | zen4-coder | MoDE, code-optimized |
+| CLIPModel | zen-vl, zen-omni | Vision-language |
+| WhisperForConditionalGeneration | zen-scribe | Audio transcription |
+
+The full list of 60+ supported architectures covers text, vision, audio, code, and multimodal models across dense, MoE, and MoDE configurations.
 
 New architectures are added by implementing the `ModelPipeline` trait:
 
@@ -293,12 +311,15 @@ Unlike static batching, continuous batching achieves near-optimal GPU utilizatio
 
 ### API Specification
 
-The engine exposes an OpenAI-compatible HTTP API on port 8080:
+The engine exposes four API surfaces:
+
+#### 1. OpenAI-Compatible HTTP API (port 8080)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/v1/chat/completions` | POST | Chat completions (messages array, streaming via SSE) |
 | `/v1/completions` | POST | Legacy text completions (prompt string) |
+| `/v1/embeddings` | POST | Text embeddings (when embedding model is loaded) |
 | `/v1/models` | GET | List loaded models |
 | `/health` | GET | Engine health, model status, KV cache utilization |
 | `/ready` | GET | Readiness probe (returns 200 when models are loaded) |
@@ -306,6 +327,37 @@ The engine exposes an OpenAI-compatible HTTP API on port 8080:
 | `/metrics` | GET | Prometheus metrics (configurable port, default 9090) |
 
 Request and response formats follow the OpenAI API specification exactly. Streaming responses use Server-Sent Events with `text/event-stream` content type; each token is sent as a `data:` event, terminated by `data: [DONE]`.
+
+#### 2. Rust SDK
+
+The engine exposes a native Rust API via the `hanzo-engine` crate for direct in-process inference without HTTP overhead. This is used by Hanzo Edge (HIP-0050) and embedding pipelines.
+
+```rust
+use hanzo_engine::{Engine, EngineConfig, ChatMessage};
+
+let engine = Engine::new(EngineConfig::from_yaml("engine.yaml")?)?;
+let response = engine.chat_completion(vec![
+    ChatMessage::user("Explain PagedAttention in one sentence."),
+]).await?;
+```
+
+#### 3. Python SDK (PyO3)
+
+A Python binding via PyO3 enables integration with Python ML pipelines without running a separate HTTP server:
+
+```python
+from hanzo_engine import Engine
+
+engine = Engine.from_config("engine.yaml")
+response = engine.chat_completion(
+    messages=[{"role": "user", "content": "Hello"}],
+    temperature=0.7,
+)
+```
+
+#### 4. MCP Interface
+
+The engine implements the Model Context Protocol (HIP-0010) for tool-augmented inference, allowing MCP clients to invoke engine capabilities as tools.
 
 ### Health and Metrics
 
@@ -616,10 +668,11 @@ When serving multiple models, each model runs in an isolated memory region. A bu
 ### Phase 4: Optimization (Q4 2026)
 - Custom CUDA kernels for Zen-specific attention patterns
 - FlashAttention-3 integration for Hopper GPUs (H100/H200)
-- FP8 quantization support for Hopper and Blackwell GPUs
+- FP8 native tensor core utilization on Hopper and Blackwell GPUs
 - Disaggregated prefill/decode for latency-sensitive workloads
 - Apple Silicon Metal backend for local development
 - Benchmark suite and regression testing infrastructure
+- Shared model format and quantization pipeline with Hanzo Edge (HIP-0050)
 
 ## Backwards Compatibility
 

@@ -129,6 +129,12 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0066](./HIPs/hip-0066-data-governance-standard.md) | Data Governance & Lineage Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0067](./HIPs/hip-0067-federated-learning-standard.md) | Federated Learning Standard | Standards Track | Core | Draft |
 
+### Networking & Routing (HIP-0068 — HIP-0069)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0068](./HIPs/hip-0068-ingress-standard.md) | Ingress Standard | Standards Track | Infrastructure | Active |
+
 ### Quantum Computing (HIP-0070 — HIP-0073)
 
 | Number | Title | Type | Category | Status |

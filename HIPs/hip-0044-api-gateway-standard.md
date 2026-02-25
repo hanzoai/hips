@@ -1,57 +1,61 @@
 ---
 hip: 0044
-title: API Gateway Standard
+title: Hanzo Gateway Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-02-23
-requires: HIP-0004, HIP-0026
+updated: 2026-02-24
+requires: HIP-0004, HIP-0026, HIP-0068
 ---
 
-# HIP-44: API Gateway Standard
+# HIP-44: Hanzo Gateway Standard
 
 ## Abstract
 
-This proposal defines the API Gateway standard for the Hanzo ecosystem. The API Gateway is the single ingress point for all external traffic destined for Hanzo services. It handles routing, authentication, rate limiting, CORS, circuit breaking, caching, and observability for every HTTP request that enters the platform.
+This proposal defines the Hanzo Gateway, the API gateway layer for the Hanzo ecosystem. The Gateway handles route-level configuration, authentication, rate limiting, CORS, circuit breaking, response transformation, and observability for API requests destined for Hanzo backend services.
 
-The gateway is built on **KrakenD**, a Go-based, stateless API gateway that routes requests declaratively via a single JSON configuration file. It requires no database, no clustering protocol, and no external coordination. One binary, one config file, sub-millisecond routing overhead.
+The Gateway sits **behind Hanzo Ingress** (HIP-0068). Ingress handles TLS termination, load balancing, and reverse proxying at the network edge. The Gateway receives pre-terminated HTTP traffic from Ingress and applies application-layer policies -- API key auth, per-key rate limiting, request/response transformation, circuit breakers -- before forwarding to the 26+ backend services.
 
-This HIP is explicitly distinct from **HIP-4 (LLM Gateway)**, which is the AI-specific proxy for 100+ LLM providers. The API Gateway routes traffic *to* the LLM Gateway (among 26+ other backends). They solve different problems at different layers.
+The gateway is built on **KrakenD CE** (Community Edition), a Go-based, stateless API gateway forked at [github.com/hanzoai/gateway](https://github.com/hanzoai/gateway). It routes requests declaratively via JSON configuration files. It requires no database, no clustering protocol, and no external coordination. One binary, one config file, sub-millisecond routing overhead.
 
-**Repository**: [github.com/hanzoai/gateway](https://github.com/hanzoai/gateway)
+This HIP is explicitly distinct from **HIP-4 (LLM Gateway)**, which is the AI-specific proxy for 100+ LLM providers, and from **HIP-0068 (Ingress)**, which is the network-level reverse proxy and load balancer. The API Gateway routes traffic *to* the LLM Gateway (among 26+ other backends). They solve different problems at different layers.
+
+**Repository**: [github.com/hanzoai/gateway](https://github.com/hanzoai/gateway) (KrakenD CE fork, Go)
+**Configs**: `configs/hanzo/gateway.json`, `configs/lux/gateway.json`
+**Endpoints**: 133+ API routes for `api.hanzo.ai`
 **Port**: 8080 (HTTP), 8443 (HTTPS)
 **Docker**: `ghcr.io/hanzoai/gateway:latest`
-**Config**: `krakend.json` (declarative)
 
 ## Motivation
 
-### The Routing Problem
+### The Application-Layer Routing Problem
 
-Hanzo runs 26+ backend services across two Kubernetes clusters. Without a gateway, each service would need its own Ingress resource, its own TLS certificate, its own rate limiting, and its own authentication middleware. This leads to:
+Hanzo runs 26+ backend services across two Kubernetes clusters. Ingress (HIP-0068) handles TLS termination and basic routing, but without an application-layer gateway, each service would need its own authentication middleware, rate limiting, and CORS configuration. This leads to:
 
-1. **Configuration sprawl**: 26 Ingress resources, 26 TLS certificates, 26 rate limit configs. Each one slightly different. Each one a potential misconfiguration.
-2. **Duplicated auth logic**: Every service independently validates JWTs, checks API keys, or calls IAM for token introspection. When the auth scheme changes, every service must be updated.
-3. **No unified rate limiting**: Per-service rate limits cannot enforce org-wide or user-wide quotas. A user could exhaust their quota by spreading requests across services.
-4. **No cross-cutting observability**: Without a central point, there is no single place to measure total request volume, error rates, or latency distributions across the platform.
-5. **CORS chaos**: Each service configures CORS independently. One misconfigured `Access-Control-Allow-Origin` header and the frontend breaks silently.
+1. **Duplicated auth logic**: Every service independently validates JWTs, checks API keys, or calls IAM for token introspection. When the auth scheme changes, every service must be updated.
+2. **No unified rate limiting**: Per-service rate limits cannot enforce org-wide or user-wide quotas. A user could exhaust their quota by spreading requests across services.
+3. **No cross-cutting observability**: Without a central point, there is no single place to measure total request volume, error rates, or latency distributions across the platform.
+4. **CORS chaos**: Each service configures CORS independently. One misconfigured `Access-Control-Allow-Origin` header and the frontend breaks silently.
+5. **No response transformation**: Backend services must all emit consistent response formats, error codes, and headers independently.
 
 ### The Gateway Solution
 
-A single API Gateway at `api.hanzo.ai` eliminates all five problems. Every external request enters through one point. Authentication is validated once. Rate limits are enforced globally. CORS headers are set consistently. Metrics are collected uniformly. Backend services receive pre-authenticated, pre-validated requests and focus exclusively on business logic.
+The Hanzo Gateway at `api.hanzo.ai` sits behind Ingress and eliminates all five problems. After Ingress terminates TLS and performs basic load balancing, the Gateway applies application-layer policies. Authentication is validated once. Rate limits are enforced globally. CORS headers are set consistently. Metrics are collected uniformly. Backend services receive pre-authenticated, pre-validated requests and focus exclusively on business logic.
 
 ### Why Not Just Use the LLM Gateway?
 
 The LLM Gateway (HIP-4) is a *specialized* proxy for AI workloads. It understands tokens, models, providers, semantic caching, and cost optimization. None of that logic applies to IAM, Search, Storage, or the other 20+ services. Conflating general API routing with LLM-specific routing would create a monolithic gateway that does everything poorly.
 
 ```
-Internet --> API Gateway (HIP-44) --> LLM Gateway (HIP-4) --> AI Providers
-                                  --> IAM (HIP-26)
-                                  --> Search, Storage, Flow, ...
-                                  --> 23+ other services
+Internet --> Ingress (HIP-68) --> Gateway (HIP-44) --> LLM Gateway (HIP-4) --> AI Providers
+             (TLS, L7 LB)        (auth, rate limit)  --> IAM (HIP-26)
+                                                      --> Search, Storage, Flow, ...
+                                                      --> 23+ other services
 ```
 
-The API Gateway routes `/v1/chat/*` to the LLM Gateway on port 4000. The LLM Gateway then handles provider selection, failover, and cost optimization. Each layer does one thing well.
+Ingress terminates TLS and load-balances across Gateway replicas. The Gateway validates auth, applies rate limits, and routes `/v1/chat/*` to the LLM Gateway on port 4000. The LLM Gateway then handles provider selection, failover, and cost optimization. Each layer does one thing well.
 
 ## Design Philosophy
 
@@ -110,13 +114,14 @@ The tradeoff is that changes require a restart (or graceful reload). KrakenD sup
                           Internet
                              |
                   +----------+----------+
-                  |    Load Balancer    |
-                  |  (DigitalOcean LB)  |
+                  |   Hanzo Ingress     |
+                  |     (HIP-68)        |
+                  |  TLS + L7 routing   |
                   +----------+----------+
                              |
                   +----------+----------+
-                  |    API Gateway      |
-                  |    (KrakenD)        |
+                  |   Hanzo Gateway     |
+                  |    (KrakenD CE)     |
                   |   :8080 / :8443    |
                   +----------+----------+
                              |
@@ -129,7 +134,7 @@ The tradeoff is that changes require a restart (or graceful reload). KrakenD sup
    +---------+ +------+ +------+ +---------+ +-------+
 ```
 
-The gateway is stateless. Every instance is identical. Horizontal scaling is achieved by adding more pods behind the load balancer. No leader election, no quorum, no consensus.
+The gateway is stateless. Every instance is identical. Horizontal scaling is achieved by adding more pods behind Ingress. No leader election, no quorum, no consensus.
 
 ### Service Routing Table
 
@@ -301,7 +306,7 @@ Streaming endpoints (LLM completions, event streams) use `no-op` encoding to pas
 
 ### TLS Termination
 
-In production, TLS terminates at the load balancer. The gateway receives plaintext HTTP on port 8080 from within the cluster. For bare-metal or edge deployments, KrakenD terminates TLS directly with minimum TLS 1.2 (TLS 1.3 preferred).
+In production, TLS terminates at Hanzo Ingress (HIP-0068). The Gateway receives plaintext HTTP on port 8080 from Ingress within the cluster. For bare-metal or edge deployments where no separate Ingress exists, KrakenD can terminate TLS directly with minimum TLS 1.2 (TLS 1.3 preferred).
 
 ### Health Checks
 
@@ -427,7 +432,15 @@ hanzo-gateway run -c /etc/hanzo/krakend.json -d   # Run with hot-reload
 
 ### Flexible Configuration
 
-For large deployments, `krakend.json` can be split into partials:
+The repository ships two pre-built gateway configurations:
+
+```
+configs/
+  hanzo/gateway.json          # api.hanzo.ai (133+ endpoints, 26+ backends)
+  lux/gateway.json            # api.lux.network (Lux blockchain services)
+```
+
+For large deployments, configurations can be split into partials:
 
 ```
 /etc/krakend/
@@ -450,14 +463,17 @@ CI/CD pipelines run `krakend check -tlc krakend.json` on every PR. Merges are bl
 
 | HIP | Relationship |
 |-----|-------------|
-| **HIP-4** (LLM Gateway) | API Gateway routes `/v1/chat/*` to LLM Gateway. Separate processes. |
-| **HIP-26** (IAM) | API Gateway validates JWTs against IAM's JWKS endpoint. |
+| **HIP-68** (Ingress) | Gateway sits behind Ingress. Ingress handles TLS termination and L7 load balancing; Gateway handles application-layer policies. |
+| **HIP-4** (LLM Gateway) | Gateway routes `/v1/chat/*` to LLM Gateway. Separate processes. |
+| **HIP-26** (IAM) | Gateway validates JWTs against IAM's JWKS endpoint. |
 | **HIP-27** (KMS) | TLS certificates and API key secrets stored in KMS. |
 | **HIP-28** (KV Store) | Distributed rate limit counters may use Valkey. |
 | **HIP-29** (Database) | Gateway uses no database. Backend services use PostgreSQL. |
 | **HIP-31** (Observability) | Gateway exports Prometheus metrics consumed by Zap/Grafana. |
 | **HIP-32** (Object Storage) | Gateway routes `/v1/storage/*` to MinIO. |
 | **HIP-33** (Registry) | Gateway routes `/v1/registry/*` to container registry. |
+| **HIP-43** (Engine) | Gateway routes inference requests via LLM Gateway to Engine. |
+| **HIP-50** (Edge) | Edge devices may call Gateway directly for cloud inference fallback. |
 
 ## Security Considerations
 
