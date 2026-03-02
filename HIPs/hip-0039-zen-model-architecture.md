@@ -13,7 +13,7 @@ requires: HIP-0002, HIP-0004
 
 ## Abstract
 
-This proposal defines the Zen model family, Hanzo's frontier large language models co-developed with research partners. Zen models use a **Mixture of Distilled Experts (MoDE)** architecture spanning nine sizes from 600M to 480B parameters. The family provides a single, consistent architecture across scales -- from edge devices to datacenter clusters -- with multimodal capabilities (text, vision, audio, code) in the larger variants.
+This proposal defines the Zen model family, Hanzo's frontier large language models co-developed with research partners. Zen models use a **Mixture of Diverse Experts (MoDE)** architecture spanning nine sizes from 600M to 480B parameters. The family provides a single, consistent architecture across scales -- from edge devices to datacenter clusters -- with multimodal capabilities (text, vision, audio, code) in the larger variants.
 
 Zen models are served via the LLM Gateway (HIP-0004) and the dedicated Zen Gateway, which handles model-specific routing, quantization selection, and KV cache management. Model weights are hosted on Hugging Face (zenlm org) and Hanzo Object Storage (HIP-0032).
 
@@ -35,7 +35,7 @@ Zen addresses all five problems through a unified MoDE architecture with a dedic
 
 ## Design Philosophy
 
-### Why Mixture of Distilled Experts (MoDE)
+### Why Mixture of Diverse Experts (MoDE)
 
 The core insight behind MoDE is that **intelligence is sparse**. For any given input, only a small fraction of a model's knowledge is relevant. A question about Python syntax does not need the parameters that encode knowledge of organic chemistry.
 
@@ -120,7 +120,7 @@ The Zen Gateway configuration lives at `github.com/hanzoai/zen-gateway` and inte
 
 ```yaml
 Core Architecture:
-  Type: Transformer with Mixture of Distilled Experts (MoDE)
+  Type: Transformer with Mixture of Diverse Experts (MoDE)
   Attention: Grouped Query Attention (GQA)
   Position Encoding: Rotary Position Embeddings (RoPE)
   Activation: SwiGLU

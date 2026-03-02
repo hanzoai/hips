@@ -223,7 +223,7 @@ claude-sonnet-4-20250514     anthropic   200000    $0.0030      $0.0150
 ```
 Model:          zen-72b
 Provider:       hanzo
-Architecture:   Zen MoDE (Mixture of Distilled Experts)
+Architecture:   Zen MoDE (Mixture of Diverse Experts)
 Parameters:     72B (12B active)
 Context:        131072 tokens
 Capabilities:   chat, completion, function_calling, vision
