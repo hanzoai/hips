@@ -15,7 +15,7 @@ requires: HIP-0027, HIP-0029
 
 Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a fork of [Casdoor](https://github.com/casdoor/casdoor), a Go/Beego-based identity platform, chosen for its lightweight single-binary deployment model and native compatibility with the Go-heavy Hanzo and Lux infrastructure stack.
 
-Hanzo IAM implements OAuth 2.0, OpenID Connect (OIDC), SAML 2.0, and CAS protocols. It provides multi-tenant authentication across five identity domains -- hanzo.id, lux.id, zoo.id, pars.id, and id.ad.nexus -- all backed by a single IAM instance with per-organization theming, policies, and application isolation.
+Hanzo IAM implements OAuth 2.0, OpenID Connect (OIDC), SAML 2.0, and CAS protocols. It provides multi-tenant authentication with per-organization white-label identity domains — any organization registered in IAM can get its own branded login page and identity domain. The default deployment ships with hanzo.id, lux.id, zoo.id, pars.id, and id.ad.nexus, but the system supports arbitrary additional tenants via configuration.
 
 The system also tracks per-user credit balances for AI usage billing, making IAM the source of truth for user identity *and* user spend across all Hanzo services.
 
@@ -67,7 +67,7 @@ Beyond cost, managed services create vendor lock-in in the most sensitive part o
 
 ### Why Multi-Tenant via Domain
 
-Each organization gets its own identity domain:
+Each organization gets its own white-label identity domain. The system supports an arbitrary number of tenants — any organization registered in IAM can be assigned a custom domain. The default deployment includes:
 
 | Organization | Domain | Primary Color | Description |
 |-------------|--------|---------------|-------------|
@@ -77,7 +77,18 @@ Each organization gets its own identity domain:
 | Pars | pars.id | #3b82f6 (blue) | Regional platform |
 | AdNexus | id.ad.nexus | #3b82f6 (blue) | Advertising platform |
 
-The reverse proxy (Traefik in production) routes all five domains to the same IAM container on port 8000. IAM resolves the organization from the request's `Host` header via the `origin` configuration and the application's `organization` field. This means organizations are fully isolated -- different themes, different OAuth applications, different password policies, different MFA requirements -- while sharing one IAM process and one database.
+Adding a new tenant requires:
+1. Create the organization in IAM (via API or init_data.json)
+2. Create an OAuth application for the organization
+3. Add the domain to the reverse proxy (Traefik IngressRoute or DNS record)
+4. Either add the domain to the `hanzo/id` middleware tenant map, or deploy a forked instance with `IAM_ORIGIN`, `NEXT_PUBLIC_ORG`, and `NEXT_PUBLIC_CLIENT_ID` environment variables
+
+The reverse proxy (Traefik in production) routes all tenant domains to the same IAM container on port 8000. IAM resolves the organization from the request's `Host` header via the `origin` configuration and the application's `organization` field. Organizations are fully isolated — different themes, different OAuth applications, different password policies, different MFA requirements — while sharing one IAM process and one database.
+
+The `hanzo/id` login UI is designed to be forked for deep customization. Organizations can:
+- Fork `hanzoai/id` to `luxfi/id`, `zoofdn/id`, etc. for fully custom branding
+- Or use the same `hanzoai/id` image with per-tenant env vars for lightweight white-labeling
+- Or add entries to the middleware tenant map for multi-domain deployment from a single image
 
 The alternative (path-based multi-tenancy like `hanzo.id/lux/login`) is fragile. It leaks the organizational structure into URLs, makes CORS configuration harder, and prevents each org from having a clean, branded identity domain that users can trust.
 
@@ -128,7 +139,7 @@ Every Hanzo application uses Authorization Code Grant with PKCE (RFC 7636). Impl
 2. Client computes code_challenge = BASE64URL(SHA256(code_verifier))
 
 3. Client redirects user to:
-   GET https://hanzo.id/login/oauth/authorize
+   GET https://hanzo.id/oauth/authorize
      ?client_id=hanzo-app-client-id
      &redirect_uri=https://hanzo.ai/callback
      &response_type=code
@@ -145,7 +156,7 @@ Every Hanzo application uses Authorization Code Grant with PKCE (RFC 7636). Impl
      &state=<random>
 
 6. Client exchanges code for tokens:
-   POST https://hanzo.id/api/login/oauth/access_token
+   POST https://hanzo.id/oauth/token
      grant_type=authorization_code
      &code=<authorization_code>
      &redirect_uri=https://hanzo.ai/callback
@@ -192,7 +203,7 @@ Each service in the ecosystem registers as an OAuth application with its own cli
 | app-adnexus | adnexus-app-client-id | adnexus | ad.nexus/callback |
 
 All applications use:
-- **Grant types**: `authorization_code`, `refresh_token`
+- **Grant types**: `authorization_code`, `refresh_token`, `client_credentials`, `implicit`, `password`
 - **Response types**: `code`, `token`, `id_token`
 - **Token format**: JWT
 - **Password hashing**: argon2id
@@ -268,7 +279,7 @@ IAM bootstraps from `init_data.json` on first startup. This file defines the ini
       "organization": "hanzo",
       "clientId": "hanzo-app-client-id",
       "clientSecret": "${IAM_APP_HANZO_CLIENT_SECRET}",
-      "grantTypes": ["authorization_code", "refresh_token"],
+      "grantTypes": ["authorization_code", "refresh_token", "client_credentials", "implicit", "password"],
       "tokenFormat": "JWT",
       "expireInHours": 168,
       "refreshExpireInHours": 720
@@ -297,16 +308,31 @@ The `initDataNewOnly` configuration flag controls whether init_data.json overwri
 
 ### API Endpoints
 
-#### Authentication
+#### Authentication (RFC 6749 Standard Endpoints)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/get-app-login` | Resolve application and org from client ID |
-| POST | `/api/login` | Password login (returns session or redirects) |
-| GET | `/login/oauth/authorize` | OAuth 2.0 authorization endpoint |
-| POST | `/api/login/oauth/access_token` | Token exchange endpoint |
-| POST | `/api/login/oauth/refresh_token` | Token refresh endpoint |
-| GET | `/api/logout` | Session logout |
+All OAuth endpoints use RFC 6749/OIDC standard paths. The IAM backend also serves legacy Casdoor paths (`/login/oauth/authorize`, `/api/login/oauth/access_token`, `/api/login/oauth/refresh_token`) for backward compatibility, but **all new integrations MUST use the RFC standard paths**.
+
+| Method | Endpoint | RFC | Description |
+|--------|----------|-----|-------------|
+| GET | `/api/get-app-login` | — | Resolve application and org from client ID |
+| POST | `/api/login` | — | Password login (returns session or redirects) |
+| GET | `/oauth/authorize` | RFC 6749 §3.1 | OAuth 2.0 authorization endpoint |
+| POST | `/oauth/token` | RFC 6749 §3.2 | Token exchange (authorization_code, refresh_token, client_credentials, password) |
+| POST | `/oauth/introspect` | RFC 7662 | Token introspection |
+| POST | `/oauth/revoke` | RFC 7009 | Token revocation |
+| GET | `/oauth/userinfo` | OIDC Core §5.3 | UserInfo endpoint (also available at `/api/userinfo`) |
+| GET | `/oauth/logout` | OIDC RP-Initiated Logout | End session endpoint |
+| POST | `/oauth/device` | RFC 8628 | Device authorization endpoint |
+| GET | `/api/logout` | — | Session logout |
+
+#### Legacy Endpoint Mapping (Backward Compatibility)
+
+| Legacy (Casdoor) Path | RFC Standard Path | Notes |
+|----------------------|-------------------|-------|
+| `/login/oauth/authorize` | `/oauth/authorize` | Both work; prefer RFC |
+| `/api/login/oauth/access_token` | `/oauth/token` | Both work; prefer RFC |
+| `/api/login/oauth/refresh_token` | `/oauth/token` | Use `grant_type=refresh_token` |
+| `/api/login/oauth/introspect` | `/oauth/introspect` | Both work; prefer RFC |
 
 #### User Management
 
@@ -330,11 +356,36 @@ The `initDataNewOnly` configuration flag controls whether init_data.json overwri
 
 #### Discovery
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/.well-known/openid-configuration` | OIDC discovery document |
-| GET | `/.well-known/jwks` | JSON Web Key Set |
-| GET | `/api/health` | Health check |
+| Method | Endpoint | RFC | Description |
+|--------|----------|-----|-------------|
+| GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | OIDC discovery document |
+| GET | `/.well-known/oauth-authorization-server` | RFC 8414 | OAuth 2.0 Authorization Server Metadata (alias) |
+| GET | `/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
+| GET | `/.well-known/{appName}` | — | Per-application OIDC discovery |
+| GET | `/.well-known/{appName}/jwks` | — | Per-application JWKS |
+| GET | `/.well-known/webfinger` | RFC 7033 | WebFinger resource discovery |
+| GET | `/api/health` | — | Health check |
+
+The OIDC discovery document returns RFC-standard endpoint URLs:
+
+```json
+{
+  "issuer": "https://hanzo.id",
+  "authorization_endpoint": "https://hanzo.id/oauth/authorize",
+  "token_endpoint": "https://hanzo.id/oauth/token",
+  "userinfo_endpoint": "https://hanzo.id/oauth/userinfo",
+  "device_authorization_endpoint": "https://hanzo.id/oauth/device",
+  "jwks_uri": "https://hanzo.id/.well-known/jwks",
+  "introspection_endpoint": "https://hanzo.id/oauth/introspect",
+  "revocation_endpoint": "https://hanzo.id/oauth/revoke",
+  "end_session_endpoint": "https://hanzo.id/oauth/logout",
+  "registration_endpoint": "https://hanzo.id/api/oauth/register",
+  "response_types_supported": ["code", "token", "id_token", ...],
+  "grant_types_supported": ["authorization_code", "implicit", "password", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange"],
+  "code_challenge_methods_supported": ["plain", "S256"],
+  "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post", "private_key_jwt", "none"]
+}
+```
 
 ### SDK Integration
 
@@ -578,6 +629,52 @@ At startup, IAM's `resolveSecrets()` function fetches values from KMS using:
 
 This means client secrets, database passwords, and encryption keys never appear in Git, Docker images, or config files. KMS authentication uses Universal Auth tokens stored as Kubernetes secrets.
 
+## RFC Compliance
+
+As of 2026-03-05, all Hanzo IAM endpoints have been standardized to RFC 6749/OIDC paths. This section documents the compliance status.
+
+### Standards Implemented
+
+| Standard | Status | Notes |
+|----------|--------|-------|
+| RFC 6749 (OAuth 2.0) | Full | Authorization, token, all grant types |
+| RFC 7636 (PKCE) | Full | S256 and plain challenge methods |
+| RFC 7662 (Token Introspection) | Full | `/oauth/introspect` |
+| RFC 7009 (Token Revocation) | Full | `/oauth/revoke` |
+| RFC 8414 (AS Metadata) | Full | `/.well-known/oauth-authorization-server` |
+| RFC 8628 (Device Authorization) | Full | `/oauth/device` |
+| RFC 7033 (WebFinger) | Full | `/.well-known/webfinger` |
+| OIDC Core 1.0 | Full | Discovery, UserInfo, ID Tokens |
+| OIDC Discovery 1.0 | Full | `/.well-known/openid-configuration` |
+| OIDC RP-Initiated Logout | Full | `/oauth/logout` |
+| RFC 7517 (JWK) | Full | `/.well-known/jwks` |
+| RFC 7519 (JWT) | Full | RS256, RS512, ES256, ES384, ES512 |
+
+### Custom Login UI (hanzo.id)
+
+The `hanzo/id` repository provides a forkable, white-label Next.js login UI that serves as the frontend for all identity domains. It includes:
+
+- **RFC path normalization middleware**: Translates RFC standard paths to IAM backend paths transparently
+- **OIDC discovery rewriting**: Rewrites `.well-known` responses to use the public tenant domain
+- **Multi-tenant detection**: Hostname-based tenant resolution (hanzo.id, lux.id, zoo.id, pars.id, id.ad.nexus)
+- **PKCE support**: Built-in S256 code challenge generation and verification
+- **White-label forkable**: Fork to `luxfi/id`, `zoofdn/id`, etc. for org-specific branding
+
+### SDK RFC Compliance
+
+All official SDKs have been updated to use RFC standard paths:
+
+| SDK | Package | Auth Endpoint | Token Endpoint |
+|-----|---------|--------------|----------------|
+| Python | `hanzo-iam` | `/oauth/authorize` | `/oauth/token` |
+| JavaScript | `@hanzo/iam-sdk` | `/oauth/authorize` | `/oauth/token` |
+| Go | `github.com/hanzoai/iam/iamsdk` | `/oauth/authorize` | `/oauth/token` |
+| CLI | `hanzo-cli` | `/oauth/authorize` | `/oauth/token` |
+
+### Backward Compatibility
+
+The IAM backend continues to serve legacy Casdoor paths alongside RFC paths. Both resolve to the same handler. Legacy paths will be maintained indefinitely but are not documented for new integrations. The OIDC discovery document returns only RFC standard paths.
+
 ## Security Considerations
 
 ### Authentication Security
@@ -606,9 +703,27 @@ This means client secrets, database passwords, and encryption keys never appear 
 - **Admin password rotation**: The default admin password in init_data.json is `admin`. Production deployments MUST rotate this immediately. The `HANZO_INIT_USER_EMAIL` bootstrap flow creates admin users with KMS-managed passwords.
 - **Audit logging**: All authentication events (login, logout, token refresh, password change) are logged with timestamp, IP, user agent, and result. Logs are shipped to the centralized logging stack.
 
-### Scope Validation
+### Authentication vs Authorization (AuthN vs AuthZ)
 
-IAM validates OAuth scopes against the application's configured scope set. If a client requests scopes not allowed by its application configuration, IAM returns `invalid_scope` per RFC 6749 Section 4.1.2.1. This prevents a compromised client from escalating its permissions.
+IAM handles both authentication (identity verification) and authorization (access control), but they are distinct concerns:
+
+**Authentication (AuthN)** — "Who are you?"
+- OAuth 2.0 flows (authorization code + PKCE, client credentials, device code)
+- Password login with argon2id hashing
+- Social login (GitHub, Google, etc.) via identity providers
+- WebAuthn / FIDO2 for phishing-resistant MFA
+- SAML 2.0 and CAS for enterprise SSO
+- Session management (Redis-backed, 30-min idle timeout)
+
+**Authorization (AuthZ)** — "What can you do?"
+- **OAuth scopes**: Applications request scopes (openid, profile, email, custom). IAM validates requested scopes against the application's allowed scope set and returns `invalid_scope` per RFC 6749 §4.1.2.1 if the client requests scopes not configured for its application.
+- **RBAC roles and permissions**: IAM supports role-based access control. Roles are collections of permissions; users are assigned roles per-organization. The `permission` and `role` tables enforce this.
+- **Organization isolation**: Users can be members of multiple organizations (hanzo, lux, zoo, pars, adnexus) but each session is scoped to one organization context. Cross-org access requires switching context.
+- **Application-level isolation**: Each OAuth application has its own client credentials, redirect URIs, grant types, and scopes. A token issued for `app-console` cannot be used at `app-commerce` (different `aud` claim).
+- **Admin vs normal user**: The `isAdmin` flag on the user entity grants full API access within the organization. Non-admin users are restricted to self-service operations.
+- **Balance-gated access**: Services can check `balance > 0` from the JWT claims or userinfo endpoint to gate access to paid features (AI inference, compute).
+
+The key design principle: **IAM authenticates users and issues scoped tokens. Services authorize requests by validating token claims.** IAM does not make fine-grained authorization decisions for downstream services — it provides the identity and claims that services use to make their own authorization decisions.
 
 ## References
 
@@ -617,6 +732,12 @@ IAM validates OAuth scopes against the application's configured scope set. If a 
 3. [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) - Proof Key for Code Exchange (PKCE)
 4. [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519) - JSON Web Token (JWT)
 5. [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) - OIDC specification
+6. [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662) - OAuth 2.0 Token Introspection
+7. [RFC 7009](https://datatracker.ietf.org/doc/html/rfc7009) - OAuth 2.0 Token Revocation
+8. [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414) - OAuth 2.0 Authorization Server Metadata
+9. [RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628) - OAuth 2.0 Device Authorization Grant
+10. [RFC 7517](https://datatracker.ietf.org/doc/html/rfc7517) - JSON Web Key (JWK)
+11. [RFC 7033](https://datatracker.ietf.org/doc/html/rfc7033) - WebFinger
 6. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Unified AI provider interface (consumes IAM tokens)
 7. [HIP-18: Payment Processing Standard](./hip-0018-payment-processing-standard.md) - Commerce billing (feeds credits into IAM)
 8. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) - Agent identity (built on IAM)

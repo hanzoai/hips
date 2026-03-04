@@ -492,8 +492,8 @@ export const auth = betterAuth({
       clientId: process.env.HANZO_IAM_CLIENT_ID || process.env.HANZO_CLIENT_ID,
       clientSecret: process.env.HANZO_IAM_CLIENT_SECRET || process.env.HANZO_CLIENT_SECRET,
       issuer: iamUrl,
-      authorization: `${iamUrl}/login/oauth/authorize`,
-      token: `${iamUrl}/api/login/oauth/access_token`,
+      authorization: `${iamUrl}/oauth/authorize`,
+      token: `${iamUrl}/oauth/token`,
       userinfo: `${iamUrl}/api/userinfo`,
     },
   },
@@ -502,7 +502,7 @@ export const auth = betterAuth({
 
 When a user clicks "Sign in with Hanzo" on the Platform login page:
 
-1. Platform redirects to `hanzo.id/login/oauth/authorize` with PKCE challenge.
+1. Platform redirects to `hanzo.id/oauth/authorize` with PKCE challenge.
 2. User authenticates at hanzo.id (password, WebAuthn, or social login).
 3. hanzo.id redirects back to `platform.hanzo.ai/callback` with authorization code.
 4. Platform exchanges the code for tokens.

@@ -433,7 +433,7 @@ Console uses NextAuth.js with a custom IAM provider:
 
 ```
 1. User visits console.hanzo.ai
-2. NextAuth redirects to hanzo.id/login/oauth/authorize
+2. NextAuth redirects to hanzo.id/oauth/authorize
    ?client_id=hanzo-console-client-id
    &redirect_uri=console.hanzo.ai/api/auth/callback/hanzo-iam
    &scope=openid profile email

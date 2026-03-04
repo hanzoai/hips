@@ -111,7 +111,7 @@ hanzo auth refresh     # Forces a token refresh
 **`hanzo auth login`** initiates an OAuth 2.0 Authorization Code Grant with PKCE:
 
 1. CLI starts a local HTTP server on a random port (e.g., `http://localhost:48291/callback`)
-2. CLI opens `https://hanzo.id/login/oauth/authorize` in the user's default browser with:
+2. CLI opens `https://hanzo.id/oauth/authorize` in the user's default browser with:
    - `client_id=hanzo-cli-client-id`
    - `redirect_uri=http://localhost:48291/callback`
    - `response_type=code`

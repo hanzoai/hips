@@ -19,6 +19,7 @@ README.md      # Index
 | 5 | Final | Post-Quantum Crypto | ML-KEM-768, ML-DSA-65, liboqs v0.11. 5 privacy tiers (Open to GPU TEE-I/O) |
 | 6 | Draft | Per-User Fine-Tuning | Per-USER models (not domain-specific). On-chain training ledger, encrypted training |
 | 7 | Draft | Active Inference | VERSES/Active Inference, EFE minimization, IEEE 2874 Spatial Web |
+| 26 | Draft | IAM Standard | RFC 6749/OIDC-compliant IAM at hanzo.id. Multi-tenant (5 domains), PKCE, credit balances |
 
 ## Related Ecosystems
 
@@ -66,7 +67,27 @@ cargo test --package hanzo-pqc # PQC tests
 - Hanzo <-> Zoo: shared HLLM architecture, model portability
 - IEEE 2874: HSML, HSTP, Universal Data Graph
 
+## OAuth/OIDC RFC Compliance (2026-03-05)
+
+All Hanzo IAM endpoints are RFC 6749/OIDC standard. Legacy Casdoor paths still served for backward compat.
+
+| RFC Path | Legacy Path | Purpose |
+|----------|-------------|---------|
+| `/oauth/authorize` | `/login/oauth/authorize` | Authorization endpoint |
+| `/oauth/token` | `/api/login/oauth/access_token` | Token exchange |
+| `/oauth/introspect` | `/api/login/oauth/introspect` | Token introspection |
+| `/oauth/revoke` | — | Token revocation |
+| `/oauth/userinfo` | `/api/userinfo` | UserInfo endpoint |
+| `/oauth/device` | — | Device authorization |
+| `/oauth/logout` | — | End session |
+| `/.well-known/openid-configuration` | same | OIDC discovery |
+| `/.well-known/jwks` | same | JSON Web Key Set |
+
+SDKs updated: Python (hanzo-iam), JS (@hanzo/iam-sdk), Go (iamsdk), CLI (hanzo-cli).
+
 ## References
 
 - VERSES/AXIOM, Friston Active Inference, NIST FIPS 203/204
 - liboqs v0.11, MCP, FlashAttention-2, BitDelta
+- RFC 6749 (OAuth 2.0), RFC 7636 (PKCE), RFC 7662 (Introspection), RFC 7009 (Revocation)
+- RFC 8414 (AS Metadata), RFC 8628 (Device Auth), OIDC Core 1.0, OIDC Discovery 1.0
