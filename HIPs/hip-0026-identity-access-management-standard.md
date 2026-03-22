@@ -520,7 +520,7 @@ enableErrorMask = true
 inactiveTimeoutMinutes = 30
 logPostOnly = true
 initDataFile = "./init_data.json"
-initDataNewOnly = false
+initDataNewOnly = true
 kmsUrl = https://kms.hanzo.ai
 kmsProjectSlug = hanzo-iam
 kmsEnvironment = prod
@@ -529,7 +529,7 @@ kmsEnvironment = prod
 Key configuration decisions:
 - **`enableErrorMask = true`**: Production never leaks internal error details to clients.
 - **`logPostOnly = true`**: GET requests are not logged (reduces log volume by ~80%).
-- **`initDataNewOnly = false`**: Every restart reconciles state with init_data.json, preventing configuration drift.
+- **`initDataNewOnly = true`**: Only create missing entities from init_data.json. Never delete or overwrite existing users, apps, or orgs. This protects passwords, MFA settings, and all user data from being reset on pod restarts.
 - **`kmsUrl`**: Secrets are fetched from KMS (HIP-27) at startup, not stored in config files.
 
 ### Database Schema
