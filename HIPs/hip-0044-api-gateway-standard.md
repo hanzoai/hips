@@ -179,7 +179,7 @@ All external API traffic is routed through the gateway at `api.hanzo.ai`. Each s
   "endpoint": "/v1/chat/completions",
   "method": "POST",
   "timeout": "120s",
-  "input_headers": ["Authorization", "Content-Type", "X-Request-ID", "X-Org-ID", "X-Hanzo-Key"],
+  "input_headers": ["Authorization", "Content-Type", "X-Request-ID", "X-Org-ID", "X-IAM-Key"],
   "output_encoding": "no-op",
   "backend": [{
     "url_pattern": "/v1/chat/completions",
@@ -197,7 +197,7 @@ All external API traffic is routed through the gateway at `api.hanzo.ai`. Each s
       "max_rate": 1000,
       "client_max_rate": 100,
       "strategy": "header",
-      "key": "X-Hanzo-Key"
+      "key": "X-IAM-Key"
     }
   }
 }
@@ -252,7 +252,7 @@ Rate limit headers are included in every response: `X-RateLimit-Limit`, `X-RateL
       "http://localhost:*"
     ],
     "allow_methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    "allow_headers": ["Authorization", "Content-Type", "X-Request-ID", "X-Hanzo-Key", "X-Org-ID"],
+    "allow_headers": ["Authorization", "Content-Type", "X-Request-ID", "X-IAM-Key", "X-Org-ID"],
     "expose_headers": ["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "X-Request-ID"],
     "allow_credentials": true,
     "max_age": "12h"

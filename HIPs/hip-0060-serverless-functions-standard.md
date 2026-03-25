@@ -586,9 +586,9 @@ Functions are invoked via HTTP POST to the function's Knative Service endpoint. 
 POST /v1/functions/embed-document/invoke
 Content-Type: application/json
 Authorization: Bearer <jwt>
-X-Hanzo-Trigger: mq
-X-Hanzo-Trigger-Source: mq.batch.embeddings
-X-Hanzo-Request-ID: req_01HQ3X7K8M2N4P5R6S7T8U9V0W
+X-Function-Trigger: mq
+X-Function-Trigger-Source: mq.batch.embeddings
+X-Request-ID: req_01HQ3X7K8M2N4P5R6S7T8U9V0W
 
 {
   "document_id": "doc_abc123",
@@ -601,10 +601,10 @@ X-Hanzo-Request-ID: req_01HQ3X7K8M2N4P5R6S7T8U9V0W
 ```json
 HTTP/1.1 200 OK
 Content-Type: application/json
-X-Hanzo-Function: embed-document
-X-Hanzo-Revision: embed-document-00003
-X-Hanzo-Duration-Ms: 1250
-X-Hanzo-Instance: fn-embed-document-00003-deployment-abc12-xyz
+X-Function-Name: embed-document
+X-Function-Revision: embed-document-00003
+X-Function-Duration-Ms: 1250
+X-Function-Instance: fn-embed-document-00003-deployment-abc12-xyz
 
 {
   "document_id": "doc_abc123",

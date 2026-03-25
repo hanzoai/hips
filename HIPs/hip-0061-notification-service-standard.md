@@ -284,7 +284,7 @@ Register a webhook endpoint to receive notifications programmatically:
 }
 ```
 
-Webhooks are signed with HMAC-SHA256 using the shared secret. The signature is included in the `X-Hanzo-Signature-256` header. Receivers MUST validate the signature before processing.
+Webhooks are signed with HMAC-SHA256 using the shared secret. The signature is included in the `X-Webhook-Signature-256` header. Receivers MUST validate the signature before processing.
 
 #### Preference Management
 

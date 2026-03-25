@@ -159,7 +159,7 @@ The canonical API definition lives in the Stainless configuration repository. Th
 - Pagination patterns
 - Streaming event schemas
 
-**Spec versioning**: The OpenAPI spec is versioned with semantic versioning. Breaking changes (removed fields, changed types) increment the major version. Additive changes (new endpoints, new optional fields) increment the minor version. The current API version is communicated via the `X-Hanzo-API-Version` header.
+**Spec versioning**: The OpenAPI spec is versioned with semantic versioning. Breaking changes (removed fields, changed types) increment the major version. Additive changes (new endpoints, new optional fields) increment the minor version. The current API version is communicated via the `X-API-Version` header.
 
 **Spec location**: The spec is maintained in the Stainless platform and exported to each SDK repository as `api.md` -- a human-readable API reference generated from the spec.
 
@@ -208,11 +208,11 @@ For multi-tenant applications where a single API key serves multiple organizatio
 
 ```
 Authorization: Bearer sk-hanzo-master-key
-X-Hanzo-Organization: acme-corp
-X-Hanzo-Team: ml-research
+X-IAM-Organization: acme-corp
+X-IAM-Team: ml-research
 ```
 
-The master key must have cross-org permissions. The `X-Hanzo-Organization` header scopes the request to a specific org's models, budgets, and rate limits.
+The master key must have cross-org permissions. The `X-IAM-Organization` header scopes the request to a specific org's models, budgets, and rate limits.
 
 ### Base URL Configuration
 
@@ -443,7 +443,7 @@ All SDKs accept the following configuration at construction time:
 
 SDKs version independently from the API and follow semantic versioning. Current versions: Python 2.x, TypeScript 0.x, Go 0.x, Rust 0.x -- all targeting API v1.
 
-API version pinning is supported via the `X-Hanzo-API-Version` header (passed via `default_headers`), allowing the server to evolve while clients receive consistent responses until they explicitly upgrade.
+API version pinning is supported via the `X-API-Version` header (passed via `default_headers`), allowing the server to evolve while clients receive consistent responses until they explicitly upgrade.
 
 ### File Uploads
 
@@ -665,7 +665,7 @@ Each SDK ships with three categories of tests: **unit tests** (mock HTTP, no net
 
 API keys can be rotated without downtime: generate a new key, update the client configuration, delete the old key. SDKs do not cache keys between requests, so updates take effect immediately.
 
-API keys are scoped to an organization. A key created for org `hanzo` cannot access resources in org `lux`. This is enforced server-side by the LLM Gateway (HIP-4). The `organization` constructor parameter sets the `X-Hanzo-Organization` header on all requests.
+API keys are scoped to an organization. A key created for org `hanzo` cannot access resources in org `lux`. This is enforced server-side by the LLM Gateway (HIP-4). The `organization` constructor parameter sets the `X-IAM-Organization` header on all requests.
 
 ### Input Validation and Dependency Security
 

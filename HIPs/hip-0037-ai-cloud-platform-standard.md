@@ -499,7 +499,7 @@ member.invited               # Team member invited
 member.removed               # Team member removed
 ```
 
-Webhook payloads include an HMAC-SHA256 signature header (`X-Hanzo-Signature`) computed with a per-webhook secret, enabling receivers to verify authenticity.
+Webhook payloads include an HMAC-SHA256 signature header (`X-Webhook-Signature`) computed with a per-webhook secret, enabling receivers to verify authenticity.
 
 ## Implementation
 

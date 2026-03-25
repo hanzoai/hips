@@ -299,14 +299,14 @@ routing:
   rules:
     - match:
         headers:
-          x-hanzo-version: "v2.1-canary"
+          x-api-version: "v2.1-canary"
       route:
         service: llm-gateway
         subset: canary
 
     - match:
         headers:
-          x-hanzo-tenant: "enterprise-acme"
+          x-iam-tenant: "enterprise-acme"
       route:
         service: llm-gateway
         subset: dedicated

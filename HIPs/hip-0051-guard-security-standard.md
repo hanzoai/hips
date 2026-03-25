@@ -158,7 +158,7 @@ Geo-blocking rules restrict traffic by country code. Operators configure allowed
 
 **Stage 2: Authentication Enrichment**
 
-Guard does not perform authentication (that is the API Gateway's responsibility). It reads the headers injected by the Gateway (`X-User-ID`, `X-Org-ID`, `X-Hanzo-Key`, `X-Scopes`) and uses them for per-identity policy enforcement. If these headers are missing, Guard rejects the request -- it refuses to operate on unauthenticated traffic.
+Guard does not perform authentication (that is the API Gateway's responsibility). It reads the headers injected by the Gateway (`X-User-ID`, `X-Org-ID`, `X-IAM-Key`, `X-Scopes`) and uses them for per-identity policy enforcement. If these headers are missing, Guard rejects the request -- it refuses to operate on unauthenticated traffic.
 
 **Stage 3: Rate Limiting and Token Budget**
 
