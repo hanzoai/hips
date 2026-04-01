@@ -17,13 +17,19 @@ Standardize the agent runtime layer across all Hanzo platforms (Rust CLI/TUI, Py
 
 ## Platforms
 
-| Platform | Package | Status |
-|----------|---------|--------|
-| Rust CLI/TUI | @hanzo/dev (hanzo-dev crate) | Production |
-| Python CLI/TUI | hanzo-dev (PyPI) | Production |
-| JS/TS CLI | @hanzo/dev (npm) | Production |
-| Web UI | hanzo/cloud | Production |
-| Multi-channel bot | @hanzo/bot | Production |
+| Platform | Package | Role |
+|----------|---------|------|
+| Rust CLI/TUI | @hanzo/dev (hanzo-dev crate) | Dev tool (native) |
+| Python CLI/TUI | hanzo-dev (PyPI) | Dev tool (Python) |
+| JS/TS CLI | @hanzo/dev (npm) | Dev tool (JS wrapper → Rust binary) |
+| LLM API Gateway | hanzo/cloud (Go, ZAP) | Model routing, IAM, billing, KMS |
+| PaaS | hanzo/platform | Deploy apps, databases, Docker |
+| Chat Web UI | hanzo/chat (React) | Browser chat interface |
+| Desktop App | hanzo/app (macOS) | AI command palette + local AI |
+| Component Lib | @hanzo/ui (React/Vue/Svelte) | 161+ UI components |
+| Multi-channel Bot | @hanzo/bot (Node.js) | 22 channels (WhatsApp, Slack, Discord, etc.) |
+| Python SDK | hanzoai (PyPI) | Core runtime, protocols, auth |
+| MCP Server | @hanzo/mcp (npm) + hanzo-mcp (PyPI) | Tool surface for AI assistants |
 
 ## Motivation
 
