@@ -50,6 +50,31 @@ Specifies how all Hanzo Base-powered services achieve durable state persistence 
 4. **K8s sidecar pattern**: Init container restores; sidecar replicates continuously.
 5. **ZAP binary format**: ZapDB replication uses the ZAP frame format (magic `0x5A415001`) for incremental backup. Frames are age-encrypted and streamed to S3 in 500ms batches.
 6. **Post-quantum hybrid**: All age encryption uses ML-KEM-768 + X25519 hybrid mode (age v1.3.0+, `age1pq` key prefix). NIST FIPS 203 compliant.
+7. **Cloud HSM**: Master keys stored in Cloud HSM (FIPS 140-2 Level 3). Key material never leaves HSM boundary.
+8. **ML-DSA-65 JWT**: IAM issues JWT tokens signed with ML-DSA-65 (FIPS 204). JWKS validation uses PQ-safe signatures.
+9. **PQ TLS**: X25519MLKEM768 as first curve in TLS 1.3 supported groups.
+
+## Complete PQ Scorecard
+
+All cryptographic layers are PQ-safe except EVM chain signing (immutable protocol constraint).
+
+| Layer | Algorithm | PQ Status | Status |
+|-------|-----------|-----------|--------|
+| Disk encryption | AES-256 (sqlcipher) | Safe (128-bit PQ) | Deployed |
+| HKDF derivation | HKDF-SHA-256 | Safe (128-bit PQ) | Deployed |
+| Field encryption | AES-256-GCM | Safe (128-bit PQ) | Deployed |
+| S3 backup | age ML-KEM-768+X25519 (`age1pq`) | Safe (FIPS 203) | Deployed |
+| TLS | X25519MLKEM768 (first curve) | Safe (hybrid PQ) | Deployed |
+| JWT signing | ML-DSA-65 (FIPS 204) | Safe (Module-LWE+SIS) | Deployed |
+| JWKS validation | ML-DSA-65 | Safe | Deployed |
+| MPC transport | Hybrid KEM (X25519+ML-KEM-768) | Safe | Deployed |
+| MPC key shares | PQ KEM encryption | Safe | Deployed |
+| Master keys | Cloud HSM (FIPS 140-2 L3) | Hardware isolation | Deployed |
+| Chain signing | secp256k1 ECDSA | **Not PQ-safe** | EVM constraint |
+
+## Cloud HSM for Master Keys
+
+Master encryption keys are stored in Cloud HSM (GCP Cloud KMS, FIPS 140-2 Level 3 certified Cavium HSMs). The master key never leaves the HSM boundary. Wrap, unwrap, and sign operations execute inside the HSM. Three keyrings per ecosystem (devnet, testnet, mainnet), 12 keys total. Mainnet keys use HSM protection level.
 
 ## ZapDB Streaming Replication
 
