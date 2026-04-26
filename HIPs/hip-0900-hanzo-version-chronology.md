@@ -7,14 +7,14 @@ status: Final
 type: Informational
 category: Meta
 created: 2026-02-14
-tags: [chronology, version-history, meta, gpu-native, ai-coin, hmm, trifecta]
+tags: [chronology, version-history, meta, gpu-native, ai-coin, hmm, triumvirate]
 ---
 
 ## Abstract
 
 This HIP is the canonical chronology of the Hanzo network: the four
 locked version milestones, their activation dates, the AI compute
-infrastructure at each step, and what the trifecta (DEX + EVM + FHE)
+infrastructure at each step, and what the triumvirate (DEX + EVM + FHE)
 came to mean for the network. Hanzo AI Inc. (Techstars '17) shipped
 1.0 as a centralised AI compute network and graduated through PQ and
 GPU-native to a sovereign Lux-family L1 at 4.0. This document is the
@@ -36,9 +36,9 @@ HIPs, and changelogs. This HIP fixes the timeline.
 | 3.0 | 2025 | Full PQ | ML-DSA mandatory for validators; Hanzo settles under Lux Quasar 3.0 (LP-105) cert lanes; FHE inference research preview. | `hanzo-pq-crypto`, `hanzo-fhe-inference` |
 | 4.0 | 2026-02-14 | GPU-native + native DEX with Liquidity Protocol | Sovereign L1 on the Lux-family primary chain template (LP-134); AIVM GPU-resident with 8 precompiles (0x0a01--0x0a08); HMM cross-listed via Liquidity Protocol; FHE inference promoted to production; Proof-of-AI mining. | `hanzo-4-0-launch` |
 
-## 4.0 Trifecta
+## 4.0 Triumvirate
 
-A Lux-family L1 is trifecta-complete when it carries three first-class
+A Lux-family L1 is triumvirate-complete when it carries three first-class
 subsystems. Hanzo 4.0 specialises each one for AI compute:
 
 1. **DEX --- HMM (Hanzo Market Maker).** The native AI-compute
