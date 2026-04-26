@@ -42,7 +42,7 @@ validation:
   stakingToken: AI
   
 consensus:
-  engine: snowman
+  engine: nova
   parameters:
     k: 20
     alpha: 15
@@ -64,7 +64,7 @@ consensus:
       "minStake": "2000000000000000000000"
     },
     "consensus": {
-      "engine": "snowman",
+      "engine": "nova",
       "parameters": {
         "k": 20,
         "alpha": 15,
