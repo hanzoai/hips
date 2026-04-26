@@ -32,8 +32,8 @@ and native integration with Lux's multi-consensus architecture.
 ## Motivation
 
 Hanzo and Lux are architecturally complementary. Hanzo's L1 is optimized for AI
-compute: GPU-equipped validators, TEE attestation, and Snowman consensus tuned for
-inference workloads (HIP-0024). Lux is optimized for economic settlement: Snow
+compute: GPU-equipped validators, TEE attestation, and Nova-mode consensus tuned for
+inference workloads (HIP-0024). Lux is optimized for economic settlement: Quasar
 consensus for sub-second finality, a multi-VM architecture supporting EVM (DeFi),
 and deep liquidity through its native exchange infrastructure.
 
@@ -78,16 +78,17 @@ incompatible systems.
 
 Lux Network provides three properties that Hanzo requires but does not replicate:
 
-- **Snow consensus for fast finality.** Lux achieves probabilistic finality in
-  under one second via the Snow consensus family (Avalanche, Snowman, Snowball).
-  Financial settlement requires rapid, irreversible confirmation. Hanzo's Snowman
+- **Quasar consensus for fast finality.** Lux achieves probabilistic finality in
+  under one second via the Quasar consensus family (Nebula DAG mode, Nova linear
+  mode, Photon committee selection, Wave threshold voting — see LP-020).
+  Financial settlement requires rapid, irreversible confirmation. Hanzo's Nova
   instance is tuned for AI workloads (larger blocks, GPU attestation overhead),
-  producing finality in 1-2 seconds. Lux's lighter-weight Snowman achieves ~1
+  producing finality in 1-2 seconds. Lux's lighter-weight Nova achieves ~1
   second. Together, a cross-chain round-trip settles in under 10 seconds.
 
 - **Multi-VM architecture for different workloads.** Lux supports the EVM
-  (C-Chain) for DeFi smart contracts, the AVM (X-Chain) for UTXO-based asset
-  creation and exchange, and the Platform VM (P-Chain) for validator management
+  (C-Chain) for DeFi smart contracts, the XVM (X-Chain) for UTXO-based asset
+  creation and exchange, and the PVM (P-Chain) for validator management
   and staking. Each VM is purpose-built. Hanzo does not need to replicate DeFi
   infrastructure when Lux already provides it.
 
@@ -100,7 +101,7 @@ Lux Network provides three properties that Hanzo requires but does not replicate
 ### Why a Bridge Over Native Integration
 
 Hanzo's L1 (HIP-0024, chain ID 36963) is AI-optimized: validators require GPU
-hardware, TEE attestation, and run Snowman consensus tuned for inference
+hardware, TEE attestation, and run Nova-mode consensus tuned for inference
 workloads. Lux's primary network is settlement-optimized: lightweight validators,
 high throughput, deep liquidity.
 
@@ -151,23 +152,25 @@ do not match the Hanzo-Lux security model:
 
 ### Why Multi-Consensus Approach
 
-Different operations need different consensus guarantees. The Lux Snow consensus
-family provides this flexibility through three protocols:
+Different operations need different consensus guarantees. The Lux Quasar consensus
+family provides this flexibility through composable primitives:
 
-- **Snowball** provides repeated sub-sampled voting for parameter agreement. The
-  bridge uses Snowball semantics during validator set rotation: candidates are
-  proposed, validators vote in sub-sampled rounds, and the set converges on a new
-  composition without a single coordinator.
+- **Photon** provides repeated sub-sampled committee selection (k-of-N,
+  Fisher-Yates with luminance reputation). The bridge uses Photon semantics
+  during validator set rotation: candidates are proposed, validators vote in
+  sub-sampled rounds, and the set converges on a new composition without a
+  single coordinator.
 
-- **Snowman** provides linear chain consensus. Both Hanzo and Lux use Snowman for
-  block production. The bridge monitors finalized blocks on both Snowman instances
-  to determine when lock/burn events are irreversible.
+- **Nova** provides linear-chain consensus mode. Both Hanzo and Lux use Nova for
+  block production on linear chains. The bridge monitors finalized blocks on both
+  Nova instances to determine when lock/burn events are irreversible.
 
-- **Avalanche** provides DAG-based consensus for concurrent transaction
-  processing. The Lux X-Chain uses Avalanche consensus for UTXO-based asset
-  transfers. When the bridge transfers $AI to Lux, it lands first on the C-Chain
-  (EVM, Snowman). Users can then move assets to the X-Chain (Avalanche) for fast
-  UTXO-based transfers, or to the P-Chain for staking.
+- **Nebula** provides DAG-based consensus mode for concurrent transaction
+  processing. When the bridge transfers $AI to Lux, it lands first on the C-Chain
+  (EVM, Nova). Users can then move assets to the X-Chain (XVM) for fast UTXO-based
+  transfers, or to the P-Chain for staking. The C-Chain and X-Chain both run in
+  Nova mode under Quasar 3.0; Nebula mode is reserved for DAG chains
+  (M-Chain, F-Chain, A-Chain optional).
 
 This multi-consensus approach means the bridge does not impose a single consensus
 model. It adapts to whichever Lux chain the user targets, using the appropriate
@@ -415,12 +418,12 @@ func IsEligibleBridgeValidator(nodeID ids.NodeID, chainID ids.ID) (bool, error) 
 
 #### X-Chain Integration (Fast Asset Transfers)
 
-The Lux X-Chain uses Avalanche consensus (DAG-based) for UTXO asset operations.
-After $AI arrives on the C-Chain as wAI (ERC-20), users can export it to the
-X-Chain for fast UTXO-based transfers using Avalanche consensus.
+The Lux X-Chain runs the XVM (UTXO virtual machine) for asset operations under
+Quasar 3.0 Nova-mode consensus. After $AI arrives on the C-Chain as wAI
+(ERC-20), users can export it to the X-Chain for fast UTXO-based transfers.
 
 X-Chain integration enables:
-- Sub-second asset transfers between Lux users (Avalanche DAG consensus).
+- Sub-second asset transfers between Lux users (Quasar Nova consensus).
 - Atomic swaps between wAI and other X-Chain assets.
 - Cross-chain exports to the P-Chain for staking operations.
 
@@ -444,7 +447,7 @@ leverages a lightweight AI Verification VM deployed as a Lux L1:
 ```yaml
 ai_verification_vm:
   purpose: Verify AI compute proofs relayed from Hanzo
-  consensus: snowman
+  consensus: nova
   chain_type: L1
   capabilities:
     - TEE attestation verification
@@ -468,13 +471,13 @@ A bridge transfer is considered final when all three conditions are met:
 
 | Step | Chain | Expected Time | Description |
 |------|-------|---------------|-------------|
-| 1 | Source | ~1-2s | Transaction finality on source chain (Snowman) |
+| 1 | Source | ~1-2s | Transaction finality on source chain (Nova) |
 | 2 | Validators | ~3-5s | 7-of-11 validators sign the bridge message |
 | 3 | Destination | ~1-2s | Mint/unlock transaction finality on destination chain |
 
 **Total expected bridge time: 5-9 seconds.**
 
-The relayer waits for source chain finality (Hanzo Snowman: ~2s, Lux Snow: ~1s)
+The relayer waits for source chain finality (Hanzo Nova: ~2s, Lux Quasar: ~1s)
 before presenting the lock/burn event to the validator set. Validators
 independently verify the event against their own chain state before signing.
 
@@ -804,7 +807,7 @@ relayer:
     chain_monitor:
       - watches Hanzo L1 for Lock events via WebSocket subscription
       - watches Lux C-Chain for Burn events via WebSocket subscription
-      - confirms finality (waits for Snowman acceptance) before relaying
+      - confirms finality (waits for Nova acceptance) before relaying
       - constructs Merkle proofs from source chain receipt tries
 
     validator_coordinator:

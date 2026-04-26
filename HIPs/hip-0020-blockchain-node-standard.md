@@ -49,7 +49,7 @@ AI compute payments must be settled on a chain with established economic securit
 
 ### 6. Existing node software does not fit
 
-Lux Node (Go, Snow consensus) is designed for general-purpose L1 operation with VM plugins. Ethereum clients are designed for EVM execution. Cosmos SDK nodes are designed for application-specific chains with Tendermint consensus. None of them natively support GPU inventory management, AI inference verification, sub-200ms block production, or tensor operation verification. Building on any of these would require replacing so many components that forking provides no advantage over a purpose-built implementation.
+Lux Node (Go, Quasar consensus) is designed for general-purpose L1 operation with VM plugins. Ethereum clients are designed for EVM execution. Cosmos SDK nodes are designed for application-specific chains with Tendermint consensus. None of them natively support GPU inventory management, AI inference verification, sub-200ms block production, or tensor operation verification. Building on any of these would require replacing so many components that forking provides no advantage over a purpose-built implementation.
 
 ## Design Philosophy
 
@@ -88,13 +88,13 @@ The alternative -- building custom networking on raw TCP or QUIC -- would requir
 
 ### Why Not Fork Lux Node
 
-Lux Node is written in Go and implements the Snow consensus family (Snowman, Snowball) for general-purpose L1 blockchain operation. It supports pluggable Virtual Machines (AVM, PlatformVM, EVM) and is designed for multi-chain architectures. Forking it and adding AI compute features would seem like a shortcut, but it is not.
+Lux Node is written in Go and implements the Quasar consensus family (Nova, Photon) for general-purpose L1 blockchain operation. It supports pluggable Virtual Machines (XVM, PVM, EVM) and is designed for multi-chain architectures. Forking it and adding AI compute features would seem like a shortcut, but it is not.
 
 **Different language, different guarantees.** Lux Node is Go. Our compute verification layer uses Candle, which is Rust. Calling Rust from Go via CGo introduces FFI overhead, complicates the build system, and loses Rust's safety guarantees at the boundary. A pure Rust node can call Candle natively with zero overhead.
 
-**Different consensus requirements.** Snow consensus achieves finality through repeated random subsampling, which provides excellent performance for general-purpose transaction ordering. But AI compute coordination needs a different property: task-assignment consensus, where the network must agree not just on transaction order but on which node should execute which compute job. This requires compute-aware leader election that Snow was not designed for.
+**Different consensus requirements.** Quasar consensus achieves finality through repeated sub-sampled committee voting (Photon + Wave), which provides excellent performance for general-purpose transaction ordering. But AI compute coordination needs a different property: task-assignment consensus, where the network must agree not just on transaction order but on which node should execute which compute job. This requires compute-aware leader election that Quasar was not designed for.
 
-**Different block intervals.** Lux Node targets 1-2 second block times, appropriate for financial transactions. Compute coordination needs 200ms blocks to keep scheduling latency low. Retrofitting faster block production into Snow consensus would require fundamental changes to the protocol parameters and networking assumptions.
+**Different block intervals.** Lux Node targets 1-2 second block times, appropriate for financial transactions. Compute coordination needs 200ms blocks to keep scheduling latency low. Retrofitting faster block production into Quasar consensus would require fundamental changes to the protocol parameters and networking assumptions.
 
 **Different state model.** Lux Node's state is UTXO-based (X-Chain) or account-based (C-Chain). Hanzo Node's state includes GPU inventories, active compute sessions, model registries, and inference result caches. These are fundamentally different data structures that would not benefit from Lux Node's existing state management.
 
