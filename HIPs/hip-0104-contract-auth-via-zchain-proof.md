@@ -11,16 +11,20 @@ requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0078, HIP-0079, HIP-00
 
 ## Abstract
 
-HIP-0104 defines the **contract-side auth surface** for verifying
-Z-Chain auth proofs from within EVM-compatible contracts under the
-strict-PQ profile. A precompile at address `0x13` accepts a
-`ZCHAIN_AUTH_PROOF` envelope (the format-byte-`0x10`
-STARK_FRI_SHA3_PQ proof from HIP-0078) and returns the authenticated
-`AccountID` plus a `verified_at_height` flag. A complementary direct-
-verify precompile at `0x14` accepts a raw `(pubkey, transcript, sig)`
-tuple and returns success/failure under unmodified FIPS 204 ML-DSA-65.
+HIP-0104 defines the **contract-side auth surface** for verifying PQ
+signatures and Z-Chain auth proofs from within EVM-compatible contracts
+under the strict-PQ profile. Four precompiles are pinned in the EVM
+0x0301..0x0304 block:
+
+- `0x0301` `pq_verify_mldsa65` — FIPS 204 ML-DSA-65 verify
+- `0x0302` `pq_verify_mldsa87` — FIPS 204 ML-DSA-87 verify (high-value)
+- `0x0303` `pq_verify_slh_dsa` — FIPS 205 SLH-DSA verify (hash-based backstop)
+- `0x0304` `pq_verify_z_auth_proof` — STARK_FRI_SHA3_PQ Z-Chain auth proof
+
+Each precompile returns `(bool ok, bytes payload)` per the canonical Go
+function-pointer interface in `luxfi/consensus/protocol/auth/precompile.go`.
 Contracts call these precompiles to gate sensitive functions on
-ML-DSA-65 identity without re-implementing the verifier.
+PQ identity without re-implementing the verifier.
 
 ## Motivation
 
@@ -35,10 +39,41 @@ bespoke contract code. One precompile pair closes this.
 
 ## Specification
 
-Canonical reference: `luxfi/consensus/protocol/auth/precompile.go`
-(auth-pq-surface branch) and `luxfi/coreth/core/vm/contracts_pq.go`.
+Canonical references:
+- `luxfi/consensus/protocol/auth/precompile.go` — function-pointer types
+  and the four `PrecompileAddrPQVerify*` constants.
+- `luxfi/coreth/core/vm/contracts_pq.go` — EVM wiring (gas schedule
+  lives here, not in consensus).
 
-### Precompile 0x13 — Z-Chain auth proof verifier
+### Precompile 0x0301 — `pq_verify_mldsa65`
+
+```
+input: bytes
+    mldsa_pubkey          []byte
+    transcript            [48]byte
+    mldsa_signature       []byte
+
+output: (bool ok, bytes payload)
+    ok      = true on verify success
+    payload empty on success, error-detail bytes on failure
+```
+
+Verifies a FIPS 204 ML-DSA-65 signature. Used by HIP-0087 permits and
+HIP-0086 envelope introspection where the contract already has the
+pubkey and signature locally.
+
+### Precompile 0x0302 — `pq_verify_mldsa87`
+
+Same shape as 0x0301; verifies a FIPS 204 ML-DSA-87 signature (NIST PQ
+Cat 5). Used for high-value contract authorisation (treasury,
+governance roots).
+
+### Precompile 0x0303 — `pq_verify_slh_dsa`
+
+Same shape as 0x0301; verifies a FIPS 205 SLH-DSA signature. The
+hash-based backstop for account recovery / breakglass operations.
+
+### Precompile 0x0304 — `pq_verify_z_auth_proof`
 
 ```
 input: bytes
@@ -51,34 +86,19 @@ input: bytes
         nonce                 uint64
     }
 
-output: bytes (96 bytes on success, empty on failure)
-    account_id            [48]byte // authenticated
-    verified_at_height    uint64   // Z-Chain height of the proof
-    flags                 uint64   // bit 0 = verified, bit 1 = high-value-auth
+output: (bool ok, bytes payload)
+    ok      = true on verify success
+    payload encodes account_id (48 B), verified_at_height (u64), flags
+            (u64) on success
 ```
 
-Gas schedule:
+The heavy verifier suitable for cross-domain authentication: a wallet
+that lives on Z-Chain proving an action to a contract on the EVM side.
 
-| step                                | gas        |
-|-------------------------------------|------------|
-| base verifier setup                 | 50,000     |
-| STARK_FRI_SHA3_PQ verify            | 1,200,000  |
-| account-id binding check            | 20,000     |
-| total (typical)                     | 1,270,000  |
-
-### Precompile 0x14 — direct ML-DSA-65 verify
-
-```
-input: bytes
-    mldsa_pubkey          []byte
-    transcript            [48]byte
-    mldsa_signature       []byte
-
-output: bytes (1 byte)
-    0x01 on verify success, 0x00 on failure
-```
-
-Gas schedule: 800,000 (single ML-DSA-65 verify, FIPS 204).
+Gas-schedule numbers live in the coreth wiring
+(`core/vm/contracts_pq.go`) and are calibrated against the canonical
+verifier benchmark in `luxfi/consensus`. Operators MUST re-benchmark on
+each major release to prevent under-pricing attacks.
 
 Contracts call these via standard EVM `staticcall`:
 
@@ -86,8 +106,8 @@ Contracts call these via standard EVM `staticcall`:
 function verifyPQ(bytes calldata proof, bytes32 expectedAccount)
     external view returns (bool)
 {
-    (bool ok, bytes memory out) = address(0x13).staticcall(proof);
-    if (!ok || out.length < 96) return false;
+    (bool ok, bytes memory out) = address(0x0304).staticcall(proof);
+    if (!ok || out.length < 48) return false;
     bytes32 acct;
     assembly { acct := mload(add(out, 0x20)) }
     return acct == expectedAccount;
@@ -96,24 +116,22 @@ function verifyPQ(bytes calldata proof, bytes32 expectedAccount)
 
 ## Rationale
 
-Two precompiles, not one: the Z-Chain-proof path (0x13) is the heavy
-verifier suitable for cross-domain authentication (a wallet that lives
-on Z-Chain proving an action to a contract on the EVM-side); the
-direct verify path (0x14) is the light path suitable for HIP-0087
-permits and HIP-0086 envelope introspection where the contract already
-has the pubkey and signature locally. Both reuse the same canonical Go
-verifier under the hood — one verifier in the tree.
+Four precompiles, one per primitive: ML-DSA-65 and ML-DSA-87 (lattice
+identity at Cat 3 and Cat 5), SLH-DSA (stateless hash-based backstop),
+and the Z-Chain proof path (heavy STARK verifier). Each reuses the
+same canonical Go verifier under the hood — one verifier in the tree.
 
 ## Backwards compatibility
 
 None. Strict-PQ chains reject `ecrecover` calls at the consensus
-boundary; contracts that used `ecrecover` MUST migrate to 0x13 / 0x14.
-Permissive profiles MAY keep `ecrecover` active during transition.
+boundary; contracts that used `ecrecover` MUST migrate to one of
+0x0301..0x0304. Permissive profiles MAY keep `ecrecover` active during
+transition.
 
 ## Reference implementation
 
-`luxfi/consensus/protocol/auth/precompile.go` (auth-pq-surface).
-EVM binding: `luxfi/coreth/core/vm/contracts_pq.go`. Test vectors:
+`luxfi/consensus/protocol/auth/precompile.go`. EVM binding:
+`luxfi/coreth/core/vm/contracts_pq.go`. Test vectors:
 `luxfi/coreth/core/vm/testdata/precompile_pq_v1.json`.
 
 ## Security considerations

@@ -108,7 +108,8 @@ for cold roots: hash-based security relies only on SHA-3 collision
 resistance — orthogonal to lattice assumptions in ML-DSA. Loss of
 M-LWE security under future cryptanalysis still leaves SLH-DSA intact
 to authorise emergency upgrades. The two-tier separation matches NIST
-SP 800-57 §5.3 long-term-key guidance.
+SP 800-57 Part 1 Rev. 5 §5.6.1 cryptoperiod guidance for long-lived
+keys.
 
 ## Backwards compatibility
 
