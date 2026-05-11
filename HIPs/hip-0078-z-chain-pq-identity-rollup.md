@@ -242,8 +242,10 @@ becomes pure finality spine; Z-Chain holds all bulky state.
   `0x81` ProofSystemIDs are explicit forbidden markers, not fallback.
 - **STARK soundness reduces to hash-collision resistance.** cSHAKE256
   is FIPS-approved; PQ-secure under classical and quantum models.
-  Round-by-round soundness via the standard FRI analysis (Block et
-  al., ASIACRYPT 2023 and follow-ups).
+  Round-by-round soundness via the standard FRI analysis (Ben-Sasson,
+  Bentov, Horesh, Riabzev — *"Fast Reed–Solomon Interactive Oracle
+  Proofs of Proximity,"* ICALP 2018; refined by Bordage, Lecomte —
+  *"On the Soundness of the FRI Protocol"* (proximity gaps), 2022).
 - **Validator-set tampering.** A malicious validator-set update must
   produce a valid Z-Chain proof; without it, Q-Chain refuses the
   EpochCommitment. Trust delegation: from Q-Chain consensus to
@@ -284,7 +286,8 @@ becomes pure finality spine; Z-Chain holds all bulky state.
 - NIST SP 800-185 — *cSHAKE / KMAC / TupleHash / ParallelHash*.
 - NIST IR 8214C — *First Call for Multi-Party Threshold Schemes*.
 - Plonky3 — https://github.com/Plonky3/Plonky3
-- Block, Garreta, Riahi, Tang — *"Fiat-Shamir Bulletproofs are Non-Malleable"* (FRI round-by-round-soundness analogue), ASIACRYPT 2023.
+- Ben-Sasson, Bentov, Horesh, Riabzev — *"Fast Reed–Solomon Interactive Oracle Proofs of Proximity,"* ICALP 2018 — FRI soundness baseline.
+- Bordage, Lecomte — *"On the Soundness of the FRI Protocol"* (proximity gaps for FRI), 2022 — refined RBR soundness bound.
 - RISC Zero zkVM whitepaper.
 - HIP-0077 — Mesh Identity, Gossip & Payments (parent).
 - HIP-0079 — Q-Chain Finality Blocks (consumer of Z-Chain roots).

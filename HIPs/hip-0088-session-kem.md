@@ -32,14 +32,22 @@ end-to-end PQ posture.
 
 ## Specification
 
-Canonical reference: `luxfi/consensus/protocol/auth/session_kem.go`
-(auth-pq-surface branch). Also: `luxfi/zap/handshake.go`.
+Canonical references:
+- `luxfi/consensus/config/pq_mode.go` — `KeyExchangeID` enum (canonical wire bytes).
+- `luxfi/node/network/kem/scheme.go` — ML-KEM session primitives (FIPS 203).
+- `luxfi/node/network/peer/handshake.go` — handshake state machine.
+
+The KEM `auth/session_kem.go` path named in earlier drafts does not exist;
+session-KEM lives in `node/network/kem/` (encapsulate/decapsulate +
+shared-secret derivation) and `node/network/peer/handshake.go` (mutual
+authentication transcript). Canonical wire bytes are sourced from
+`config.KeyExchangeID` and shared with `protocol/auth` via type alias.
 
 ```
 SessionInit (client → server):
     profile_id        uint8
-    kem_scheme_id     uint8       // 0x60 ML-KEM-768 | 0x61 ML-KEM-1024
-                                  // 0x62 X-Wing (forbidden under strict-PQ)
+    kem_scheme_id     uint8       // 0x01 ML-KEM-768 | 0x02 ML-KEM-1024
+                                  // 0x90 X25519Unsafe (forbidden under strict-PQ)
     client_kem_pubkey []byte      // 1184 B for 768, 1568 B for 1024
     client_nonce      [32]byte
     client_mldsa_sig  []byte      // ML-DSA.Sign over (init_bytes)
@@ -69,11 +77,12 @@ session_key = KMAC256(shared_secret,
 Acceptance under strict-PQ:
 
 1. `profile_id` matches chain pin.
-2. `kem_scheme_id ∈ {0x60, 0x61}`; `0x62` (X-Wing) rejected.
+2. `kem_scheme_id ∈ {0x01, 0x02}`; `0x90` (X25519Unsafe) rejected.
 3. Both ML-DSA-65 signatures verify under unmodified FIPS 204 against
    the respective party's pubkey.
-4. `kem_scheme_id = 0x60` (ML-KEM-768) is the default; `0x61` is
-   required when either side advertises `role=high-value`.
+4. `kem_scheme_id = 0x01` (ML-KEM-768) is the default; `0x02`
+   (ML-KEM-1024) is required when either side advertises
+   `role=high-value`.
 5. Session key is rotated every 1 hour or 2^28 records, whichever
    comes first.
 
@@ -89,15 +98,16 @@ key-derivation pattern used elsewhere in the strict-PQ stack.
 
 ## Backwards compatibility
 
-None. Strict-PQ refuses classical key exchange (X25519, ECDH) and
-X-Wing at the handshake boundary. The permissive profile (0x02) MAY
-accept X-Wing; the FIPS profile (0x03) MAY accept ML-KEM only.
+None. Strict-PQ refuses classical key exchange (X25519, ECDH) at the
+handshake boundary. The permissive profile (0x02) MAY accept hybrid
+constructions; the FIPS profile (0x03) MAY accept ML-KEM only.
 
 ## Reference implementation
 
-`luxfi/consensus/protocol/auth/session_kem.go`. ZAP integration:
-`luxfi/zap/handshake.go`. ML-KEM primitive: `luxfi/crypto/mlkem`. KAT
-vectors: `luxfi/consensus/protocol/auth/testdata/session_kem_v1.json`.
+ML-KEM primitive + session derivation: `luxfi/node/network/kem/`.
+Handshake state machine: `luxfi/node/network/peer/handshake.go`.
+Canonical wire byte registry: `luxfi/consensus/config/pq_mode.go`
+(`KeyExchangeID`).
 
 ## Security considerations
 
@@ -115,8 +125,8 @@ paths in the strict-PQ stack.
 - NIST FIPS 204 — ML-DSA mutual auth.
 - NIST FIPS 202 + SP 800-185 — KMAC256, TupleHash256.
 - NIST SP 800-57 — key management.
-- LP-115 — X-Wing (referenced for the transitional profile only).
-- `luxfi/consensus/protocol/auth/session_kem.go`.
+- `luxfi/consensus/config/pq_mode.go` — canonical `KeyExchangeID`.
+- `luxfi/node/network/kem/scheme.go`, `luxfi/node/network/peer/handshake.go`.
 
 ## Copyright
 
