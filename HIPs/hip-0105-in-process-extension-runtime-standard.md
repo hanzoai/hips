@@ -189,6 +189,7 @@ wasm instances at T=1000 with zero latency benefit.
 | goja | `BASE_GOJAVM_POOL_SIZE` | 8 | Cheap per-pool-item (~9 KB Go heap); 8 is safe. |
 | wazero | `BASE_WASMVM_POOL_SIZE` | **4** | Each instance is ~80 KB linear memory; larger pools waste RAM with no throughput gain. |
 | v8go | `BASE_V8VM_POOL_SIZE` | 8 | Sized for context pool, but see scale findings — v8go is **NOT recommended for production** at meaningful concurrency. |
+| pyvm | `BASE_PYVM_POOL_SIZE` | 4 | Each Python sub-interpreter is ~4.6 MB. Pool of 4 = ~18 MB baseline. Default tuned to balance per-module memory vs cold-start cost. |
 
 Native doesn't pool — functions are stateless Go calls.
 
@@ -202,6 +203,7 @@ Run on Apple M1 Max, Go 1.26.3, median of 3 runs at `-benchtime=2s`. Workload:
 | Runtime | Serial ns/op | Parallel ns/op | Ratio vs native (serial) | Ratio vs native (parallel) |
 |---|---:|---:|---:|---:|
 | **native** | **1,197** | **694** | 1.0× | 1.0× |
+| pyvm (CPython 3.13) | 4,089 | 2,765 | 3.4× | 4.0× |
 | goja | 4,513 | 1,652 | 3.8× | 2.4× |
 | wazero (AssemblyScript) | 9,956 | 3,271 | 8.3× | 4.7× |
 | v8go | 11,895 | 12,667 | 9.9× | **18.3× (degrades)** |
@@ -219,7 +221,8 @@ Run on Apple M1 Max, Go 1.26.3, median of 3 runs at `-benchtime=2s`. Workload:
 
 | Runtime | B/invoke | allocs/invoke |
 |---|---:|---:|
-| **v8go** | **673** | (lowest — V8 reuses) |
+| **pyvm (CPython 3.13)** | **496** | **10** (LOWEST allocs of any non-native) |
+| v8go | 673 | low |
 | native | 1,450 | minimal |
 | goja | 3,433 | JS → Go marshalling |
 | wazero (AS) | 44,425 | JSON ptr/len + linear-memory copy |
@@ -342,7 +345,25 @@ holds:**
    benchmarking and experimental use only until upstream ships
    per-context isolation that resolves the crash.
 
-6. **Are you serving a workload where seconds of cold start is fine and
+6. **Do you need REAL CPython (with the full ecosystem including
+   numpy, pandas, cryptography) inside the Go binary, and is your
+   deployment SINGLE-TENANT?** → **pyvm**. CPython 3.13 embedded via
+   direct cgo bridge. Beats wazero AS by 2.4× serial and has the
+   lowest per-invocation memory (496 B/op) of any sandboxed runtime
+   measured. Sub-interpreter pool gives per-tenant-style isolation
+   within the single-process deployment.
+
+   **DO NOT use pyvm in multi-tenant builds.** A C extension segfault
+   in any tenant's code kills the entire host process and every other
+   tenant. Multi-tenant operators must policy-reject `runtime: pyvm`
+   in extension manifests. Gate with `-tags pyvm` at build time;
+   default off.
+
+   Python 3.13 free-threading (PEP 703, `python3.13t`) is detected
+   at runtime via `Py_GIL_DISABLED`; when present, GIL operations
+   become no-ops and goroutines run Python in real parallel.
+
+7. **Are you serving a workload where seconds of cold start is fine and
    GPU is needed?** → That's HIP-0060 Functions, not this. Wrong HIP.
 
 ### What we are NOT recommending
