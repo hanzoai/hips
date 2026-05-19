@@ -83,6 +83,28 @@ The unified binary collapses this:
 
 ## Specification
 
+### Canonical Hanzo Go stack
+
+The unified binary is opinionated. Every subsystem uses the same Go
+substrate. **One way to do everything.** No parallel frameworks, no
+parallel ORMs, no parallel loggers, no parallel wire formats.
+
+| Concern | Canonical | Notes |
+|---|---|---|
+| Web framework | `hanzoai/zip` | The ONE Go web framework. Built on Fiber v3 / fasthttp (implementation detail). Sinatra/Express-style primary API. **No `.Fast` escape hatch — zip is fast.** |
+| ORM | `hanzoai/orm` | Backends: SQLite (today), PostgreSQL/MySQL/MSSQL/Oracle via `dbx` (wiring pending), ZapDB via `luxfi/database`, CR-SQLite for client-side distributed (license-permitting). |
+| Logger | `luxfi/log` | NEVER `uber-go/zap`, NEVER `log/slog`, NEVER stdlib `log`. |
+| Wire protocol | ZAP | Every subsystem ships `<svc>/schema/<name>.zap`. `zapc` generates Go/TS/Py/Rust bindings. No `.capnp` files in Hanzo-authored source. |
+| Storage durability | `hanzoai/replicate` over `hanzo/vfs` | Per HIP-0107 (streaming replication over vfs). Covers SQLite WAL, ZapDB log, blockchain state, generic logs through one pipeline. |
+| Object store interface | `hanzo/vfs` | The ONLY object-store interface. All sink-side bytes route through vfs. |
+| Analytical store | `hanzoai/datastore-go` | Separate from `orm`. NOT an ORM backend — different workload class. |
+
+**Migration adapters (transitional only, not parallel ways to build new
+services):** `zip.Adapt(http.Handler)`, `zip.AdaptChi(chi.Router)`,
+`zip.MountBeego(beego.App)`, `zip.MountGin(gin.Engine)`. These exist so
+existing chi/beego/gin code can be wrapped into a zip mount without a
+same-day rewrite. New code must be written natively against zip.
+
 ### Process model
 
 `superbase` is a single process exposing:
@@ -112,11 +134,14 @@ cost beyond the compiled code in the binary.
 
 ### Subsystem boundaries
 
-Each Hanzo Go service exposes a single `Mount(r chi.Router, deps superbase.Deps) error`
-function. `superbase`'s `main.go` is essentially:
+Each Hanzo Go service exposes a single
+`Mount(app *zip.App, deps superbase.Deps) error` function (canonical
+signature; the old `chi.Router`-based shape is migrated through the
+`zip.AdaptChi` adapter). `superbase`'s `main.go` is essentially:
 
 ```go
 import (
+    "github.com/hanzoai/zip"
     "github.com/hanzoai/iam"
     "github.com/hanzoai/base"
     "github.com/hanzoai/kms"
@@ -135,23 +160,23 @@ import (
 func main() {
     cfg := superbase.LoadConfig()
     deps := superbase.BuildDeps(cfg)
-    r := chi.NewMux()
+    app := zip.New()
 
-    if cfg.Enabled("iam")      { iam.Mount(r, deps)      }
-    if cfg.Enabled("kms")      { kms.Mount(r, deps)      }
-    if cfg.Enabled("base")     { base.Mount(r, deps)     }
-    if cfg.Enabled("commerce") { commerce.Mount(r, deps) }
-    if cfg.Enabled("cloud")    { cloud.Mount(r, deps)    }
-    if cfg.Enabled("gateway")  { gateway.Mount(r, deps)  }
-    if cfg.Enabled("o11y")     { o11y.Mount(r, deps)     }
-    if cfg.Enabled("vfs")      { vfs.Mount(r, deps)      }
-    if cfg.Enabled("mq")       { mq.Mount(r, deps)       }
-    if cfg.Enabled("dns")      { dns.Mount(r, deps)      }
-    if cfg.Enabled("amqp")     { amqp.Mount(r, deps)     }
-    if cfg.Enabled("mcp")      { mcp.Mount(r, deps)      }
+    if cfg.Enabled("iam")      { iam.Mount(app, deps)      }
+    if cfg.Enabled("kms")      { kms.Mount(app, deps)      }
+    if cfg.Enabled("base")     { base.Mount(app, deps)     }
+    if cfg.Enabled("commerce") { commerce.Mount(app, deps) }
+    if cfg.Enabled("cloud")    { cloud.Mount(app, deps)    }
+    if cfg.Enabled("gateway")  { gateway.Mount(app, deps)  }
+    if cfg.Enabled("o11y")     { o11y.Mount(app, deps)     }
+    if cfg.Enabled("vfs")      { vfs.Mount(app, deps)      }
+    if cfg.Enabled("mq")       { mq.Mount(app, deps)       }
+    if cfg.Enabled("dns")      { dns.Mount(app, deps)      }
+    if cfg.Enabled("amqp")     { amqp.Mount(app, deps)     }
+    if cfg.Enabled("mcp")      { mcp.Mount(app, deps)      }
     // ...
 
-    superbase.Serve(r, cfg)  // HTTP + ZAP RPC + admin
+    superbase.Serve(app, cfg)  // HTTP + ZAP RPC + admin
 }
 ```
 
@@ -259,6 +284,31 @@ The extension runtime IS the user-code boundary inside the unified
 process. Don't shell out, don't spawn sidecars, don't run Knative pods
 for per-request hooks. HIP-0060 (Functions) handles the workloads where
 those overheads are justified.
+
+### Multi-language handlers
+
+HIP-0105 defines two mount points (in-process Base hooks AND web routes
+via `hanzoai/zip`). The unified binary uses **mount point #2** to allow
+service routes themselves to be authored in any HIP-0105-supported
+language:
+
+| Language | Runtime | Mount path |
+|---|---|---|
+| Go (Hanzo-authored) | native | direct in-process — default for all service code |
+| Rust / C++ / Zig / AssemblyScript | wazero | compiled to `*.wasm`, loaded under `hz_routes/<name>/` |
+| JavaScript / TypeScript | goja (production) or v8go (experimental) | source files loaded directly |
+| Python | pyvm (single-tenant only, `-tags pyvm`) | CPython 3.13 sub-interpreter pool |
+| DSL / policy | starlark | sandboxed, deterministic, no I/O by default |
+
+All five runtimes mount through the SAME `zip.App` via
+`app.Module(method+path, runtime, modulePath)`. The route author writes
+their handler in their preferred language; the same `.zap` schemas
+generate the same I/O types across all of them. Crash isolation,
+cancellation semantics, and scale characteristics are exactly as
+described in HIP-0105.
+
+Multi-tenant deployments MUST gate `AllowedRuntimes` to exclude runtimes
+lacking hard sandbox (pyvm, v8go).
 
 ### Deployment surfaces this enables
 
