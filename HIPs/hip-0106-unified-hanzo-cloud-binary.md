@@ -1,6 +1,6 @@
 ---
 hip: 0106
-title: Superbase — Unified Hanzo Cloud Binary
+title: Cloud — Unified Hanzo Binary
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
@@ -9,11 +9,11 @@ created: 2026-05-19
 requires: HIP-0014, HIP-0026, HIP-0027, HIP-0037, HIP-0105, HIP-0302
 ---
 
-# HIP-106: Superbase — Unified Hanzo Cloud Binary
+# HIP-106: Cloud — Unified Hanzo Binary
 
 ## Abstract
 
-This proposal defines `superbase` — a single Go binary that imports every
+This proposal defines `cloud` — a single Go binary that imports every
 Hanzo-native subsystem as a package and dispatches requests to them by
 HTTP path, subsystem flag, or per-deployment configuration. The same
 binary powers `api.hanzo.ai`, `api.osage.cloud`, `api.lux.cloud`,
@@ -21,13 +21,16 @@ binary powers `api.hanzo.ai`, `api.osage.cloud`, `api.lux.cloud`,
 Brand, enabled subsystems, and tenant scope are deployment
 configuration; the binary is the same artifact across all.
 
-**Naming note**: `superbase` is the unified binary. `~/work/hanzo/cloud`
-is and remains the **LLM control plane** subsystem per HIP-0037 — it is
-one of the subsystems mounted into `superbase`, not the binary itself.
+**Naming note (2026-05-19 rename)**: the unified binary lives at
+`hanzoai/cloud` (this repo); the former LLM-control-plane content
+that used to live at `hanzoai/cloud` was renamed to `hanzoai/ai` and
+is now mounted as the `ai` subsystem inside this binary. **White-label
+fork target is `hanzoai/cloud`** — customers fork this one repo to
+launch their own ecosystem.
 
 **Inter-subsystem contract**: ZAP (the Hanzo native binary protocol).
 Every subsystem ships its public interface as a `.zap` schema; `zapc`
-generates Go/TS/Python/Rust bindings; `superbase` wires the in-process
+generates Go/TS/Python/Rust bindings; `cloud` wires the in-process
 ZAP-typed Go interfaces when subsystems are co-resident, falls back to
 ZAP RPC over the wire when split. **No `.capnp` files anywhere in
 Hanzo-authored code.**
@@ -40,7 +43,7 @@ supervised process.
 ## Motivation
 
 Today Hanzo ships ~11+ Go-native services as independent binaries: IAM,
-Base, KMS, Gateway, Ingress, Commerce, Cloud (LLM control plane), o11y,
+Base, KMS, Gateway, Ingress, Commerce, AI (LLM control plane subsystem), o11y,
 AMQP, MCP (Go path), DNS, VFS, MQ, Authz, Agents. Each gets its own
 Dockerfile, Helm chart, deploy lane, CI workflow, release cadence, and
 observability spine. For Hanzo this is acceptable — we operate the
@@ -58,10 +61,10 @@ the reference implementations.
 
 The unified binary collapses this:
 
-1. **One artifact**, `ghcr.io/hanzoai/superbase:vX.Y.Z`, that contains
+1. **One artifact**, `ghcr.io/hanzoai/cloud:vX.Y.Z`, that contains
    every Hanzo Go subsystem as compiled code.
 2. **Deployment configuration** at startup enables a subset of subsystems
-   (`superbase --enable=iam,base,kms,commerce,gateway,cloud`).
+   (`cloud --enable=iam,base,kms,commerce,gateway,ai`).
 3. **Per-tenant routing** at request time: `X-Org-Id` from JWT picks
    the tenant's Base instance, KMS namespace, IAM application, and brand.
 4. **Multi-tenant Base** at the storage layer per HIP-0302: each tenant
@@ -107,7 +110,7 @@ same-day rewrite. New code must be written natively against zip.
 
 ### Process model
 
-`superbase` is a single process exposing:
+`cloud` is a single process exposing:
 
 - One HTTP listener (default `:8080`) that fans out to subsystem
   handlers by URL prefix (`/v1/iam/...`, `/v1/base/...`, etc.)
@@ -119,13 +122,13 @@ same-day rewrite. New code must be written natively against zip.
 Subsystem activation:
 
 ```bash
-superbase \
-  --enable=iam,base,kms,commerce,gateway,cloud,o11y \
+cloud \
+  --enable=iam,base,kms,commerce,gateway,ai,o11y \
   --brand=osage \
   --domain=osage.cloud \
   --iam-issuer=https://iam.hanzo.id \
-  --kms-master-key-ref=kms://hanzo/superbase/osage/master \
-  --data-dir=/var/lib/superbase
+  --kms-master-key-ref=kms://hanzo/cloud/osage/master \
+  --data-dir=/var/lib/cloud
 ```
 
 Each subsystem flag enables that subsystem's HTTP routes, ZAP services,
@@ -135,9 +138,9 @@ cost beyond the compiled code in the binary.
 ### Subsystem boundaries
 
 Each Hanzo Go service exposes a single
-`Mount(app *zip.App, deps superbase.Deps) error` function (canonical
+`Mount(app *zip.App, deps cloud.Deps) error` function (canonical
 signature; the old `chi.Router`-based shape is migrated through the
-`zip.AdaptChi` adapter). `superbase`'s `main.go` is essentially:
+`zip.AdaptChi` adapter). `cloud`'s `main.go` is essentially:
 
 ```go
 import (
@@ -146,7 +149,7 @@ import (
     "github.com/hanzoai/base"
     "github.com/hanzoai/kms"
     "github.com/hanzoai/commerce"
-    "github.com/hanzoai/cloud"      // LLM control plane subsystem
+    "github.com/hanzoai/ai"      // LLM control plane subsystem (was hanzoai/cloud pre-rename)
     "github.com/hanzoai/gateway"
     "github.com/hanzoai/o11y"
     "github.com/hanzoai/vfs"
@@ -154,19 +157,19 @@ import (
     "github.com/hanzoai/dns"
     "github.com/hanzoai/amqp"
     "github.com/hanzoai/mcp"
-    "github.com/hanzoai/superbase"
+    "github.com/hanzoai/cloud"
 )
 
 func main() {
-    cfg := superbase.LoadConfig()
-    deps := superbase.BuildDeps(cfg)
+    cfg := cloud.LoadConfig()
+    deps := cloud.BuildDeps(cfg)
     app := zip.New()
 
     if cfg.Enabled("iam")      { iam.Mount(app, deps)      }
     if cfg.Enabled("kms")      { kms.Mount(app, deps)      }
     if cfg.Enabled("base")     { base.Mount(app, deps)     }
     if cfg.Enabled("commerce") { commerce.Mount(app, deps) }
-    if cfg.Enabled("cloud")    { cloud.Mount(app, deps)    }
+    if cfg.Enabled("ai")       { ai.Mount(app, deps)       }
     if cfg.Enabled("gateway")  { gateway.Mount(app, deps)  }
     if cfg.Enabled("o11y")     { o11y.Mount(app, deps)     }
     if cfg.Enabled("vfs")      { vfs.Mount(app, deps)      }
@@ -176,13 +179,13 @@ func main() {
     if cfg.Enabled("mcp")      { mcp.Mount(app, deps)      }
     // ...
 
-    superbase.Serve(app, cfg)  // HTTP + ZAP RPC + admin
+    cloud.Serve(app, cfg)  // HTTP + ZAP RPC + admin
 }
 ```
 
 This means **every existing Go service must expose a `Mount` function**
 in addition to its `cmd/<service>/main.go`. The `main.go` becomes a
-thin shim that calls `Mount` on its own; `superbase`'s main calls the
+thin shim that calls `Mount` on its own; `cloud`'s main calls the
 same `Mount` from its own binary. No business logic moves.
 
 Reference implementations already in tree (per `AUDIT_2026_05_19.md`):
@@ -207,7 +210,7 @@ and over-wire interface. Build pipeline:
 `zapc` is the Rust-implemented Hanzo ZAP compiler at `~/work/hanzo/zap/zapc-rs/`.
 Multi-language codegen: `zapc generate file.zap --lang {go,ts,py,rust}`.
 
-When `superbase` runs subsystems in-process: each `Mount(...)` registers
+When `cloud` runs subsystems in-process: each `Mount(...)` registers
 its `*_server.go` against the local ZAP dispatcher, and the typed
 client interfaces in `deps` resolve to **direct Go function calls
 through the ZAP runtime** (no marshalling, no network). When subsystems
@@ -215,7 +218,7 @@ are split: same generated client makes ZAP RPC calls over the
 wire. Same business code in either mode.
 
 **Existing `.zap` schemas in production** (real, not aspirational):
-- `~/work/hanzo/cloud/cloud.zap` — LLM control plane types (ChatMessage, ModelProvider, ChatCompletion)
+- `~/work/hanzo/ai/ai.zap` (was `~/work/hanzo/cloud/cloud.zap` pre-rename) — LLM control plane types (ChatMessage, ModelProvider, ChatCompletion)
 - `~/work/hanzo/commerce/api/billing/billing.zap` — billing schemas
 - `~/work/hanzo/tasks/schema/tasks.zap` — task scheduling
 - `~/work/hanzo/zap/rust/schema/zap.zap` — self-describing schema
@@ -264,7 +267,7 @@ Each generated `Client` has two implementations:
 - **in-process** (direct method calls through the local ZAP dispatcher)
 - **RPC** (ZAP-typed RPC over the wire)
 
-`superbase` wires in-process. Legacy split deploys wire RPC. Same
+`cloud` wires in-process. Legacy split deploys wire RPC. Same
 business code in either mode. **Every subsystem boundary is typed end
 to end** via the `.zap` schema.
 
@@ -277,7 +280,7 @@ extension runtime from HIP-0105:
   goja wins multi-tenant SaaS at scale)
 - Per-request policy rules in Gateway → **wazero** (untrusted) or
   **native** (Hanzo-authored)
-- Custom prompt transforms for Cloud (LLM control plane) → **wazero**
+- Custom prompt transforms for AI (LLM control plane subsystem) → **wazero**
 - Custom tool functions for Agents → **wazero**
 
 The extension runtime IS the user-code boundary inside the unified
@@ -315,9 +318,9 @@ lacking hard sandbox (pyvm, v8go).
 | Deployment | Brand | Enabled subsystems | Domain |
 |---|---|---|---|
 | Hanzo flagship | hanzo | all | api.hanzo.ai |
-| Osage Cloud | osage | iam, base, kms, commerce, cloud, gateway, o11y, vfs | api.osage.cloud |
+| Osage Cloud | osage | iam, base, kms, commerce, ai, gateway, o11y, vfs | api.osage.cloud |
 | Lux Cloud | lux | iam, base, kms, gateway, chain | api.lux.cloud |
-| Zoo Cloud | zoo | iam, base, kms, brain, gateway, vfs | api.zoo.cloud |
+| Zoo Cloud | zoo | iam, base, kms, ai, gateway, vfs | api.zoo.cloud |
 | Customer X (reseller) | custom | iam, base, kms, commerce, gateway | api.x.com |
 
 Same image. Different startup configuration. The `osage.cloud`
@@ -360,12 +363,12 @@ entirely):**
   expands PCI scope to every other tenant. Stays its own deployment.
   See Non-goals.
 
-### Phase 2 — Ship `superbase` (1 week)
+### Phase 2 — Ship `cloud` (1 week)
 
-`~/work/hanzo/superbase/cmd/superbase/main.go` — new repo
-`github.com/hanzoai/superbase`. Imports the seven subsystems from
+`~/work/hanzo/cloud/cmd/cloud/main.go` — new repo
+`github.com/hanzoai/cloud`. Imports the seven subsystems from
 Phase 1, wires Deps, dispatches by subsystem flag. Ship as
-`ghcr.io/hanzoai/superbase:v0.1.0`. Single-tenant smoke deployment at
+`ghcr.io/hanzoai/cloud:v0.1.0`. Single-tenant smoke deployment at
 a dev domain first.
 
 ### Phase 3 — Fold the heavy subsystems (2 weeks)
@@ -376,7 +379,7 @@ a dev domain first.
 10. **o11y** — heaviest multi-tenant footprint (309 X-Org-Id call-sites
     per audit). Get this right and the per-tenant routing pattern is
     proven for everything else.
-11. **cloud** (LLM control plane per HIP-0037) — mount existing routes
+11. **ai** (LLM control plane per HIP-0037) — mount existing routes
 12. **mcp** — depends on iam
 13. **mq** — depends on base for durability
 14. **ingress** — depends on gateway routes
@@ -392,7 +395,7 @@ calling org. Telemetry tagged with org.
 Operator CRD `ResellerCloud{name, parentOrg, brand, enabledSubsystems}`
 that creates the IAM app + KMS namespace + Base storage allocation +
 Gateway routes atomically. Documented at
-`~/work/hanzo/superbase/docs/RESELLER.md`. Self-serve resell becomes
+`~/work/hanzo/cloud/docs/RESELLER.md`. Self-serve resell becomes
 possible.
 
 **Operator convergence (BLOCKER for Phase 5).** The audit identified
@@ -457,8 +460,8 @@ commerce is NOT subject to PCI-DSS L1 audit.
 |---|---|
 | `vault` | **CDE** — the only system that touches PAN. Full L1 audit. Quarterly ASV. HSM-backed key store. Own deployment, own k8s namespace, own NetworkPolicy boundary. |
 | `payments` | **CDE-connected** (NOT CDE). Sees only tokens. Payments service operated in tokens-only mode. Calls `vault.Charge(token, processor, amount)` for the actual processor call. |
-| `commerce` | **CDE-connected** (NOT CDE). Light router. Only ever handles tokens + intent IDs. Mounts inside superbase like any other subsystem. |
-| Everything else in superbase | **Not CDE-connected.** Standard SOC2-grade controls. |
+| `commerce` | **CDE-connected** (NOT CDE). Light router. Only ever handles tokens + intent IDs. Mounts inside cloud like any other subsystem. |
+| Everything else in cloud | **Not CDE-connected.** Standard SOC2-grade controls. |
 
 For this architecture to be sound, two requirements must hold:
 
@@ -481,20 +484,20 @@ The same architecture supports four deployment modes:
 
 2. **Hanzo as PSP for a white-label customer**: customer's brand
    (`lux.cloud`, `zoo.cloud`, `osage.cloud`) runs commerce inside their
-   superbase deployment; commerce's `payments_client` and `vault_client`
+   cloud deployment; commerce's `payments_client` and `vault_client`
    ZAP endpoints point at Hanzo's payments + vault. Customer carries no
    PCI obligation. Hanzo's vault has multi-tenant token namespacing per
    org.
 
 3. **Customer brings their own PSP backend**: customer deploys their own
-   vault + payments. Their superbase's commerce subsystem points its
+   vault + payments. Their cloud's commerce subsystem points its
    ZAP-RPC endpoints at THEIR vault + payments deployment. **Hanzo
    carries no PCI obligation for that customer's flows.** The customer
    holds their own PCI scope. Commerce is a swappable thin router.
 
 4. **Single-tenant Hanzo Payments-as-a-product**: customer's ENTIRE
    commercial unit is payment-processing. Deploy payments + vault + a
-   trimmed superbase as a unit. Commerce still operates as light router
+   trimmed cloud as a unit. Commerce still operates as light router
    — no design change, only deployment shape.
 
 Modes 1-3 share the same binary. Configuration determines which
@@ -526,7 +529,7 @@ vault or payments operator.
   prefix (`s3://bucket/datastore/...` vs `s3://bucket/replicate/...`).
 - **`~/work/hanzo/insights` (Hanzo Insights — AI observability + eval + prompt management) is NOT
   folded.** Runs as a separate process — the canonical AI console
-  for cloud-hosted LLM operations. Integrates with superbase via
+  for cloud-hosted LLM operations. Integrates with cloud via
   HTTP + (forthcoming) ZAP-typed endpoints; consumed by the `cloud`
   subsystem (LLM control plane) and surfaced to operators as part of
   the AI console.
