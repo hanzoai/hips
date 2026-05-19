@@ -319,6 +319,56 @@ Cold-start budget: ~150 ms full boot with all 13 subsystems mounted; the
 lazy-mount pattern from HIP-0108 brings this down to ~10 ms by deferring
 subsystem `Mount()` until first request.
 
+#### Per-replica capacity budget
+
+The verified, measured budget for a Hanzo `zip`-on-`fasthttp` replica
+(Apple M1 Max / Go 1.26.3 / Fiber v3 v3.2.0, gateway hot-path):
+
+| Conns | Heap delta | Per-conn heap | Goroutines |
+|---|---:|---:|---:|
+| 1,000 | 7.84 MiB | **8.02 KiB** | **1.00 / conn** |
+| 8,454 | 67 MiB | **8.02 KiB** | **1.00 / conn** |
+
+| Concurrent conns | Heap | Pod RAM (with headroom) |
+|---:|---:|---:|
+| 10,000 | 80 MiB | 256 MiB |
+| 100,000 | 800 MiB | 1 GiB |
+| 1,000,000 | 8 GiB | 10 replicas × 1 GiB |
+
+The operational target is **100k concurrent client connections per
+replica** at a 1 GiB pod ceiling. The cliff above 100k/replica is
+OS-side (fasthttp listener queue, ulimit, kernel ephemeral port range),
+not Go-side. Cap `zip.Config.Concurrency: 100_000` to stay inside the
+budget; the kernel ulimit must be configured accordingly via the pod's
+securityContext.
+
+JSON impl at the edge: every production `cloud` Dockerfile compiles
+with `GOEXPERIMENT=jsonv2`. Verified edge-path wins on Apple M1 Max /
+Go 1.26 / zip on Fiber v3 v3.2.0:
+
+| Bench | json/v1 | json/v2 | Δ |
+|---|---|---|---|
+| Edge POST roundtrip | 19,782 ns / 73 allocs | 17,406 ns / 56 allocs | **−12% time, −23% allocs** |
+| Marshal-only | 12,860 ns / 34 allocs | 10,092 ns / 34 allocs | **−22% time** |
+| Unmarshal-only | 17,122 ns / 67 allocs | 13,785 ns / 50 allocs | **−19% time, −25% allocs** |
+
+JSON marshal runs **at most once per request** (at the gateway edge);
+inter-subsystem calls use ZAP. The −22% marshal-only win lands once,
+on the response path to the client.
+
+Reproduce:
+
+```bash
+cd ~/work/hanzo/zip
+go test -bench=BenchmarkJSON -benchmem -run=^$ .
+GOEXPERIMENT=jsonv2 go test -bench=BenchmarkJSON -benchmem -run=^$ .
+
+cd ~/work/hanzo/gateway
+go test -mod=mod -run=TestConnMemory -v -conn-count=10000
+```
+
+Canonical scale doc: `~/work/hanzo/hips/docs/SCALE_STANDARD.md`.
+
 #### Single-process invariant
 
 By design, the `cloud` binary holds no per-tenant state in process memory
