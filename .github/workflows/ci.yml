@@ -37,8 +37,8 @@ jobs:
             echo "Error: Missing 'title:' field in $file"
             exit 1
           fi
-          if ! grep -q "^author:" "$file"; then
-            echo "Error: Missing 'author:' field in $file"
+          if ! grep -qE "^authors?:" "$file"; then
+            echo "Error: Missing 'author:' or 'authors:' field in $file"
             exit 1
           fi
           if ! grep -q "^status:" "$file"; then
@@ -69,7 +69,7 @@ jobs:
           hip=$(grep "^hip:" "$file" | cut -d' ' -f2)
           title=$(grep "^title:" "$file" | cut -d' ' -f2-)
           status=$(grep "^status:" "$file" | cut -d' ' -f2)
-          author=$(grep "^author:" "$file" | cut -d' ' -f2-)
+          author=$(grep -E "^authors?:" "$file" | head -1 | cut -d' ' -f2-)
           echo "| $hip | $title | $status | $author |" >> hip-index.md
         done
 
