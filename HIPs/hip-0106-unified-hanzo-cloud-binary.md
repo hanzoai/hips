@@ -412,26 +412,130 @@ shared CRD types. Decision required before Phase 5 starts.
 ### Phase 6 — Billing wiring (separate HIP follow-up)
 
 Commerce subsystem reads per-tenant usage from base + o11y/ClickHouse
-and applies the reseller revenue-share contract. Per the audit,
-**`commerce` is the canonical billing/pricing/subscription home** —
-the TS `billing`, `pricing`, and `auto` packages get absorbed into
-`commerce` via Go rewrites.
+and applies the reseller revenue-share contract. **`commerce` is the
+canonical billing/pricing/subscription home** — the TS `billing` and
+`pricing` packages get absorbed into `commerce` via Go rewrites.
+
+**Note on `auto`**: the earlier audit grouped `auto` with billing/pricing
+for commerce absorption. **This was wrong.** `~/work/hanzo/auto` is a
+plug-n-play IFTT-style trigger framework that sits on top of
+`~/work/hanzo/tasks` (durable task queue). It is **NOT** under commerce.
+`auto` is its own subsystem and mounts independently. `tasks` is its own
+subsystem — the durable-queue primitive used by `auto`, by `commerce`
+recurring billing, by `o11y` retention jobs, and by anything else that
+needs durable scheduling.
+
+## Commerce — light router, NOT in PCI-DSS scope
+
+**Commerce is a thin orchestrator.** It owns the customer-facing checkout
+flow, tenant config, billing logic, pricing logic, invoicing, and
+webhook intake. It explicitly does NOT:
+
+- Touch a Primary Account Number (PAN)
+- Process card data
+- Implement processor connector logic (HyperSwitch / Stripe SDK /
+  Adyen SDK)
+- Store encrypted PAN
+
+Commerce only handles **tokens** (vault tokens) and **intents**
+(payments-orchestrator references). When commerce needs to charge, it
+calls `payments` (Rust) via ZAP RPC with a token + amount + processor
+hint. Payments calls `vault` (Go) via ZAP RPC with a "Charge this token"
+request; vault pulls the PAN from its encrypted store, makes the
+outbound HTTPS to the processor, and returns the response. **PAN never
+leaves vault.**
+
+This makes commerce **CDE-connected**, not **CDE**. Lighter controls
+apply (network segmentation, access control, change management) but
+commerce is NOT subject to PCI-DSS L1 audit.
+
+## Solo-vault CDE
+
+**Vault is the only system in PCI-CDE.** Per the corrected scope:
+
+| System | PCI scope |
+|---|---|
+| `vault` | **CDE** — the only system that touches PAN. Full L1 audit. Quarterly ASV. HSM-backed key store. Own deployment, own k8s namespace, own NetworkPolicy boundary. |
+| `payments` | **CDE-connected** (NOT CDE). Sees only tokens. HyperSwitch fork operated in tokens-only mode. Calls `vault.Charge(token, processor, amount)` for the actual processor call. |
+| `commerce` | **CDE-connected** (NOT CDE). Light router. Only ever handles tokens + intent IDs. Mounts inside superbase like any other subsystem. |
+| Everything else in superbase | **Not CDE-connected.** Standard SOC2-grade controls. |
+
+For this architecture to be sound, two requirements must hold:
+
+1. **Browser-side card collection runs directly against vault** (vault
+   ships a `vault-collect.js` iframe; PAN posts directly to vault from
+   the browser, never via commerce or any Hanzo app server).
+2. **HyperSwitch (payments) runs in tokens-only mode** — verified by
+   audit of HyperSwitch data flow that no code path exposes raw PAN to
+   the surrounding Go process.
+
+Both are tracked under the implementation TODO list at
+`~/work/hanzo/vault/docs/` (to be created).
+
+## PSP optionality
+
+The same architecture supports four deployment modes:
+
+1. **Default (Hanzo as merchant)**: Hanzo operates vault + payments +
+   commerce. Hanzo bears the PCI-DSS L1 audit. PCI scope = vault only.
+
+2. **Hanzo as PSP for a white-label customer**: customer's brand
+   (`lux.cloud`, `zoo.cloud`, `osage.cloud`) runs commerce inside their
+   superbase deployment; commerce's `payments_client` and `vault_client`
+   ZAP endpoints point at Hanzo's payments + vault. Customer carries no
+   PCI obligation. Hanzo's vault has multi-tenant token namespacing per
+   org.
+
+3. **Customer brings their own PSP backend**: customer deploys their own
+   vault + payments. Their superbase's commerce subsystem points its
+   ZAP-RPC endpoints at THEIR vault + payments deployment. **Hanzo
+   carries no PCI obligation for that customer's flows.** The customer
+   holds their own PCI scope. Commerce is a swappable thin router.
+
+4. **Single-tenant Hanzo Payments-as-a-product**: customer's ENTIRE
+   commercial unit is payment-processing. Deploy payments + vault + a
+   trimmed superbase as a unit. Commerce still operates as light router
+   — no design change, only deployment shape.
+
+Modes 1-3 share the same binary. Configuration determines which
+endpoints commerce talks to. The "swappable thin router" property is
+load-bearing: commerce never grows code that depends on a specific
+vault or payments operator.
 
 ## Non-goals
 
 - **TS service rewrite as part of this HIP.** Platform (Next.js /
-  Dokploy fork), brain (where still TS), bot, billing/pricing/auto
+  Dokploy fork), brain (where still TS), bot, billing, pricing
   (separate Go rewrites slated under commerce subsumption). They can
   be ported to Go later if performance or operations require it; this
   HIP does not block on them.
-- **Folding Python services.** LangFlow (`~/work/hanzo/flow`),
-  inference servers, ML pipelines remain separate. They communicate
-  with the unified binary via HTTP behind the gateway subsystem.
-- **`vault` is explicitly NOT folded.** Vault is PCI-compliant CDE
-  (card data environment) per the audit. Folding it into a
-  multi-tenant binary would expand PCI scope to every other tenant in
-  the process. Vault stays a separate process with its own deployment.
-  **Hard rule, no exceptions.**
+- **`vault` and `payments` are explicitly NOT folded.** Both stay as
+  their own deployments with their own PCI scope boundaries per the
+  "Solo-vault CDE" section above. Vault is CDE. Payments is
+  CDE-connected. Commerce talks to both via ZAP RPC. **Hard rule, no
+  exceptions** — even single-tenant deployments use the three-process
+  architecture.
+- **`~/work/hanzo/flow` (LangFlow) is NOT folded.** Visual ML
+  pipeline / agent-building tool. Heavy native deps (torch, faiss,
+  sentence-transformers). Runs as a separate process behind the
+  gateway subsystem. Per the FT audit (2026-05-19), classified RED
+  — defer to GIL-Python until torch ships cp313t (>=2.6).
+- **`~/work/hanzo/datastore` (ClickHouse fork) is NOT folded.** OLAP
+  column store. Uses ClickHouse-native ReplicatedMergeTree + S3 disk.
+  Out of scope. Shares S3 bucket with HIP-0107 streaming via vfs
+  prefix (`s3://bucket/datastore/...` vs `s3://bucket/replicate/...`).
+- **`langfuse` (LLM observability / eval / prompt management) is NOT
+  folded.** Runs as a separate process — the canonical AI console
+  for cloud-hosted LLM operations. Integrates with superbase via
+  HTTP + (forthcoming) ZAP-typed endpoints; consumed by the `cloud`
+  subsystem (LLM control plane) and surfaced to operators as part of
+  the AI console.
+- **Other Python services flagged RED by the 2026-05-19 free-threading
+  audit** (`cli`, `erp`, `insights`, `sentry`, `studio`) — all stay
+  separate processes until their upstream FT-blockers clear
+  (xmlsec, confluent-kafka, chdb, single-threaded Django/Celery
+  assumptions, torch <2.6). Run under regular `python3.13`
+  (GIL-enabled) until then.
 - **Cross-deployment service mesh.** The unified binary collapses
   in-deployment service calls; cross-deployment (Hanzo ↔ Lux ↔ Zoo)
   stays on the existing service-discovery + bridge layer.
