@@ -179,14 +179,16 @@ AssemblyScript implementation.
 ### Pool sizing
 
 Every runtime maintains a per-module pool of pre-warmed instances /
-contexts so per-invocation cost stays microsecond-scale. Default size 8;
-each runtime exposes an env override:
+contexts so per-invocation cost stays microsecond-scale. Each runtime
+exposes an env override. **Defaults were revised after the scale study
+(see below): wazero default reduced to 4** because pool=8 produced 256K
+wasm instances at T=1000 with zero latency benefit.
 
-| Runtime | Env | Default |
-|---|---|---|
-| goja | `BASE_GOJAVM_POOL_SIZE` | 8 |
-| wazero | `BASE_WASMVM_POOL_SIZE` | 8 |
-| v8go | `BASE_V8VM_POOL_SIZE` | 8 |
+| Runtime | Env | Default | Notes |
+|---|---|---|---|
+| goja | `BASE_GOJAVM_POOL_SIZE` | 8 | Cheap per-pool-item (~9 KB Go heap); 8 is safe. |
+| wazero | `BASE_WASMVM_POOL_SIZE` | **4** | Each instance is ~80 KB linear memory; larger pools waste RAM with no throughput gain. |
+| v8go | `BASE_V8VM_POOL_SIZE` | 8 | Sized for context pool, but see scale findings — v8go is **NOT recommended for production** at meaningful concurrency. |
 
 Native doesn't pool — functions are stateless Go calls.
 
@@ -231,6 +233,75 @@ Run on Apple M1 Max, Go 1.26.3, median of 3 runs at `-benchtime=2s`. Workload:
 | goja | +10.7 MB |
 | v8go | +36.3 MB (cgo + V8 statics) |
 
+### Scale findings (added 2026-05-19 after the second benchmark pass)
+
+The throughput benchmark above measured a single hot module. The scale
+benchmark measured fan-out — many modules, many tenants, many concurrent
+invocations — and **materially changes the recommendation for two runtimes**.
+
+**Per-loaded-module Go-heap cost (steady state, 1000 modules loaded):**
+
+| Runtime | Per-module heap | Total at N=1000 | Total at N=10000 |
+|---|---:|---:|---:|
+| native | ~16 B | <1 MB | ~1 MB |
+| goja | ~9 KB | ~9 MB | ~90 MB |
+| wazero (pool=8) | ~635 KB | ~635 MB | (extrapolated 6.4 GB) |
+| wazero (pool=4) | ~320 KB | ~320 MB | (extrapolated 3.2 GB) |
+| v8go | crashed before reaching N=500 (SIGSEGV in libv8) |
+
+**Sustained concurrent invocations on one module (throughput at M concurrent):**
+
+| Runtime | M=10 ops/s | M=100 ops/s | M=1000 ops/s | M=10000 ops/s |
+|---|---:|---:|---:|---:|
+| native | scales linearly with M | linear | linear | linear |
+| goja | scales | scales | **188,000** | scales |
+| wazero (pool=4) | scales | scales | pool exhaustion above pool size; queueing | queueing |
+| v8go | OK at M=10 | **SIGSEGV in libv8** | (process crash) | (process crash) |
+
+**Pool-size sweep (1000 tenants, wazero):**
+
+| Pool size | Latency | Memory |
+|---:|---:|---:|
+| 1 | high (queueing) | ~80 MB |
+| 4 | **good** | **~320 MB** |
+| 16 | same as 4 | ~1.3 GB |
+| 64 | same as 4 | ~5.1 GB |
+| 256 | same as 4 | **10.8 GB** |
+
+No latency improvement beyond pool=4. Anything higher is pure waste.
+
+**Concrete corrections this forces:**
+
+1. **v8go is removed from the production decision tree.** v8go v0.9 on
+   darwin/arm64 SIGSEGVs inside libv8 at ~100 concurrent invocations on
+   a shared isolate. This is not "slow" — it is **process death**.
+   Production-disqualifier for any service expecting real concurrency.
+   `plugins/v8vm` ships but is for benchmarking and experimental use
+   only. Tracked upstream — revisit if v8go ships per-context isolation
+   and resolves the crash.
+
+2. **goja is the production winner for multi-tenant JS at scale.**
+   ~9 KB per loaded module, 188K ops/s on a single module at M=1000
+   concurrent, no cgo, no crash modes. For a SaaS deployment hosting
+   thousands of tenants each with a few JS extensions, goja is the
+   right call. The cooperative-interrupt caveat remains, but the
+   stability-at-scale story dwarfs it.
+
+3. **wazero default pool is 4, not 8.** No throughput gain beyond that
+   for the workloads measured; halving the pool halves the per-module
+   memory floor.
+
+4. **wazero scales to ~10K modules at pool=4 (~3.2 GB).** Beyond that,
+   compile-cache miss + linear-memory floor compounds; see Open
+   Questions below for a future test.
+
+5. **native scales to any reasonable N.** ~16 B per loaded function
+   pointer; the goroutine cost (~8 KB) dominates only at >100K
+   concurrent invocations of any single module.
+
+Full numbers and methodology in `~/work/hanzo/base/docs/EXTENSIONS_BENCHMARK.md`
+under "## Scale Study".
+
 ## The new standard
 
 **Go-native is the default.** Every metric in the benchmark — serial perf,
@@ -247,20 +318,31 @@ holds:**
 1. **Is the code Hanzo-authored and Go-permissible?** → **native**.
    Default; no further questions.
 
-2. **Is the code user-supplied (any tenant could write malicious code)?**
-   You need a hard sandbox.
+2. **Is the code user-supplied AND threat model requires HARD sandbox
+   (e.g. tenants could be actively malicious)?**
    - **Language flexibility matters?** (Rust / TinyGo / Zig / AssemblyScript /
-     C plugin authors) → **wazero**.
-   - **Pure-JS authoring preferred and cgo is acceptable in your deploy?** →
-     **v8go**.
-   - **Pure-JS authoring preferred and cgo is NOT acceptable (static
-     binary distribution, edge deploys)?** → **goja**. Accept that the
-     sandbox is soft and the abort is cooperative.
+     C plugin authors) → **wazero**. Pool default 4.
+   - **JS authoring only?** → wazero with Javy (once the WASI-stdio shim
+     lands — see Open Questions). Until then, accept the soft sandbox
+     and use goja (see next item).
 
-3. **Is the code an existing `.base.js` hook from the legacy `plugins/jsvm`
-   path?** → **goja**. Don't migrate working hooks for taste.
+3. **Is the code user-supplied JS where the threat model is "ordinary
+   customers, not adversaries"?** → **goja**. Per the scale findings, this
+   is the right answer for multi-tenant SaaS hosting thousands of JS
+   extensions — ~9 KB per loaded module, 188K ops/s at high concurrency,
+   no crash modes, no cgo. The cooperative-interrupt caveat applies; pair
+   with a `ctx` deadline and resource limits at the host boundary.
 
-4. **Are you serving a workload where seconds of cold start is fine and
+4. **Is the code an existing `.base.js` hook from the legacy `plugins/jsvm`
+   path?** → **goja** (back-compat).
+
+5. **Are you tempted to use v8go for "modern JS perf"?** → **Don't, for
+   production.** v8go v0.9 SIGSEGVs inside libv8 at modest concurrency
+   (~100 invokers). The `plugins/v8vm` runtime ships but is for
+   benchmarking and experimental use only until upstream ships
+   per-context isolation that resolves the crash.
+
+6. **Are you serving a workload where seconds of cold start is fine and
    GPU is needed?** → That's HIP-0060 Functions, not this. Wrong HIP.
 
 ### What we are NOT recommending
