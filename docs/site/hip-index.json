@@ -1,5 +1,5 @@
 {
-  "hip_count": 75,
+  "hip_count": 122,
   "hips": [
     {
       "number": 0,
@@ -477,10 +477,10 @@
     {
       "number": 43,
       "file": "hip-0043-llm-inference-engine-standard.md",
-      "title": "LLM Inference Engine Standard",
+      "title": "Hanzo Engine — LLM Inference Engine Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Core",
       "created": "2026-02-23"
@@ -488,10 +488,10 @@
     {
       "number": 44,
       "file": "hip-0044-api-gateway-standard.md",
-      "title": "API Gateway Standard",
+      "title": "Hanzo Gateway Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -554,10 +554,10 @@
     {
       "number": 50,
       "file": "hip-0050-edge-computing-standard.md",
-      "title": "Edge Computing Standard",
+      "title": "Hanzo Edge — Edge AI Runtime Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -662,6 +662,424 @@
       "created": "2026-02-23"
     },
     {
+      "number": 60,
+      "file": "hip-0060-serverless-functions-standard.md",
+      "title": "Serverless Functions (FaaS) Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 61,
+      "file": "hip-0061-notification-service-standard.md",
+      "title": "Notification & Messaging Service Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 62,
+      "file": "hip-0062-scheduler-standard.md",
+      "title": "Cron & Job Scheduler Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 63,
+      "file": "hip-0063-feature-flags-standard.md",
+      "title": "Feature Flags & Experimentation Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 64,
+      "file": "hip-0064-log-aggregation-standard.md",
+      "title": "Log Aggregation & Search Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 65,
+      "file": "hip-0065-backup-disaster-recovery-standard.md",
+      "title": "Backup & Disaster Recovery Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 66,
+      "file": "hip-0066-data-governance-standard.md",
+      "title": "Data Governance & Lineage Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 67,
+      "file": "hip-0067-federated-learning-standard.md",
+      "title": "Federated Learning Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 68,
+      "file": "hip-0068-ingress-standard.md",
+      "title": "Ingress Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Active",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-24"
+    },
+    {
+      "number": 69,
+      "file": "hip-0069-service-discovery-and-auto-bridge.md",
+      "title": "Service Discovery & Auto-Bridge",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-05-08"
+    },
+    {
+      "number": 70,
+      "file": "hip-0070-quantum-computing-integration-standard.md",
+      "title": "Quantum Computing Integration Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 71,
+      "file": "hip-0071-quantum-key-distribution-standard.md",
+      "title": "Quantum Key Distribution Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Security",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 72,
+      "file": "hip-0072-quantum-machine-learning-standard.md",
+      "title": "Quantum Machine Learning Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 73,
+      "file": "hip-0073-quantum-random-number-generation-standard.md",
+      "title": "Quantum Random Number Generation Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Security",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 74,
+      "file": "hip-0074-software-bill-of-materials-standard.md",
+      "title": "Software Bill of Materials & Git Stamp Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 75,
+      "file": "hip-0075-oss-contributor-payout-standard.md",
+      "title": "Open Source Contributor Tracking & Payout Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 76,
+      "file": "hip-0076-open-ai-protocol-standard.md",
+      "title": "Open AI Protocol & Decentralized Inference Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 77,
+      "file": "hip-0077-mesh-identity-gossip-and-payments.md",
+      "title": "Mesh Identity, Gossip & Payments (PQ)",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": ""
+    },
+    {
+      "number": 78,
+      "file": "hip-0078-z-chain-pq-identity-rollup.md",
+      "title": "Z-Chain — Post-Quantum Identity & Attestation Rollup",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": ""
+    },
+    {
+      "number": 79,
+      "file": "hip-0079-q-chain-finality-blocks.md",
+      "title": "Q-Chain — Quasar Finality Block Standard",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": ""
+    },
+    {
+      "number": 80,
+      "file": "hip-0080-robotics-integration-standard.md",
+      "title": "Robotics & Embodied AI Integration Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 81,
+      "file": "hip-0081-computer-vision-pipeline-standard.md",
+      "title": "Computer Vision Pipeline Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 82,
+      "file": "hip-0082-digital-twin-simulation-standard.md",
+      "title": "Digital Twin & Simulation Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 83,
+      "file": "hip-0083-sensor-fusion-slam-standard.md",
+      "title": "Sensor Fusion & SLAM Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 84,
+      "file": "hip-0084-pulsar-m-dkg.md",
+      "title": "Pulsar-M — Threshold ML-DSA DKG & Signing",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Cryptography",
+      "created": ""
+    },
+    {
+      "number": 85,
+      "file": "hip-0085-wallet-pq-account-type.md",
+      "title": "Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID)",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Cryptography",
+      "created": "2026-05-11"
+    },
+    {
+      "number": 86,
+      "file": "hip-0086-tx-auth-envelope.md",
+      "title": "TxAuthEnvelope (typed PQ transaction signing)",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Cryptography",
+      "created": "2026-05-11"
+    },
+    {
+      "number": 87,
+      "file": "hip-0087-pq-permit.md",
+      "title": "PQ Permit (replaces EIP-2612)",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Cryptography",
+      "created": "2026-05-11"
+    },
+    {
+      "number": 88,
+      "file": "hip-0088-session-kem.md",
+      "title": "Session KEM (ML-KEM-768/1024 for P2P)",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Cryptography",
+      "created": "2026-05-11"
+    },
+    {
+      "number": 89,
+      "file": "hip-0089-drbg-randomness-beacon.md",
+      "title": "DRBG / Randomness Beacon (SP 800-90A)",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Cryptography",
+      "created": "2026-05-11"
+    },
+    {
+      "number": 90,
+      "file": "hip-0090-brain-computer-interface-standard.md",
+      "title": "Brain-Computer Interface (BCI) Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 91,
+      "file": "hip-0091-genomics-pipeline-standard.md",
+      "title": "Genomics & Bioinformatics Pipeline Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 92,
+      "file": "hip-0092-drug-discovery-ai-standard.md",
+      "title": "Drug Discovery AI Pipeline Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 93,
+      "file": "hip-0093-synthetic-biology-standard.md",
+      "title": "Synthetic Biology & DNA Data Storage Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 94,
+      "file": "hip-0094-medical-ai-standard.md",
+      "title": "Medical AI & Clinical Decision Support Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-02-23"
+    },
+    {
+      "number": 95,
+      "file": "hip-0095-qos-challenge-system.md",
+      "title": "Untitled",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "",
+      "category": "",
+      "created": ""
+    },
+    {
+      "number": 96,
+      "file": "hip-0096-ai-compute-contribution-rewards.md",
+      "title": "Untitled",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "",
+      "category": "",
+      "created": ""
+    },
+    {
+      "number": 98,
+      "file": "hip-0098-governance-upgrade-keys.md",
+      "title": "Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold roots)",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Cryptography",
+      "created": "2026-05-11"
+    },
+    {
       "number": 101,
       "file": "hip-0101-hanzo-lux-bridge-protocol-integration.md",
       "title": "Hanzo-Lux Bridge Protocol Integration",
@@ -671,6 +1089,72 @@
       "type": "Standards Track",
       "category": "Bridge",
       "created": "2025-01-15"
+    },
+    {
+      "number": 102,
+      "file": "hip-0102-omnichain-bridge.md",
+      "title": "Omnichain Bridge Integration",
+      "description": "Cross-chain AI inference payments and model deployment via Lux Teleport omnichain bridge",
+      "author": "Hanzo AI",
+      "status": "Final",
+      "type": "Standards Track",
+      "category": "Bridge",
+      "created": "2023-09-01"
+    },
+    {
+      "number": 103,
+      "file": "hip-0103-bridge-pq-only-profile.md",
+      "title": "Bridge PQ-Only Profile",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-05-11"
+    },
+    {
+      "number": 104,
+      "file": "hip-0104-contract-auth-via-zchain-proof.md",
+      "title": "Contract Auth via Z-Chain Proof",
+      "description": "",
+      "author": "",
+      "status": "Proposed",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-05-11"
+    },
+    {
+      "number": 105,
+      "file": "hip-0105-in-process-extension-runtime-standard.md",
+      "title": "In-Process Extension Runtime Standard",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-05-19"
+    },
+    {
+      "number": 106,
+      "file": "hip-0106-unified-hanzo-cloud-binary.md",
+      "title": "Superbase — Unified Hanzo Cloud Binary",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-05-19"
+    },
+    {
+      "number": 107,
+      "file": "hip-0107-streaming-replication-over-vfs.md",
+      "title": "Streaming Replication over VFS",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-05-18"
     },
     {
       "number": 200,
@@ -825,6 +1309,39 @@
       "type": "Standards Track",
       "category": "Interface",
       "created": "2025-01-21"
+    },
+    {
+      "number": 301,
+      "file": "hip-0301-python-sdk-agent-runtime-protocols.md",
+      "title": "Agent Runtime Protocols & Cross-Platform Parity",
+      "description": "",
+      "author": "Hanzo AI",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-03-31"
+    },
+    {
+      "number": 302,
+      "file": "hip-0302-encrypted-sqlite-replication-standard.md",
+      "title": "Hanzo Replicate: Encrypted SQLite Durability for Base Services",
+      "description": "",
+      "author": "Zach Kelling (zach@hanzo.ai)",
+      "status": "Final",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-04-09"
+    },
+    {
+      "number": 900,
+      "file": "hip-0900-hanzo-version-chronology.md",
+      "title": "Hanzo Version Chronology --- 1.0 / 2.0 / 3.0 / 4.0",
+      "description": "Canonical version timeline for the Hanzo Network from initial AI compute infrastructure through the GPU-native 4.0 activation on 2026-02-14.",
+      "author": "Zach Kelling, Antje Worring",
+      "status": "Final",
+      "type": "Informational",
+      "category": "Meta",
+      "created": "2026-02-14"
     }
   ]
 }

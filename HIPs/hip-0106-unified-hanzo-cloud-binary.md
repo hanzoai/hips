@@ -78,8 +78,8 @@ The unified binary collapses this:
    the JWT, forwards in-process.
 6. **ZAP-typed interfaces** between subsystems. Same generated Go code
    serves both in-process direct calls and over-wire RPC. Bootnode and
-   other subsystems already use this pattern via `pycapnp`/`zapc-rs`
-   today.
+   other subsystems already use this pattern via `zapc` (the Hanzo ZAP
+   compiler, Rust impl at `~/work/hanzo/zap/zapc-rs/`) today.
 
 ## Specification
 

@@ -1,5 +1,5 @@
 {
-  "hip_count": 119,
+  "hip_count": 122,
   "hips": [
     {
       "number": 0,
@@ -477,7 +477,7 @@
     {
       "number": 43,
       "file": "hip-0043-llm-inference-engine-standard.md",
-      "title": "Hanzo Engine \u2014 LLM Inference Engine Standard",
+      "title": "Hanzo Engine — LLM Inference Engine Standard",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Active",
@@ -554,7 +554,7 @@
     {
       "number": 50,
       "file": "hip-0050-edge-computing-standard.md",
-      "title": "Hanzo Edge \u2014 Edge AI Runtime Standard",
+      "title": "Hanzo Edge — Edge AI Runtime Standard",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Active",
@@ -862,7 +862,7 @@
     {
       "number": 78,
       "file": "hip-0078-z-chain-pq-identity-rollup.md",
-      "title": "Z-Chain \u2014 Post-Quantum Identity & Attestation Rollup",
+      "title": "Z-Chain — Post-Quantum Identity & Attestation Rollup",
       "description": "",
       "author": "",
       "status": "Draft",
@@ -873,7 +873,7 @@
     {
       "number": 79,
       "file": "hip-0079-q-chain-finality-blocks.md",
-      "title": "Q-Chain \u2014 Quasar Finality Block Standard",
+      "title": "Q-Chain — Quasar Finality Block Standard",
       "description": "",
       "author": "",
       "status": "Draft",
@@ -928,7 +928,7 @@
     {
       "number": 84,
       "file": "hip-0084-pulsar-m-dkg.md",
-      "title": "Pulsar-M \u2014 Threshold ML-DSA DKG & Signing",
+      "title": "Pulsar-M — Threshold ML-DSA DKG & Signing",
       "description": "",
       "author": "",
       "status": "Draft",
@@ -1047,6 +1047,28 @@
       "created": "2026-02-23"
     },
     {
+      "number": 95,
+      "file": "hip-0095-qos-challenge-system.md",
+      "title": "Untitled",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "",
+      "category": "",
+      "created": ""
+    },
+    {
+      "number": 96,
+      "file": "hip-0096-ai-compute-contribution-rewards.md",
+      "title": "Untitled",
+      "description": "",
+      "author": "",
+      "status": "Draft",
+      "type": "",
+      "category": "",
+      "created": ""
+    },
+    {
       "number": 98,
       "file": "hip-0098-governance-upgrade-keys.md",
       "title": "Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold roots)",
@@ -1115,13 +1137,24 @@
     {
       "number": 106,
       "file": "hip-0106-unified-hanzo-cloud-binary.md",
-      "title": "Unified Hanzo Cloud Binary",
+      "title": "Superbase — Unified Hanzo Cloud Binary",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Draft",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-05-19"
+    },
+    {
+      "number": 107,
+      "file": "hip-0107-streaming-replication-over-vfs.md",
+      "title": "Streaming Replication over VFS",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-05-18"
     },
     {
       "number": 200,
@@ -1291,7 +1324,7 @@
     {
       "number": 302,
       "file": "hip-0302-encrypted-sqlite-replication-standard.md",
-      "title": "\"Hanzo Replicate: Encrypted SQLite Durability for Base Services\"",
+      "title": "Hanzo Replicate: Encrypted SQLite Durability for Base Services",
       "description": "",
       "author": "Zach Kelling (zach@hanzo.ai)",
       "status": "Final",
