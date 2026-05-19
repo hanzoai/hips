@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-05-18
-requires: HIP-0027, HIP-0032, HIP-0302
+requires: HIP-0026, HIP-0027, HIP-0032, HIP-0302
 ---
 
 # HIP-107: Streaming Replication over VFS
