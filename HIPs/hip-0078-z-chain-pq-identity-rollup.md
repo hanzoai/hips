@@ -4,7 +4,7 @@ title: Z-Chain — Post-Quantum Identity & Attestation Rollup
 type: Standards Track
 category: Infrastructure
 status: Draft
-authors: Hanzo AI
+author: Hanzo AI
 requires: HIP-0005 (Post-Quantum Security), HIP-0070 (Quantum Computing), HIP-0077 (Mesh Identity, Gossip & Payments), HIP-0079 (Q-Chain Finality Blocks), HIP-0084 (Pulsar-M DKG)
 ---
 

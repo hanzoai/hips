@@ -4,7 +4,7 @@ title: Pulsar-M — Threshold ML-DSA DKG & Signing
 type: Standards Track
 category: Cryptography
 status: Draft
-authors: Hanzo AI
+author: Hanzo AI
 requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain), HIP-0079 (Q-Chain)
 ---
 
