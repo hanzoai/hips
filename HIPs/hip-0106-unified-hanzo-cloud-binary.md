@@ -103,10 +103,22 @@ parallel ORMs, no parallel loggers, no parallel wire formats.
 | Analytical store | `hanzoai/datastore-go` | Separate from `orm`. NOT an ORM backend — different workload class. |
 
 **Migration adapters (transitional only, not parallel ways to build new
-services):** `zip.Adapt(http.Handler)`, `zip.AdaptChi(chi.Router)`,
-`zip.MountBeego(beego.App)`, `zip.MountGin(gin.Engine)`. These exist so
-existing chi/beego/gin code can be wrapped into a zip mount without a
-same-day rewrite. New code must be written natively against zip.
+services):** `zip.AdaptNetHTTP(http.Handler)`,
+`zip.AdaptNetHTTPFunc(http.HandlerFunc)`,
+`zip.AdaptNetHTTPMiddleware(func(http.Handler) http.Handler)`, and
+`app.Mount(prefix, http.Handler)` as the path-prefixed mount form.
+`chi.Router`, `gin.Engine`, and `beego.App.Handlers` all satisfy
+`http.Handler` natively, so the same adapter covers every legacy
+framework — no per-framework wrapper needed. These exist so existing
+chi/beego/gin code can be wrapped into a zip mount without a same-day
+rewrite. **New code must be written natively against zip.** Adapters
+cost ~5% per-request perf versus native Fiber dispatch and that cost
+compounds at high RPS; replace adapted routes when feasible.
+
+The framework itself is **`hanzoai/zip` v0.1.0+** on `feat/fiber-v3`
+(commit train rebuilds upstream zeekay/zip from scratch on Fiber v3;
+see `hanzoai/zip` PR #1). zip is the ONE web framework. chi / gin /
+beego / echo are MIGRATION-ONLY and never appear in new Hanzo Go code.
 
 ### Process model
 
@@ -295,23 +307,41 @@ via `hanzoai/zip`). The unified binary uses **mount point #2** to allow
 service routes themselves to be authored in any HIP-0105-supported
 language:
 
-| Language | Runtime | Mount path |
+| Language | Runtime name | Mount path |
 |---|---|---|
 | Go (Hanzo-authored) | native | direct in-process — default for all service code |
-| Rust / C++ / Zig / AssemblyScript | wazero | compiled to `*.wasm`, loaded under `hz_routes/<name>/` |
-| JavaScript / TypeScript | goja (production) or v8go (experimental) | source files loaded directly |
-| Python | pyvm (single-tenant only, `-tags pyvm`) | CPython 3.13 sub-interpreter pool |
-| DSL / policy | starlark | sandboxed, deterministic, no I/O by default |
+| Rust / C++ / Zig / AssemblyScript | `wasm` (wazero) | compiled to `*.wasm`, loaded under `hz_routes/<name>/` |
+| JavaScript / TypeScript | `goja` (production) or `v8go` (experimental) | source files loaded directly |
+| Python | `pyvm` (single-tenant only, `-tags pyvm`) | CPython 3.13 sub-interpreter pool |
+| DSL / policy | `starlark` | sandboxed, deterministic, no I/O by default |
 
-All five runtimes mount through the SAME `zip.App` via
-`app.Module(method+path, runtime, modulePath)`. The route author writes
-their handler in their preferred language; the same `.zap` schemas
-generate the same I/O types across all of them. Crash isolation,
-cancellation semantics, and scale characteristics are exactly as
-described in HIP-0105.
+**Every HIP-0105 runtime is mountable as a route via the SAME entry
+point**: `app.Module(method+path, runtimeName, modulePath)`. One method
+on the zip.App; one canonical JSON envelope shape (`{method, path,
+params, query, headers, body, org, user, userEmail}`) every guest
+sees; one response envelope (`{status, headers, body}`) every guest
+returns. There is no per-runtime mount API — `app.ModuleWasm` /
+`app.ModuleGoja` / `app.ModulePython` do not exist on purpose. One way.
 
-Multi-tenant deployments MUST gate `AllowedRuntimes` to exclude runtimes
-lacking hard sandbox (pyvm, v8go).
+```go
+app.Module("POST /v1/policy/eval",  "wasm",     "./ext/policy")    // Rust/AS/Zig/C → wasm via wazero
+app.Module("POST /v1/transform",    "pyvm",     "./ext/transform") // single-tenant CPython
+app.Module("POST /v1/webhook",      "goja",     "./ext/webhook")   // recommended multi-tenant JS
+app.Module("POST /v1/route",        "starlark", "./ext/route")     // config DSL
+```
+
+The route author writes their handler in their preferred language; the
+same `.zap` schemas generate the same I/O types across all of them.
+Crash isolation, cancellation semantics, and scale characteristics are
+exactly as described in HIP-0105. The loader is **duck-typed** via
+`zip/runtime.Loader` so zip itself stays decoupled from
+`hanzoai/base/plugins/extruntime` (the canonical loader implementation);
+the unified binary constructs `*extruntime.Loader` once with whichever
+runtimes it cares about and threads it into `zip.Config.Loader`.
+
+Multi-tenant deployments MUST gate `AllowedRuntimes` on `zip.Config` to
+exclude runtimes lacking hard sandbox (pyvm, v8go). `AllowedRuntimes:
+nil` accepts whatever the Loader has registered.
 
 ### Deployment surfaces this enables
 
