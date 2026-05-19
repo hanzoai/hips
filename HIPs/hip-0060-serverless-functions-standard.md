@@ -1017,6 +1017,7 @@ User function code is injected into these base images at deployment time. The co
 | **HIP-50** (Edge Computing) | TypeScript functions sync to Edge for latency-sensitive CPU workloads. |
 | **HIP-55** (Message Queue) | MQ trigger consumes NATS subjects. Functions publish to MQ via `ctx.publish`. |
 | **HIP-57** (ML Pipeline) | Pipeline stages can be implemented as functions. Retraining triggers. |
+| **HIP-105** (In-Process Extension Runtime) | Complementary, different workload class. HIP-60 runs full containerized functions in Knative pods (cold start in seconds, GPU-attachable). HIP-105 runs in-process wasm/JS/Go extensions inside a host service (cold start in microseconds, no pod). Rule of thumb: if the work justifies a fresh pod, HIP-60; if it's a hot-path validator or per-record hook, HIP-105. |
 
 ## References
 

@@ -13,6 +13,14 @@ requires: HIP-0027, HIP-0032, HIP-0065
 
 **Full specification**: See `~/work/hanzo/papers/hip-0302-replicate.tex` (LaTeX) and the compiled PDF `hip-0302-replicate.pdf`.
 
+> **See also HIP-0107 (Streaming Replication over VFS)** for the
+> unified VFS-backed approach that supersedes the per-backend sink code
+> referenced in this HIP. HIP-0302 stays Final as the spec for the
+> SQLite WAL and ZapDB substrate (encryption keys, recovery objectives,
+> sidecar pattern). HIP-0107 adds one transport pipeline on top that
+> covers SQLite, ZapDB, blockchain state, and generic logs through the
+> same `source-adapter → age → vfs.Backend` flow.
+
 ## Abstract
 
 Specifies how all Hanzo Base-powered services achieve durable state persistence through continuous encrypted streaming replication to S3-compatible storage using `hanzoai/replicate` and `hanzoai/age`. Covers two storage engines:
