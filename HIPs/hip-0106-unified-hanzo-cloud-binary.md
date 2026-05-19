@@ -246,6 +246,102 @@ Hanzo-authored source. ZAP is Hanzo-native and is the only thing the
 public surface knows about. (Brand-policy parity with @hanzo/gui / Zen
 MoDE — see CLAUDE.md.)
 
+### Edge + stateless scaling
+
+The `cloud` binary is fully stateless within the process. All state lives
+in the per-tenant SQLite + KMS + VFS layer per HIP-0302 / HIP-0107.
+Any replica can serve any request as long as it can open the requesting
+tenant's SQLite file from local storage (cached) or the encrypted S3
+mirror (cold).
+
+```
+load balancer (k8s Service / DO LB / Cloudflare)
+  └── sticky / consistent-hash on X-Org-Id
+      ↓
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ cloud replica│  │ cloud replica│  │ cloud replica│   ← N replicas, identical
+│ ingress      │  │ ingress      │  │ ingress      │     binary, no shared
+│ gateway      │  │ gateway      │  │ gateway      │     in-process state
+│ iam, kms,    │  │ iam, kms,    │  │ iam, kms,    │
+│ base,        │  │ base,        │  │ base,        │
+│ commerce,    │  │ commerce,    │  │ commerce,    │
+│ ai, vfs,     │  │ ai, vfs,     │  │ ai, vfs,     │
+│ o11y, mcp,   │  │ o11y, mcp,   │  │ o11y, mcp,   │
+│ amqp, mq,    │  │ amqp, mq,    │  │ amqp, mq,    │
+│ dns, authz   │  │ dns, authz   │  │ dns, authz   │
+└──────────────┘  └──────────────┘  └──────────────┘
+       │                 │                 │
+       └─────────────────┼─────────────────┘
+                         ↓
+        ┌──────────────────────────────────────┐
+        │ per-tenant SQLite + age-encrypted     │
+        │ S3 mirror (HIP-0302, HIP-0107).       │
+        │ KMS master key + per-org HKDF DEK.    │
+        │ VFS = canonical object-store iface.   │
+        └──────────────────────────────────────┘
+```
+
+#### Routing
+
+The load balancer routes external requests to any replica. Consistent-hash
+on `X-Org-Id` (after gateway-mint) keeps each tenant warm on one replica
+when possible — this is a perf optimization, not a correctness requirement.
+Cold tenants get served by whichever replica has capacity; per-tenant
+SQLite cold-open is millisecond-scale.
+
+#### Gateway as edge subsystem
+
+Within each replica, the `gateway` subsystem owns the edge concerns:
+
+- JWT validation against `iam` JWKS
+- Identity-header strip + gateway-minted `X-Org-Id` per `iam.tenantClaim`
+- Per-route policy + rate limiting
+
+After gateway, calls between subsystems use ZAP-typed Go method calls
+(see "Subsystem boundaries"); no per-hop JSON marshalling. JSON marshal
+runs at most once per request, at the subsystem handler boundary,
+returning to the gateway response path.
+
+#### Scaling characteristics
+
+| Workload | RAM per replica | Throughput per replica |
+|---|---:|---:|
+| Idle | ~150 MB | n/a |
+| 100 active tenants, mixed | ~500 MB – 1 GB | ~10K req/s |
+| 1000 active tenants, heavy | ~7 – 16 GB | ~50K req/s |
+
+Horizontal scaling knob: number of replicas behind the load balancer.
+Kubernetes HPA on CPU + per-replica X-Org-Id-affinity hashing scales
+linearly until the per-tenant SQLite + replicate fan-out hits its
+own limits, which sit well above this binary's per-replica throughput.
+
+Cold-start budget: ~150 ms full boot with all 13 subsystems mounted; the
+lazy-mount pattern from HIP-0108 brings this down to ~10 ms by deferring
+subsystem `Mount()` until first request.
+
+#### Single-process invariant
+
+By design, the `cloud` binary holds no per-tenant state in process memory
+beyond:
+- the read-side page cache for SQLite (evictable, `pragma cache_size`-bounded)
+- the wazero/goja/pyvm extension runtime pools (HIP-0105, HIP-0108)
+- the in-process Deps-client method dispatch table
+
+Replica restart is safe at any time. Active requests reconnect via the
+load balancer. No graceful-drain coordination required across replicas
+beyond standard k8s pod lifecycle.
+
+#### Anti-patterns
+
+- Replica-local caches keyed by tenant ID without time-based eviction
+  → causes memory leak under tenant churn
+- Cross-replica in-memory pub-sub (sharing state via NATS in-memory
+  topics) → use durable queue subsystem (`mq`, `amqp`) instead
+- Sticky-session affinity REQUIRED (vs. preferred) → forces stateful
+  load balancer config; breaks the "any replica serves any tenant"
+  invariant. The X-Org-Id consistent hash is an optimization, not a
+  contract.
+
 ### Tenant isolation
 
 | Layer | Today | Under HIP-106 |
