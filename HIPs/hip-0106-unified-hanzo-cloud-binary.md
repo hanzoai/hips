@@ -433,7 +433,7 @@ webhook intake. It explicitly does NOT:
 
 - Touch a Primary Account Number (PAN)
 - Process card data
-- Implement processor connector logic (HyperSwitch / Stripe SDK /
+- Implement processor connector logic (Stripe SDK /
   Adyen SDK)
 - Store encrypted PAN
 
@@ -456,7 +456,7 @@ commerce is NOT subject to PCI-DSS L1 audit.
 | System | PCI scope |
 |---|---|
 | `vault` | **CDE** — the only system that touches PAN. Full L1 audit. Quarterly ASV. HSM-backed key store. Own deployment, own k8s namespace, own NetworkPolicy boundary. |
-| `payments` | **CDE-connected** (NOT CDE). Sees only tokens. HyperSwitch fork operated in tokens-only mode. Calls `vault.Charge(token, processor, amount)` for the actual processor call. |
+| `payments` | **CDE-connected** (NOT CDE). Sees only tokens. Payments service operated in tokens-only mode. Calls `vault.Charge(token, processor, amount)` for the actual processor call. |
 | `commerce` | **CDE-connected** (NOT CDE). Light router. Only ever handles tokens + intent IDs. Mounts inside superbase like any other subsystem. |
 | Everything else in superbase | **Not CDE-connected.** Standard SOC2-grade controls. |
 
@@ -465,8 +465,8 @@ For this architecture to be sound, two requirements must hold:
 1. **Browser-side card collection runs directly against vault** (vault
    ships a `vault-collect.js` iframe; PAN posts directly to vault from
    the browser, never via commerce or any Hanzo app server).
-2. **HyperSwitch (payments) runs in tokens-only mode** — verified by
-   audit of HyperSwitch data flow that no code path exposes raw PAN to
+2. **Payments runs in tokens-only mode** — verified by
+   audit of payments data flow that no code path exposes raw PAN to
    the surrounding Go process.
 
 Both are tracked under the implementation TODO list at
@@ -515,7 +515,7 @@ vault or payments operator.
   CDE-connected. Commerce talks to both via ZAP RPC. **Hard rule, no
   exceptions** — even single-tenant deployments use the three-process
   architecture.
-- **`~/work/hanzo/flow` (LangFlow) is NOT folded.** Visual ML
+- **`~/work/hanzo/flow` (Hanzo Flow — visual ML pipeline / agent-building) is NOT folded.** Visual ML
   pipeline / agent-building tool. Heavy native deps (torch, faiss,
   sentence-transformers). Runs as a separate process behind the
   gateway subsystem. Per the FT audit (2026-05-19), classified RED
@@ -524,7 +524,7 @@ vault or payments operator.
   column store. Uses ClickHouse-native ReplicatedMergeTree + S3 disk.
   Out of scope. Shares S3 bucket with HIP-0107 streaming via vfs
   prefix (`s3://bucket/datastore/...` vs `s3://bucket/replicate/...`).
-- **`langfuse` (LLM observability / eval / prompt management) is NOT
+- **`~/work/hanzo/insights` (Hanzo Insights — AI observability + eval + prompt management) is NOT
   folded.** Runs as a separate process — the canonical AI console
   for cloud-hosted LLM operations. Integrates with superbase via
   HTTP + (forthcoming) ZAP-typed endpoints; consumed by the `cloud`
