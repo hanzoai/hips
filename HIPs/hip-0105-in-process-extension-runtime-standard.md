@@ -370,10 +370,21 @@ at the zip / Base config level to exclude runtimes lacking hard sandbox
 6. **Do you need REAL CPython (with the full ecosystem including
    numpy, pandas, cryptography) inside the Go binary, and is your
    deployment SINGLE-TENANT?** → **pyvm**. CPython 3.13 embedded via
-   direct cgo bridge. Beats wazero AS by 2.4× serial and has the
-   lowest per-invocation memory (496 B/op) of any sandboxed runtime
-   measured. Sub-interpreter pool gives per-tenant-style isolation
-   within the single-process deployment.
+   a small direct cgo bridge (`plugins/pyvm/pyvm_bridge.{c,h}`, ~150
+   lines). The canonical Hanzo Go binding for embedded CPython is
+   [`github.com/hanzoai/cpy3`](https://github.com/hanzoai/cpy3) — a
+   fork of `go-python/cpy3` with Python 3.12+ removed-API polyfills,
+   a `SubInterpreter` wrapper, `IsGILDisabled()` detection, a
+   `LoadSource`+`CallJSONFunctionByName` JSON hot-path helper, and a
+   3.13t build script. pyvm chooses the inline bridge because the
+   consolidated `pyvm_invoke` (1 cgo call per Invoke) is ~30% faster
+   than routing through the cpy3 wrappers for the JSON-pipe
+   embedding contract.
+
+   Beats wazero AS by ~2× serial and has the lowest per-invocation
+   memory (496 B/op) of any sandboxed runtime measured. Sub-interpreter
+   pool gives per-tenant-style isolation within the single-process
+   deployment.
 
    **DO NOT use pyvm in multi-tenant builds.** A C extension segfault
    in any tenant's code kills the entire host process and every other
@@ -381,9 +392,24 @@ at the zip / Base config level to exclude runtimes lacking hard sandbox
    in extension manifests. Gate with `-tags pyvm` at build time;
    default off.
 
-   Python 3.13 free-threading (PEP 703, `python3.13t`) is detected
-   at runtime via `Py_GIL_DISABLED`; when present, GIL operations
-   become no-ops and goroutines run Python in real parallel.
+   Python 3.13 free-threading (PEP 703, `python3.13t`) is detected at
+   runtime via `pyvm.GilDisabled()`; when present, the GIL is a no-op
+   and OWN_GIL sub-interpreters become unnecessary for parallelism.
+   **Measured 2026-05-18 on Apple M1 Max, default `BASE_PYVM_POOL_SIZE=4`:
+   free-threading is a non-event for pyvm's embedding workload.**
+
+   | Build | Serial ns/op | Parallel ns/op |
+   |---|---:|---:|
+   | 3.13 default-GIL | 4,073 | 5,733 |
+   | 3.13t free-threaded | 4,478 | 5,805 |
+
+   PEP 684 OWN_GIL sub-interpreters already deliver per-OS-thread
+   parallelism on default-GIL; PEP 703 doesn't add headroom unless
+   you abandon the sub-interp pool and run many threads against one
+   interpreter — which we don't. The pool size is the lever, not the
+   GIL mode. Revisit when CPython 3.14+ ships free-threading as
+   default with closed serial-perf gap. Full measurement:
+   `~/work/hanzo/base/docs/EXTENSIONS_BENCHMARK.md`.
 
 7. **Are you serving a workload where seconds of cold start is fine and
    GPU is needed?** → That's HIP-0060 Functions, not this. Wrong HIP.
