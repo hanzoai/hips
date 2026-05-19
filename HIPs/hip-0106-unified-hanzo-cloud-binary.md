@@ -86,6 +86,95 @@ The unified binary collapses this:
 
 ## Specification
 
+### Wire protocol stack
+
+JSON crosses the system boundary exactly once per request. Inside,
+every inter-subsystem call is ZAP-typed Go values — direct method
+calls when co-resident, ZAP RPC when split. JSON re-marshalling
+between Hanzo subsystems is a defect.
+
+```
+External clients
+  └── HTTP + JSON (stdlib encoding/json/v2 via hanzoai/zip jsonenc)
+        ↓
+ingress (TLS termination, log, rate limit)
+  └── ingress hands the request to gateway with the JSON body intact
+        ↓
+gateway (JWT validation, identity-header mint, route)
+  └── gateway hands the request to the subsystem with X-Org-Id +
+      the validated JWT; the body is still JSON until the subsystem
+      handler parses it
+        ↓
+subsystem handler (e.g. commerce, ai, mcp)
+  └── parses JSON body via zip.Ctx.Bind() — encoding/json/v2 when
+      GOEXPERIMENT=jsonv2, encoding/json v1 otherwise
+  └── inter-subsystem calls via cloud.Deps clients — ZAP-typed Go
+      values, no JSON re-marshal (in-process: direct method calls;
+      split: ZAP RPC over :9653)
+  └── response back to zip.Ctx.JSON() — same jsonenc, same variant
+        ↓
+gateway → ingress → external client
+```
+
+#### Invariants
+
+1. **JSON happens at most ONCE per request, at the subsystem
+   handler boundary.** Inter-subsystem code paths use ZAP-typed Go
+   values — `cloud.Deps.IAM.VerifyJWT(...)`,
+   `cloud.Deps.Commerce.GetTenantConfig(...)`, etc. No subsystem
+   marshals a struct, hands it to another subsystem, and watches it
+   get unmarshaled.
+
+2. **`encoding/json/v2` is the canonical JSON impl.** When the
+   binary is compiled with `GOEXPERIMENT=jsonv2`, every JSON path in
+   `hanzoai/zip` (and therefore every Hanzo HTTP handler) routes
+   through stdlib `encoding/json/v2`. Without the flag, zip falls
+   back to `encoding/json` v1. No third-party JSON library
+   (`goccy/go-json`, `sonic`, `jsoniter`, …) is permitted in the
+   Hanzo Go stack. Stdlib only.
+
+3. **ZAP RPC is the wire format when subsystems are split-deployed.**
+   The same `cloud.<Subsystem>Client` interface that resolves to a
+   direct Go call when co-resident resolves to a ZAP RPC client when
+   split. The subsystem caller does not branch on the mode.
+   Inter-subsystem RPC rides the existing :9653 ZAP listener.
+
+4. **One JSON entry point per Hanzo Go binary.** `hanzoai/zip`
+   internal/jsonenc package; selected at compile time by
+   `goexperiment.jsonv2` build tag. `zip.JSONVariant` is a constant
+   exposing which impl is active (`encoding/json/v2` or
+   `encoding/json`). `zip.New` logs it at startup so operators can
+   confirm the impl from production logs.
+
+5. **Brand-neutral.** All hostnames, brands, and domain references
+   are config-driven per the existing brand-package contract — no
+   `hanzo.ai` hardcodes in the wire-stack logic. The same binary
+   serves `api.hanzo.ai`, `api.osage.cloud`, `api.lux.cloud`, etc.
+
+#### Inter-subsystem client wiring (cloud.Deps)
+
+Per HIP-0106 "Subsystem-to-subsystem calls", `cloud.Deps` exposes
+typed clients (one per subsystem). `cloud.BuildDeps(cfg)` picks the
+implementation per subsystem:
+
+| Subsystem state | Endpoint configured? | Resolves to |
+|---|---|---|
+| Enabled in this process | n/a | `nil` — the subsystem's own `Mount()` installs its in-process Client |
+| Disabled | Yes (`CLOUD_<NAME>_ZAP_ADDR`) | ZAP RPC client targeting the endpoint |
+| Disabled | No | `clients.Disabled<Name>()` — fail-closed stub returning a clear error |
+| Payments / Vault | (always RPC per HIP-0106 solo-vault CDE) | ZAP RPC client at `CLOUD_PAYMENTS_ZAP_ADDR` / `CLOUD_VAULT_ZAP_ADDR`, or fail-closed disabled stub if no endpoint |
+
+Subsystem code calls `deps.<Name>.<Method>(...)` without knowing the
+mode. The interface is the contract. Detection of the fail-closed
+stub at mount-time uses `clients.IsDisabled(err)`.
+
+The cloud/types leaf package holds the transport types AND the client
+interfaces so the in-process / RPC implementations can satisfy them
+without an import cycle through cloud. As subsystems ship their .zap
+schemas and `zapc generate <schema>.zap --lang go --out ./zap/gen/`
+produces typed bindings, the placeholder types in `cloud/types/`
+become aliases to the generated structs.
+
 ### Canonical Hanzo Go stack
 
 The unified binary is opinionated. Every subsystem uses the same Go
