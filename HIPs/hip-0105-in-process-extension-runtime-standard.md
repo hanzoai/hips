@@ -316,6 +316,28 @@ and the language constraint allows Go, write it in Go.
 **Pick another runtime only when one of these four exceptional conditions
 holds:**
 
+### Mount points where extensions run
+
+Per HIP-0106, the `superbase` binary mounts extension runtimes in two
+places:
+
+1. **In-process Base hooks** (the original HIP-0105 scope): per-record
+   onCreate/onUpdate/onDelete hooks, scheduled jobs, custom validators.
+   Read from `<base-data-dir>/hz_hooks/<name>/extension.json`.
+
+2. **Web routes via `hanzoai/zip`**: ANY HIP-0105 runtime is also
+   mountable as an HTTP route via `app.Module(method+path, runtime,
+   modulePath)`. Read from `<service-dir>/hz_routes/<name>/extension.json`
+   OR registered programmatically.
+
+The runtime contract is identical in both surfaces. Same `.zap` schemas
+generate the same I/O types. Same crash isolation. Same scale
+characteristics. **One abstraction, two mount points.**
+
+Multi-tenant operators MUST set `AllowedRuntimes` (or equivalent gate)
+at the zip / Base config level to exclude runtimes lacking hard sandbox
+(pyvm, v8go-experimental).
+
 ### Decision tree
 
 1. **Is the code Hanzo-authored and Go-permissible?** → **native**.
