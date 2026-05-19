@@ -1,12 +1,12 @@
-# HIP-0095: QoS Challenge System
-
-**Status**: Draft
-**Type**: Standards Track
-**Category**: Compute Protocol
-**Created**: 2026-01-24
-**Authors**: Hanzo AI
-**Requires**: HIP-0023 (Decentralized AI Compute Swarm)
-
+---
+hip: 0095
+title: QoS Challenge System
+type: Standards Track
+category: Compute Protocol
+status: Draft
+author: Hanzo AI
+created: 2026-01-24
+requires: HIP-0023 (Decentralized AI Compute Swarm)
 ---
 
 ## Abstract
