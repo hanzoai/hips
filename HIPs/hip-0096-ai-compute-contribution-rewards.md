@@ -1,12 +1,12 @@
-# HIP-0096: AI Compute Contribution Rewards
-
-**Status**: Draft
-**Type**: Standards Track
-**Category**: Economic Protocol
-**Created**: 2026-01-24
-**Authors**: Hanzo AI
-**Requires**: HIP-004 (HMM), HIP-006 (AI Mining Protocol), ZIP-002 (PoAI)
-
+---
+hip: 0096
+title: AI Compute Contribution Rewards
+type: Standards Track
+category: Economic Protocol
+status: Draft
+author: Hanzo AI
+created: 2026-01-24
+requires: HIP-004 (HMM), HIP-006 (AI Mining Protocol), ZIP-002 (PoAI)
 ---
 
 ## Abstract
