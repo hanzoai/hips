@@ -331,20 +331,34 @@ findings:
 
 ### Phase 1 — Mount contract on reference + smallest services (1 week)
 
-The audit identified three subsystems that **already export `Mount(...)`**:
-**`commerce`, `gateway`, `vfs`**. These are the reference impl shape.
-Mount contract is then extracted from the smallest remaining services:
+Per `AUDIT_2026_05_19.md`, three subsystems **already export
+`Mount(...)`**: **`commerce`, `gateway`, `vfs`**. These are the
+reference impls — Phase 1 first reshapes their signatures to the
+canonical `(*zip.App, Deps) error` form, then extends the same shape
+to the smallest remaining services:
 
-1. **commerce** (reference) — production, multi-tenant (37 X-Org-Id
-   call-sites), IAM-integrated, `Mount` exists. Validate the
-   pattern; harden Deps interface.
-2. **gateway** (reference) — `Mount` exists. Validate that the
-   subsystem can be both standalone and embedded.
-3. **vfs** (reference) — `Mount` exists. Smallest of the three.
-4. **kms** — smallest service still needing `Mount`; clean deps
-5. **dns** — small, no auth dep
-6. **amqp** — small, no auth dep
-7. **authz** — first to consume `deps.IAM`
+**Reference impls (already Mount-shaped):**
+
+1. **commerce** — production, multi-tenant (37 X-Org-Id call-sites),
+   IAM-integrated, `Mount` exists. Reshape `Deps` to the canonical
+   interface and use it as the live blueprint.
+2. **gateway** — `Mount` exists. Validate that the subsystem can be
+   both standalone and embedded.
+3. **vfs** — `Mount` exists. Smallest of the three.
+
+**Smallest remaining services to bring to the Mount contract:**
+
+4. **kms** — smallest service still needing `Mount`; clean deps.
+5. **dns** — small, no auth dep.
+6. **amqp** — small, no auth dep.
+7. **authz** — first to consume `deps.IAM`.
+
+**Explicitly excluded from Phase 1 (and from the unified binary
+entirely):**
+
+- **`vault`** — PCI-CDE. Folding it into a multi-tenant process
+  expands PCI scope to every other tenant. Stays its own deployment.
+  See Non-goals.
 
 ### Phase 2 — Ship `superbase` (1 week)
 
@@ -373,7 +387,7 @@ Universal `X-Org-Id` gating at the unified mux entry. Per-tenant data
 isolation enforced by Base. KMS reference resolution scoped to the
 calling org. Telemetry tagged with org.
 
-### Phase 5 — Reseller provisioning (1 week)
+### Phase 5 — Reseller provisioning + operator convergence (1 week)
 
 Operator CRD `ResellerCloud{name, parentOrg, brand, enabledSubsystems}`
 that creates the IAM app + KMS namespace + Base storage allocation +
@@ -381,8 +395,19 @@ Gateway routes atomically. Documented at
 `~/work/hanzo/superbase/docs/RESELLER.md`. Self-serve resell becomes
 possible.
 
-Resolves the audit's "three competing operator lineages" finding by
-picking one and converging on it.
+**Operator convergence (BLOCKER for Phase 5).** The audit identified
+three parallel operator lineages:
+
+- `~/work/hanzo/operator` (Go)
+- `~/work/hanzo/hanzo-operator` (Go, production)
+- `~/work/hanzo/operator-core` (Rust)
+
+Phase 5 cannot ship until one is picked and the other two are either
+folded in or archived. Recommended path: keep `hanzo-operator` (the
+production lineage with the existing ClusterRole), fold the
+`ResellerCloud` CRD into it, archive `operator/`, and demote
+`operator-core` to a Rust library (`library-no-action` per audit) for
+shared CRD types. Decision required before Phase 5 starts.
 
 ### Phase 6 — Billing wiring (separate HIP follow-up)
 
@@ -469,3 +494,6 @@ the TS `billing`, `pricing`, and `auto` packages get absorbed into
 - HIP-0302 — Hanzo Replicate: Encrypted SQLite + ZapDB Durability for
   Base Services (the per-tenant data isolation model — covers both
   Base's SQLite backend AND ZapDB-backed deployments)
+- HIP-0107 — Streaming Replication over VFS (the unified streaming
+  pipeline; supersedes the per-backend sink code in HIP-0302's reference
+  impl — substrate stays, transport unifies)
