@@ -65,10 +65,13 @@ The unified binary collapses this:
 3. **Per-tenant routing** at request time: `X-Org-Id` from JWT picks
    the tenant's Base instance, KMS namespace, IAM application, and brand.
 4. **Multi-tenant Base** at the storage layer per HIP-0302: each tenant
-   org gets its own SQLite file under `data/{orgSlug}.db` with a per-org
-   HKDF-derived DEK from a master key in KMS. Already the pattern in
-   `~/work/hanzo/iam` and `~/work/hanzo/base`; this HIP makes it the
-   universal contract.
+   org gets its own per-tenant data file (`data/{orgSlug}.db` for the
+   SQLite backend, equivalent path for the ZapDB backend) with a
+   per-org HKDF-derived DEK from a master key in KMS. **Replicate
+   works for both backends** — SQLite WAL streaming and ZapDB-native
+   log shipping use the same age-encrypted GCS bucket sink. Already
+   the pattern in `~/work/hanzo/iam` and `~/work/hanzo/base`; this HIP
+   makes it the universal contract.
 5. **Unified IAM auth** at the boundary per HIP-0026: every subsystem
    trusts JWTs from one shared `iam.hanzo.id` JWKS endpoint. Gateway
    strips client-supplied identity headers, mints validated ones from
@@ -413,5 +416,6 @@ the TS `billing`, `pricing`, and `auto` packages get absorbed into
   the binary)
 - HIP-0301 — Agent Runtime Protocols & Cross-Platform Parity (agents
   subsystem must satisfy)
-- HIP-0302 — Hanzo Replicate: Encrypted SQLite Durability for Base
-  Services (the per-tenant SQLite isolation model)
+- HIP-0302 — Hanzo Replicate: Encrypted SQLite + ZapDB Durability for
+  Base Services (the per-tenant data isolation model — covers both
+  Base's SQLite backend AND ZapDB-backed deployments)
