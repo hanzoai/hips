@@ -201,6 +201,16 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | Number | Title | Type | Category | Status |
 |:-------|:------|:-----|:---------|:-------|
 | [HIP-0300](./HIPs/hip-0300-unified-mcp-tools-architecture.md) | Unified MCP Tools Architecture | Standards Track | Interface | Draft |
+| [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Adopts LP-0010 — Brand Sovereignty and Federation Discovery | Meta | Governance | Final |
+| [HIP-0304](./HIPs/hip-0304-onchain-federation-registry.md) | Adopts LP-0011 — Onchain Federation Registry | Standards Track | Interface | Draft |
+
+> **Adoption pointers.** HIP-0303 and HIP-0304 are thin adoption documents
+> that record Hanzo-specific notes (canonical `@hanzo/brand` package,
+> Hanzo subnet chainId, canonical `appId` map, MCP discovery binding) and
+> point at the canonical [LP-0010](https://github.com/luxfi/lps/blob/main/LPs/lp-0010-brand-sovereignty-and-federation-discovery.md)
+> and [LP-0011](https://github.com/luxfi/lps/blob/main/LPs/lp-0011-onchain-federation-registry.md)
+> for the normative spec. Spec changes land in the LPs first; this repo
+> only records Hanzo's adoption commits.
 
 ## HIP Process
 
