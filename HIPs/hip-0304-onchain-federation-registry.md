@@ -132,7 +132,7 @@ Per HIP-0303 §6, Hanzo source trees MUST NOT mention Liquidity. The Hanzo subne
 
 HIP-0304 is additive. HIP-0303's HTTP discovery continues to work unchanged. Apps with no onchain registration are unaffected. Consumers MAY use HTTP only, onchain only, or both.
 
-The cross-org `(brandId, appId)` namespace is shared across LP-0011 / HIP-0304 / ZIP-0026 / equivalents at the **schema** level (same `bytes32` types, same canonical lowercase ASCII forms) but **registrations are per-chain** (LP-0011 §6 replay protection). A `(hanzo, market)` registered on Lux mainnet is distinct from `(hanzo, market)` on Hanzo subnet.
+The cross-org `(brandId, appId)` namespace is shared across LP-0011 / HIP-0304 / ZIP-0032 / equivalents at the **schema** level (same `bytes32` types, same canonical lowercase ASCII forms) but **registrations are per-chain** (LP-0011 §6 replay protection). A `(hanzo, market)` registered on Lux mainnet is distinct from `(hanzo, market)` on Hanzo subnet.
 
 ## Reference Implementation
 
@@ -158,6 +158,6 @@ All LP-0011 security considerations apply unchanged. Hanzo-subnet-specific:
 - HIP-0010 — MCP Integration Standards
 - HIP-0014 — Application Deployment Standard
 - HIP-0025 — Bot/Agent Wallet-RPC Billing Protocol
-- ZIP-0026 — Zoo subnet adoption of the same registry
+- ZIP-0032 — Zoo subnet adoption of the same registry
 - IETF RFC 8615 — Well-Known URIs
 - IETF RFC 8785 — JSON Canonicalization Scheme
