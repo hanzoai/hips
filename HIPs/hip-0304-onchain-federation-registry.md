@@ -46,6 +46,7 @@ This document records Hanzo subnet activation, the canonical Hanzo `appId` map, 
 - **MCP discovery binding**: Hanzo apps that expose an MCP endpoint per HIP-0010 SHOULD include the MCP root URL inside `/.well-known/<appId>.json` under an `mcp` key (`{ "url", "version", "auth" }`). Because LP-0011's `wellKnownHash` covers the whole JSON document, the MCP URL is implicitly attested as part of the federated registration; rotating MCP endpoints requires a registry `update()` call.
 - **Liquidity blocklist**: the Hanzo subnet's federation precompile MUST reject registrations with `brandId == bytes32("liquidity")` (hardcoded blocklist constant); Liquidity's federation registry lives on Liquid EVM (chainId 8675309) and is not bridged into Hanzo.
 - **Cross-chain registration**: Hanzo apps serving traffic from both Lux mainnet and Hanzo subnet SHOULD register independently on each chain — LP-0011 §6 binds `block.chainid` into every commit hash so the same calldata cannot be replayed.
+- **v0.2 Registry/Resolver split**: Hanzo subnet implementations MUST deploy BOTH precompiles atomically — `0x0000000000000000000000000000000000011001` (`FederationRegistry` resolver) AND `0x0000000000000000000000000000000000011002` (`BrandConfigStore`). Partial deployment is rejected by node bootstrap. The resolver address is unchanged from v0.1 so existing federation aggregator clients keep working without code changes.
 
 ## Reference implementation (Hanzo)
 
