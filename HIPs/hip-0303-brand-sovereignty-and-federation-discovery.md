@@ -95,7 +95,7 @@ Each Hanzo app exposes its identity at `/.well-known/<appId>.json` per IETF RFC 
 }
 ```
 
-Same shape as LP-0010 and ZIP-0025. Federation peers (e.g. `https://zoo.market`, `https://parsai/market`) ship empty in source; operators mount a custom file via ConfigMap at deploy time.
+Same shape as LP-0010 and ZIP-0031. Federation peers (e.g. `https://zoo.market`, `https://parsai.io`) ship empty in source; operators mount a custom file via ConfigMap at deploy time.
 
 ### 5. Hanzo subnet branding
 
@@ -141,6 +141,6 @@ The inverse rule (Liquidity must not reference Hanzo) is codified in `liquidityi
 ## See Also
 
 - LP-0010 — Lux ecosystem's same architecture
-- ZIP-0025 — Zoo ecosystem's same architecture
+- ZIP-0031 — Zoo ecosystem's same architecture
 - HIP-0014 — Application Deployment Standard
 - IETF RFC 8615 — Well-Known URIs
