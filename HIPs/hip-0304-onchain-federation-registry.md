@@ -36,13 +36,15 @@ Where this HIP says "consumer", "registrant", "watcher", "owner" — see LP-0011
 
 ### 2. Hanzo subnet activation
 
-| Network | Chain ID | Precompile address | Activation |
-|---------|----------|---------------------|------------|
-| Hanzo mainnet | 36963 | `0x0000000000000000000000000000000000011001` | enabled at activation height |
-| Hanzo testnet | 36964 | `0x0000000000000000000000000000000000011001` | enabled at activation height |
-| Hanzo devnet  | 36964 | `0x0000000000000000000000000000000000011001` | always enabled |
+| Network | Chain ID | `FederationRegistry` (resolver) | `BrandConfigStore` (storage) | Activation |
+|---------|----------|----------------------------------|-------------------------------|------------|
+| Hanzo mainnet | 36963 | `0x0000000000000000000000000000000000011001` | `0x0000000000000000000000000000000000011002` | enabled at activation height |
+| Hanzo testnet | 36964 | `0x0000000000000000000000000000000000011001` | `0x0000000000000000000000000000000000011002` | enabled at activation height |
+| Hanzo devnet  | 36964 | `0x0000000000000000000000000000000000011001` | `0x0000000000000000000000000000000000011002` | always enabled |
 
 The subnet runs its own activation flag (`hip0304-onchain-federation-registry`) gated on subnet validator-set consensus; Lux primary-network activation (LP-0011) is independent.
+
+**v0.2 (Registry/Resolver split)**: Hanzo subnet implementations MUST deploy both precompiles atomically (`0x...011001` resolver + `0x...011002` store); partial deployment is rejected by node bootstrap. The `0x...011001` address remains the stable consumer-facing surface and is unchanged from LP-0011 v0.1; client libraries that hard-coded that address keep working byte-for-byte (the only ABI shift is `getByBrandApp → resolve`, plus an additive `STORE()` view).
 
 ### 3. Hanzo brand registration discipline
 
