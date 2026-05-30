@@ -58,7 +58,7 @@ Meanwhile:
   age-encryption + frame-pump loop for ZapDB instead of plugging into
   `replicate` as a source.
 - Blockchain state replication is **ad-hoc per chain** — Lux primary
-  network ships its own snapshot pump, Liquid EVM ships its own,
+  network ships its own snapshot pump, regulated EVM L1 ships its own,
   Z-Chain ships its own. Each invented its own age-recipient scheme,
   its own bucket layout, its own restore tool.
 
@@ -86,7 +86,7 @@ Four canonical source adapters ship with `hanzoai/replicate`:
 |---|---|---|
 | `source/sqlite-wal` | SQLite WAL (the original Litestream surface) | WAL frames, header per Litestream protocol |
 | `source/zapdb-log` | ZapDB incremental backup | ZAP frame format (magic `0x5A415001`, defined in HIP-0302 §"ZapDB Streaming Replication") |
-| `source/chain-state` | Lux primary network, Liquid EVM, Z-Chain, Hanzo's L1 | per-block state delta + snapshot frames |
+| `source/chain-state` | Lux primary network, regulated EVM L1, Z-Chain, Hanzo's L1 | per-block state delta + snapshot frames |
 | `source/generic-log` | Any append-only log file or Unix socket | length-prefixed records |
 
 All four implement:
@@ -200,7 +200,7 @@ monotonic order, then resumes streaming.
 |---|---|---|
 | 1 | Move `replicate/{s3,gs,abs,nats,oss,sftp,webdav}` per-backend code into `hanzo/vfs`. Existing `replicate.Sink` interface deletes; callers switch to `vfs.Backend`. | 3–4 days |
 | 2 | Fold `hanzoai/zapdb-replicator` into `hanzoai/replicate` as `source/zapdb-log`. Deprecate `ghcr.io/hanzoai/zapdb-replicator` (publish a final `vN+1.0.0-deprecated` tag pointing deployers at `ghcr.io/hanzoai/replicate`). | 2 days |
-| 3 | Implement `source/chain-state` for Lux primary network. Reuse for Liquid EVM and any other Lux-derived L1. | 3–5 days for Lux primary; ~1–2 days per derived L1. |
+| 3 | Implement `source/chain-state` for Lux primary network. Reuse for regulated EVM L1 and any other Lux-derived L1. | 3–5 days for Lux primary; ~1–2 days per derived L1. |
 | 4 | Implement `source/generic-log` for arbitrary append-only logs (Unix socket or file). | 1 day |
 | 5 | Update K8s manifests across `~/work/hanzo/universe/infra/k8s/` to swap `zapdb-replicator` sidecars for `replicate --source=zapdb-log`. Bump `hanzoai/replicate` to the version that ships all four sources. | 1 day per service touched |
 
