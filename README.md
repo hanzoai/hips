@@ -212,6 +212,37 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 > for the normative spec. Spec changes land in the LPs first; this repo
 > only records Hanzo's adoption commits.
 
+### Operator CRD Kinds (HIP-0400 — HIP-0419)
+
+One HIP per Kind exposed by `hanzoai/operator` v0.3.0+. Kind names are unprefixed (no `Hanzo*`).
+
+| Number | Title | Backing Product |
+|:-------|:------|:----------------|
+| [HIP-0400](./HIPs/hip-0400-service-crd.md) | Service CRD | generic stateless workload |
+| [HIP-0401](./HIPs/hip-0401-datastore-crd.md) | Datastore CRD | ClickHouse (`hanzoai/datastore`) |
+| [HIP-0402](./HIPs/hip-0402-sql-crd.md) | SQL CRD | Postgres (`hanzoai/sql`) |
+| [HIP-0403](./HIPs/hip-0403-kv-crd.md) | KV CRD | Valkey (`hanzoai/kv`) |
+| [HIP-0404](./HIPs/hip-0404-docdb-crd.md) | DocDB CRD | FerretDB (`hanzoai/docdb`) |
+| [HIP-0405](./HIPs/hip-0405-s3-crd.md) | S3 CRD | MinIO fork (`hanzoai/s3`) |
+| [HIP-0406](./HIPs/hip-0406-dns-crd.md) | DNS CRD | CoreDNS (`hanzoai/dns`) |
+| [HIP-0407](./HIPs/hip-0407-base-crd.md) | Base CRD | Hanzo Base distribution apps |
+| [HIP-0408](./HIPs/hip-0408-iam-crd.md) | IAM CRD | identity (`hanzoai/iam`) |
+| [HIP-0409](./HIPs/hip-0409-kms-crd.md) | KMS CRD | secrets manager (`hanzoai/kms`) |
+| [HIP-0410](./HIPs/hip-0410-llm-crd.md) | LLM CRD | LLM gateway (`hanzoai/gateway`) |
+| [HIP-0411](./HIPs/hip-0411-ingress-crd.md) | Ingress CRD | ingress controller (`hanzoai/ingress`) |
+| [HIP-0412](./HIPs/hip-0412-gateway-crd.md) | Gateway CRD | API gateway (KrakenD-style) |
+| [HIP-0413](./HIPs/hip-0413-mpc-crd.md) | MPC CRD | MPC cluster (`luxfi/mpc`) |
+| [HIP-0414](./HIPs/hip-0414-network-crd.md) | Network CRD | blockchain network (`luxfi/node`) |
+| [HIP-0415](./HIPs/hip-0415-chain-crd.md) | Chain CRD | EVM chain config |
+| [HIP-0416](./HIPs/hip-0416-validator-crd.md) | Validator CRD | single validator |
+| [HIP-0417](./HIPs/hip-0417-subnet-crd.md) | Subnet CRD | subnet definition |
+| [HIP-0418](./HIPs/hip-0418-indexer-crd.md) | Indexer CRD | chain indexer (`luxfi/indexer`) |
+| [HIP-0419](./HIPs/hip-0419-explorer-crd.md) | Explorer CRD | block explorer (`luxfi/explorer`) |
+
+### Service Catalog (HIP-0420 — HIP-0503)
+
+One Informational HIP per running workload in `do-sfo3-hanzo-k8s` (84 entries, snapshot 2026-05-18). Each lists its CRD Kind, upstream, image, ingress, dependencies, and current replica count. See files `hip-04XX-<service>.md` and `hip-050X-<service>.md`.
+
 ## HIP Process
 
 1. **Have an idea** - Discuss with the community
