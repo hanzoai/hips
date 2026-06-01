@@ -4,7 +4,7 @@ title: Q-Chain — Quasar Finality Block Standard
 type: Standards Track
 category: Infrastructure
 status: Draft
-authors: Hanzo AI
+author: Hanzo AI
 requires: HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain PQ Rollup), HIP-0084 (Pulsar-M DKG)
 ---
 

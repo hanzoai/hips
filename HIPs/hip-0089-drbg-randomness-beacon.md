@@ -4,7 +4,7 @@ title: DRBG / Randomness Beacon (SP 800-90A)
 type: Standards Track
 category: Cryptography
 status: Proposed
-authors: TBD
+author: TBD
 created: 2026-05-11
 requires: HIP-0005 (Post-Quantum Security), HIP-0073 (QRNG), HIP-0077, HIP-0078, HIP-0079, HIP-0084
 ---

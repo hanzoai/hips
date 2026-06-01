@@ -4,7 +4,7 @@ title: TxAuthEnvelope (typed PQ transaction signing)
 type: Standards Track
 category: Cryptography
 status: Proposed
-authors: TBD
+author: TBD
 created: 2026-05-11
 requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain), HIP-0079 (Q-Chain), HIP-0084 (Pulsar-M DKG), HIP-0085 (Wallet PQ Account Type)
 ---
