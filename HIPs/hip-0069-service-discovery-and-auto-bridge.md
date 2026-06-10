@@ -60,7 +60,7 @@ and filters.
 |----------------|----------|----------------------------------------|
 | `role`         | ✓        | `mcp` / `iam` / `kms` / `mpc` / `base` / `engine` / `browser` / `node` / `desktop` / `gateway` / `static` |
 | `server_id`    | ✓        | `kms-laptop.local-12345`               |
-| `org`          | default `hanzo` | `hanzo` / `lux` / `zoo` / `osage` / `liquidity` |
+| `org`          | default `hanzo` | `hanzo` / `lux` / `zoo` / `osage` |
 | `version`      | ✓        | `0.5.1`                                |
 | `proto`        | ✓        | `zap/1` / `http/1.1` / `grpc/1`        |
 | `capabilities` | ✓        | `sign,verify,encrypt`                  |
