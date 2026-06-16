@@ -19,7 +19,9 @@ README.md      # Index
 | 5 | Final | Post-Quantum Crypto | ML-KEM-768, ML-DSA-65, liboqs v0.11. 5 privacy tiers (Open to GPU TEE-I/O) |
 | 6 | Draft | Per-User Fine-Tuning | Per-USER models (not domain-specific). On-chain training ledger, encrypted training |
 | 7 | Draft | Active Inference | VERSES/Active Inference, EFE minimization, IEEE 2874 Spatial Web |
-| 26 | Draft | IAM Standard | RFC 6749/OIDC-compliant IAM at hanzo.id. Multi-tenant (5 domains), PKCE, credit balances |
+| 26 | Draft | IAM Standard | OIDC IAM server, per-brand origins, PKCE, credit balances. Client contract: HIP-0111 |
+| 111 | Active | IAM Auth Standard | The one way: `@hanzo/iam` SDK + canonical `/v1/iam/oauth/*` endpoints. No legacy paths |
+| 112 | Active | Cloud Topology | ingress→gateway→services, IAM, KMS, observability, per-brand. Ties HIP-0044/0068/0026/0027/0031 |
 
 ## Related Ecosystems
 
@@ -67,23 +69,20 @@ cargo test --package hanzo-pqc # PQC tests
 - Hanzo <-> Zoo: shared HLLM architecture, model portability
 - IEEE 2874: HSML, HSTP, Universal Data Graph
 
-## OAuth/OIDC RFC Compliance (2026-03-05)
+## IAM auth: one way (HIP-0111)
 
-All Hanzo IAM endpoints are RFC 6749/OIDC standard. Legacy Casdoor paths still served for backward compat.
+Canonical OIDC endpoints, relative to brand `serverUrl`. No `/oauth/*`, no `/api/login/*`, no `/api/` prefix. One way; no backward compatibility.
 
-| RFC Path | Legacy Path | Purpose |
-|----------|-------------|---------|
-| `/oauth/authorize` | `/login/oauth/authorize` | Authorization endpoint |
-| `/oauth/token` | `/api/login/oauth/access_token` | Token exchange |
-| `/oauth/introspect` | `/api/login/oauth/introspect` | Token introspection |
-| `/oauth/revoke` | — | Token revocation |
-| `/oauth/userinfo` | `/api/userinfo` | UserInfo endpoint |
-| `/oauth/device` | — | Device authorization |
-| `/oauth/logout` | — | End session |
-| `/.well-known/openid-configuration` | same | OIDC discovery |
-| `/.well-known/jwks` | same | JSON Web Key Set |
+| Path | Purpose |
+|------|---------|
+| `/.well-known/openid-configuration` | OIDC discovery (host-relative) |
+| `/v1/iam/oauth/authorize` | Authorization (PKCE `S256`) |
+| `/v1/iam/oauth/token` | Token exchange (`client_secret_basic`) |
+| `/v1/iam/oauth/userinfo` | UserInfo |
+| `/v1/iam/.well-known/jwks` | JSON Web Key Set |
+| `/v1/iam/oauth/logout` | End session |
 
-SDKs updated: Python (hanzo-iam), JS (@hanzo/iam-sdk), Go (iamsdk), CLI (hanzo-cli).
+JS/TS integrate only via `@hanzo/iam` (`/server`, `/betterauth`, `/nextauth`, `/react`, `/browser`, `/passport`); Go via `iamsdk`. IAM serves a `200 text/html` catch-all for unregistered paths — never let path or discovery drift. See **HIP-0111** (auth) and **HIP-0112** (cloud topology).
 
 ## References
 
