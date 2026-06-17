@@ -1,4 +1,4 @@
-# LLM.md - Hanzo Improvement Proposals (HIPs)
+# Hanzo Improvement Proposals (HIPs)
 
 ## Repository
 
