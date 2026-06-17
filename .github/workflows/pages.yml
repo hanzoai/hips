@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
     environment:
       name: github-pages
       url: https://hips.hanzo.ai
-    runs-on: ubuntu-latest
+    runs-on: hanzo-deploy-linux-amd64
     needs: build
     steps:
       - name: Deploy to GitHub Pages
