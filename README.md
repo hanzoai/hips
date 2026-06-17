@@ -172,6 +172,13 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0093](./HIPs/hip-0093-synthetic-biology-standard.md) | Synthetic Biology & DNA Data Storage Standard | Standards Track | Core | Draft |
 | [HIP-0094](./HIPs/hip-0094-medical-ai-standard.md) | Medical AI & Clinical Decision Support Standard | Standards Track | Core | Draft |
 
+### Identity & Topology (HIP-0111 — HIP-0112)
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | Hanzo IAM Authentication Standard | Standards Track | Infrastructure | Active |
+| [HIP-0112](./HIPs/hip-0112-cloud-infrastructure-topology-standard.md) | Cloud Infrastructure Topology Standard | Standards Track | Infrastructure | Active |
+
 ### Cross-Chain (HIP-0100+)
 
 | Number | Title | Type | Category | Status |

@@ -139,7 +139,7 @@ Every Hanzo application uses Authorization Code Grant with PKCE (RFC 7636). Impl
 2. Client computes code_challenge = BASE64URL(SHA256(code_verifier))
 
 3. Client redirects user to:
-   GET https://hanzo.id/oauth/authorize
+   GET https://iam.hanzo.ai/v1/iam/oauth/authorize
      ?client_id=hanzo-app-client-id
      &redirect_uri=https://hanzo.ai/callback
      &response_type=code
@@ -148,7 +148,7 @@ Every Hanzo application uses Authorization Code Grant with PKCE (RFC 7636). Impl
      &code_challenge=<code_challenge>
      &code_challenge_method=S256
 
-4. User authenticates at hanzo.id (password, WebAuthn, or social login)
+4. User authenticates at the brand login UI (password, WebAuthn, or social login)
 
 5. IAM redirects back:
    GET https://hanzo.ai/callback
@@ -156,7 +156,7 @@ Every Hanzo application uses Authorization Code Grant with PKCE (RFC 7636). Impl
      &state=<random>
 
 6. Client exchanges code for tokens:
-   POST https://hanzo.id/oauth/token
+   POST https://iam.hanzo.ai/v1/iam/oauth/token
      grant_type=authorization_code
      &code=<authorization_code>
      &redirect_uri=https://hanzo.ai/callback
@@ -308,31 +308,20 @@ The `initDataNewOnly` configuration flag controls whether init_data.json overwri
 
 ### API Endpoints
 
-#### Authentication (RFC 6749 Standard Endpoints)
+#### Authentication (canonical OIDC endpoints)
 
-All OAuth endpoints use RFC 6749/OIDC standard paths. The IAM backend also serves legacy Casdoor paths (`/login/oauth/authorize`, `/api/login/oauth/access_token`, `/api/login/oauth/refresh_token`) for backward compatibility, but **all new integrations MUST use the RFC standard paths**.
+These `/v1/iam/oauth/*` paths are the only OIDC endpoints. There is no `/oauth/*`, no `/api/login/*`, no `/api/`-prefixed auth path. Clients reach them only through `@hanzo/iam`; see **HIP-0111 (Hanzo IAM Authentication Standard)**, which is authoritative for the client contract. IAM serves a `200 text/html` SPA catch-all for any unregistered path — a wrong path is silent breakage, not a `404`.
 
 | Method | Endpoint | RFC | Description |
 |--------|----------|-----|-------------|
 | GET | `/api/get-app-login` | — | Resolve application and org from client ID |
 | POST | `/api/login` | — | Password login (returns session or redirects) |
-| GET | `/oauth/authorize` | RFC 6749 §3.1 | OAuth 2.0 authorization endpoint |
-| POST | `/oauth/token` | RFC 6749 §3.2 | Token exchange (authorization_code, refresh_token, client_credentials, password) |
-| POST | `/oauth/introspect` | RFC 7662 | Token introspection |
-| POST | `/oauth/revoke` | RFC 7009 | Token revocation |
-| GET | `/oauth/userinfo` | OIDC Core §5.3 | UserInfo endpoint (also available at `/api/userinfo`) |
-| GET | `/oauth/logout` | OIDC RP-Initiated Logout | End session endpoint |
-| POST | `/oauth/device` | RFC 8628 | Device authorization endpoint |
-| GET | `/api/logout` | — | Session logout |
-
-#### Legacy Endpoint Mapping (Backward Compatibility)
-
-| Legacy (Casdoor) Path | RFC Standard Path | Notes |
-|----------------------|-------------------|-------|
-| `/login/oauth/authorize` | `/oauth/authorize` | Both work; prefer RFC |
-| `/api/login/oauth/access_token` | `/oauth/token` | Both work; prefer RFC |
-| `/api/login/oauth/refresh_token` | `/oauth/token` | Use `grant_type=refresh_token` |
-| `/api/login/oauth/introspect` | `/oauth/introspect` | Both work; prefer RFC |
+| GET | `/v1/iam/oauth/authorize` | RFC 6749 §3.1 | Authorization endpoint (PKCE `S256` required) |
+| POST | `/v1/iam/oauth/token` | RFC 6749 §3.2 | Token exchange (`client_secret_basic` for confidential clients) |
+| GET | `/v1/iam/oauth/userinfo` | OIDC Core §5.3 | UserInfo endpoint |
+| GET | `/v1/iam/oauth/logout` | OIDC RP-Initiated Logout | End session endpoint |
+| GET | `/v1/iam/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
+| GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | Discovery (host-relative; `originFrontend` empty) |
 
 #### User Management
 
@@ -358,36 +347,30 @@ All OAuth endpoints use RFC 6749/OIDC standard paths. The IAM backend also serve
 
 | Method | Endpoint | RFC | Description |
 |--------|----------|-----|-------------|
-| GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | OIDC discovery document |
-| GET | `/.well-known/oauth-authorization-server` | RFC 8414 | OAuth 2.0 Authorization Server Metadata (alias) |
-| GET | `/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
-| GET | `/.well-known/{appName}` | — | Per-application OIDC discovery |
-| GET | `/.well-known/{appName}/jwks` | — | Per-application JWKS |
-| GET | `/.well-known/webfinger` | RFC 7033 | WebFinger resource discovery |
+| GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | OIDC discovery document (host-relative) |
+| GET | `/v1/iam/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
 | GET | `/api/health` | — | Health check |
 
-The OIDC discovery document returns RFC-standard endpoint URLs:
+The OIDC discovery document is host-relative and self-consistent — issuer, authorize, token, userinfo, and jwks all share one origin (`originFrontend` empty in `app.prod.conf`):
 
 ```json
 {
-  "issuer": "https://hanzo.id",
-  "authorization_endpoint": "https://hanzo.id/oauth/authorize",
-  "token_endpoint": "https://hanzo.id/oauth/token",
-  "userinfo_endpoint": "https://hanzo.id/oauth/userinfo",
-  "device_authorization_endpoint": "https://hanzo.id/oauth/device",
-  "jwks_uri": "https://hanzo.id/.well-known/jwks",
-  "introspection_endpoint": "https://hanzo.id/oauth/introspect",
-  "revocation_endpoint": "https://hanzo.id/oauth/revoke",
-  "end_session_endpoint": "https://hanzo.id/oauth/logout",
-  "registration_endpoint": "https://hanzo.id/api/oauth/register",
-  "response_types_supported": ["code", "token", "id_token", ...],
-  "grant_types_supported": ["authorization_code", "implicit", "password", "client_credentials", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code", "urn:ietf:params:oauth:grant-type:token-exchange"],
-  "code_challenge_methods_supported": ["plain", "S256"],
-  "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post", "private_key_jwt", "none"]
+  "issuer": "https://iam.hanzo.ai",
+  "authorization_endpoint": "https://iam.hanzo.ai/v1/iam/oauth/authorize",
+  "token_endpoint": "https://iam.hanzo.ai/v1/iam/oauth/token",
+  "userinfo_endpoint": "https://iam.hanzo.ai/v1/iam/oauth/userinfo",
+  "jwks_uri": "https://iam.hanzo.ai/v1/iam/.well-known/jwks",
+  "end_session_endpoint": "https://iam.hanzo.ai/v1/iam/oauth/logout",
+  "response_types_supported": ["code"],
+  "grant_types_supported": ["authorization_code", "refresh_token", "client_credentials"],
+  "code_challenge_methods_supported": ["S256"],
+  "token_endpoint_auth_methods_supported": ["client_secret_basic"]
 }
 ```
 
 ### SDK Integration
+
+The client contract is **HIP-0111**. JS/TS applications integrate only through `@hanzo/iam`; Go services use `iamsdk`. No application writes an OIDC path string.
 
 #### Go SDK
 
@@ -396,7 +379,7 @@ import "github.com/hanzoai/iam/iamsdk"
 
 func init() {
     iamsdk.InitConfig(
-        "https://hanzo.id",           // IAM endpoint
+        "https://iam.hanzo.ai",       // IAM endpoint
         "hanzo-app-client-id",        // Client ID
         "client-secret-here",         // Client secret
         "cert-hanzo",                 // Certificate name
@@ -420,48 +403,23 @@ func getUserInfo(token string) (*iamsdk.User, error) {
 }
 ```
 
-#### JavaScript SDK
+#### JavaScript / TypeScript SDK (`@hanzo/iam`)
 
-```javascript
-import { SDK } from 'iam-js-sdk'
+Server-side token validation:
 
-const sdk = new SDK({
-  serverUrl: 'https://hanzo.id',
-  clientId: 'hanzo-app-client-id',
-  appName: 'app-hanzo',
-  organizationName: 'hanzo',
-})
+```ts
+import { validateToken } from "@hanzo/iam/server";
 
-// Redirect to login
-sdk.signin_redirect()
-
-// Handle callback
-const token = await sdk.exchangeForAccessToken(window.location.href)
-
-// Get user info
-const user = await sdk.getUserInfo(token.access_token)
-```
-
-#### Bearer Token Validation (Any Language)
-
-For services that just need to validate a bearer token, the simplest integration is to call the userinfo endpoint:
-
-```
-GET https://hanzo.id/api/userinfo
-Authorization: Bearer <access_token>
-
-Response:
-{
-  "sub": "hanzo/z",
-  "name": "z",
-  "email": "z@hanzo.ai",
-  "preferred_username": "z",
-  "balance": 9998.50,
-  "isAdmin": true
+const result = await validateToken(accessToken, {
+  serverUrl: "https://iam.hanzo.ai",
+  clientId: "hanzo-app-client-id",
+});
+if (result.ok) {
+  const { userId, email, owner } = result; // owner = org slug; scope queries to it
 }
 ```
 
-This is how the PaaS Platform validates IAM login tokens -- it sends the bearer token to the userinfo endpoint and matches the returned email against existing user records.
+Framework providers (`@hanzo/iam/betterauth`, `@hanzo/iam/nextauth`), the React SPA client (`@hanzo/iam/react`, `@hanzo/iam/browser`), and Passport (`@hanzo/iam/passport`) are specified in HIP-0111.
 
 ## Implementation
 
@@ -629,51 +587,41 @@ At startup, IAM's `resolveSecrets()` function fetches values from KMS using:
 
 This means client secrets, database passwords, and encryption keys never appear in Git, Docker images, or config files. KMS authentication uses Universal Auth tokens stored as Kubernetes secrets.
 
-## RFC Compliance
-
-As of 2026-03-05, all Hanzo IAM endpoints have been standardized to RFC 6749/OIDC paths. This section documents the compliance status.
+## Standards Compliance
 
 ### Standards Implemented
 
 | Standard | Status | Notes |
 |----------|--------|-------|
-| RFC 6749 (OAuth 2.0) | Full | Authorization, token, all grant types |
-| RFC 7636 (PKCE) | Full | S256 and plain challenge methods |
-| RFC 7662 (Token Introspection) | Full | `/oauth/introspect` |
-| RFC 7009 (Token Revocation) | Full | `/oauth/revoke` |
-| RFC 8414 (AS Metadata) | Full | `/.well-known/oauth-authorization-server` |
-| RFC 8628 (Device Authorization) | Full | `/oauth/device` |
-| RFC 7033 (WebFinger) | Full | `/.well-known/webfinger` |
+| RFC 6749 (OAuth 2.0) | Full | Authorization Code + PKCE; `client_secret_basic` |
+| RFC 7636 (PKCE) | Full | `S256` only |
 | OIDC Core 1.0 | Full | Discovery, UserInfo, ID Tokens |
-| OIDC Discovery 1.0 | Full | `/.well-known/openid-configuration` |
-| OIDC RP-Initiated Logout | Full | `/oauth/logout` |
-| RFC 7517 (JWK) | Full | `/.well-known/jwks` |
-| RFC 7519 (JWT) | Full | RS256, RS512, ES256, ES384, ES512 |
+| OIDC Discovery 1.0 | Full | `/.well-known/openid-configuration` (host-relative) |
+| OIDC RP-Initiated Logout | Full | `/v1/iam/oauth/logout` |
+| RFC 7517 (JWK) | Full | `/v1/iam/.well-known/jwks` |
+| RFC 7519 (JWT) | Full | RS256 signing |
 
-### Custom Login UI (hanzo.id)
+### Custom Login UI
 
 The `hanzo/id` repository provides a forkable, white-label Next.js login UI that serves as the frontend for all identity domains. It includes:
 
-- **RFC path normalization middleware**: Translates RFC standard paths to IAM backend paths transparently
-- **OIDC discovery rewriting**: Rewrites `.well-known` responses to use the public tenant domain
-- **Multi-tenant detection**: Hostname-based tenant resolution (hanzo.id, lux.id, zoo.id, pars.id, id.ad.nexus)
-- **PKCE support**: Built-in S256 code challenge generation and verification
-- **White-label forkable**: Fork to `luxfi/id`, `zoofdn/id`, etc. for org-specific branding
+- **OIDC discovery rewriting**: serves `.well-known` host-relative to the tenant domain
+- **Multi-tenant detection**: hostname-based tenant resolution (per-brand origin)
+- **PKCE support**: built-in `S256` code challenge generation and verification
+- **White-label forkable**: fork to `luxfi/id`, `zoofdn/id`, etc. for org-specific branding
 
-### SDK RFC Compliance
+### SDK Compliance
 
-All official SDKs have been updated to use RFC standard paths:
+The client contract is **HIP-0111**. JS/TS uses `@hanzo/iam`; Go uses `iamsdk`. All hit the canonical `/v1/iam/oauth/*` endpoints.
 
-| SDK | Package | Auth Endpoint | Token Endpoint |
-|-----|---------|--------------|----------------|
-| Python | `hanzo-iam` | `/oauth/authorize` | `/oauth/token` |
-| JavaScript | `@hanzo/iam-sdk` | `/oauth/authorize` | `/oauth/token` |
-| Go | `github.com/hanzoai/iam/iamsdk` | `/oauth/authorize` | `/oauth/token` |
-| CLI | `hanzo-cli` | `/oauth/authorize` | `/oauth/token` |
+| SDK | Package | Authorize | Token |
+|-----|---------|-----------|-------|
+| JS/TS | `@hanzo/iam` | `/v1/iam/oauth/authorize` | `/v1/iam/oauth/token` |
+| Go | `github.com/hanzoai/iam/iamsdk` | `/v1/iam/oauth/authorize` | `/v1/iam/oauth/token` |
 
-### Backward Compatibility
+### No Backward Compatibility
 
-The IAM backend continues to serve legacy Casdoor paths alongside RFC paths. Both resolve to the same handler. Legacy paths will be maintained indefinitely but are not documented for new integrations. The OIDC discovery document returns only RFC standard paths.
+There are no legacy paths. `/oauth/*`, `/api/login/oauth/*`, and `/api/`-prefixed auth paths are not served and not supported. The OIDC discovery document returns only the canonical `/v1/iam/oauth/*` endpoints.
 
 ## Security Considerations
 
