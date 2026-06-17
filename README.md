@@ -18,18 +18,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 ## HIP Index
 
-### Core Protocol HIPs
-
-| Number | Title | Type | Category | Status |
-|:-------|:------|:-----|:---------|:-------|
-| [HIP-001](./HIP-001.md) | Post-Quantum Cryptography Standard | Standards Track | Security | Implemented |
-| [HIP-002](./HIP-002.md) | AI/Blockchain Convergence Architecture | Standards Track | Core | In Development |
-| [HIP-002-ASO](./HIP-002-aso.md) | Active Semantic Optimization Protocol | Standards Track | Core | Active |
-| [HIP-003](./HIP-003.md) | Model Context Protocol (MCP) Integration | Standards Track | Interface | Active |
-| [HIP-004](./HIP-004-hmm.md) | Hanzo HMM (Hamiltonian Market Maker) | Standards Track | Core | Active |
-| [HIP-005](./HIP-005-kms.md) | KMS Hardware Security Module Integration | Standards Track | Infrastructure | Active |
-| [HIP-006](./HIP-006-ai-mining-protocol.md) | Hanzo AI Mining Protocol | Standards Track | Core | Draft |
-| [HIP-007](./HIP-007-zap.md) | ZAP - Zero-copy Agent Protocol | Standards Track | Interface | Draft |
+The canonical numbering is the four-digit `HIP-NNNN` series organized by category in the tables below. The earlier three-digit numbering (`HIP-001`, `HIP-002`, ...) has been superseded; representative successors include `HIP-001` → [`HIP-0005`](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md), `HIP-003` → [`HIP-0010`](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md), and `HIP-004` → [`HIP-0008`](./HIPs/hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md). Historical three-digit drafts are preserved under [`docs-old/archive/`](./docs-old/archive/).
 
 ### Foundation & Models (HIP-0000 — HIP-0010)
 
