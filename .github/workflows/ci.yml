@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate-hips:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     
     steps:
     - uses: actions/checkout@v3
@@ -76,7 +76,7 @@ jobs:
         cat hip-index.md
 
   security-check:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     
     steps:
     - uses: actions/checkout@v3
@@ -100,7 +100,7 @@ jobs:
         fi
 
   technical-validation:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
 
     steps:
     - uses: actions/checkout@v3
@@ -116,7 +116,7 @@ jobs:
         echo "Code block validation skipped (non-critical)"
 
   build-docs:
-    runs-on: ubuntu-latest
+    runs-on: hanzo-build-linux-amd64
     
     steps:
     - uses: actions/checkout@v3
