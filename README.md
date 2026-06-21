@@ -199,6 +199,7 @@ The canonical numbering is the four-digit `HIP-NNNN` series organized by categor
 | [HIP-0300](./HIPs/hip-0300-unified-mcp-tools-architecture.md) | Unified MCP Tools Architecture | Standards Track | Interface | Draft |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Adopts LP-0010 — Brand Sovereignty and Federation Discovery | Meta | Governance | Final |
 | [HIP-0304](./HIPs/hip-0304-onchain-federation-registry.md) | Adopts LP-0011 — Onchain Federation Registry | Standards Track | Interface | Draft |
+| [HIP-0305](./HIPs/hip-0305-esign-shared-db-tenancy.md) | esign: shared-DB tenancy via team-where, not file-per-tenant | Standards Track | Infrastructure | Accepted |
 
 > **Adoption pointers.** HIP-0303 and HIP-0304 are thin adoption documents
 > that record Hanzo-specific notes (canonical `@hanzo/brand` package,
