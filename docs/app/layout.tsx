@@ -26,6 +26,14 @@ export const metadata = {
   keywords: ['Hanzo', 'AI', 'proposals', 'HIP', 'MCP', 'agents', 'infrastructure', 'LLM', 'gateway'],
   authors: [{ name: 'Hanzo AI' }],
   metadataBase: new URL('https://hips.hanzo.ai'),
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.png',
+  },
   openGraph: {
     title: 'Hanzo Improvement Proposals (HIPs) - AI Infrastructure Standards',
     description: 'Explore the technical foundations of Hanzo AI - standards for Model Context Protocol, Agent SDK, LLM Gateway, and AI services.',
