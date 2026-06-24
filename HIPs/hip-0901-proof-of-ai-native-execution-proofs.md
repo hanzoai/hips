@@ -32,10 +32,10 @@ not by the matmul check. A `workloadType` field selects the binding: **PoE**
 (embedding), **PoI** (inference), **PoT** (training), **PoC** (contribution).
 
 There is **one canonical contract implementation**, shared across the whole
-ecosystem: it lives in `luxfi/standard` at `contracts/ai/thinking/` and is
-consumed everywhere — Hanzo included — via `@luxfi/standard/ai/thinking`. There
+ecosystem: it lives in `luxfi/standard` at `contracts/ai/` and is
+consumed everywhere — Hanzo included — via `@luxfi/standard/ai`. There
 is no second implementation. PoAI carries a **leaderless operator-LLM
-governance-execution** layer (`ThinkingGovernor`/`ThinkingParameters` settle
+governance-execution** layer (`AIGovernor`/`AIParams` settle
 canonical YES/NO + knob medians on-chain; `AIExecute`/`AIPolicy`/`AIApproval`
 read any contract state typed and execute arbitrary approved operations under a
 timelock). PoAI is **public, leaderless, decentralized, operator-safe, and
@@ -269,8 +269,8 @@ pre/post-processing covers the whole zen zoo:
 ### One canonical contract — consumed everywhere
 
 There is **one** on-chain implementation of PoAI. It lives in **`luxfi/standard`
-at `contracts/ai/thinking/`** and is consumed by every Lux-descended chain —
-Hanzo included — via `@luxfi/standard/ai/thinking`. There is **no second
+at `contracts/ai/`** and is consumed by every Lux-descended chain —
+Hanzo included — via `@luxfi/standard/ai`. There is **no second
 implementation** to drift against; Hanzo's settlement and mint paths compose
 these contracts, they do not fork them. Pinned `pragma solidity ^0.8.30`, SPDX
 `BSD-3-Clause` extended by the LP-0012 ecosystem grant (§ Ecosystem license). The
@@ -297,11 +297,11 @@ load-bearing pieces:
 - **`MinerStakeRegistry.sol`** — bond/slash: a miner bonds in proportion to
   declared capacity; the fraud-proof verifier slashes a *proven* discrepancy
   automatically (the math, not a vote); a cooldown stops exit-before-fraud-proof.
-- **`AICoin.sol` / `AICoinMiner.sol`** — the **fair-mined** native coin:
+- **`AICoin.sol` / `AIMiner.sol`** — the **fair-mined** native coin:
   `MAX_SUBSIDY = 1,000,000,000` AI, no pre-mine, supply from zero, the emission
   slope **halving every four years** (`HALVING_PERIOD = 4 * 365 days`), the
   geometric sum equal to exactly `MAX`. Multiple verified-cognition mint paths
-  (`AICoinMiner` against A-Chain receipts, `ThinkingMiner` against
+  (`AIMiner` against A-Chain receipts, `AIConsensusMiner` against
   governance-consensus share) share **one** cap; a minter is always a
   proof-enforcing contract, never an EOA — the god-key defense.
 
@@ -309,10 +309,10 @@ load-bearing pieces:
 
 PoAI lets verified AI **govern and act** on-chain. Two decision primitives over
 one bonded operator set, plus a three-tier execution surface — all in
-`contracts/ai/thinking/`, all leaderless (no proposer, no admin key on the
+`contracts/ai/`, all leaderless (no proposer, no admin key on the
 decision path):
 
-- **`ThinkingGovernor.sol`** decides a categorical **policy**: each bonded
+- **`AIGovernor.sol`** decides a categorical **policy**: each bonded
   node-operator LLM emits a structured verdict `{vote, confidence}`,
   secp256k1-signs the **canonical consensus preimage** —
   `keccak256(abi.encodePacked(bytes32 modelSpecHash, uint8 vote, uint16
@@ -322,7 +322,7 @@ decision path):
   majority records a canonical `Vote.Yes`/`Vote.No` decision on-chain
   (`getThought(taskId).canonicalVote`). The free-form rationale is *deliberately
   excluded* from consensus (hash-addressed audit evidence, never byte-identical).
-- **`ThinkingParameters.sol`** decides a continuous **value**: each operator's
+- **`AIParams.sol`** decides a continuous **value**: each operator's
   LLM proposes a number in a declared `[lo, hi]`, signs a domain-separated
   judgment binding `block.chainid + address(this)`, and the chain settles to the
   **median** of a sortition-sampled quorum — *unweighted* (one operator, one
@@ -335,7 +335,7 @@ decision path):
   - **READ** — `read*` staticcalls any getter and hands back a **typed** value
     (`readBool`/`readUint`/`readInt`/`readAddress`/`readBytes32`/`readMany`).
   - **ENACT (Tier 1)** — `enact` reads a knob the validators **decided** in
-    `ThinkingParameters` and splices its value as the sole argument of
+    `AIParams` and splices its value as the sole argument of
     `target.selector(value)`; a 32-byte word ABI-encodes to any single type, so
     one call sets bool/uint/int/address/bytes32 — low-risk, idempotent, **no
     timelock** (the value *is* the consensus output).
@@ -441,9 +441,9 @@ trusted as a centralized cloud" without changing the protocol.
   same soundness argument. Data-sharing is *not* forced into the same check — it
   is an orthogonal confidentiality concern.
 - **Why one canonical contract.** A single implementation in `luxfi/standard`
-  consumed via `@luxfi/standard/ai/thinking` means no drift between Hanzo, Zoo,
+  consumed via `@luxfi/standard/ai` means no drift between Hanzo, Zoo,
   Lux, and Pars — one verifier, one registry, one coin, one governor.
-- **Why decomplect governance from execution.** `ThinkingGovernor`/`Parameters`
+- **Why decomplect governance from execution.** `AIGovernor`/`AIParams`
   *decide*; `AIExecute` *acts*; `AIApproval` is a thin adapter binding a settled
   verdict to an operation hash; `AIPolicy` is an orthogonal guard. Each concern in
   one place.
@@ -493,12 +493,12 @@ trusted as a centralized cloud" without changing the protocol.
   `freivalds_test.go`, `transcript_test.go`, `wire_test.go`, `scale_test.go`,
   `adversarial_test.go`.
 - **Canonical contracts (one implementation):** `luxfi/standard`
-  `contracts/ai/thinking/` — `ComputeWitnessLib`, `AIComputeRegistry`,
-  `AChainRootOracle`, `MinerStakeRegistry`, `AICoin`, `AICoinMiner`,
-  `ThinkingMiner`, `ThinkingGovernor`, `ThinkingParameters`, `AIExecute`,
+  `contracts/ai/` — `ComputeWitnessLib`, `AIComputeRegistry`,
+  `AChainRootOracle`, `MinerStakeRegistry`, `AICoin`, `AIMiner`,
+  `AIConsensusMiner`, `AIGovernor`, `AIParams`, `AIExecute`,
   `AIApproval`, `AIPolicy` (+ `ComputeProofLib`, `ComputeProfile`,
   `ComputeVerifier`, `AttestationRootRegistry`, `AIReceiptRoots`). Consumed via
-  `@luxfi/standard/ai/thinking`.
+  `@luxfi/standard/ai`.
 - **PQ:** `crypto/promptseal` (X-Wing), `precompile/mldsa` (`0x…012202`,
   44/65/87), `precompile/slhdsa` (`0x…012203`), `precompile/p3q` (`0x…012205`),
   `precompile/xwing` (`0x…2221`), `warp/envelope.go` (`MLDSACertSet`).
@@ -522,14 +522,14 @@ trusted as a centralized cloud" without changing the protocol.
 
 - The chain refuses to mint, settle, or act on a reward without a valid proof at
   the required tier — the profile gate is live in `luxfi/standard`
-  `contracts/ai/thinking/`, with the global no-double-mint registry
+  `contracts/ai/`, with the global no-double-mint registry
   (`AIComputeRegistry`), the trustless PQ root oracle (`AChainRootOracle`),
   bond/slash (`MinerStakeRegistry`), and the fair-mined capped/halving coin
-  (`AICoin`/`AICoinMiner`).
+  (`AICoin`/`AIMiner`).
 
 **Governance-execution (built):**
 
-- `ThinkingGovernor` + `ThinkingParameters` settle canonical YES/NO + knob
+- `AIGovernor` + `AIParams` settle canonical YES/NO + knob
   medians on-chain from the operator-LLM quorum; `AIExecute` + `AIApproval` +
   `AIPolicy` let consensus read any state typed and execute arbitrary approved
   operations under timelock + predecessor + one-shot + guardian veto + policy
@@ -554,14 +554,14 @@ remaining engineering. The proof system itself is canonical and enforced today.
 | `luxd` | Lux node (Go) | `luxfi/crypto/poi` verifier (in-module) | verifier available |
 | `zood` | Zoo node (Go) | `luxfi/crypto/poi` verifier (in-module) | verifier available |
 
-On-chain enforcement (`luxfi/standard` `contracts/ai/thinking/`) is the binding
+On-chain enforcement (`luxfi/standard` `contracts/ai/`) is the binding
 authority on every one of these chains regardless of node binary.
 
 ## Ecosystem license (LP-0012)
 
 The canonical PoAI work — the Rust prover core (`hanzo-engine/src/poi.rs`), the
 Go verifier (`luxfi/crypto/poi`), and the Solidity contracts (`luxfi/standard`
-`contracts/ai/thinking/`) — is licensed **BSD-3-Clause** (the per-file
+`contracts/ai/`) — is licensed **BSD-3-Clause** (the per-file
 `SPDX-License-Identifier` is authoritative) **extended by the LP-0012 ecosystem
 grant**: production use is granted to chains **descending from the Lux primary
 network** (Hanzo, Zoo, Pars, and other Lux-descended L1s/L2s/L3s). Hanzo runs
@@ -578,7 +578,7 @@ PoAI under this grant. Commercial licensing beyond these terms is by arrangement
 6. LP-0012 — Permissionless + ecosystem license.
 7. `hanzo-engine/src/poi.rs` — Freivalds core (14 `#[test]`).
 8. `luxfi/crypto/poi` — canonical Go verifier (22 `Test*`).
-9. `luxfi/standard` `contracts/ai/thinking/` — canonical contract.
+9. `luxfi/standard` `contracts/ai/` — canonical contract.
 10. RFC 6962 — Certificate Transparency (Merkle lone-node promotion).
 
 ## Copyright
