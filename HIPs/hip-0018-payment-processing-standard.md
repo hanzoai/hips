@@ -14,7 +14,9 @@ requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30
 
 ## Abstract
 
-This proposal defines the payment processing standard for the Hanzo ecosystem. Hanzo Commerce is the billing, subscription, and payment service that bridges external payment processors (primarily Stripe) with the internal credit system managed by Hanzo IAM (HIP-26). Every dollar a user pays is converted into credits. Every AI inference, API call, or compute job consumes credits. Commerce handles the money side; IAM holds the balance; the LLM Gateway (HIP-4) and Cloud services meter usage.
+This proposal defines the payment processing standard for the Hanzo ecosystem. Hanzo Commerce is the billing, subscription, and payment service that bridges the **native Hanzo PSP (Hanzo Pay — the same payment engine white-labeled as `lux-pay` on Lux and per-brand elsewhere)** with the internal credit system managed by Hanzo IAM (HIP-26). Card data is tokenized inside the Hanzo Vault PCI CDE; on-chain rails settle $AI directly. Every dollar a user pays is converted into credits. Every AI inference, API call, or compute job consumes credits. Commerce handles the money side; IAM holds the balance; the LLM Gateway (HIP-4) and Cloud services meter usage.
+
+> **No external-processor dependency.** First-party Hanzo/Lux/Zoo/Zen surfaces process payments through the native PSP, never through a third-party processor that can deplatform us. Commerce keeps a *pluggable* provider-adapter interface so a brand MAY add a regional rail, but no first-party flow depends on one.
 
 The system is designed around a single invariant: **IAM is the source of truth for user balances**. Commerce writes credits in; Cloud and Gateway write credits out. No service other than IAM may directly mutate a user's balance. All mutations flow through IAM's transaction API.
 
@@ -40,7 +42,7 @@ Without a unified billing system, each service would need its own payment integr
 ### Why This Matters
 
 1. **User trust**: Users must understand what they are paying for. Opaque per-token billing erodes trust. Credits provide a simple, predictable unit.
-2. **Service isolation**: LLM Gateway should not need Stripe credentials. It should check a balance, do the work, and report usage. Payment processing is not its job.
+2. **Service isolation**: LLM Gateway should not need payment-processor credentials. It should check a balance, do the work, and report usage. Payment processing is not its job.
 3. **Fraud prevention**: A single source of truth for balances prevents double-spending. If Cloud and Gateway each maintained independent balances, a race condition could allow a user to spend more than they have.
 4. **Regulatory compliance**: Financial transactions require audit trails, PCI compliance, and dispute resolution. Centralizing this in Commerce means one team handles compliance, not five.
 
@@ -58,32 +60,25 @@ Credits also decouple the billing unit from provider pricing. When OpenAI change
 
 The alternative -- real-time per-token billing in USD -- requires sub-cent transaction tracking, creates rounding errors that accumulate, and produces invoices with thousands of line items. Credits eliminate all three problems.
 
-### Why Stripe Over Building Payment Infrastructure
+### Why a Native PSP (Hanzo Pay)
 
-PCI DSS compliance requires 300+ security controls across 12 requirement categories. An in-house payment system must handle card number encryption, key rotation, network segmentation, penetration testing, and annual audits. The compliance cost alone is $50K-$200K/year for a Level 3 merchant.
+Hanzo originally bridged an external processor. That dependency proved fatal: a third-party processor can **deplatform an entire ecosystem at will** — freezing funds, disabling checkout, and cutting off every brand that rides on it, with no recourse and no portability. This is not hypothetical; it is exactly what happened, and it is why this standard now mandates a **native PSP**. Payment sovereignty — owning the rail end-to-end — is a first-class requirement, not an optimization.
 
-Stripe handles all of this. We never see, store, or transmit card numbers. Stripe's `checkout.session` creates a hosted payment page on Stripe's PCI-compliant infrastructure. Our servers only receive webhooks confirming that payment succeeded.
+The native PSP (**Hanzo Pay**, the same engine white-labeled as `lux-pay` / per-brand) provides:
 
-Beyond compliance, Stripe provides:
+- **Sovereignty**: No external party can disable, freeze, or deplatform a first-party flow. The rail is ours; outages and policy changes are ours to manage.
+- **PCI offload, in-house**: Card data never touches Commerce or any app server. The **Hanzo Vault** CDE (a dedicated PCI-DSS-scoped tokenization service) holds the card-handling surface; everything else operates on opaque tokens, keeping the broad system out of PCI scope exactly as an external processor would — but under our control.
+- **Hosted checkout**: A native hosted payment page (served from the Vault/PSP boundary) so app servers only ever receive a signed completion webhook.
+- **Subscription management**: Recurring billing, proration, dunning (failed-payment retry), and lifecycle hooks.
+- **Invoicing**: Invoice generation, PDF rendering, and email delivery.
+- **Fraud detection**: Risk scoring on the native rail; on-chain rails are inherently irreversible (no chargeback exposure).
+- **Marketplace payouts**: Connect-style transfers for agent revenue (HIP-25) settle natively, including on-chain $AI to any wallet.
 
-- **Global payment methods**: Cards, Apple Pay, Google Pay, SEPA, iDEAL, bank transfers in 135+ currencies across 45+ countries.
-- **Subscription management**: Recurring billing, proration, dunning (failed payment retry), and subscription lifecycle hooks.
-- **Invoicing**: Automatic invoice generation, PDF rendering, and email delivery.
-- **Fraud detection**: Stripe Radar uses ML to block fraudulent transactions before they reach us.
-- **Connect**: For future marketplace features where agents (HIP-25) earn revenue.
+The compliance burden the standard once cited as a reason to outsource (PCI DSS: 300+ controls across 12 categories) is met by scoping the CDE to **Hanzo Vault** alone, not by handing the customer relationship to a party that can revoke it.
 
-The cost is 2.9% + $0.30 per transaction. For a $20 credit purchase, that is $0.88. For the PCI compliance, global coverage, and engineering time saved, this is an excellent trade.
+### Pluggable Provider Adapters (Optional, Per-Brand)
 
-### Why Not Paddle
-
-Paddle is a Merchant of Record (MoR) -- it handles sales tax, VAT, and regulatory compliance in exchange for higher fees (5% + $0.50). This is attractive for companies selling to consumers in the EU where VAT rules are complex. However:
-
-1. **Limited payment methods**: Paddle supports fewer payment methods than Stripe, particularly in Asia and Latin America where crypto-native developers cluster.
-2. **Slower payouts**: Paddle batches payouts weekly or monthly; Stripe settles in 2 business days.
-3. **Less API control**: Paddle's API is opinionated about subscription models. Our credit-based system requires more flexibility than Paddle provides.
-4. **Pricing**: 5% vs 2.9% adds up quickly at scale. On $1M annual revenue, that is $21K in additional fees.
-
-For Hanzo's use case -- a B2B/B2D (business-to-developer) platform with global reach -- Stripe's flexibility and lower fees win.
+Commerce keeps a provider-adapter interface so a brand MAY plug an additional rail (regional cards, bank transfer, a Merchant-of-Record for EU VAT, etc.). These are **optional, per-brand, and never on a first-party critical path** — the native PSP is always the default and the only rail a first-party surface is required to support. Adapters are registered explicitly; none is implicit or default. (Notably, no first-party surface registers an external processor that can deplatform the ecosystem.)
 
 ### Why Not Blockchain-Only Payments
 
@@ -91,10 +86,10 @@ The Hanzo ecosystem includes $AI token (HIP-1) and on-chain settlement (HIP-25).
 
 1. **Friction**: Most developers do not have crypto wallets. Requiring wallet setup, token purchase, and gas fees for a $20 credit top-up would eliminate 90%+ of potential users.
 2. **Volatility**: Token prices fluctuate. If a user buys credits with $AI at $0.50 and the price drops to $0.30 before they use the credits, who absorbs the loss?
-3. **Speed**: Stripe processes a payment in 2-3 seconds. On-chain settlement takes 2-15 seconds depending on the chain and requires block confirmations for finality.
-4. **Chargebacks**: Credit card users have dispute rights. Blockchain transactions are irreversible. Offering only crypto payments forfeits consumer protection, which is a regulatory risk.
+3. **Speed**: The native PSP processes a card payment in 2-3 seconds. On-chain settlement takes 2-15 seconds depending on the chain and requires block confirmations for finality.
+4. **Chargebacks**: Card users have dispute rights. Blockchain transactions are irreversible. Offering only crypto payments forfeits consumer protection, which is a regulatory risk.
 
-The correct approach is **both**: Stripe for fiat, blockchain for crypto. Commerce accepts both and normalizes them into credits. The user does not need to know or care which payment rail was used.
+The correct approach is **both**: the native PSP for fiat, blockchain for crypto. Commerce accepts both and normalizes them into credits. The user does not need to know or care which payment rail was used.
 
 ### Why IAM Holds Balances
 
@@ -118,17 +113,17 @@ The tradeoff: balance is denormalized. Commerce is the authoritative ledger ("wh
 
 ### Why Webhook-Driven Architecture
 
-Payment processing is inherently asynchronous. A user clicks "Pay" on a Stripe Checkout page, enters their card, waits for 3D Secure, and Stripe processes the charge. This takes 5-30 seconds. Holding a synchronous HTTP connection open for this duration is fragile.
+Payment processing is inherently asynchronous. A user clicks "Pay" on the native hosted checkout page, enters their card, waits for 3D Secure, and the PSP processes the charge. This takes 5-30 seconds. Holding a synchronous HTTP connection open for this duration is fragile.
 
 Instead, Commerce uses webhooks:
 
-1. Commerce creates a Stripe Checkout Session and returns the URL to the client.
-2. Client redirects to Stripe's hosted checkout page.
-3. User completes payment on Stripe's infrastructure.
-4. Stripe sends a `checkout.session.completed` webhook to Commerce.
+1. Commerce creates a native PSP checkout session and returns the URL to the client.
+2. Client redirects to the native hosted checkout page (served from the Vault/PSP boundary; card data never reaches Commerce).
+3. User completes payment on the PCI-scoped CDE.
+4. The PSP sends a signed `checkout.session.completed` webhook to Commerce.
 5. Commerce verifies the webhook signature, records the transaction, then calls IAM to add credits.
 
-This decouples payment processing from service delivery. If Commerce is briefly unavailable when the webhook fires, Stripe retries with exponential backoff for up to 72 hours. Eventual consistency is acceptable for billing -- a 30-second delay between payment and credit delivery is imperceptible to users.
+This decouples payment processing from service delivery. If Commerce is briefly unavailable when the webhook fires, the PSP retries with exponential backoff for up to 72 hours. Eventual consistency is acceptable for billing -- a 30-second delay between payment and credit delivery is imperceptible to users.
 
 ## Specification
 
@@ -136,9 +131,10 @@ This decouples payment processing from service delivery. If Commerce is briefly 
 
 ```
                               +------------------------+
-                              |       Stripe           |
-                              |  (Checkout, Billing,   |
-                              |   Webhooks, Invoices)  |
+                              |  Hanzo Pay (native PSP)|
+                              |  + Hanzo Vault (PCI    |
+                              |   CDE: card tokens)    |
+                              |  Checkout/Billing/Hooks|
                               +------+------+----------+
                                      |      |
                            webhooks  |      |  checkout sessions
@@ -225,7 +221,7 @@ tiers:
     name: "Free"
     price_monthly: 0
     credits_monthly: 1000
-    stripe_price_id: null
+    psp_price_id: null
     overage: blocked
     features:
       - "1,000 credits/month (~100 GPT-4 messages)"
@@ -237,7 +233,7 @@ tiers:
     name: "Pro"
     price_monthly: 20
     credits_monthly: 50000
-    stripe_price_id: "price_pro_monthly"
+    psp_price_id: "price_pro_monthly"
     overage: pay_as_you_go
     features:
       - "50,000 credits/month (~5,000 GPT-4 messages)"
@@ -251,7 +247,7 @@ tiers:
     name: "Team"
     price_monthly: 100
     credits_monthly: 150000
-    stripe_price_id: "price_team_monthly"
+    psp_price_id: "price_team_monthly"
     overage: pay_as_you_go
     features:
       - "150,000 credits/month"
@@ -265,7 +261,7 @@ tiers:
     name: "Enterprise"
     price_monthly: custom
     credits_monthly: custom
-    stripe_price_id: "price_enterprise_custom"
+    psp_price_id: "price_enterprise_custom"
     overage: invoice
     features:
       - "Custom credit allocation"
@@ -281,11 +277,11 @@ Free-tier credits reset monthly and do not accumulate. Paid-tier included credit
 
 #### Subscription Lifecycle
 
-- **Upgrade**: Commerce creates Stripe Subscription -> Stripe charges monthly -> webhook `invoice.paid` -> Commerce credits IAM with included credits.
-- **Renewal**: Stripe auto-charges -> webhook `invoice.paid` -> Commerce adds monthly credits. Unused credits from previous months roll over for 90 days.
-- **Overage**: When a Pro/Team user exceeds included credits, usage continues at the standard rate. Overage is metered via Stripe usage records and billed at period end alongside the subscription fee.
-- **Downgrade**: Commerce cancels the Stripe Subscription at period end. Remaining credits are usable until expiry. After the period ends, the user reverts to Free tier (1,000 credits/month, hard cap).
-- **Payment failure**: Stripe retries 3 times over 7 days using smart retries. After 3 failures the subscription enters `past_due`. After 14 days `past_due`, the subscription is canceled and the user is downgraded to Free.
+- **Upgrade**: Commerce creates a PSP subscription -> the PSP charges monthly -> webhook `invoice.paid` -> Commerce credits IAM with included credits.
+- **Renewal**: the PSP auto-charges -> webhook `invoice.paid` -> Commerce adds monthly credits. Unused credits from previous months roll over for 90 days.
+- **Overage**: When a Pro/Team user exceeds included credits, usage continues at the standard rate. Overage is metered via PSP usage records and billed at period end alongside the subscription fee.
+- **Downgrade**: Commerce cancels the PSP subscription at period end. Remaining credits are usable until expiry. After the period ends, the user reverts to Free tier (1,000 credits/month, hard cap).
+- **Payment failure**: the PSP retries 3 times over 7 days using smart retries. After 3 failures the subscription enters `past_due`. After 14 days `past_due`, the subscription is canceled and the user is downgraded to Free.
 
 ### Payment Flow
 
@@ -293,15 +289,15 @@ Free-tier credits reset monthly and do not accumulate. Paid-tier included credit
 
 ```
 1. Client: POST /v1/billing/checkout { amount: 2000, currency: "usd", credits: 21000 }
-2. Commerce creates Stripe Checkout Session with metadata (user_id, org_id, credits, idempotency_key)
-3. Commerce returns checkout URL -> client redirects user to Stripe
-4. User completes payment on Stripe's hosted page
-5. Stripe fires webhook: checkout.session.completed
+2. Commerce creates a PSP checkout session with metadata (user_id, org_id, credits, idempotency_key)
+3. Commerce returns checkout URL -> client redirects user to the native hosted checkout
+4. User completes payment on the native hosted checkout page (Hanzo Vault CDE)
+5. PSP fires webhook: checkout.session.completed
 6. Commerce verifies webhook signature (HMAC-SHA256)
 7. Commerce checks idempotency key in Redis (prevent double-processing)
 8. Commerce calls IAM: POST /api/add-balance { owner: "hanzo", user: "z", amount: 21.0 }
 9. Commerce records transaction: POST /api/add-transaction
-   { category: "Recharge", user: "z", amount: 21.0, name: "txn_stripe_cs_..." }
+   { category: "Recharge", user: "z", amount: 21.0, name: "txn_psp_cs_..." }
 10. User's IAM balance updated. Credits available immediately.
 ```
 
@@ -315,7 +311,7 @@ Commerce also accepts $AI token (HIP-1) payments on Hanzo Network (chain ID 3696
 |--------|----------|-------------|------|
 | GET | `/v1/billing/balance` | Current credit balance | Bearer token |
 | GET | `/v1/billing/transactions` | Transaction history with pagination | Bearer token |
-| POST | `/v1/billing/checkout` | Create Stripe Checkout session | Bearer token |
+| POST | `/v1/billing/checkout` | Create PSP checkout session | Bearer token |
 | POST | `/v1/billing/checkout/crypto` | Create crypto payment intent | Bearer token |
 | POST | `/v1/billing/subscribe` | Create or change subscription | Bearer token |
 | DELETE | `/v1/billing/subscribe` | Cancel subscription | Bearer token |
@@ -323,8 +319,8 @@ Commerce also accepts $AI token (HIP-1) payments on Hanzo Network (chain ID 3696
 | GET | `/v1/billing/invoices` | List invoices | Bearer token |
 | GET | `/v1/billing/invoices/:id` | Download invoice PDF | Bearer token |
 | GET | `/v1/billing/usage` | Usage breakdown by period | Bearer token |
-| POST | `/v1/billing/portal` | Create Stripe Customer Portal session | Bearer token |
-| POST | `/webhooks/stripe` | Stripe webhook receiver | Stripe signature |
+| POST | `/v1/billing/portal` | Create PSP customer portal session | Bearer token |
+| POST | `/webhooks/psp` | PSP webhook receiver | PSP signature |
 
 #### Response Examples
 
@@ -345,18 +341,18 @@ Commerce also accepts $AI token (HIP-1) payments on Hanzo Network (chain ID 3696
 
 ### Webhook Handling
 
-Commerce receives webhooks from Stripe for all payment-related events. The webhook handler follows a strict pipeline:
+Commerce receives webhooks from the native PSP for all payment-related events. The webhook handler follows a strict pipeline:
 
 ```python
-async def handle_stripe_webhook(request):
+async def handle_psp_webhook(request):
     # 1. Verify signature (CRITICAL - prevents forgery)
     payload = request.body
-    signature = request.headers["Stripe-Signature"]
+    signature = request.headers["X-Webhook-Signature"]
     try:
-        event = stripe.Webhook.construct_event(
-            payload, signature, STRIPE_WEBHOOK_SECRET
+        event = psp.verify_event(
+            payload, signature, psp_webhook_secret
         )
-    except stripe.error.SignatureVerificationError:
+    except psp.SignatureError:
         return Response(status=400, body="Invalid signature")
 
     # 2. Check idempotency (prevent double-processing)
@@ -378,7 +374,7 @@ async def handle_stripe_webhook(request):
     if handler:
         await handler(event)
 
-    # 4. Mark as processed (72h TTL matching Stripe retry window)
+    # 4. Mark as processed (72h TTL matching the PSP retry window)
     await redis.set(f"webhook:processed:{event_id}", "1", ex=259200)
 
     return Response(status=200)
@@ -474,17 +470,17 @@ Organizations can choose between two billing modes:
 
 1. User requests refund via support or `/v1/billing/refund`.
 2. Commerce validates eligibility (14-day window, sufficient credit balance).
-3. Commerce creates a Stripe refund (`stripe.refunds.create`) for the original payment intent.
-4. Stripe processes the refund (3-5 business days to card).
+3. Commerce creates a refund via the PSP (`psp.refunds.create`) for the original payment intent.
+4. The PSP processes the refund (3-5 business days to card).
 5. On webhook `charge.refunded`, Commerce debits the refunded credits from IAM via `add-transaction` with negative amount.
 6. If the user's balance goes negative after the debit, the account is flagged and usage is suspended until the balance is positive.
 
 #### Dispute (Chargeback) Flow
 
-1. Stripe receives a chargeback from the card issuer -> webhook `charge.dispute.created`.
+1. The PSP receives a chargeback from the card issuer -> webhook `charge.dispute.created`.
 2. Commerce immediately freezes the user account (`suspended=true` in IAM), debits the disputed amount, creates a support ticket, and notifies the admin team.
-3. Commerce submits evidence to Stripe: usage logs, IP addresses, login timestamps, and ToS acceptance.
-4. Stripe arbitrates (60-90 days). On `charge.dispute.closed`: if won, Commerce unfreezes the account and restores the debited amount; if lost, the account remains suspended until the balance is positive.
+3. Commerce submits evidence to the PSP: usage logs, IP addresses, login timestamps, and ToS acceptance.
+4. The card network arbitrates (60-90 days). On `charge.dispute.closed`: if won, Commerce unfreezes the account and restores the debited amount; if lost, the account remains suspended until the balance is positive.
 
 ### Invoice Generation
 
@@ -515,13 +511,13 @@ Authorization: Bearer <access_token>
 }
 ```
 
-When the metering pipeline detects a balance crossing below the threshold, it enqueues an auto-recharge job. The job creates a Stripe PaymentIntent using the stored payment method, processes the charge, and credits the balance without user interaction. Auto-recharge is rate-limited (max 5/month by default) to prevent runaway charges from buggy clients or compromised API keys.
+When the metering pipeline detects a balance crossing below the threshold, it enqueues an auto-recharge job. The job creates a PSP payment intent using the stored (tokenized) payment method, processes the charge, and credits the balance without user interaction. Auto-recharge is rate-limited (max 5/month by default) to prevent runaway charges from buggy clients or compromised API keys.
 
 ## Implementation Roadmap
 
 ### Phase 1: Core Billing (Completed)
 
-- [x] Stripe Checkout integration for one-time credit purchases
+- [x] Native PSP checkout integration for one-time credit purchases
 - [x] Webhook handler for `checkout.session.completed`
 - [x] IAM balance update via `/api/add-balance`
 - [x] Transaction recording via `/api/add-transaction`
@@ -530,7 +526,7 @@ When the metering pipeline detects a balance crossing below the threshold, it en
 
 ### Phase 2: Subscriptions (Completed)
 
-- [x] Stripe Subscription creation for Pro/Team tiers
+- [x] Native PSP subscription creation for Pro/Team tiers
 - [x] Monthly credit allocation on `invoice.paid`
 - [x] Subscription upgrade/downgrade with proration
 - [x] Dunning (failed payment) handling
@@ -542,7 +538,7 @@ When the metering pipeline detects a balance crossing below the threshold, it en
 - [ ] Per-model credit cost configuration
 - [ ] Real-time usage dashboard
 - [ ] Usage breakdown by model, service, and time period
-- [ ] Overage billing via Stripe metered usage
+- [ ] Overage billing via PSP metered usage
 
 ### Phase 4: Multi-Org and Enterprise (Planned)
 
@@ -563,20 +559,20 @@ When the metering pipeline detects a balance crossing below the threshold, it en
 
 ### PCI DSS Compliance
 
-Commerce achieves PCI compliance by **never handling cardholder data**. All payment forms are hosted by Stripe (Checkout Sessions, Elements, or Customer Portal). Commerce servers never see, store, process, or transmit card numbers, CVVs, or expiration dates. This qualifies Hanzo as a **SAQ A** merchant -- the simplest PCI self-assessment level.
+Commerce achieves PCI compliance by **never handling cardholder data**. Cardholder data is confined to the **Hanzo Vault** CDE — the only PCI-DSS-scoped component — which hosts the payment form (native hosted checkout) and issues opaque tokens. Commerce and every app server operate on tokens only; they never see, store, process, or transmit card numbers, CVVs, or expiration dates. Commerce qualifies as a **SAQ A** surface; the Vault carries the full SAQ D / RoC scope, isolated from the rest of the ecosystem.
 
 ### Webhook Signature Verification
 
-Every Stripe webhook is verified using HMAC-SHA256:
+Every native-PSP webhook is verified using HMAC-SHA256:
 
 ```python
-# Stripe signs webhooks with the webhook signing secret.
+# The PSP signs webhooks with the webhook signing secret (held in KMS).
 # The signature includes a timestamp to prevent replay attacks.
-signature = request.headers["Stripe-Signature"]
+signature = request.headers["X-Webhook-Signature"]
 # Format: t=<timestamp>,v1=<signature>
 
 expected = hmac_sha256(
-    key=STRIPE_WEBHOOK_SECRET,
+    key=psp_webhook_secret,   # from KMS, never plaintext
     message=f"{timestamp}.{payload}"
 )
 
@@ -590,9 +586,9 @@ expected = hmac_sha256(
 
 Every payment operation uses idempotency keys to prevent double-charging:
 
-1. **Stripe Checkout**: The `idempotency_key` in session metadata ensures retried webhooks do not create duplicate credits.
-2. **IAM Transactions**: The transaction `name` field (`txn_stripe_{event_id}`) acts as a unique constraint. IAM rejects duplicate transaction names.
-3. **Redis deduplication**: Processed webhook event IDs are stored in Redis with a 72-hour TTL matching Stripe's retry window.
+1. **PSP Checkout**: The `idempotency_key` in session metadata ensures retried webhooks do not create duplicate credits.
+2. **IAM Transactions**: The transaction `name` field (`txn_psp_{event_id}`) acts as a unique constraint. IAM rejects duplicate transaction names.
+3. **Deduplication store**: Processed webhook event IDs are persisted with a 72-hour TTL matching the PSP's retry window.
 
 These three layers provide defense-in-depth against double-processing.
 
@@ -605,7 +601,7 @@ These three layers provide defense-in-depth against double-processing.
 | `/v1/billing/balance` | 60 | per minute per user |
 | `/v1/billing/transactions` | 30 | per minute per user |
 | `/v1/billing/usage` | 10 | per minute per user |
-| `/webhooks/stripe` | 1000 | per minute (global) |
+| `/webhooks/psp` | 1000 | per minute (global) |
 
 Rate limiting is enforced via Redis sliding window counters. Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header.
 
@@ -624,8 +620,8 @@ Every financial event produces an immutable audit record:
     "user_agent": "Mozilla/5.0..."
   },
   "details": {
-    "stripe_event_id": "evt_...",
-    "stripe_session_id": "cs_...",
+    "psp_event_id": "evt_...",
+    "psp_session_id": "cs_...",
     "amount_usd": 20.00,
     "credits_added": 21000,
     "balance_before": 5000,
@@ -659,13 +655,13 @@ When a user's balance reaches zero during an API request:
 3. [HIP-8: HMM (Hanzo Market Maker)](./hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md) - Token price oracle for crypto-to-credit conversion
 4. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) - Agent-level billing built on Commerce
 5. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - Balance storage and transaction ledger
-6. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for Stripe keys and secrets
+6. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for PSP keys and secrets
 7. [HIP-30: Event Streaming Standard](./hip-0030-event-streaming-standard.md) - Billing event distribution
 8. [HIP-32: Object Storage Standard](./hip-0032-object-storage-standard.md) - Invoice PDF storage
 9. [HIP-101: Hanzo-Lux Bridge Protocol](./hip-0101-hanzo-lux-bridge-protocol-integration.md) - Cross-chain payment acceptance
-10. [Stripe Checkout Documentation](https://stripe.com/docs/payments/checkout)
-11. [Stripe Webhooks Best Practices](https://stripe.com/docs/webhooks/best-practices)
-12. [Stripe Billing / Subscriptions](https://stripe.com/docs/billing/subscriptions/overview)
+10. [Hanzo Pay (native PSP) — `github.com/lux-pay`](https://github.com/lux-pay) (white-labeled `lux-pay` on Lux)
+11. [Hanzo Vault — PCI CDE / card tokenization](https://github.com/hanzoai/vault)
+12. [PCI DSS v4.0 — SAQ A / SAQ D scoping](https://www.pcisecuritystandards.org/)
 13. [PCI DSS Quick Reference Guide](https://www.pcisecuritystandards.org/document_library)
 14. [Hanzo Commerce Repository](https://github.com/hanzoai/commerce)
 

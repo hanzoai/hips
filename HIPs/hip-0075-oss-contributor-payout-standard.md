@@ -100,11 +100,11 @@ The trade-off is that git attribution can be gamed: a contributor could make man
 
 ### Why On-Chain Payouts
 
-Contributor payouts are recorded on the Hanzo L1 chain (HIP-24) through a smart contract. This is more complex than simply wiring money via Stripe. We accept the complexity because:
+Contributor payouts are recorded on the Hanzo L1 chain (HIP-24) through a smart contract. This is more complex than simply wiring fiat through a payment processor. We accept the complexity because:
 
 1. **Transparency**: Anyone can audit the contributor payout contract. The total pool size, individual payouts, scoring parameters, and historical distributions are all publicly verifiable. This builds trust with contributors who have been burned by opaque corporate sponsorship programs that promise much and deliver little.
 
-2. **Global access**: On-chain payouts in $AI tokens reach any contributor with a wallet, regardless of their country, banking access, or Stripe availability. Stripe operates in 46 countries. The Hanzo L1 operates everywhere there is internet.
+2. **Global access**: On-chain payouts in $AI tokens reach any contributor with a wallet, regardless of their country, banking access, or fiat-rail availability. Fiat processors reach ~46 countries. The Hanzo L1 operates everywhere there is internet.
 
 3. **Composability**: On-chain payouts integrate with the broader Hanzo DeFi ecosystem. Contributors can stake their $AI tokens, provide liquidity on the HMM (HIP-8), or use them to pay for Hanzo Cloud services. The tokens are not dead-end gift cards; they are liquid assets within a functioning economy.
 
@@ -164,7 +164,7 @@ GitHub Sponsors and HIP-75 are complementary. A contributor can receive both Git
 |         |                                                        |    |
 |         |  +------------------+    +-------------------------+   |    |
 |         |  | $AI On-Chain     |    | Fiat via Commerce       |   |    |
-|         |  | (HIP-24 L1)     |    | (HIP-18 Stripe)        |   |    |
+|         |  | (HIP-24 L1)     |    | (HIP-18 native PSP)    |   |    |
 |         |  +------------------+    +-------------------------+   |    |
 |         +--------------------------------------------------------+    |
 +-----------------------------------------------------------------------+
@@ -218,7 +218,7 @@ Each contributor configures their preferred payout method:
 | Method | Mechanism | Requirements |
 |--------|-----------|--------------|
 | `token` | $AI tokens to wallet address on Hanzo L1 | Wallet address linked to DID |
-| `fiat` | USD via Hanzo Commerce (Stripe) | Commerce account with verified bank |
+| `fiat` | USD via Hanzo Commerce (native PSP) | Commerce account with verified bank |
 | `credits` | Hanzo Cloud credits added to IAM balance | Hanzo Cloud account linked to DID |
 | `split` | Percentage split across multiple methods | At least two methods configured |
 
@@ -472,7 +472,7 @@ Contributors who prefer fiat receive payouts via Hanzo Commerce (HIP-18):
 
 1. Contributor sets payout preference to `fiat` and links a Commerce account.
 2. At distribution time, the system calculates the USD equivalent of their $AI allocation using the time-weighted average price (TWAP) from the HMM (HIP-8) over the preceding 7 days.
-3. Commerce creates a Stripe Connect transfer to the contributor's linked bank account.
+3. Commerce creates a native-PSP Connect-style transfer to the contributor's linked bank account.
 4. The $AI tokens that would have been distributed are retained in the pool (effectively buying back from the contributor at market price).
 
 Fiat payouts require identity verification (KYC) through Commerce, in compliance with financial regulations. Token payouts do not require KYC below regulatory thresholds (varies by jurisdiction).
@@ -621,7 +621,7 @@ The payout pool is denominated in $AI tokens. The ContributorPayout smart contra
 
 ### HIP-18 (Commerce)
 
-Fiat payouts route through Commerce's Stripe Connect integration. Commerce handles KYC, bank account verification, and wire transfers. Commerce also provides the 1099 generation infrastructure.
+Fiat payouts route through Commerce's native-PSP Connect-style payout rail. Commerce handles KYC, bank account verification, and wire transfers. Commerce also provides the 1099 generation infrastructure.
 
 ### HIP-24 (Hanzo L1)
 

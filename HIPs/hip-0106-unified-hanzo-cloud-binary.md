@@ -701,7 +701,7 @@ webhook intake. It explicitly does NOT:
 
 - Touch a Primary Account Number (PAN)
 - Process card data
-- Implement processor connector logic (Stripe SDK /
+- Implement processor connector logic (native PSP SDK /
   Adyen SDK)
 - Store encrypted PAN
 

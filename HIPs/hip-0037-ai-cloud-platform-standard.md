@@ -209,7 +209,7 @@ DELETE /v1/api-keys/:id          # Revoke key
 POST   /v1/api-keys/:id/rotate   # Rotate (new secret, same scope)
 ```
 
-Key creation returns the full key exactly once. Subsequent reads return only the last 4 characters for identification. This follows the same security pattern as Stripe and OpenAI.
+Key creation returns the full key exactly once. Subsequent reads return only the last 4 characters for identification. This follows the same security pattern used by leading API platforms (show-once, then last-4 only).
 
 ### Usage Tracking
 
