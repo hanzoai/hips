@@ -171,7 +171,7 @@ spec:
 | `lux.id` | IAM (Casdoor) | 8000 | hanzo-k8s |
 | `zoo.id` | IAM (Casdoor) | 8000 | hanzo-k8s |
 | `pars.id` | IAM (Casdoor) | 8000 | hanzo-k8s |
-| `kms.hanzo.ai` | KMS (Infisical) | 8080 | hanzo-k8s |
+| `kms.hanzo.ai` | KMS (Hanzo KMS) | 8080 | hanzo-k8s |
 | `platform.hanzo.ai` | Platform (Dokploy) | 3000 | hanzo-k8s |
 | `console.hanzo.ai` | Console | 3001 | hanzo-k8s |
 | `cloud.hanzo.ai` | Cloud | 3002 | hanzo-k8s |

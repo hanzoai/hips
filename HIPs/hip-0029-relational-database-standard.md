@@ -190,7 +190,7 @@ will evaluate dedicated vector infrastructure. Until then, pgvector is sufficien
 │  │    cloud         - Hanzo Cloud                           │       │
 │  │    console       - Hanzo Console                         │       │
 │  │    hanzo_cloud   - Hanzo Cloud (legacy schema)           │       │
-│  │    kms           - KMS (Infisical)                       │       │
+│  │    kms           - KMS (Hanzo KMS)                       │       │
 │  │    platform      - PaaS Platform (Dokploy)              │       │
 │  │                                                          │       │
 │  │  Extensions: pgvector, pg_trgm, uuid-ossp,              │       │
@@ -215,7 +215,7 @@ will evaluate dedicated vector infrastructure. Until then, pgvector is sufficien
 │  │    console       - Lux Console                           │       │
 │  │    gateway       - KrakenD API Gateway                   │       │
 │  │    hanzo         - Core Hanzo services                   │       │
-│  │    kms           - KMS (Infisical)                       │       │
+│  │    kms           - KMS (Hanzo KMS)                       │       │
 │  │                                                          │       │
 │  │  Extensions: pgvector, pg_trgm, uuid-ossp               │       │
 │  └──────────────────────────────────────────────────────────┘       │
@@ -262,7 +262,7 @@ credentials from KMS secrets:
 | IAM | Beego ORM (xorm) | `conf/app.conf` `dataSourceName` field |
 | Cloud | Prisma | `DATABASE_URL` env var |
 | Console | Prisma | `DATABASE_URL` env var |
-| KMS | Internal (Infisical) | `DB_CONNECTION_URI` env var |
+| KMS | Internal (Hanzo KMS) | `DB_CONNECTION_URI` env var |
 | Platform | Prisma | `DATABASE_URL` env var |
 | Commerce | raw `database/sql` | `DATABASE_URL` env var |
 | Gateway | KrakenD config | `dsn` in gateway config JSON |
@@ -625,7 +625,7 @@ host    all       all        0.0.0.0/0      reject
 
 ### Credential Management
 
-All database passwords are managed by KMS (Infisical at kms.hanzo.ai):
+All database passwords are managed by Hanzo KMS (kms.hanzo.ai):
 
 1. KMS stores `DATABASE_URL` for each service
 2. `KMSSecret` CRDs sync secrets into Kubernetes
@@ -634,7 +634,7 @@ All database passwords are managed by KMS (Infisical at kms.hanzo.ai):
 
 ```yaml
 # KMSSecret resource for IAM database credentials
-apiVersion: secrets.infisical.com/v1alpha1
+apiVersion: secrets.lux.network/v1alpha1
 kind: KMSSecret
 metadata:
   name: iam-database

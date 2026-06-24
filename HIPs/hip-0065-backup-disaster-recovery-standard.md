@@ -35,7 +35,7 @@ lux-k8s). Each service adopted its own backup approach:
 - **ClickHouse** has no automated backup; operators run manual `BACKUP` commands.
 - **MinIO** replicates buckets between clusters but has no off-site copy.
 - **Model artifacts** are stored in S3 buckets with no versioning policy.
-- **KMS secrets** are backed up only through Infisical's built-in export.
+- **KMS secrets** are backed up only through the KMS built-in export.
 
 This patchwork creates five problems:
 

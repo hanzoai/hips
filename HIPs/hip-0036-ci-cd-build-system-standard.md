@@ -76,7 +76,7 @@ GitHub Secrets are scoped to a single repository (or organization, but org-level
 260 repos x 1 manual update = 260 manual secret rotations
 ```
 
-With Hanzo KMS (at `kms.hanzo.ai`, powered by Infisical):
+With Hanzo KMS (at `kms.hanzo.ai`, powered by luxfi/kms MPC):
 
 ```
 1 KMS update = all 260 repos pick up the new token on next build

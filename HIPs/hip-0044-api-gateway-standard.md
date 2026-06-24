@@ -167,7 +167,7 @@ All external API traffic is routed through the gateway at `api.hanzo.ai`. Each s
 | `/v1/mcp/*` | MCP Server | 8008 | Model Context Protocol |
 | `/v1/tensors/*` | Tensor Service | 8009 | Tensor operations |
 | `/v1/bots/*` | Bot Service | 8010 | Bot/agent wallets |
-| `/v1/kms/*` | KMS (Infisical) | 8011 | Secrets management |
+| `/v1/kms/*` | KMS (Hanzo KMS) | 8011 | Secrets management |
 | `/health` | Gateway (self) | -- | Liveness probe |
 | `/__health` | Gateway (self) | -- | Readiness probe |
 | `/__stats` | Gateway (self) | -- | Internal statistics |
