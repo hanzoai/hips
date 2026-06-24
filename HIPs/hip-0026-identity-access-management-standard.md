@@ -96,7 +96,7 @@ The alternative (path-based multi-tenancy like `hanzo.id/lux/login`) is fragile.
 
 IAM already owns the user entity. Every authenticated API call already hits IAM (to validate the JWT or session). Adding a `balance` field to the user record means that the LLM Gateway (HIP-4) can check "is this user authenticated?" and "does this user have credits?" in a single token validation, without a second round-trip to a billing microservice.
 
-The `Transaction` model in IAM records both credits (Recharge from Commerce) and debits (Purchase from Cloud/LLM Gateway). This is not a full accounting system -- it is a ledger of balance-affecting events scoped to the user. Complex billing logic (invoices, Stripe integration, subscription tiers) lives in Commerce (HIP-18). IAM is the *balance cache*, not the billing engine.
+The `Transaction` model in IAM records both credits (Recharge from Commerce) and debits (Purchase from Cloud/LLM Gateway). This is not a full accounting system -- it is a ledger of balance-affecting events scoped to the user. Complex billing logic (invoices, native-PSP integration, subscription tiers) lives in Commerce (HIP-18). IAM is the *balance cache*, not the billing engine.
 
 ## Specification
 

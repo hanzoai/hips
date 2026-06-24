@@ -39,7 +39,7 @@ Fork of `mattermost/focalboard`-style commerce stack, heavily diverged. Go/Gin.
 
 ## Dependencies
 
-SQL (orders/products), KV (cart), Stripe (payments), IAM SSO, S3 (product images).
+SQL (orders/products), KV (cart), Hanzo Pay native PSP (payments), IAM SSO, S3 (product images).
 
 ## Status
 

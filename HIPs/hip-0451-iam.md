@@ -39,7 +39,7 @@ Fork of `casdoor/casdoor` (Apache 2.0), heavy Hanzo branding/feature patches.
 
 ## Dependencies
 
-SQL (users/orgs/apps), KMS (signing keys), S3 (avatars), Stripe via Commerce (recharge).
+SQL (users/orgs/apps), KMS (signing keys), S3 (avatars), native PSP via Commerce (recharge).
 
 ## Status
 

@@ -39,7 +39,7 @@ Hanzo-native, no upstream.
 
 ## Dependencies
 
-SQL (invoices), Commerce (orders), Console (usage events), Stripe (external).
+SQL (invoices), Commerce (orders), Console (usage events), Hanzo Pay native PSP.
 
 ## Status
 
