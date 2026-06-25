@@ -161,13 +161,14 @@ The canonical numbering is the four-digit `HIP-NNNN` series organized by categor
 | [HIP-0093](./HIPs/hip-0093-synthetic-biology-standard.md) | Synthetic Biology & DNA Data Storage Standard | Standards Track | Core | Draft |
 | [HIP-0094](./HIPs/hip-0094-medical-ai-standard.md) | Medical AI & Clinical Decision Support Standard | Standards Track | Core | Draft |
 
-### Identity & Topology (HIP-0111 — HIP-0113)
+### Identity & Topology (HIP-0111 — HIP-0115)
 
 | Number | Title | Type | Category | Status |
 |:-------|:------|:-----|:---------|:-------|
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | Hanzo IAM Authentication Standard | Standards Track | Infrastructure | Active |
 | [HIP-0112](./HIPs/hip-0112-cloud-infrastructure-topology-standard.md) | Cloud Infrastructure Topology Standard | Standards Track | Infrastructure | Active |
 | [HIP-0113](./HIPs/hip-0113-hanzo-service-conventions.md) | Hanzo Service Conventions | Standards Track | Infrastructure | Active |
+| [HIP-0115](./HIPs/hip-0115-hanzo-frontend-delivery.md) | Hanzo Frontend Delivery | Standards Track | Infrastructure | Active |
 
 ### Cross-Chain (HIP-0100+)
 
