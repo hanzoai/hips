@@ -216,12 +216,38 @@ These break in production and are not permitted under any circumstance:
 3. **Any per-app OIDC path string** — no application writes `/v1/iam/oauth/...` (or, worse, `/oauth/...`) itself. The path lives in `OIDC_PATHS` inside the SDK; applications pass only `serverUrl`.
 4. **Legacy paths** — `/oauth/*`, `/api/login/oauth/*`, anything `/api/`-prefixed. Gone. No backward compatibility.
 5. **Non-empty `originFrontend`** in production — produces a split-origin discovery document that breaks strict clients.
+6. **Per-app social OAuth clients** — an app registering its own Google/GitHub (or Web3) OAuth client. Social providers are configured ONCE per network, org-level, and shared (§7). A per-app client re-creates the shared one N times and drifts.
+7. **`/api/` on the front-door too** — the IAM's own login UI / portal Worker uses the native login API under `/v1/iam/*` (§6), never `/api/login`, `/api/get-app-login`, `/api/signup`. The "no `/api/`" rule is absolute, including the front-door.
 
 ### 5. Gotchas (call out explicitly)
 
 - **SPA catch-all** — IAM returns a `200 text/html` page for ANY unregistered path. A wrong path is not a `404`; it is silent breakage. Clients MUST hit the exact `/v1/iam/*` paths. This is why the SDK centralizes paths and degrades discovery to hard-coded canonical values.
 - **Discovery self-consistency** — issuer/authorize/token/userinfo/jwks share one origin (host-relative). Keep `originFrontend` empty in `app.prod.conf`.
-- **`owner` is the tenant** — the JWT `owner` claim is the org slug. Scope every data query to it. The gateway (HIP-0044) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT.
+- **`owner` is the tenant** — the org slug. IAM emits **`owner`** (and the standard-name alias **`organization`**) in BOTH the OIDC userinfo response AND the JWT, in every token format, scope-independent — so a consumer reading either claim off either surface gets the tenant. Scope every data query to it. The gateway (HIP-0044) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT. A consumer that reads org from a non-standard field (e.g. Casdoor `groups`) and finds nothing MUST fail closed, never silently fall back to a `"default"`/`"personal"` org — that is a tenant-isolation defect.
+
+### 6. The login front-door surface
+
+The OIDC endpoints (§1) are how **client applications** authenticate. The IAM *also* serves a native login API under the same canonical `/v1/iam/*` prefix — used **only** by the IAM's own login UI (the per-brand portal at `hanzo.id`/`lux.id`/… and its Cloudflare Worker), never by client apps:
+
+| Purpose | Path |
+|---------|------|
+| App/org resolution before login | `/v1/iam/get-app-login` |
+| Password login | `/v1/iam/login` |
+| Signup | `/v1/iam/signup` |
+| Verification code | `/v1/iam/send-verification-code` |
+| Account | `/v1/iam/get-account` |
+| Native userinfo | `/v1/iam/userinfo` |
+| Logout | `/v1/iam/logout` |
+
+Same rule as §1: `/v1/iam/*` only — no `/api/`, anywhere, including the front-door Worker. The separation is strict: **client apps use only the OIDC surface (§1) through the SDK**; the native login API is the IAM's internal front-end contract, not a client integration point.
+
+### 7. Social & Web3 — one shared provider, never per-app
+
+Google, GitHub, and Web3 are configured **once per network** as org-level providers in IAM (`admin/provider-google`, `admin/provider-github`, …). Every app reuses them via a per-app `canSignIn` toggle — an application **never** registers its own social OAuth client (§4.6).
+
+- The shared social OAuth client's redirect URI is **IAM's own callback** (`https://iam.<brand>/callback`); the provider hop happens inside IAM, not in the app. The app only ever sets *its own* `redirect_uri` (its `/auth/callback`).
+- An app selects a method with one knob: `startLogin({ provider })` adds `&provider=<name>` to `/v1/iam/oauth/authorize`. Omit `provider` for the IAM login page (password + whatever it offers). **One flow; the provider is a parameter, not a separate code path** — adding a provider is a config entry plus a button, and every app inherits it.
+- Login buttons are presentation, wired through `@hanzo/ui` `<SignIn providers={…}>` to the SDK. A surface that lacks a working button has it *disabled in config* — it is never *deleted from code*, because the shared provider is always available.
 
 ## Security Considerations
 
