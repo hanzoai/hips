@@ -75,7 +75,7 @@ Each role MUST accept the listed methods over its declared `proto`.
 - `tools/list`, `tools/call`, `prompts/list`, `prompts/get`,
   `resources/list`, `resources/read`
 
-#### `role=iam`  (Hanzo IAM — Casdoor-derived)
+#### `role=iam`  (Hanzo IAM)
 - `iam.login`, `iam.token.exchange`, `iam.user.get`, `iam.user.list`,
   `iam.session.refresh`, `iam.session.revoke`
 - HTTP equivalents under `/v1/iam/*`

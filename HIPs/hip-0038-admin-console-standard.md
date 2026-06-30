@@ -108,7 +108,7 @@ The three-tier role hierarchy:
 | **ADMIN** | Operational control: manage projects, invite users, view billing, manage API keys |
 | **MEMBER** | Read access: view projects, traces, evaluations; use API keys assigned to their projects |
 
-This is simpler than fine-grained RBAC (which Casdoor supports but Console does not expose). Three roles cover 95% of real-world access patterns. Adding custom roles would increase the permission surface area without proportional benefit. If a specific permission is needed (e.g., "can view billing but not traces"), the answer is to create a separate project with appropriate visibility, not to add another role.
+This is simpler than fine-grained RBAC (which Hanzo IAM supports but Console does not expose). Three roles cover 95% of real-world access patterns. Adding custom roles would increase the permission surface area without proportional benefit. If a specific permission is needed (e.g., "can view billing but not traces"), the answer is to create a separate project with appropriate visibility, not to add another role.
 
 ### How It Integrates
 

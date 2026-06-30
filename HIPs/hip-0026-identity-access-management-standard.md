@@ -13,7 +13,7 @@ requires: HIP-0027, HIP-0029
 
 ## Abstract
 
-Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a fork of [Casdoor](https://github.com/casdoor/casdoor), a Go/Beego-based identity platform, chosen for its lightweight single-binary deployment model and native compatibility with the Go-heavy Hanzo and Lux infrastructure stack.
+Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a Go/Beego-based identity platform, chosen for its lightweight single-binary deployment model and native compatibility with the Go-heavy Hanzo and Lux infrastructure stack.
 
 Hanzo IAM implements OAuth 2.0, OpenID Connect (OIDC), SAML 2.0, and CAS protocols. It provides multi-tenant authentication with per-organization white-label identity domains — any organization registered in IAM can get its own branded login page and identity domain. The default deployment ships with hanzo.id, lux.id, zoo.id, pars.id, and id.ad.nexus, but the system supports arbitrary additional tenants via configuration.
 
@@ -43,13 +43,13 @@ A single IAM instance at hanzo.id eliminates all five problems. Services delegat
 
 This section explains the *why* behind each major design decision. Good infrastructure decisions compound; bad ones metastasize. Understanding the rationale prevents future engineers from "fixing" things that are not broken.
 
-### Why Casdoor Over Keycloak
+### Why Hanzo IAM Over Keycloak
 
 Keycloak is the most popular open-source IAM. It is also a 500MB+ Java application that requires a JVM, takes 30+ seconds to start, and consumes 512MB of heap at idle. In the Hanzo ecosystem, where the blockchain node, CLI tools, SDK, and wallet are all written in Go, introducing a Java dependency for IAM is a poor fit.
 
-Casdoor compiles to a single Go binary (~50MB), starts in under 2 seconds, and idles at ~50MB RSS. It ships a React frontend (easy to customize for branding) and supports the same protocol set as Keycloak (OAuth 2.0, OIDC, SAML, CAS, LDAP, RADIUS). The tradeoff is a smaller community and fewer enterprise features (no fine-grained RBAC policies, no UMA). For our use case -- OAuth SSO across a handful of first-party services -- Casdoor's feature set is sufficient, and the operational simplicity is decisive.
+Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and idles at ~50MB RSS. It ships a React frontend (easy to customize for branding) and supports the same protocol set as Keycloak (OAuth 2.0, OIDC, SAML, CAS, LDAP, RADIUS). The tradeoff is a smaller community and fewer enterprise features (no fine-grained RBAC policies, no UMA). For our use case -- OAuth SSO across a handful of first-party services -- the Hanzo IAM feature set is sufficient, and the operational simplicity is decisive.
 
-| Factor | Casdoor | Keycloak |
+| Factor | Hanzo IAM | Keycloak |
 |--------|---------|----------|
 | Language | Go | Java |
 | Binary size | ~50 MB | ~500 MB+ |
@@ -675,7 +675,7 @@ The key design principle: **IAM authenticates users and issues scoped tokens. Se
 
 ## References
 
-1. [Casdoor](https://github.com/casdoor/casdoor) - Open-source identity and access management platform
+1. [Hanzo IAM](https://github.com/hanzoai/iam) - Open-source identity and access management platform
 2. [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) - The OAuth 2.0 Authorization Framework
 3. [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) - Proof Key for Code Exchange (PKCE)
 4. [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519) - JSON Web Token (JWT)

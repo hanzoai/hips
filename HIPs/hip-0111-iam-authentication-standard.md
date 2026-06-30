@@ -17,7 +17,7 @@ This is the one and only way an application authenticates a user or validates a 
 
 HIP-0026 specifies the IAM **server** — the provider itself. This HIP specifies the **client contract** — how everything else talks to it. Where the two touch (endpoint paths, discovery), this HIP is authoritative and HIP-0026 follows it.
 
-Hanzo IAM is a Casdoor-derived, standards-compliant OIDC provider deployed once per brand:
+Hanzo IAM is a standards-compliant OIDC provider deployed once per brand:
 
 | Brand | IAM origin (`serverUrl`) | Login UI |
 |-------|--------------------------|----------|
@@ -223,7 +223,7 @@ These break in production and are not permitted under any circumstance:
 
 - **SPA catch-all** — IAM returns a `200 text/html` page for ANY unregistered path. A wrong path is not a `404`; it is silent breakage. Clients MUST hit the exact `/v1/iam/*` paths. This is why the SDK centralizes paths and degrades discovery to hard-coded canonical values.
 - **Discovery self-consistency** — issuer/authorize/token/userinfo/jwks share one origin (host-relative). Keep `originFrontend` empty in `app.prod.conf`.
-- **`owner` is the tenant** — the org slug. IAM emits **`owner`** (and the standard-name alias **`organization`**) in BOTH the OIDC userinfo response AND the JWT, in every token format, scope-independent — so a consumer reading either claim off either surface gets the tenant. Scope every data query to it. The gateway (HIP-0044) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT. A consumer that reads org from a non-standard field (e.g. Casdoor `groups`) and finds nothing MUST fail closed, never silently fall back to a `"default"`/`"personal"` org — that is a tenant-isolation defect.
+- **`owner` is the tenant** — the org slug. IAM emits **`owner`** (and the standard-name alias **`organization`**) in BOTH the OIDC userinfo response AND the JWT, in every token format, scope-independent — so a consumer reading either claim off either surface gets the tenant. Scope every data query to it. The gateway (HIP-0044) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT. A consumer that reads org from a non-standard field (e.g. a legacy `groups` claim) and finds nothing MUST fail closed, never silently fall back to a `"default"`/`"personal"` org — that is a tenant-isolation defect.
 
 ### 6. The login front-door surface
 

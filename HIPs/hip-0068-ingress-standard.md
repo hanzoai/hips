@@ -167,10 +167,10 @@ spec:
 |------|----------------|------|---------|
 | `api.hanzo.ai` | API Gateway (HIP-44) | 8080 | hanzo-k8s |
 | `llm.hanzo.ai` | LLM Gateway (HIP-4) | 4000 | hanzo-k8s |
-| `hanzo.id` | IAM (Casdoor) | 8000 | hanzo-k8s |
-| `lux.id` | IAM (Casdoor) | 8000 | hanzo-k8s |
-| `zoo.id` | IAM (Casdoor) | 8000 | hanzo-k8s |
-| `pars.id` | IAM (Casdoor) | 8000 | hanzo-k8s |
+| `hanzo.id` | Hanzo IAM | 8000 | hanzo-k8s |
+| `lux.id` | Hanzo IAM | 8000 | hanzo-k8s |
+| `zoo.id` | Hanzo IAM | 8000 | hanzo-k8s |
+| `pars.id` | Hanzo IAM | 8000 | hanzo-k8s |
 | `kms.hanzo.ai` | KMS (Hanzo KMS) | 8080 | hanzo-k8s |
 | `platform.hanzo.ai` | Platform (Dokploy) | 3000 | hanzo-k8s |
 | `console.hanzo.ai` | Console | 3001 | hanzo-k8s |
