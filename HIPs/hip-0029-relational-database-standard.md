@@ -74,7 +74,7 @@ Both engines are mature and battle-tested. We chose PostgreSQL for four reasons:
    pg_stat_statements (query performance monitoring). PostgreSQL's extension model
    lets us add capabilities without changing the core engine.
 
-**Note on IAM**: Hanzo IAM (Casdoor fork) supports both MySQL and PostgreSQL.
+**Note on IAM**: Hanzo IAM supports both MySQL and PostgreSQL.
 Local development may use MySQL for convenience (`compose.mysql.yml`), but all
 staging and production deployments MUST use PostgreSQL. The `conf/app.conf`
 `driverName` field MUST be set to `postgres` in non-local environments.
@@ -186,7 +186,7 @@ will evaluate dedicated vector infrastructure. Until then, pgvector is sufficien
 │  │  PostgreSQL StatefulSet (postgres.hanzo.svc:5432)        │       │
 │  │                                                          │       │
 │  │  Databases:                                              │       │
-│  │    iam           - Hanzo IAM (Casdoor)                   │       │
+│  │    iam           - Hanzo IAM                             │       │
 │  │    cloud         - Hanzo Cloud                           │       │
 │  │    console       - Hanzo Console                         │       │
 │  │    hanzo_cloud   - Hanzo Cloud (legacy schema)           │       │
@@ -667,7 +667,7 @@ spec:
 
 ### IAM Dual-Engine Support
 
-Hanzo IAM (Casdoor fork) supports both MySQL and PostgreSQL. For local
+Hanzo IAM supports both MySQL and PostgreSQL. For local
 development convenience, MySQL is available:
 
 ```bash

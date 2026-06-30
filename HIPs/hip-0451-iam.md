@@ -20,7 +20,7 @@ Managed by `kind: IAM` ([HIP-408](hip-0408-iam-crd.md)).
 
 ## Upstream
 
-Fork of `casdoor/casdoor` (Apache 2.0), heavy Hanzo branding/feature patches.
+Hanzo IAM (Apache 2.0), heavy Hanzo branding/feature patches.
 
 ## Source
 
