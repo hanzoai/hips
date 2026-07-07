@@ -36,6 +36,21 @@ ZAP-typed Go interfaces when subsystems are co-resident, falls back to
 ZAP RPC over the wire when split. **No `.capnp` files anywhere in
 Hanzo-authored code.**
 
+**Transport boundary (ZAP-native internal; standards at the edge).** Every
+Hanzo-authored transport is ZAP — there is **no gRPC anywhere in Hanzo code**
+(the only historical gRPC was dead Temporal-porting codegen, removed in
+`hanzoai/tasks#12`), and **zero internal protobuf message shapes**. The single
+sanctioned exception is at the *external interoperability edge*: the
+observability plane speaks the OpenTelemetry wire standards **OTLP** (trace/log
+ingest, `cloud/zaptrace` — itself gRPC-free, OTLP-over-ZAP) and **OpAMP** (agent
+management, `o11y`), so any standard OpenTelemetry SDK or agent can interoperate.
+This mirrors the API edge (HTTP/JSON in, ZAP internal): the boundary may carry an
+external standard for interop; everything behind it is pure ZAP. Transitive
+protobuf pulled by foundational dependencies (beego/authz/coraza/lego/otel and
+even `luxfi/metric/client`) is a dependency-side follow-up, not Hanzo-authored
+code.
+
+
 The substrate this HIP depends on landed in HIP-0105 (in-process
 extension runtime). HIP-0106 is what you build *on top of* HIP-0105 to
 fold the existing Hanzo Go services into a single multi-tenant
