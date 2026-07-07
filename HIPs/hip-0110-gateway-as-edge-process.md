@@ -160,6 +160,16 @@ These targets follow from fasthttp's per-conn buffer pool, the
 `(claims size × number of distinct kid)` bytes. There is no per-tenant
 storage to amortize, so the gateway scales linearly with conn count.
 
+The per-conn figure is measured, not estimated: `conn_memory_test.go`
+holds the gateway at **8.02 KiB heap and one goroutine per concurrent
+connection** (verified 1 000 → 8 454 conns, Fiber v3 / fasthttp),
+reproducible with `go test -run=TestConnMemory -conn-count=10000` in
+`~/work/hanzo/gateway`. The RAM targets above are that per-conn budget
+plus fixed process overhead; a `Concurrency: 100_000` cap on
+`zip.Config` keeps a replica inside the 1 GiB ceiling, above which the
+cliff is OS-side (listener queue, ulimit, ephemeral port range), not
+Go-side.
+
 ### Wire protocol
 
 The boundary contract is one of three:
@@ -178,6 +188,13 @@ The boundary contract is one of three:
    callbacks, real-time record changes) carry a `connId` that the
    gateway looks up in its local connection table and forwards as
    SSE / WebSocket frames to the originating client.
+
+**Backend selection.** The gateway keeps no per-route table.
+`pickBackend(path)` routes `/v1/base/*` to the base ZAP peer and
+everything else to the cloud ZAP peer; the cloud binary's own router
+owns subsystem dispatch in-process (HIP-0106). The gateway only knows
+"base vs not-base" — the per-route surface stays in cloud, not at the
+edge.
 
 Inside `cloud` and `base`, ZAP frames are decoded once and dispatched
 to the per-subsystem `Mount` chain as native typed values. JSON
@@ -354,6 +371,10 @@ Gateway image: `ghcr.io/hanzoai/gateway:vX.Y.Z`, built from
   The gateway is exactly: zip + fasthttp + luxfi/zap + go-jose +
   luxfi/log + Go stdlib.
 - No CGo deps. Image size target: < 20 MiB.
+- `GOEXPERIMENT=jsonv2` in the production Dockerfile: every edge JSON
+  marshal/unmarshal runs through `encoding/json/v2` (−12% time / −23%
+  allocs on the edge POST roundtrip). JSON exists only at this edge, so
+  the flag's win is localized to exactly the one process that pays it.
 
 K8s `Service`:
 

@@ -39,6 +39,20 @@ recipients). HIP-0107 sits on top: it unifies the transport so the
 SQLite backend, the ZapDB backend, and any future backend route bytes
 through the same pipeline.
 
+**Two mechanisms, one substrate (the reconciliation).** Hanzo grew TWO
+SQLite-HA implementations: `hanzoai/replicate` (a Litestream fork —
+continuous streaming WAL → object store, files stored as age-encrypted
+`.zap.age`) and `hanzoai/vfs/replica` (whole-object `VACUUM INTO`
+snapshots plus the piece Litestream lacks: a coordinator-free single-writer
+election). That overlap is a one-and-one-way violation. This HIP resolves
+it, and names the winner: **streaming replication (`hanzoai/replicate`) is
+the canonical durability/replication transport; HRW single-writer election
+(`hanzoai/vfs/replica`, `owner.go`) is the canonical write-coordination.**
+The whole-object snapshot path is superseded by streaming for the
+replication path; the election and the hydrate/adopt primitives stay. See
+"HA-SQLite substrate" and "Relationship to HIP-0302 and hanzoai/replicate"
+below.
+
 ## Motivation
 
 Today Hanzo has **two parallel "where bytes live" abstractions**
@@ -194,6 +208,118 @@ The same binary handles all four source types via the `--source` flag.
 Restore drains the latest snapshot frame, then applies delta frames in
 monotonic order, then resumes streaming.
 
+## HA-SQLite substrate: single-writer election + adoption contract (shipped)
+
+The streaming pipeline above answers "how do bytes get durable." It does
+NOT answer "which replica may write." Litestream — and therefore
+`hanzoai/replicate` — assumes a single writer and does not elect one.
+`hanzoai/vfs/replica` (shipped on `vfs` main, `a947159`) supplies exactly
+that missing half, plus the primitives a service needs to adopt HA without
+changing its own storage library. It is the ONE shared substrate every
+Hanzo service imports instead of re-inventing durability.
+
+### Single-writer election (Rendezvous / HRW), no coordinator
+
+`replica/owner.go` answers, identically on every replica and with no
+network round-trip, "who is the single writer for org X?" via
+Highest-Random-Weight hashing over the live membership set:
+
+- `Owner(orgID, members)` — deterministic winner; `weight =
+  SHA-256(orgID ‖ 0x00 ‖ memberID)[:8]` as a big-endian uint64, tie-broken
+  on member ID so the result is order-independent.
+- `IsOwner(orgID, selfID, members)` — the per-write hot-path gate.
+- `Replicas(orgID, members, n)` — owner first, then ordered failover
+  successors, so a reader can pre-warm the org it is next in line to own.
+- **Fail-closed:** empty membership yields `ok=false` — never a wrong
+  writer. No election protocol, no lock service, no service discovery,
+  **no Postgres, no Redis.**
+
+Ownership is PER-ORG: the owning replica writes ALL of an org's DBs (root +
+every per-project + per-user file) so an org's data has locality and moves
+as one unit on failover. Reads are served from any replica's vfs-synced
+copy.
+
+### Adoption contract
+
+Every adopter wires the same three lines at its per-org store seam:
+
+1. **hydrate-on-open** — `Pull()` (or `RestoreFile`) the latest durable
+   copy before first use of an org DB, so a fresh or replaced pod starts
+   from committed state.
+2. **single-writer** — `IsOwner(org, self, members)` gates writes; a
+   non-owner serves stale-tolerant reads (Pull-then-read) and forwards
+   writes to the owner.
+3. **post-commit ship/stream** — the owner ships after a write burst (the
+   shipped `Replicator.PushLoop`), superseded on the streaming path by
+   `replicate` continuous WAL shipping.
+
+### Shipped primitives (`hanzoai/vfs/replica`)
+
+- `SQLiteDB` (`sqlite.go`) — the real per-org handle: `Snapshot` = `VACUUM
+  INTO` a temp (forces a WAL checkpoint, one transaction-consistent copy,
+  no torn pages, no `-wal`/`-shm` to ship); `Restore` = write-temp → close
+  → drop `-wal`/`-shm` → atomic rename → reopen (a crash mid-restore leaves
+  the old DB intact). CGO-free (`modernc.org/sqlite`), same durability
+  pragmas (WAL / NORMAL / foreign_keys / busy_timeout) as base and visor.
+- `SnapshotFile` / `RestoreFile` — handle-less adoption primitives so an
+  xorm / GORM service adopts HA without a handle conflict (restore runs
+  BEFORE the service opens its own engine).
+- `BackendStore` (`store.go`) — adapts any `vfs` backend (`file://` dev,
+  `s3://` SeaweedFS prod) to the `Store`, with a cheap `<key>.ver`
+  content-version sidecar so a reader skips redundant pulls; `Get`
+  recomputes the version authoritatively, so a stale sidecar degrades to a
+  redundant pull, never a wrong restore.
+- Per-org envelope encryption — `WithEncryption(Cipher, org)` seals every
+  pushed snapshot with the org's KMS-derived key, orgID bound as AAD so a
+  blob cannot be replayed under another org (HIP-0302 recipients).
+- `DBPath(org, scope, service)` — the canonical HIP-0302 object layout
+  (`orgs/<org>/[scope/]<service>.db`), computed identically on every
+  replica; `Version(data)` — the one content hash (SHA-256) both the
+  `Replicator` and any `Store` use.
+
+### Live adoption
+
+**visor is the reference adopter and it is LIVE.** `object/store_replica.go`
+opts in via `REPLICA_STORE` (`s3://…` SeaweedFS in prod, `file://` in test;
+unset = local-only, nil replicator, today's behavior with zero regression).
+It hydrates-on-open before xorm opens each org DB and runs a per-org ship
+loop; the success path logs, verbatim (`store_replica.go:128`):
+
+```
+visor HA: org "_global" shipping to object store (durable)
+```
+
+with explicit push-FAILED / push-recovered logs so a durability feature can
+never fail invisibly. `hanzoai/cloud` consolidated its own former
+`internal/org` replicator + election onto this same package (#11a3ae6 —
+re-exported as thin aliases in `internal/org/shared.go`), so cloud and
+visor now run ONE implementation. Rolling the same three-line adoption to
+iam / commerce / base is the remaining work.
+
+## Relationship to HIP-0302 and hanzoai/replicate
+
+HIP-0302 stays Final: it owns the encryption recipients, recovery
+objectives, and the sidecar / emptyDir pattern. HIP-0107 owns the transport
+and the write-coordination on top. The two SQLite-HA mechanisms reconcile
+as follows — **this is the decision, stated plainly:**
+
+| Concern | Winner | Why |
+|---|---|---|
+| Durability / replication transport | **`hanzoai/replicate`** (Litestream fork) | Continuous streaming WAL → object store (converted to immutable LTX, shipped as age-encrypted `.zap.age`) is strictly better than whole-object snapshots: lower RPO, incremental bytes, no periodic full-DB rewrite. CGO-free (`modernc.org/sqlite`). Canonical replication path. |
+| Single-writer coordination | **`hanzoai/vfs/replica`** (`owner.go`) | Litestream / `replicate` do NOT elect a writer. HRW / Rendezvous election is the genuinely-novel piece — coordinator-free, fail-closed, no Postgres/Redis. |
+| Adoption / hydrate / restore | **`hanzoai/vfs/replica`** (`SnapshotFile` / `RestoreFile`) | Handle-less primitives let any service hydrate-on-open and adopt HA regardless of its own DB library. |
+| Whole-object `VACUUM INTO` snapshot | **superseded for replication** | Kept as the consistent-copy primitive behind `SnapshotFile` and as the currently-shipped ship path; replaced by streaming as the durability transport as services migrate. |
+
+**Honest status.** The election, the adoption primitives, and the visor
+live path are shipped. The convergence — every adopter shipping via
+`replicate` streaming rather than the `Replicator` whole-object push, and
+folding `zapdb-replicator` + the per-backend sinks into the one
+`source-adapter → age → vfs.Backend` pipeline (the four-source design
+above) — is the reconciliation roadmap this HIP ratifies, not a claim that
+it is already uniform. The one-and-one-way violation (two overlapping
+SQLite-HA libraries) is closed by DECISION here; the code convergence
+follows the phases below.
+
 ## Implementation phases
 
 | Phase | Work | Effort |
@@ -252,8 +378,15 @@ monotonic order, then resumes streaming.
 - HIP-0302 — Hanzo Replicate: Encrypted SQLite + ZapDB Durability
   for Base Services (the predecessor for the SQLite/ZapDB substrate;
   HIP-0107 adds the unified pipeline on top — HIP-0302 stays Final)
-- Reference implementation: `~/work/hanzo/replicate` (source
-  adapters live here) and `~/work/hanzo/vfs` (sink backends move
-  here)
+- Reference implementations:
+  - `~/work/hanzo/vfs/replica` (SHIPPED) — HRW single-writer election
+    (`owner.go`), the `Replicator` (`replica.go`), the real `SQLiteDB`
+    snapshot/restore + `SnapshotFile`/`RestoreFile` adoption primitives
+    (`sqlite.go`), and `BackendStore` over a `vfs` backend (`store.go`).
+  - `~/work/hanzo/replicate` — `github.com/hanzoai/replicate`, the
+    Litestream fork: streaming WAL → immutable LTX → object store, files
+    stored as age-encrypted `.zap.age`; the canonical replication
+    transport.
+  - `~/work/hanzo/vfs` — the sink backends (`vfs.Backend`).
 - Litestream protocol (SQLite WAL framing): https://litestream.io
 - age v1.3.0+ PQ-hybrid recipients: https://age-encryption.org
