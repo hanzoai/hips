@@ -1,5 +1,5 @@
 ---
-hip: 0113
+hip: 0119
 title: Hanzo Service Conventions
 author: Hanzo AI Team
 type: Standards Track
@@ -9,7 +9,7 @@ created: 2026-06-25
 requires: HIP-0027, HIP-0031, HIP-0044, HIP-0068, HIP-0111, HIP-0112, HIP-0400
 ---
 
-# HIP-113: Hanzo Service Conventions
+# HIP-119: Hanzo Service Conventions
 
 ## Abstract
 
@@ -158,7 +158,7 @@ ingress) under white-label branding. **LPs and ZIPs adopt this HIP by reference 
 MUST NOT restate or fork the service contract.** What differs between ecosystems is
 *values* — brand, domain, theme, the org segment of `<org>-<app>` and
 `ghcr.io/<org>/…` — never *shape*. An LP or ZIP that needs a backend service points
-at HIP-0113; the contract is identical up, down, left, right, in, and out. That
+at HIP-0119; the contract is identical up, down, left, right, in, and out. That
 identity is the whole point: it is what makes the platform one way.
 
 ## Reference implementation

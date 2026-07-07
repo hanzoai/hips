@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-06-25
-requires: HIP-0036, HIP-0068, HIP-0112, HIP-0113, HIP-0504
+requires: HIP-0036, HIP-0068, HIP-0112, HIP-0119, HIP-0504
 ---
 
 # HIP-115: Hanzo Frontend Delivery
@@ -19,7 +19,7 @@ one repo in its org's apps organization, is one application on the PaaS, builds
 the same way, and is served the same way. There is exactly one project per site;
 there are no second implementations and no second homes.
 
-It is the frontend peer of HIP-0113. HIP-0113 governs backend *services* — they
+It is the frontend peer of HIP-0119. HIP-0119 governs backend *services* — they
 serve `/v1/*` and `:9090` to machines, live in per-service repos, and are deployed
 by the operator. This HIP governs *apps* — they serve `/` to humans, live in the
 per-org apps organization, and are deployed by the PaaS. The split is the
@@ -112,4 +112,4 @@ Existing scattered frontends are migrated into the apps org one site at a time:
 ## References
 
 - HIP-0036 CI/CD Build System · HIP-0068 Ingress · HIP-0112 Cloud Topology
-- HIP-0113 Service Conventions (the backend peer) · HIP-0504 Design System
+- HIP-0119 Service Conventions (the backend peer) · HIP-0504 Design System
