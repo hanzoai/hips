@@ -4,9 +4,10 @@ title: Cloud — Unified Hanzo Binary
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Review
 created: 2026-05-19
-requires: HIP-0014, HIP-0026, HIP-0027, HIP-0037, HIP-0105, HIP-0302
+updated: 2026-07-07
+requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0037, HIP-0105, HIP-0302, HIP-0422
 ---
 
 # HIP-106: Cloud — Unified Hanzo Binary
@@ -39,6 +40,107 @@ The substrate this HIP depends on landed in HIP-0105 (in-process
 extension runtime). HIP-0106 is what you build *on top of* HIP-0105 to
 fold the existing Hanzo Go services into a single multi-tenant
 supervised process.
+
+## Realized state (updated 2026-07-07)
+
+The sections below this one are the design as proposed. This section
+records what has actually SHIPPED in `hanzoai/cloud` — verified in
+tree, measured, and running — so the HIP reads as a spec of what IS,
+not only of what was intended. Status moved Draft → Review on the
+strength of this.
+
+### The registry that shipped
+
+Subsystem activation landed as a **registry + blank-import** pattern
+(`build.go`), refining the explicit-enumeration sketch in
+"Subsystem boundaries" below:
+
+```go
+// MountFunc is the canonical per-subsystem signature.
+type MountFunc func(app any, deps Deps) error // app is *zip.App
+
+func Register(name string, order int, mount MountFunc)
+func RegisterWithShutdown(name string, order int, mount MountFunc, shutdown ShutdownFunc)
+```
+
+Each embedded subsystem calls `cloud.Register(name, order, mount)`
+from its package `init()`; `cmd/cloud` blank-imports the packages it
+compiles in. `MountAll` mounts enabled subsystems in `order`;
+`ShutdownAll` tears down in reverse order within the shutdown
+deadline. `Order` expresses hard mount sequencing (e.g. pubsub at
+order 5 binds before the Kafka adaptor at order 6 dials it).
+
+### Embedded subsystems (shipped, verified)
+
+| Subsystem | Package | What shipped |
+|---|---|---|
+| **IAM** | `clients/iamsvc` | Wraps `iamserver.InitEmbed()` — the full IAM identity runtime (config, SQLite store, KMS signing keys, controllers, authz filters, background loops) bootstrapped **side-effect-free**: no `lsof`/SIGKILL `StopOldInstance`, no LDAP/RADIUS listeners, no `os.Exit`, binds no listener, returns errors instead of panicking. Mounts the whole Beego handler verbatim, so hanzo.id OAuth/OIDC semantics (authorize `clientId` org-resolution, JWT audiences, SuperAdmin `owner=="admin"`, argon2id) are preserved byte-for-byte. Red-reviewed. A **single-replica guard** (`CLOUD_REPLICAS`) refuses to boot iam-enabled above 1 replica — sessions are process-local; the helm chart pins `replicas=1`. |
+| **KMS** | `clients/kms` + `clients/kmssvc` | Embedded `luxfi/kms` SecretStore (`clients/kms`, in-process `Deps.KMS`) plus the `/v1/kms/*` REST surface (`clients/kmssvc`) on cloud's ONE auth boundary — never a parallel JWT stack. Org folded into the store path (`/orgs/{org}/…`) so one org can never address another's records. No master key → health-only mode. |
+| **o11y** | `clients/o11y` | SigNoz-derived OTLP traces/logs ingest embedded, ported onto **upstream ch-go** (clickhouse-go v2.44.0 / ch-go v0.71.0) — SigNoz's dd-sketch fork of ch-go does not compile against upstream, so the exporter was ported rather than forking the driver. Native datastore **metrics** driver (`pkg/datastoremetrics`) on the same upstream ch-go. Per-product o11y. |
+| **Tasks** | `durable.go` | Durable task engine embedded; ungated ZAP on loopback `:19999`, **gated ZAP on `:9999`** (the port the retired tasksd exposed) with org-scoped tokens. |
+| **Notify** | `clients/notify` | The one live contract — IAM OTP `POST /v1/notify/send?sync=true` — served natively in-process (IAM→cloud over ZAP + M2M). Imports notifyd's own provider packages (twilio/twilioemail/plivo/mail); no provider plumbing reimplemented. Async sends answer 503 exactly as notifyd without a worker. |
+| **PubSub** | `clients/pubsub` | Native NATS + JetStream data plane embedded via `hanzoai/pubsub/embed`; binds `:4222`, JetStream over the cloud data dir. **No ZooKeeper, no raft, no etcd** — single embedded node; the Lux-consensus (Quasar) durable control plane is the staged follow-up per HIP-0116. Enabled + broken ⇒ boot aborts (fail-closed), never a phantom messaging plane. |
+| **Kafka** | `clients/kafka` | Kafka-wire adaptor on `:9092` speaking NATS to the in-process PubSub on loopback `:4222` — replaces a standalone Kafka. Interop-verified. |
+| **Console** | `webui.go` | `go:embed all:webui/dist` of the **REAL** `hanzoai/console` static export (`npm run build:embed`) at the web root — one artifact, no separate console Service, no second origin. The Dockerfile **fails the build** unless a real bundle (non-empty `out/index.html` + `out/_next/`) is produced, so a placeholder can never silently ship; `ALLOW_PLACEHOLDER=1` is a dev-image-only escape hatch. |
+
+**Measured one-binary size:** backend-only 310,509,730 B (~296.1 MiB);
+with the console embedded 318,308,514 B (~303.6 MiB) — the entire
+console frontend costs **+7.8 MB** on the binary.
+
+### Disabled-by-default + fail-closed (the blast-radius rule)
+
+Every embed ships **disabled by default** (opt-in via
+`CLOUD_<NAME>_ENABLED`; unset ⇒ the subsystem is a no-op and binds
+nothing, so existing deployments are unaffected) and **fails closed**
+when enabled-but-broken: a failed bootstrap degrades that subsystem to
+503 on its own prefixes (the `iamsvc` `mountFailClosed` pattern, the
+KMS health-only mode) while every co-resident subsystem stays up.
+Data planes that cannot half-serve (pubsub) abort boot instead. A
+broken subsystem never crashes co-residents — this isolation rule is
+the reason the consolidation is safe at all.
+
+### Pods retired (verify-then-kill)
+
+The consolidation retired the standalone `notify`, `notifyd`,
+`tasks-ui`, `signoz`, `tasks`, and `temporal` pods (among others);
+social was migrated onto the embedded Tasks engine (gated ZAP `:9999`,
+verified live connections before the kill). The pattern is
+**verify-then-kill**: the embedded surface is proven against the live
+consumer contract before the standalone pod is deleted.
+
+### Storage (realized)
+
+Per-tenant **SQLite-primary** per HIP-0029/HIP-0302, exactly as
+specified below. The ONE exception is **datastore** (the
+ClickHouse-derived columnar store): a columnar OLAP engine is not
+idiomatically Go, so it stays a separate process reached over its
+native protocol (upstream ch-go) — never embedded, never an ORM
+backend.
+
+### Per-product metering + balance-floor gating (realized)
+
+Billing gates ALL products, not just AI. The edge middleware
+(`middleware_billing.go`) and the resource meter
+(`resource_billing.go`) wrap the ONE canonical commerce metering
+client (`Deps.Metering`) and the same ledger every product keys:
+
+- **402** `insufficient_balance` — default balance-floor gate at zero
+  balance, priced by actual request path;
+- **402** `spend_cap_exceeded` — per-scope caps;
+- **503** `balance_unavailable` — fail-closed when balance is unknown;
+- self-metering data planes (`/v1/functions/`, `/v1/s3/`) are excluded
+  from the flat edge charge so per-op metering never double-bills;
+- usage is queryable per product (`?product=` / `?groupBy=product`)
+  across functions/s3/agents/ml/compute/etc.
+
+Billing/payment semantics per HIP-0018 / HIP-0422.
+
+### What this section does NOT cover
+
+How subsystems take **shape** (standalone / embedded / plugin VM) and
+the consensus+ZapDB state substrate are HIP-0116. Deployment
+**topology** (single process / self-bootstrapped cluster / BYO k8s) is
+HIP-0117. This HIP stays the spec of the host binary itself.
 
 ## Motivation
 
@@ -288,6 +390,13 @@ This means **every existing Go service must expose a `Mount` function**
 in addition to its `cmd/<service>/main.go`. The `main.go` becomes a
 thin shim that calls `Mount` on its own; `cloud`'s main calls the
 same `Mount` from its own binary. No business logic moves.
+
+> **Realized refinement:** the explicit `if cfg.Enabled(...)`
+> enumeration above shipped as the registry pattern —
+> `cloud.Register(name, order, mount)` from each subsystem's `init()`
+> plus a blank import in `cmd/cloud`, with `MountAll`/`ShutdownAll`
+> driving ordered mount and reverse-ordered teardown. See "Realized
+> state" above. The `Mount` contract itself is unchanged.
 
 Reference implementations already in tree (per `AUDIT_2026_05_19.md`):
 **`commerce`, `gateway`, `vfs`** — these export `Mount(...)` today. New
@@ -830,8 +939,12 @@ vault or payments operator.
 
 4. **Build-time flags vs runtime flags** — for production we want
    every subsystem compiled in. For developer builds we might want to
-   disable some at build time to shrink the binary. Suggest both: Go
-   build tags for compile-time, CLI flags for runtime.
+   disable some at build time to shrink the binary.
+   **ANSWERED by HIP-0116**: neither build tags nor bigger binaries —
+   services build standalone AND as ZAP-native plugin VMs
+   (`luxfi/lpm`-installed, dispatched over ZAP per HIP-0114). Build
+   tags are explicitly rejected there; runtime enablement stays the
+   CLI/env flags specified here.
 
 5. **ZAP versioning** — when a subsystem evolves its `.zap` schema,
    how do we manage cross-version compat? Suggest semver on the
@@ -869,3 +982,13 @@ vault or payments operator.
 - HIP-0107 — Streaming Replication over VFS (the unified streaming
   pipeline; supersedes the per-backend sink code in HIP-0302's reference
   impl — substrate stays, transport unifies)
+- HIP-0029 — Relational Database Standard (SQLite-primary per-tenant
+  storage — the realized default)
+- HIP-0018 / HIP-0422 — payment processing / billing (the metering +
+  balance-floor semantics gated at this binary's edge)
+- HIP-0114 — ZAP — Inter-VM Cognitive Transport (envelope, framing,
+  authentication for the ZAP contract this HIP mandates)
+- HIP-0116 — Hanzo Plugin & VM Model (how subsystems take shape:
+  standalone / embedded / plugin VM; answers Open Question 4)
+- HIP-0117 — Cloud-in-a-Box — One Binary, Three Modes (deployment
+  topologies of this binary)

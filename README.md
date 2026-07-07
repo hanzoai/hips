@@ -161,6 +161,23 @@ The canonical numbering is the four-digit `HIP-NNNN` series organized by categor
 | [HIP-0093](./HIPs/hip-0093-synthetic-biology-standard.md) | Synthetic Biology & DNA Data Storage Standard | Standards Track | Core | Draft |
 | [HIP-0094](./HIPs/hip-0094-medical-ai-standard.md) | Medical AI & Clinical Decision Support Standard | Standards Track | Core | Draft |
 
+### Unified Cloud Runtime (HIP-0105 — HIP-0110, HIP-0116 — HIP-0117)
+
+The one-binary architecture: the host (HIP-0106) on the extension
+substrate (HIP-0105), how services take shape as plugins (HIP-0116),
+and how the result deploys (HIP-0117).
+
+| Number | Title | Type | Category | Status |
+|:-------|:------|:-----|:---------|:-------|
+| [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | In-Process Extension Runtime Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0106](./HIPs/hip-0106-unified-hanzo-cloud-binary.md) | Cloud — Unified Hanzo Binary | Standards Track | Infrastructure | Review |
+| [HIP-0107](./HIPs/hip-0107-streaming-replication-over-vfs.md) | Streaming Replication over VFS | Standards Track | Infrastructure | Draft |
+| [HIP-0108](./HIPs/hip-0108-on-demand-supervisor.md) | On-Demand Subsystem Supervisor + Warm Pool | Standards Track | Infrastructure | Draft |
+| [HIP-0109](./HIPs/hip-0109-hanzo-ml-cloud-toolkit.md) | Hanzo ML Cloud Toolkit | Standards Track | Infrastructure | Draft |
+| [HIP-0110](./HIPs/hip-0110-gateway-as-edge-process.md) | Gateway as Edge Process | Standards Track | Infrastructure | Draft |
+| [HIP-0116](./HIPs/hip-0116-plugin-vm-model.md) | Hanzo Plugin & VM Model — Standalone-plus-Plugin Services on Lux Consensus + ZapDB | Standards Track | Infrastructure | Draft |
+| [HIP-0117](./HIPs/hip-0117-cloud-in-a-box.md) | Cloud-in-a-Box — One Binary, Three Modes | Standards Track | Infrastructure | Draft |
+
 ### Identity & Topology (HIP-0111 — HIP-0115)
 
 | Number | Title | Type | Category | Status |
@@ -168,6 +185,7 @@ The canonical numbering is the four-digit `HIP-NNNN` series organized by categor
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | Hanzo IAM Authentication Standard | Standards Track | Infrastructure | Active |
 | [HIP-0112](./HIPs/hip-0112-cloud-infrastructure-topology-standard.md) | Cloud Infrastructure Topology Standard | Standards Track | Infrastructure | Active |
 | [HIP-0113](./HIPs/hip-0113-hanzo-service-conventions.md) | Hanzo Service Conventions | Standards Track | Infrastructure | Active |
+| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | ZAP — Inter-VM Cognitive Transport for Thinking Chains | Standards Track | Core | Draft |
 | [HIP-0115](./HIPs/hip-0115-hanzo-frontend-delivery.md) | Hanzo Frontend Delivery | Standards Track | Infrastructure | Active |
 
 ### Cross-Chain (HIP-0100+)
