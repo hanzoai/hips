@@ -4,9 +4,9 @@ title: Cloud — Unified Hanzo Binary
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Review
+status: Final
 created: 2026-05-19
-updated: 2026-07-07
+updated: 2026-07-08
 requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0037, HIP-0105, HIP-0302, HIP-0422
 ---
 

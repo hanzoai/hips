@@ -4,8 +4,9 @@ title: Cloud-in-a-Box — One Binary, Three Modes
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Review
 created: 2026-07-07
+updated: 2026-07-08
 requires: HIP-0036, HIP-0037, HIP-0106, HIP-0116, HIP-0400
 ---
 

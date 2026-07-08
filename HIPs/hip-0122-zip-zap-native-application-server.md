@@ -4,8 +4,9 @@ title: zip — The ZAP-Native Application Server Core
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-07-07
+updated: 2026-07-08
 requires: HIP-0026, HIP-0105, HIP-0114, HIP-0120
 ---
 

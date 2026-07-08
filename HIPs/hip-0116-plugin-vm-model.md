@@ -4,9 +4,9 @@ title: Hanzo Plugin & VM Model — Standalone-plus-Plugin Services on Lux Consen
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Review
 created: 2026-07-07
-updated: 2026-07-07
+updated: 2026-07-08
 requires: HIP-0105, HIP-0106, HIP-0113, HIP-0114, HIP-0122
 depends-on-external: luxfi/lpm (Lux Plugin Manager), luxfi/node (VM plugin-host model), luxfi/consensus (Quasar), luxfi/zapdb
 ---
