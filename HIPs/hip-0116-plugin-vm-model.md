@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-07-07
-requires: HIP-0105, HIP-0106, HIP-0114
+requires: HIP-0105, HIP-0106, HIP-0114, HIP-0122
 depends-on-external: luxfi/lpm (Lux Plugin Manager), luxfi/node (VM plugin-host model), luxfi/consensus (Quasar), luxfi/zapdb
 ---
 
@@ -80,8 +80,11 @@ transport: ZAP.
 
 Every `hanzoai/<repo>` service produces three artifacts from **one
 codebase and one contract** — the `Mount(app, deps)` + `.zap` schema
-contract of HIP-0106. The shape is a packaging decision, never a code
-fork:
+contract of HIP-0106, where `app` is the **zip** application server
+core (HIP-0122): the same `zip.App` surface hosts all three shapes,
+and `app.Mount` preserving the full path is what keeps a subsystem's
+routes identical across them. The shape is a packaging decision, never
+a code fork:
 
 | Shape | Artifact | Dispatch | When used |
 |---|---|---|---|
@@ -180,6 +183,12 @@ Same contract everywhere. The SaaS shape is what shipped; it is also
 the degenerate case of the plugin model in which every plugin is
 co-resident and dispatch collapses to a Go method call.
 
+Because a plugin VM is independently packaged, it is independently
+**schedulable**: horizontal scaling of a plugin VM's nodes —
+per-service, per-org, per-project, across providers — is **visor**'s
+concern (HIP-0123), which treats the plugin VM as its scalable unit.
+This HIP defines the unit; HIP-0123 defines its elasticity.
+
 ### Decided vs shipped
 
 Honesty section. As of this writing:
@@ -239,6 +248,10 @@ dispatch; it does not build a parallel plugin ecosystem.
   or plugin VM, and the state substrate under them.
 - HIP-0117 — where the result runs: single process, self-bootstrapped
   cluster, or BYO Kubernetes.
+- HIP-0122 — the server core (zip) every shape mounts on: `zip.App`,
+  transport-as-value Listen, the Mount surface.
+- HIP-0123 — how the plugin-VM unit scales: visor's per-tenant
+  per-service node pools across providers.
 
 ## References
 
@@ -250,6 +263,10 @@ dispatch; it does not build a parallel plugin ecosystem.
   envelope, framing, authentication, Bridge Law)
 - HIP-0117 — Cloud-in-a-Box — One Binary, Three Modes (deployment
   topology built on this model)
+- HIP-0122 — zip — The ZAP-Native Application Server Core (the
+  `zip.App` mount surface shared by all three shapes)
+- HIP-0123 — Visor — Fleet & Fabric Autoscaling Across Any Provider
+  (scales the plugin-VM unit this HIP defines)
 - HIP-0029 / HIP-0302 — per-tenant SQLite storage carried by Base VMs
 - `luxfi/lpm` — Lux Plugin Manager (`add-repository`,
   `install-github`)
