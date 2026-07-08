@@ -1,5 +1,5 @@
 ---
-hip: 0116
+hip: 0125
 title: Consensus-Backed Plugin-Placement Platform
 author: Hanzo AI Team
 type: Standards Track
@@ -9,7 +9,7 @@ created: 2026-07-07
 requires: HIP-0026, HIP-0027, HIP-0105, HIP-0106, HIP-0107, HIP-0112, HIP-0114, HIP-0302
 ---
 
-# HIP-116: Consensus-Backed Plugin-Placement Platform
+# HIP-125: Consensus-Backed Plugin-Placement Platform
 
 ## Abstract
 
