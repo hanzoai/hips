@@ -145,6 +145,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0124](./HIPs/hip-0124-byo-provider-and-ai.md) | Bring-Your-Own Provider & AI — Unified Dashboard and... | Standards Track | Platform | Final |
 | [HIP-0125](./HIPs/hip-0125-consensus-plugin-placement-platform.md) | Consensus-Backed Plugin-Placement Platform | Standards Track | Infrastructure | Draft |
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | Integrations, Connectors & the Extension Runtime — O... | Standards Track | Interface | Review |
+| [HIP-0127](./HIPs/hip-0127-v8-architecture-distribution-language-seam.md) | V8 · Open Edition — Architecture, Distribution & the... | Standards Track | Meta | Active |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
