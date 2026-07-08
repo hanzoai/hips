@@ -25,7 +25,7 @@ The mechanism is **two planes, decomplected, where consensus orders
 *decisions*, not *bytes***:
 
 - A **control plane** — one small **Quasar** post-quantum BFT replicated
-  state machine (RSM) across a fixed five-voter quorum
+  state machine (RSM) across a fixed seven-voter quorum
   (`luxfi/consensus/protocol/quasar` `NewEngine`; ordered finality,
   strict-PQ from day one) — whose finalized block sequence holds only tiny
   metadata: cluster membership, the placement map `(plugin, shard) →
@@ -92,7 +92,7 @@ The two planes never braid:
 | | Control plane | Data plane |
 |---|---|---|
 | **What it orders** | Placement decisions (membership, `(plugin,shard)→{writer,followers}`, writer leases + epochs) | Durable bytes (SQLite WAL frames, ZapDB deltas, snapshots) |
-| **Substrate** | **Quasar** PQ-BFT RSM (`luxfi/consensus/protocol/quasar`), 5-voter quorum, ordered finality | `hanzoai/replicate` over `hanzo/vfs`, async age-encrypted S3 log-ship (HIP-0107) |
+| **Substrate** | **Quasar** PQ-BFT RSM (`luxfi/consensus/protocol/quasar`), 7-voter quorum (5-of-7), ordered finality | `hanzoai/replicate` over `hanzo/vfs`, async age-encrypted S3 log-ship (HIP-0107) |
 | **Size** | Kilobytes. The whole placement map is small enough to fit in memory on every node. | Terabytes. Per-tenant WAL/delta streams. |
 | **Consistency** | Linearizable (the RSM is the single source of truth for who-owns-what) | Eventually consistent to the mirror; strongly consistent at the single writer |
 | **On the request path?** | **No** | **Yes** (the writer serves; followers proxy) |
@@ -295,7 +295,7 @@ one release (stage 2 below), so the cutover is reversible.
 ```
         ┌─────────────────── control plane (fast, fixed) ───────────────────┐
         │  voter-0   voter-1   voter-2   voter-3   voter-4                   │
-        │  └── Quasar PQ-BFT RSM · 5-voter quorum · placement map ───────────┘
+        │  └── Quasar PQ-BFT RSM · 7-voter quorum (5-of-7) · placement map ───┘
         └───────────────────────────────┬───────────────────────────────────┘
                                          │ watch: read-only placement map
         ┌────────────────────────────────┼──────────────────────────────────┐
@@ -306,10 +306,10 @@ one release (stage 2 below), so the cutover is reversible.
                     per-tenant ZapDB/SQLite + age-encrypted S3 mirror (HIP-0107)
 ```
 
-- **5 voter nodes** run the BFT control plane. Five is the smallest quorum
-  that tolerates two simultaneous failures with Byzantine finality; the
-  count is fixed so consensus stays fast (agreement among five, not among
-  the whole fleet).
+- **7 voter nodes** run the BFT control plane. Seven is the smallest set
+  that tolerates two simultaneous **Byzantine** failures (`N ≥ 3f+1`, so
+  `f=2`) with a quorum of five (`2f+1`); the count is fixed so consensus
+  stays fast (agreement among seven, not among the whole fleet).
 - **N non-voting data nodes** each *watch* a read-only replica of the
   placement map (the RSM streams committed updates to them), host the shards
   the map assigns them, run the unchanged `replication.go`, and serve or
@@ -434,10 +434,10 @@ not a Deployment.
 | Upgrade | Recreate (full stop) | `RollingUpdate{maxUnavailable: 1}`, `OrderedReady` |
 
 Because `NodeID`s are **stable across image upgrades**, a rolling upgrade is
-*not* a membership change: the RSM sees the same five voters and the same
+*not* a membership change: the RSM sees the same seven voters and the same
 data-node identities before and after, so **no epoch reconfiguration and no
 placement churn** happens on a deploy. `maxUnavailable: 1` keeps the voter
-quorum (4 of 5) live throughout the roll.
+quorum (6 of 7, above the 5-of-7 threshold) live throughout the roll.
 
 The existing Service aliases keep resolving: `kms` and `cloud-api` Services
 select `app.kubernetes.io/name: cloud`, which the StatefulSet pods still
@@ -468,7 +468,7 @@ differently; the surface exists.
 ### Stage 1 — control-plane RSM in SHADOW `[BR]`
 
 Mount the placement RSM as a new `cluster` subsystem (its own
-`cloud.Register`) running in **shadow**: the five voters agree on membership
+`cloud.Register`) running in **shadow**: the seven voters agree on membership
 and a placement map, data nodes watch it, but **nothing consults it yet** —
 the live fence is still the Kubernetes Lease. Verify in production that the
 shadow map matches reality (the RSM's chosen writer == the actual Lease
@@ -536,11 +536,11 @@ Where the design chose one path, and why:
 | Decision | Chosen | Rationale |
 |---|---|---|
 | Control-plane consensus | **Quasar PQ-BFT** (`protocol/quasar` `NewEngine`) | Placement decides *who may write*; a wrong/equivocating answer must be **impossible**, not improbable. **Full N-node Byzantine agreement** (decided): threshold shares split across voter pods, aggregated via Pulsar RoundSigner `Round1`/`Round2`/`Finalize` over ZAP, each voter verifying the aggregated PQ cert before applying a finalized block. **Strict-PQ from day one** (`ChainSecurityProfile` triple-mode gate) — orthogonal to and simultaneous with the Byzantine guarantee, *not* classical-now / PQ-later. |
-| Quorum shape | **5 voters + N data nodes** | Smallest Byzantine quorum tolerating 2 failures; consensus stays fast among a fixed 5 while data nodes scale unbounded. |
+| Quorum shape | **7 voters + N data nodes** | `N ≥ 3f+1` for `f=2`: seven is the smallest voter set with a Byzantine quorum (`2f+1 = 5`) tolerating 2 faults; consensus stays fast among a fixed 7 while data nodes scale unbounded. |
 | Shard granularity (v1) | **Coarse, per-plugin** | One global writer per plugin = **zero storage change** (existing data dir is the shard). Fine `(plugin,org)` is a later, opt-in refinement. |
 | KMS read path | **Writer serves reads**; followers are HA standbys | Simplest correct default; reads are already fast at the writer. Follower-serves-stale-reads is available per-connection for read-heavy plugins. |
 | Replication mode (default) | **Async S3 log-ship** (reuse `replication.go`) | Reuses HIP-0107 unchanged; RPO is small and already characterized. Sync (RPO = 0) is a **per-shard opt-in** for plugins that need it, not the default tax. |
-| Default counts | **5 voters / 3 data replicas** | 3 data replicas = one writer + two standbys, tolerating one node loss with a warm successor. |
+| Default counts | **7 voters / 3 data replicas** | 3 data replicas = one writer + two standbys, tolerating one node loss with a warm successor. |
 
 ## Failure modes
 
@@ -549,7 +549,7 @@ Where the design chose one path, and why:
 | **Control-plane quorum loss** (≥3 voters down) | Placement **frozen**: no new failovers, no rebalancing. **Serving continues** — every current writer keeps its lease and keeps writing. | Consensus is off the data path. The placement map is last-known-good and every data node already has it cached. Agility degrades; availability does not. |
 | **Split-brain write attempt** (a partitioned old writer thinks it still owns a shard) | The stale writer is fenced. | Two independent fences: (1) the RSM never grants two valid leases for one shard/epoch (linearizable); (2) the S3 epoch-CAS rejects any push whose epoch is behind the mirror's `latest` — the deposed writer physically cannot append. |
 | **Writer node loss** | RSM commits `Assign(shard, follower, epoch+1)`; a warm follower is promoted; pinning re-routes new connections to it. | Followers are HA standbys already replicating the shard; promotion is a placement-map update, not a data copy. |
-| **Rolling image upgrade** | No membership change, no epoch reconfig, no placement churn. | Stable `NodeID`s make the roll invisible to the RSM; `maxUnavailable:1` keeps 4/5 voter quorum live throughout. |
+| **Rolling image upgrade** | No membership change, no epoch reconfig, no placement churn. | Stable `NodeID`s make the roll invisible to the RSM; `maxUnavailable:1` keeps 6/7 voters live — above the 5-of-7 quorum — throughout. |
 | **Data migration correctness** (coarse→fine, or Infisical import) | Verified by **count + checksum** before the old source is retired. | No cutover trusts the copy; every stage proves equivalence first, then flips. |
 | **`/api` compat-shim mis-scoping** (stage 5) | Explicitly called out as **the** cross-tenant-leak surface. | The shim translates legacy paths to org-scoped KMS lookups; a scoping bug leaks another tenant's secret. It is the primary red-team target and ships behind the most review. |
 
