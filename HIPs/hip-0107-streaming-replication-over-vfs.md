@@ -45,11 +45,15 @@ continuous streaming WAL → object store, files stored as age-encrypted
 `.zap.age`) and `hanzoai/vfs/replica` (whole-object `VACUUM INTO`
 snapshots plus the piece Litestream lacks: a coordinator-free single-writer
 election). That overlap is a one-and-one-way violation. This HIP resolves
-it, and names the winner: **streaming replication (`hanzoai/replicate`) is
-the canonical durability/replication transport; HRW single-writer election
-(`hanzoai/vfs/replica`, `owner.go`) is the canonical write-coordination.**
-The whole-object snapshot path is superseded by streaming for the
-replication path; the election and the hydrate/adopt primitives stay. See
+it, and names the winners — one home per concern: **streaming replication
+(`hanzoai/replicate`) is the canonical durability/replication transport; HRW
+single-writer election is `hanzoai/ha` (extracted from `vfs/replica`, which
+had kept storage-agnostic election inside a SQLite library — its own
+one-and-one-way violation); the `VACUUM INTO` snapshot / hydrate / adopt
+primitives stay in `hanzoai/vfs/replica`.** `ha` decides WHO writes;
+`vfs/replica` decides HOW state ships. The whole-object snapshot path is
+superseded by streaming for the replication path; election (now `ha`) and
+the hydrate/adopt primitives stay. See
 "HA-SQLite substrate" and "Relationship to HIP-0302 and hanzoai/replicate"
 below.
 
@@ -213,26 +217,31 @@ monotonic order, then resumes streaming.
 The streaming pipeline above answers "how do bytes get durable." It does
 NOT answer "which replica may write." Litestream — and therefore
 `hanzoai/replicate` — assumes a single writer and does not elect one.
-`hanzoai/vfs/replica` (shipped on `vfs` main, `a947159`) supplies exactly
-that missing half, plus the primitives a service needs to adopt HA without
-changing its own storage library. It is the ONE shared substrate every
-Hanzo service imports instead of re-inventing durability.
+`hanzoai/ha` supplies exactly that missing half — coordinator-free
+single-writer election — and `hanzoai/vfs/replica` supplies the primitives a
+service needs to adopt HA without changing its own storage library. Together
+they are the shared substrate every Hanzo service imports instead of
+re-inventing durability: `ha` decides WHO writes, `vfs/replica` decides HOW
+state ships.
 
-### Single-writer election (Rendezvous / HRW), no coordinator
+### Single-writer election (Rendezvous / HRW), no coordinator — `hanzoai/ha`
 
-`replica/owner.go` answers, identically on every replica and with no
-network round-trip, "who is the single writer for org X?" via
-Highest-Random-Weight hashing over the live membership set:
+`hanzoai/ha` answers, identically on every replica and with no network
+round-trip, "who is the single writer for key K?" via Highest-Random-Weight
+hashing over the live membership set (K is any ownership unit — an org id, a
+shard, a singleton job name):
 
-- `Owner(orgID, members)` — deterministic winner; `weight =
-  SHA-256(orgID ‖ 0x00 ‖ memberID)[:8]` as a big-endian uint64, tie-broken
+- `Owner(key, members)` — deterministic winner; `weight =
+  SHA-256(key ‖ 0x00 ‖ memberID)[:8]` as a big-endian uint64, tie-broken
   on member ID so the result is order-independent.
-- `IsOwner(orgID, selfID, members)` — the per-write hot-path gate.
-- `Replicas(orgID, members, n)` — owner first, then ordered failover
-  successors, so a reader can pre-warm the org it is next in line to own.
+- `IsOwner(key, selfID, members)` — the per-write hot-path gate.
+- `Replicas(key, members, n)` — owner first, then ordered failover
+  successors, so a reader can pre-warm the key it is next in line to own.
+- `Membership` (seam) + `Static` — the live-set source: a cluster impl
+  (`ha/k8s`, roadmap) or single-process `Static` for dev and tests.
 - **Fail-closed:** empty membership yields `ok=false` — never a wrong
   writer. No election protocol, no lock service, no service discovery,
-  **no Postgres, no Redis.**
+  **no Postgres, no Redis.** Pure Go, stdlib only.
 
 Ownership is PER-ORG: the owning replica writes ALL of an org's DBs (root +
 every per-project + per-user file) so an org's data has locality and moves
@@ -293,8 +302,10 @@ with explicit push-FAILED / push-recovered logs so a durability feature can
 never fail invisibly. `hanzoai/cloud` consolidated its own former
 `internal/org` replicator + election onto this same package (#11a3ae6 —
 re-exported as thin aliases in `internal/org/shared.go`), so cloud and
-visor now run ONE implementation. Rolling the same three-line adoption to
-iam / commerce / base is the remaining work.
+visor now run ONE implementation; election has since been extracted again
+into `hanzoai/ha` (aliases repointed there; `vfs/replica` is now
+replication-only). Rolling the same adoption to iam / commerce / base is the
+remaining work.
 
 ## Relationship to HIP-0302 and hanzoai/replicate
 
@@ -306,7 +317,7 @@ as follows — **this is the decision, stated plainly:**
 | Concern | Winner | Why |
 |---|---|---|
 | Durability / replication transport | **`hanzoai/replicate`** (Litestream fork) | Continuous streaming WAL → object store (converted to immutable LTX, shipped as age-encrypted `.zap.age`) is strictly better than whole-object snapshots: lower RPO, incremental bytes, no periodic full-DB rewrite. CGO-free (`modernc.org/sqlite`). Canonical replication path. |
-| Single-writer coordination | **`hanzoai/vfs/replica`** (`owner.go`) | Litestream / `replicate` do NOT elect a writer. HRW / Rendezvous election is the genuinely-novel piece — coordinator-free, fail-closed, no Postgres/Redis. |
+| Single-writer coordination | **`hanzoai/ha`** | Litestream / `replicate` do NOT elect a writer. HRW / Rendezvous election is the genuinely-novel piece — coordinator-free, fail-closed, no Postgres/Redis. Extracted from `vfs/replica` so a non-SQLite singleton (cron, queue drain) elects without importing a storage library. |
 | Adoption / hydrate / restore | **`hanzoai/vfs/replica`** (`SnapshotFile` / `RestoreFile`) | Handle-less primitives let any service hydrate-on-open and adopt HA regardless of its own DB library. |
 | Whole-object `VACUUM INTO` snapshot | **superseded for replication** | Kept as the consistent-copy primitive behind `SnapshotFile` and as the currently-shipped ship path; replaced by streaming as the durability transport as services migrate. |
 
@@ -379,10 +390,13 @@ follows the phases below.
   for Base Services (the predecessor for the SQLite/ZapDB substrate;
   HIP-0107 adds the unified pipeline on top — HIP-0302 stays Final)
 - Reference implementations:
-  - `~/work/hanzo/vfs/replica` (SHIPPED) — HRW single-writer election
-    (`owner.go`), the `Replicator` (`replica.go`), the real `SQLiteDB`
-    snapshot/restore + `SnapshotFile`/`RestoreFile` adoption primitives
-    (`sqlite.go`), and `BackendStore` over a `vfs` backend (`store.go`).
+  - `~/work/hanzo/ha` (SHIPPED) — `github.com/hanzoai/ha`, HRW single-writer
+    election (`Owner`/`IsOwner`/`Replicas`/`Member`) + the `Membership` seam
+    and `Static`. Pure Go, stdlib only; election with no storage dependency.
+  - `~/work/hanzo/vfs/replica` (SHIPPED) — the `Replicator` (`replica.go`),
+    the real `SQLiteDB` snapshot/restore + `SnapshotFile`/`RestoreFile`
+    adoption primitives (`sqlite.go`), and `BackendStore` over a `vfs`
+    backend (`store.go`). Replication only; election lives in `hanzoai/ha`.
   - `~/work/hanzo/replicate` — `github.com/hanzoai/replicate`, the
     Litestream fork: streaming WAL → immutable LTX → object store, files
     stored as age-encrypted `.zap.age`; the canonical replication
