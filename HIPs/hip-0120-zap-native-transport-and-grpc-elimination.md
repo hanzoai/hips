@@ -343,7 +343,7 @@ conformance signal. Per repo:
 
 | Repo | `grpc` in go.mod | Source (never dialed by first-party code) |
 |------|------------------|-------------------------------------------|
-| `cloud` | `v1.81.1 // indirect` (+ `otelgrpc v0.67.0 // indirect`) | Embedded siblings: `hanzoai/ai`, `hanzoai/o11y` (SigNoz — intrinsically an OTLP/gRPC *collector*, so its gRPC is definitional to the receiver, not a Hanzo client dial), `hanzoai/base` (GCS gRPC transport). `zaptrace` itself is grpc-free. |
+| `cloud` | `v1.81.1 // indirect` (+ `otelgrpc v0.67.0 // indirect`) | Embedded siblings: `hanzoai/ai`, `hanzoai/o11y` (intrinsically an OTLP/gRPC *collector*, so its gRPC is definitional to the receiver, not a Hanzo client dial), `hanzoai/base` (GCS gRPC transport). `zaptrace` itself is grpc-free. |
 | `gateway` | `v1.80.0 // indirect` (+ `otelgrpc v0.67.0 // indirect`) | `krakend-pubsub`'s hardcoded `gocloud.dev/pubsub/gcppubsub` blank import (a GCP Pub/Sub driver Hanzo does not use), legacy build only. |
 | `visor` | `v1.80.0 // indirect` | OTLP-HTTP telemetry exporter: `telemetry → otlpmetrichttp → internal/oconf → grpc`. HTTP transport; no channel dialed. |
 | `ai` | `v1.81.1 // indirect` | OTLP-HTTP exporter (`object → otlptracehttp → internal/otlpconfig → grpc`) and the Gemini SDK `google.golang.org/genai` (a *direct* dep at `v1.10.0` whose HTTP backend transitively requires grpc). Neither dials a gRPC channel. |
@@ -369,7 +369,7 @@ which is a Hanzo gRPC conversation:
 2. **Raw-HTTP Gemini client (`ai`).** Replace `google.golang.org/genai` with a
    `net/http` client against the `generativelanguage` REST surface, removing the
    last direct dependency that transitively requires grpc.
-3. **Embedded SigNoz/GCS (`cloud`).** The `o11y` collector is an OTLP/gRPC
+3. **Embedded O11y/GCS (`cloud`).** The `o11y` collector is an OTLP/gRPC
    *receiver* by definition; its grpc is not a client dial and is out of scope
    for the client-side mandate. `hanzoai/base` GCS transport is a separate GCS-
    over-REST question tracked with the compute work.
