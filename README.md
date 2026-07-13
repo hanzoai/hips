@@ -95,7 +95,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0072](./HIPs/hip-0072-quantum-machine-learning-standard.md) | Quantum Machine Learning Standard | Standards Track | Core | Draft |
 | [HIP-0073](./HIPs/hip-0073-quantum-random-number-generation-standard.md) | Quantum Random Number Generation Standard | Standards Track | Security | Draft |
 | [HIP-0074](./HIPs/hip-0074-software-bill-of-materials-standard.md) | Software Bill of Materials & Git Stamp Standard | Standards Track | Infrastructure | Draft |
-| [HIP-0075](./HIPs/hip-0075-oss-contributor-payout-standard.md) | Open Source Contributor Tracking & Payout Standard | Standards Track | Core | Draft |
+| [HIP-0075](./HIPs/hip-0075-oss-contributor-payout-standard.md) | Open Source Contributor Tracking & Payout Standard | Standards Track | Core | Review |
 | [HIP-0076](./HIPs/hip-0076-open-ai-protocol-standard.md) | Open AI Protocol & Decentralized Inference Standard | Standards Track | Core | Draft |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | Mesh Identity, Gossip & Payments (PQ) | Standards Track | Infrastructure | Draft |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | Z-Chain — Post-Quantum Identity & Attestation Rollup | Standards Track | Infrastructure | Draft |
@@ -123,23 +123,23 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0102](./HIPs/hip-0102-omnichain-bridge.md) | Omnichain Bridge Integration | Standards Track | Bridge | Final |
 | [HIP-0103](./HIPs/hip-0103-bridge-pq-only-profile.md) | Bridge PQ-Only Profile | Standards Track | Infrastructure | Proposed |
 | [HIP-0104](./HIPs/hip-0104-contract-auth-via-zchain-proof.md) | Contract Auth via Z-Chain Proof | Standards Track | Infrastructure | Proposed |
-| [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | In-Process Extension Runtime Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | In-Process Extension Runtime Standard | Standards Track | Infrastructure | Review |
 | [HIP-0106](./HIPs/hip-0106-unified-hanzo-cloud-binary.md) | Cloud — Unified Hanzo Binary | Standards Track | Infrastructure | Final |
-| [HIP-0107](./HIPs/hip-0107-streaming-replication-over-vfs.md) | Streaming Replication over VFS | Standards Track | Infrastructure | Draft |
+| [HIP-0107](./HIPs/hip-0107-streaming-replication-over-vfs.md) | Streaming Replication over VFS | Standards Track | Infrastructure | Review |
 | [HIP-0108](./HIPs/hip-0108-on-demand-supervisor.md) | On-Demand Subsystem Supervisor + Warm Pool | Standards Track | Infrastructure | Draft |
 | [HIP-0109](./HIPs/hip-0109-hanzo-ml-cloud-toolkit.md) | Hanzo ML Cloud Toolkit | Standards Track | Infrastructure | Draft |
 | [HIP-0110](./HIPs/hip-0110-gateway-as-edge-process.md) | Gateway as Edge Process | Standards Track | Infrastructure | Draft |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | Hanzo IAM Authentication Standard | Standards Track | Infrastructure | Active |
 | [HIP-0112](./HIPs/hip-0112-cloud-infrastructure-topology-standard.md) | Cloud Infrastructure Topology Standard | Standards Track | Infrastructure | Active |
 | [HIP-0113](./HIPs/hip-0113-cognitive-sidecar-and-hanzo-engine-provider-runtime.md) | Cognitive Sidecar & Hanzo Engine Provider Runtime fo... | Standards Track | Core | Draft |
-| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | ZAP — Inter-VM Cognitive Transport for Thinking Chains | Standards Track | Core | Draft |
+| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | ZAP — Inter-VM Cognitive Transport for Thinking Chains | Standards Track | Core | Review |
 | [HIP-0115](./HIPs/hip-0115-hanzo-frontend-delivery.md) | Hanzo Frontend Delivery | Standards Track | Infrastructure | Active |
 | [HIP-0116](./HIPs/hip-0116-plugin-vm-model.md) | Hanzo Plugin & VM Model — Standalone-plus-Plugin Ser... | Standards Track | Infrastructure | Review |
 | [HIP-0117](./HIPs/hip-0117-cloud-in-a-box.md) | Cloud-in-a-Box — One Binary, Three Modes | Standards Track | Infrastructure | Review |
-| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | SuperAdmin & Tenant Isolation Model | Standards Track | Security | Draft |
+| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | SuperAdmin & Tenant Isolation Model | Standards Track | Security | Review |
 | [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | Hanzo Service Conventions | Standards Track | Infrastructure | Active |
-| [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | ZAP-Native Transport & gRPC Elimination | Standards Track | Core | Draft |
-| [HIP-0121](./HIPs/hip-0121-byo-compute-fleet-and-metered-billing.md) | BYO Compute Fleet & Metered Billing | Standards Track | Core | Draft |
+| [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | ZAP-Native Transport & gRPC Elimination | Standards Track | Core | Review |
+| [HIP-0121](./HIPs/hip-0121-byo-compute-fleet-and-metered-billing.md) | BYO Compute Fleet & Metered Billing | Standards Track | Core | Review |
 | [HIP-0122](./HIPs/hip-0122-zip-zap-native-application-server.md) | zip — The ZAP-Native Application Server Core | Standards Track | Infrastructure | Final |
 | [HIP-0123](./HIPs/hip-0123-visor-fleet-autoscaling.md) | Visor — Fleet & Fabric Autoscaling Across Any Provider | Standards Track | Infrastructure | Review |
 | [HIP-0124](./HIPs/hip-0124-byo-provider-and-ai.md) | Bring-Your-Own Provider & AI — Unified Dashboard and... | Standards Track | Platform | Final |
@@ -159,7 +159,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0280](./HIPs/hip-0280-ai-for-sustainability.md) | AI for Sustainability | Meta | - | Draft |
 | [HIP-0290](./HIPs/hip-0290-evidence-locker-index.md) | Evidence Locker Index | Meta | - | Draft |
 | [HIP-0295](./HIPs/hip-0295-hanzo-ai-impact-thesis.md) | Hanzo AI Impact Thesis | Meta | - | Draft |
-| [HIP-0300](./HIPs/hip-0300-unified-mcp-tools-architecture.md) | Unified MCP Tools Architecture | Standards Track | Interface | Draft |
+| [HIP-0300](./HIPs/hip-0300-unified-mcp-tools-architecture.md) | Unified MCP Tools Architecture | Standards Track | Interface | Review |
 | [HIP-0301](./HIPs/hip-0301-python-sdk-agent-runtime-protocols.md) | Agent Runtime Protocols & Cross-Platform Parity | Standards Track | Core | Draft |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | Hanzo Replicate: Encrypted SQLite Durability for Bas... | Standards Track | Infrastructure | Final |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Hanzo adopts LP-0010: Brand Sovereignty and Federati... | Meta | Governance | Final |

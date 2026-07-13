@@ -1,5 +1,5 @@
 {
-  "hip_count": 252,
+  "hip_count": 253,
   "hips": [
     {
       "number": 0,
@@ -832,7 +832,7 @@
       "title": "Open Source Contributor Tracking & Payout Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Core",
       "created": "2026-02-23"
@@ -1140,7 +1140,7 @@
       "title": "In-Process Extension Runtime Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-05-19"
@@ -1162,7 +1162,7 @@
       "title": "Streaming Replication over VFS",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-05-18"
@@ -1239,7 +1239,7 @@
       "title": "ZAP — Inter-VM Cognitive Transport for Thinking Chains",
       "description": "",
       "author": "Hanzo AI",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Core",
       "created": "2026-06-21"
@@ -1283,7 +1283,7 @@
       "title": "SuperAdmin & Tenant Isolation Model",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Security",
       "created": "2026-07-07"
@@ -1305,7 +1305,7 @@
       "title": "ZAP-Native Transport & gRPC Elimination",
       "description": "",
       "author": "Hanzo AI",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Core",
       "created": "2026-07-07"
@@ -1316,7 +1316,7 @@
       "title": "BYO Compute Fleet & Metered Billing",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Core",
       "created": "2026-07-07"
@@ -1375,6 +1375,17 @@
       "type": "Standards Track",
       "category": "Interface",
       "created": "2026-07-07"
+    },
+    {
+      "number": 127,
+      "file": "hip-0127-v8-architecture-distribution-language-seam.md",
+      "title": "V8 · Open Edition — Architecture, Distribution & the Language Seam",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Active",
+      "type": "Standards Track",
+      "category": "Meta",
+      "created": "2026-07-08"
     },
     {
       "number": 200,
@@ -1525,7 +1536,7 @@
       "title": "Unified MCP Tools Architecture",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Review",
       "type": "Standards Track",
       "category": "Interface",
       "created": "2025-01-21"

@@ -4,7 +4,7 @@ title: Unified MCP Tools Architecture
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Review
 created: 2025-01-21
 ---
 

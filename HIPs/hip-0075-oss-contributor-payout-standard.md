@@ -4,7 +4,7 @@ title: Open Source Contributor Tracking & Payout Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Review
 created: 2026-02-23
 requires: HIP-1, HIP-18, HIP-24, HIP-26, HIP-48
 ---

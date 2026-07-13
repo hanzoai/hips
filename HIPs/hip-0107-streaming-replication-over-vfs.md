@@ -4,7 +4,7 @@ title: Streaming Replication over VFS
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Review
 created: 2026-05-18
 requires: HIP-0026, HIP-0027, HIP-0032, HIP-0302
 ---

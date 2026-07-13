@@ -4,7 +4,7 @@ title: BYO Compute Fleet & Metered Billing
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Review
 created: 2026-07-07
 requires: HIP-0026, HIP-0027, HIP-0053, HIP-0106, HIP-0111, HIP-0112
 ---

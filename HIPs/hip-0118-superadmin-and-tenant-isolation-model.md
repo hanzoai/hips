@@ -4,7 +4,7 @@ title: SuperAdmin & Tenant Isolation Model
 author: Hanzo AI Team
 type: Standards Track
 category: Security
-status: Draft
+status: Review
 created: 2026-07-07
 requires: HIP-0026, HIP-0044, HIP-0068, HIP-0111
 ---

@@ -4,7 +4,7 @@ title: ZAP-Native Transport & gRPC Elimination
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Review
 created: 2026-07-07
 requires: HIP-0106, HIP-0112, HIP-0114
 ---

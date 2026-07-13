@@ -4,7 +4,7 @@ title: In-Process Extension Runtime Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Review
 created: 2026-05-19
 requires: HIP-0026
 ---
