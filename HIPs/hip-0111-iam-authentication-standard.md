@@ -6,6 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-06-16
+updated: 2026-07-15
 requires: HIP-0026, HIP-0044, HIP-0068
 ---
 
@@ -61,11 +62,13 @@ These are the **only** paths. There is no `/oauth/*`, no `/api/login/*`, no `/ap
 | UserInfo | `/v1/iam/oauth/userinfo` | OIDC Core §5.3 |
 | Introspection | `/v1/iam/oauth/introspect` | RFC 7662 |
 | Revocation | `/v1/iam/oauth/revoke` | RFC 7009 |
-| JWKS | `/v1/iam/.well-known/jwks` | RFC 7517 |
+| JWKS | `/v1/iam/.well-known/jwks` — also served at `/.well-known/jwks` | RFC 7517, RFC 8414 §3 |
 | Logout | `/v1/iam/oauth/logout` | OIDC RP-Initiated Logout |
 | Provisioning (SCIM) | `/v1/iam/scim/v2/{Users,Groups,…}` | RFC 7644/7643 (§8) |
 
 The **token endpoint** (`/v1/iam/oauth/token`) dispatches ONLY standard `grant_type`s — `authorization_code` (RFC 6749 §4.1, always PKCE-bound), `refresh_token` (§6, rotating), `client_credentials` (§4.4), `password` (§4.3, confidential first-party only), and `urn:ietf:params:oauth:grant-type:token-exchange` (RFC 8693, §7 — delegation / on-behalf-of). There is exactly one token endpoint and one spelling of it; the legacy `access_token` alias is **gone** (a client posts to `token`, never `access_token`).
+
+**`jwks_uri` comes from discovery — never hard-code it.** The key set is served at the `/v1/iam/`-prefixed path AND at the root well-known path, because RFC 8414 §3 puts the well-known URI at the issuer origin and a bare-origin verifier (the gateway's default, HIP-0044) looks there. Both spellings are one handler over one key set; discovery's `jwks_uri` is authoritative and a verifier MUST take the URI from the discovery document it already fetched. An IAM that serves only one of the two silently breaks every verifier defaulting to the other — token validation fails closed and reads as an outage.
 
 Mandatory parameters, everywhere:
 
@@ -293,6 +296,15 @@ Google, GitHub, and Web3 are configured **once per network** as org-level provid
 - **Confidential-client secrets** — KMS only (HIP-0027). `client_secret_basic` over TLS.
 - **Refresh rotation** — handled by the SDK; refresh tokens rotate on use and the previous token is invalidated.
 - **TLS everywhere** — IAM rejects plaintext. The gateway and ingress (HIP-0044, HIP-0068) terminate and re-encrypt.
+
+### Server-side invariants
+
+These bind the IAM itself, not its clients. Each is stated because an implementation violated it and the violation was a total-account-takeover path.
+
+- **Signing keys never cross the API.** A signing key lives in the store and signs in process. No endpoint — not for a SuperAdmin, not on any entity read — serves `privateKey` or an equivalent secret. Relying parties consume the **public** half from the JWKS (RFC 7517 publishes `n`/`e`, `x`/`y`, never `d`). An entity that holds secret material is masked at exactly one place on its way out; a key that reaches a caller forges every token the IAM issues.
+- **Authorize the value you execute.** The value an operation is authorized against MUST be the value the handler binds. Deriving authorization from a *second, independent* parse of the request (a re-parsed body, an envelope, a query string) is a bypass the moment the two can disagree: authorize `orgA`, execute `admin`. Authorize the decoded input, once, at one seam — for every transport that reaches the handler.
+- **A read's tenant comes from the bearer, never from a parameter.** An owner-scoped listing resolves its owner from the verified principal. A request parameter may only *narrow* within that authority (and widen for a SuperAdmin, the one cross-tenant scope); an absent or unrecognized owner MUST fail closed and never fall back to listing every tenant.
+- **Reserved owners are the trust boundary.** A token-signing cert is trusted, and published in the JWKS, only under the reserved platform orgs (`admin`, `built-in`) — so a tenant cannot shadow a platform key by creating a cert whose name collides with a `kid`. Writes to those certs are SuperAdmin-only (HIP-0026's `owner == "admin"` predicate). The trusted set and the writable set are one list, in one place.
 
 ## References
 
