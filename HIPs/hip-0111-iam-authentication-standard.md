@@ -62,13 +62,15 @@ These are the **only** paths. There is no `/oauth/*`, no `/api/login/*`, no `/ap
 | UserInfo | `/v1/iam/oauth/userinfo` | OIDC Core §5.3 |
 | Introspection | `/v1/iam/oauth/introspect` | RFC 7662 |
 | Revocation | `/v1/iam/oauth/revoke` | RFC 7009 |
-| JWKS | `/v1/iam/.well-known/jwks` — also served at `/.well-known/jwks` | RFC 7517, RFC 8414 §3 |
+| JWKS | `/v1/iam/.well-known/jwks` — `jwks_uri` points here | RFC 7517 |
 | Logout | `/v1/iam/oauth/logout` | OIDC RP-Initiated Logout |
 | Provisioning (SCIM) | `/v1/iam/scim/v2/{Users,Groups,…}` | RFC 7644/7643 (§8) |
 
 The **token endpoint** (`/v1/iam/oauth/token`) dispatches ONLY standard `grant_type`s — `authorization_code` (RFC 6749 §4.1, always PKCE-bound), `refresh_token` (§6, rotating), `client_credentials` (§4.4), `password` (§4.3, confidential first-party only), and `urn:ietf:params:oauth:grant-type:token-exchange` (RFC 8693, §7 — delegation / on-behalf-of). There is exactly one token endpoint and one spelling of it; the legacy `access_token` alias is **gone** (a client posts to `token`, never `access_token`).
 
-**`jwks_uri` comes from discovery — never hard-code it.** The key set is served at the `/v1/iam/`-prefixed path AND at the root well-known path, because RFC 8414 §3 puts the well-known URI at the issuer origin and a bare-origin verifier (the gateway's default, HIP-0044) looks there. Both spellings are one handler over one key set; discovery's `jwks_uri` is authoritative and a verifier MUST take the URI from the discovery document it already fetched. An IAM that serves only one of the two silently breaks every verifier defaulting to the other — token validation fails closed and reads as an outage.
+**`jwks_uri` comes from discovery — never hard-code it.** No RFC assigns the key set a well-known path: RFC 7517 defines the key *format*, and OIDC Discovery 1.0 §3 makes `jwks_uri` a REQUIRED field precisely so the location is *discovered*, not conventional. A verifier takes the URI from the discovery document it already fetched. That is the one way.
+
+`/.well-known/jwks` is served too, as a **compatibility alias** — the same handler over the same key set. It is not a standard; it is a Casdoor-era convention that verifiers in this estate hard-code (the gateway defaults to `https://hanzo.id/.well-known/jwks`, HIP-0044). It stays until those verifiers read `jwks_uri`, because an IAM that drops it fails every hard-coding verifier closed and reads as an outage. Retiring it is the goal, not the alias: fix the verifier, then delete the path. **New code MUST NOT hard-code either spelling.**
 
 Mandatory parameters, everywhere:
 
