@@ -13,11 +13,13 @@ requires: HIP-0026, HIP-0044, HIP-0068
 
 ## Abstract
 
-This is the one and only way an application authenticates a user or validates a token against Hanzo IAM. It defines the canonical OIDC endpoint paths, the single approved client library (`@hanzo/iam`), the integration pattern for every supported framework, the application-registration rules, and the anti-patterns that are forbidden.
+This is the one and only way an application authenticates a user, provisions an identity, or validates a token against Hanzo IAM. It defines the canonical IETF/RFC endpoint surface, the single approved client library (`@hanzo/iam`), the integration pattern for every supported framework, the application-registration rules, and the anti-patterns that are forbidden.
 
-HIP-0026 specifies the IAM **server** — the provider itself. This HIP specifies the **client contract** — how everything else talks to it. Where the two touch (endpoint paths, discovery), this HIP is authoritative and HIP-0026 follows it.
+**RFC-standard only — no vendor compat.** Every wire contract on this surface is an IETF RFC or OpenID Connect standard. There are NO Casdoor verb aliases (`get-users`, `add-user`, `get-account`, `issue-user-token`, …), no bespoke "verb" REST, and no backward-compat shims, on iam or on any client. Where a capability has a standard, the standard IS the surface: identity provisioning is **SCIM 2.0** (RFC 7644/7643), delegated/on-behalf-of tokens are **OAuth 2.0 Token Exchange** (RFC 8693), account claims are **OIDC UserInfo**, token validation is **Introspection** (RFC 7662) + JWKS (RFC 7517). A client that needs a capability uses its RFC; if no RFC covers it, it is the authorization server's internal concern (§6), never a new public "verb".
 
-Hanzo IAM is a standards-compliant OIDC provider deployed once per brand:
+HIP-0026 specifies the IAM **server** — the provider itself (the clean-room `hanzoai/iam2` implementation). This HIP specifies the **wire contract** — how everything talks to it. Where the two touch (endpoint paths, discovery), this HIP is authoritative and HIP-0026 follows it.
+
+Hanzo IAM (`hanzoai/iam2`) is a clean-room, standards-based OAuth 2.0 + OpenID Connect + SCIM 2.0 provider — original expression, no upstream fork — deployed once per brand:
 
 | Brand | IAM origin (`serverUrl`) | Login UI |
 |-------|--------------------------|----------|
@@ -50,20 +52,28 @@ All three vanish if there is exactly one library that owns exactly one set of pa
 
 These are the **only** paths. There is no `/oauth/*`, no `/api/login/*`, no `/api/` prefix. They are relative to the brand `serverUrl`.
 
-| Purpose | Path | RFC |
-|---------|------|-----|
-| Discovery | `/.well-known/openid-configuration` | OIDC Discovery 1.0 |
+| Purpose | Path | RFC / spec |
+|---------|------|------------|
+| OIDC discovery | `/.well-known/openid-configuration` | OIDC Discovery 1.0 |
+| AS metadata | `/.well-known/oauth-authorization-server` | RFC 8414 |
 | Authorize | `/v1/iam/oauth/authorize` | RFC 6749 §3.1 |
 | Token | `/v1/iam/oauth/token` | RFC 6749 §3.2 |
 | UserInfo | `/v1/iam/oauth/userinfo` | OIDC Core §5.3 |
+| Introspection | `/v1/iam/oauth/introspect` | RFC 7662 |
+| Revocation | `/v1/iam/oauth/revoke` | RFC 7009 |
 | JWKS | `/v1/iam/.well-known/jwks` | RFC 7517 |
 | Logout | `/v1/iam/oauth/logout` | OIDC RP-Initiated Logout |
+| Provisioning (SCIM) | `/v1/iam/scim/v2/{Users,Groups,…}` | RFC 7644/7643 (§8) |
+
+The **token endpoint** (`/v1/iam/oauth/token`) dispatches ONLY standard `grant_type`s — `authorization_code` (RFC 6749 §4.1, always PKCE-bound), `refresh_token` (§6, rotating), `client_credentials` (§4.4), `password` (§4.3, confidential first-party only), and `urn:ietf:params:oauth:grant-type:token-exchange` (RFC 8693, §7 — delegation / on-behalf-of). There is exactly one token endpoint and one spelling of it; the legacy `access_token` alias is **gone** (a client posts to `token`, never `access_token`).
 
 Mandatory parameters, everywhere:
 
 - **PKCE `S256`** on every authorization request. `plain` is not permitted. Public clients (SPAs, native) require it; confidential clients use it too.
-- **`client_secret_basic`** for confidential clients (server-side token exchange). HTTP Basic, not body params.
-- **Scopes** `openid profile email`.
+- **`client_secret_basic`** for confidential clients. HTTP Basic, not body params.
+- **Scopes** `openid profile email` (+ `offline_access` for a refresh token).
+- **`resource` / `audience`** (RFC 8707) name the resource server a token is minted for; the AS stamps `aud` accordingly and validators fail closed on a mismatch.
+- **`iss`** is pinned per deployment (`IAM_ISSUER`, e.g. `https://hanzo.id`) so every token and the discovery document advertise ONE stable issuer regardless of request host — never steerable by `X-Forwarded-Host`.
 
 The discovery document MUST be self-consistent: `issuer`, `authorization_endpoint`, `token_endpoint`, `userinfo_endpoint`, and `jwks_uri` all share one origin (host-relative to the brand). The IAM knob that controls this is `originFrontend` in `app.prod.conf` — it MUST be empty so discovery is host-relative. A split-origin discovery document breaks strict OIDC clients (`openid-client`, NextAuth) that pin the issuer.
 
@@ -218,6 +228,8 @@ These break in production and are not permitted under any circumstance:
 5. **Non-empty `originFrontend`** in production — produces a split-origin discovery document that breaks strict clients.
 6. **Per-app social OAuth clients** — an app registering its own Google/GitHub (or Web3) OAuth client. Social providers are configured ONCE per network, org-level, and shared (§7). A per-app client re-creates the shared one N times and drifts.
 7. **`/api/` on the front-door too** — the IAM's own login UI / portal Worker uses the native login API under `/v1/iam/*` (§6), never `/api/login`, `/api/get-app-login`, `/api/signup`. The "no `/api/`" rule is absolute, including the front-door.
+8. **Casdoor "verb" aliases / bespoke REST for a standardized capability** — `get-users`, `get-user?id=`, `add-user`, `update-user`, `delete-user`, `get-organizations`, `get-records`, `issue-user-token`, `get-account`, `mint-user-keys`, and every other Casdoor-shaped verb are **gone**, on iam and on every client. Each has an RFC that IS the surface: identity provisioning → **SCIM 2.0** (§8), delegated/on-behalf-of tokens → **Token Exchange** (§7), account claims → **UserInfo** (§1). A client that reaches for a verb is reaching for the wrong contract; there is no compat layer that will answer it.
+9. **A duplicate spelling of a standard endpoint** — one `token` endpoint, not `token` + `access_token`; one `userinfo`, not `userinfo` + `get-account`. An alias is two ways to do one thing; the standard path is the only one served.
 
 ### 5. Gotchas (call out explicitly)
 
@@ -225,21 +237,45 @@ These break in production and are not permitted under any circumstance:
 - **Discovery self-consistency** — issuer/authorize/token/userinfo/jwks share one origin (host-relative). Keep `originFrontend` empty in `app.prod.conf`.
 - **`owner` is the tenant** — the org slug. IAM emits **`owner`** (and the standard-name alias **`organization`**) in BOTH the OIDC userinfo response AND the JWT, in every token format, scope-independent — so a consumer reading either claim off either surface gets the tenant. Scope every data query to it. The gateway (HIP-0044) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT. A consumer that reads org from a non-standard field (e.g. a legacy `groups` claim) and finds nothing MUST fail closed, never silently fall back to a `"default"`/`"personal"` org — that is a tenant-isolation defect.
 
-### 6. The login front-door surface
+### 6. The login front-door — the AS's own concern, not a client surface
 
-The OIDC endpoints (§1) are how **client applications** authenticate. The IAM *also* serves a native login API under the same canonical `/v1/iam/*` prefix — used **only** by the IAM's own login UI (the per-brand portal at `hanzo.id`/`lux.id`/… and its Cloudflare Worker), never by client apps:
+OAuth 2.0 / OIDC deliberately do **not** specify how the authorization server authenticates the end user (the credential-entry step). That is the AS's internal concern. So the hosted login page (the per-brand portal at `hanzo.id`/`lux.id`/… and its Worker) has a small first-party API it — and ONLY it — calls, under the canonical `/v1/iam/*` prefix:
 
 | Purpose | Path |
 |---------|------|
 | App/org resolution before login | `/v1/iam/get-app-login` |
-| Password login | `/v1/iam/login` |
+| Password login (mints the code) | `/v1/iam/login` |
 | Signup | `/v1/iam/signup` |
 | Verification code | `/v1/iam/send-verification-code` |
-| Account | `/v1/iam/get-account` |
-| Native userinfo | `/v1/iam/userinfo` |
-| Logout | `/v1/iam/logout` |
+| Logout | `/v1/iam/oauth/logout` (§1) |
 
-Same rule as §1: `/v1/iam/*` only — no `/api/`, anywhere, including the front-door Worker. The separation is strict: **client apps use only the OIDC surface (§1) through the SDK**; the native login API is the IAM's internal front-end contract, not a client integration point.
+This is NOT a client integration surface and NOT a set of "verbs" a client may call — it is the AS's own login UI talking to the AS. **Account claims are NOT here**: there is no `get-account` and no second `userinfo` — every consumer (including the gateway admin-guard, HIP-0044) reads the standard **OIDC UserInfo** (`/v1/iam/oauth/userinfo`, §1), which carries `sub`, `owner`/`organization`, `email`, `email_verified`, and the `isAdmin` claim the SuperAdmin predicate derives from. One account contract, and it is the RFC one.
+
+Same rule as §1: `/v1/iam/*` only — no `/api/`, anywhere, including the front-door Worker. **Client apps use only the standard surface (§1) through the SDK**; the login API is internal to the AS.
+
+### 7. Delegation / on-behalf-of — OAuth 2.0 Token Exchange (RFC 8693)
+
+A trusted first-party backend that must call a downstream API **as** an end user (the console BFF forwarding a request on the signed-in user's behalf, the keyless AI proxy) obtains that token through **RFC 8693 Token Exchange** on the token endpoint — never a bespoke `issue-user-token` verb.
+
+- `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`, `client_secret_basic` (confidential clients only, capability-gated by `IAM_KEY_MINT_ALLOWED_APPS`), `subject_token` naming the target user (or a `requested_subject`), `requested_token_type=urn:ietf:params:oauth:token-type:access_token`, and `resource`/`audience` (RFC 8707) pinning the downstream resource server.
+- The issued token carries the **target user's** subject + `owner` (so a resource server that scopes on the validated `owner` claim scopes to the user's tenant), an `act` claim recording the acting client, and the requested `aud`. It is signed by the same trusted key the JWKS publishes — indistinguishable from a token the user obtained directly, which is the point.
+- Acting on behalf of a **reserved-org (`admin`/`built-in`)** subject requires the separate `IAM_ADMIN_MINT_ALLOWED_APPS` capability (defense in depth: a leaked general-exchange credential can never reach a SuperAdmin identity). Every exchange is audit-logged.
+
+### 8. Identity provisioning — SCIM 2.0 (RFC 7644 / RFC 7643)
+
+Creating, reading, updating, and deleting identities is **SCIM 2.0** — the IETF standard for cross-domain identity management — under `/v1/iam/scim/v2/`. There are NO `get-users`/`add-user`/`get-organizations` verbs.
+
+| Resource | Path | Maps to |
+|----------|------|---------|
+| Service provider config | `/v1/iam/scim/v2/ServiceProviderConfig` | supported features |
+| Schemas / resource types | `/v1/iam/scim/v2/{Schemas,ResourceTypes}` | discovery |
+| Users | `/v1/iam/scim/v2/Users` (+ `/{id}`) | the user entity |
+| Groups | `/v1/iam/scim/v2/Groups` (+ `/{id}`) | organizations, roles |
+
+- Standard verbs are HTTP: `GET` (list with `filter`/`startIndex`/`count`, or by id), `POST` (create), `PUT`/`PATCH` (RFC 7644 §3.5.2 patch ops), `DELETE`. Lists return the SCIM `ListResponse` envelope (`totalResults`/`Resources`), not a Casdoor `{status,data,data2}` one.
+- A User is the SCIM core schema (`urn:ietf:params:scim:schemas:core:2.0:User`) plus a Hanzo enterprise extension for `owner`/`isAdmin`/credential metadata. Passwords are write-only (`password` attribute in), never returned. Secrets never cross a SCIM response (the AS masks on read).
+- Tenant scope: a non-super caller's SCIM view is pinned to its own `owner`; a SuperAdmin may `filter` across tenants. Same authorization model as every other surface — bearer-authenticated, owner-scoped, fail-closed.
+- Clients provision through the SDK's SCIM client (or any conformant SCIM library); no client writes SCIM URLs by hand, same as §2/§3.
 
 ### 7. Social & Web3 — one shared provider, never per-app
 
@@ -266,7 +302,18 @@ Google, GitHub, and Web3 are configured **once per network** as org-level provid
 4. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS-managed client secrets
 5. [HIP-0112: Cloud Infrastructure Topology Standard](./hip-0112-cloud-infrastructure-topology-standard.md) — how IAM fits the estate
 6. [`@hanzo/iam`](https://github.com/hanzo-js/iam) — the SDK; `src/paths.ts` is the canonical path source
-7. [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749), [RFC 7636 (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636), [RFC 7517 (JWK)](https://datatracker.ietf.org/doc/html/rfc7517), [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+7. Standards this surface implements (the wire contract, in full):
+   - [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) OAuth 2.0 — authorize, token (authorization_code / refresh_token / client_credentials / password grants)
+   - [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) PKCE `S256`
+   - [RFC 7517](https://datatracker.ietf.org/doc/html/rfc7517) JWK / JWKS
+   - [RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662) Token Introspection
+   - [RFC 7009](https://datatracker.ietf.org/doc/html/rfc7009) Token Revocation
+   - [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414) Authorization Server Metadata
+   - [RFC 8693](https://datatracker.ietf.org/doc/html/rfc8693) OAuth 2.0 Token Exchange — delegation / on-behalf-of (replaces `issue-user-token`)
+   - [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) Resource Indicators (`resource`/`audience`)
+   - [RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628) Device Authorization Grant (optional, for input-constrained clients)
+   - [RFC 7644](https://datatracker.ietf.org/doc/html/rfc7644) SCIM 2.0 Protocol + [RFC 7643](https://datatracker.ietf.org/doc/html/rfc7643) SCIM Core Schema — identity provisioning (replaces the `get-users`/`add-user` verbs)
+   - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html) + [Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html) — id_token, UserInfo, discovery, RP-initiated logout
 
 ## Copyright
 
