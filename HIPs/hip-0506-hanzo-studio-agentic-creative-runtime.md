@@ -31,7 +31,7 @@ catalog, no curation memory, no reuse of base assets, and no path from "chat" to
 "editable pipeline." Hanzo already ships every substrate needed — a sandbox that
 runs Python/Node/container isolated on a dedicated pool, a durable task queue,
 GPU federation (BYO-GPU + cloud), a multi-tenant IAM/session/billing spine, and
-the ComfyUI engine with video/audio/music/3D node packs vendored. What is missing
+the Studio engine with video/audio/music/3D node packs vendored. What is missing
 is the **composition**: a chat-first surface, a preset/curation memory that makes
 output get closer to intent each pass, and the wiring from the copilot to the
 sandbox and queue. This HIP specifies that composition.
@@ -48,7 +48,7 @@ tenancy/IAM/session, the durable **`tasks`** queue (fronts `tasks.hanzo.ai`), th
 asset catalog/library, presets, and curation (per-org SQLite / Hanzo Base).
 
 **Data plane = where compute runs** (stateless, no auth logic): GPU graphs on the
-Python ComfyUI engine (BYO-GPU or cloud GPU) dispatched via `tasks`; arbitrary
+Hanzo Studio engine (BYO-GPU or cloud GPU) dispatched via `tasks`; arbitrary
 agent/user code on the `exec` sandbox.
 
 **Security boundary:** the control plane never executes agent/user code inline.
@@ -79,7 +79,7 @@ Seed KIND catalog (each = template + questionnaire on the substrate above):
 
 | KIND | Substrate |
 |---|---|
-| Product photography (multi-view ecom: front·side·back) | ComfyUI try-on/relight graph (karma pipeline generalized) |
+| Product photography (multi-view ecom: front·side·back) | Studio try-on/relight graph (karma pipeline generalized) |
 | **Ghost mannequin** (product on invisible form, no person) | try-on graph, ghost preset — a reusable, forkable base |
 | **3D fabric-drape form** (no person — dress-form/mannequin) | 3D cloth-drape sim to see how fabric hangs/drapes |
 | **3D try-on** (garment on a 3D avatar/body) | garment → 3D body fit + drape |
@@ -103,8 +103,8 @@ once, fork/remix forever, never re-upload a base.
 ### Template sources — import, don't hand-build
 Two existing libraries seed the KIND catalog; almost no pipeline is authored from
 scratch:
-- **Generative pipelines = imported ComfyUI workflows.** Every vendored node pack
-  ships canonical example workflows (WanVideoWrapper·LTXVideo·CogVideoX·
+- **Generative pipelines = imported Studio workflows.** Every vendored node pack
+  ships canonical example workflows (Wan·LTXVideo·CogVideoX·
   HunyuanVideo for video, ACE-Step for music, Hunyuan3D-class for 3D, VideoHelper
   for edit). Import those (+ curated community graphs) as ready KIND templates —
   the broader set of video/music/3D/voice pipelines is a bulk **import**, not a
@@ -168,7 +168,7 @@ One verb (`fork`), any object.
 - **Chat-first home (default):** monochrome Hanzo look, "What should we create?",
   design-system + template + model pickers, projects/assets below. Served by the
   `studio` cloud app.
-- **Advanced mode:** the ComfyUI node editor, itself editable by chat (the copilot
+- **Advanced mode:** the Studio node editor, itself editable by chat (the copilot
   reads+mutates the graph).
 - **Specialized editor modes per KIND:** LaTeX paper editor (source + live PDF via
   `exec`), CAD→3D viewport, CAD→mockup, deck/doc/site code-canvas. Each is a
@@ -207,9 +207,30 @@ Hunyuan3D-class packs. Documents/papers: `exec` libs.
 6. **`hanzo studio` + `design-sync` CLI**; **Google Drive** connector; specialized
    editor modes (LaTeX, 3D).
 
+## Compatibility (the one place we name ComfyUI)
+
+In-product, workflows are **Hanzo Studio workflows** — we never surface the name
+"ComfyUI." Externally, one compatibility statement holds:
+
+> **Hanzo Studio workflows are compatible with the ComfyUI workflow format.**
+
+Extent of support:
+- **Graph/API format:** identical. Any ComfyUI workflow JSON (UI or API/prompt form)
+  imports and runs in Studio unchanged; every asset's embedded graph is this format.
+- **Node packs:** run **unmodified.** The engine is a fork with core packages
+  renamed (`comfy*`→`studio*`, `Comfy*`→`Studio*`); the `studio_compat` meta-path
+  shim aliases every `comfy*` import to its `studio*` counterpart at load, so
+  upstream packs need no forking. We **vendor the latest** packs pinned by SHA
+  (`custom_nodes/hanzo-packs.txt`) and track upstream.
+- **Display:** all "ComfyUI" display strings are re-branded to Hanzo Studio; the
+  compatibility is a capability, not a surface.
+
+So: import any community/pack workflow, run any node pack, get the latest — with
+zero "ComfyUI" anywhere in the product.
+
 ## Non-goals
 
-Rewriting the ComfyUI/Python engine in Go; gpython; embedding torch/CUDA in the Go
+Rewriting the Studio (Python) engine in Go; gpython; embedding torch/CUDA in the Go
 binary; rebuilding a sandbox or queue (they exist); per-brand forks of the studio
 surface (white-label by hostname per HIP-0504).
 
