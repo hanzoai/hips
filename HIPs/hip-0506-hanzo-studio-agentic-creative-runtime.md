@@ -18,7 +18,7 @@ work of **every modality** — image, product photography, packaging, video, mus
 voice, 3D, documents (docx/xlsx/pptx/pdf), LaTeX papers, decks, sites, and social/
 ad content — driven by chat. You talk to Studio; the agent either runs a saved
 workflow **or** writes and runs arbitrary code in a sandbox; outputs land in one
-per-org asset store; you curate, fork, and remix continuously. The ComfyUI node
+per-org asset store; you curate, fork, and remix continuously. The the Studio engine node
 editor becomes an **Advanced** view over the same substrate. This is a
 **composition of already-shipped Hanzo cloud apps**, not a rewrite: `exec`/
 `functions` (sandbox), `tasks` (durable queue), `gpu` (dispatch), `connectorruntime`
@@ -206,27 +206,6 @@ Hunyuan3D-class packs. Documents/papers: `exec` libs.
    3D→(model & packshot)→social/ads/video.
 6. **`hanzo studio` + `design-sync` CLI**; **Google Drive** connector; specialized
    editor modes (LaTeX, 3D).
-
-## Compatibility (the one place we name ComfyUI)
-
-In-product, workflows are **Hanzo Studio workflows** — we never surface the name
-"ComfyUI." Externally, one compatibility statement holds:
-
-> **Hanzo Studio workflows are compatible with the ComfyUI workflow format.**
-
-Extent of support:
-- **Graph/API format:** identical. Any ComfyUI workflow JSON (UI or API/prompt form)
-  imports and runs in Studio unchanged; every asset's embedded graph is this format.
-- **Node packs:** run **unmodified.** The engine is a fork with core packages
-  renamed (`comfy*`→`studio*`, `Comfy*`→`Studio*`); the `studio_compat` meta-path
-  shim aliases every `comfy*` import to its `studio*` counterpart at load, so
-  upstream packs need no forking. We **vendor the latest** packs pinned by SHA
-  (`custom_nodes/hanzo-packs.txt`) and track upstream.
-- **Display:** all "ComfyUI" display strings are re-branded to Hanzo Studio; the
-  compatibility is a capability, not a surface.
-
-So: import any community/pack workflow, run any node pack, get the latest — with
-zero "ComfyUI" anywhere in the product.
 
 ## Non-goals
 
