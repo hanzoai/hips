@@ -1,5 +1,5 @@
 ---
-hip: 230
+hip: 0230
 title: AI Transparency & Explainability
 tags: [ai-ethics, transparency, explainability, governance]
 description: Framework for ensuring transparency and explainability of Hanzo AI systems.

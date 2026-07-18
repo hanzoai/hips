@@ -1,5 +1,5 @@
 ---
-hip: 220
+hip: 0220
 title: Bias Detection & Mitigation
 tags: [ai-ethics, fairness, bias, evaluation]
 description: Framework for detecting, measuring, and mitigating bias in AI systems.

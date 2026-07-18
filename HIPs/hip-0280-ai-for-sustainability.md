@@ -1,5 +1,5 @@
 ---
-hip: 280
+hip: 0280
 title: AI for Sustainability
 tags: [sustainability, impact, applications, climate]
 description: Framework for applying Hanzo AI capabilities to sustainability challenges.

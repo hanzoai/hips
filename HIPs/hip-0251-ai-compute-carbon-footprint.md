@@ -1,5 +1,5 @@
 ---
-hip: 251
+hip: 0251
 title: AI Compute Carbon Footprint
 tags: [sustainability, carbon, compute, emissions]
 description: Methodology for measuring and reporting carbon emissions from AI training and inference.

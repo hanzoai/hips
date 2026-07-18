@@ -1,5 +1,5 @@
 ---
-hip: 295
+hip: 0295
 title: Hanzo AI Impact Thesis
 tags: [impact, vision, ecosystem, thesis, venture, accelerator]
 description: Unified impact thesis for Hanzo AI and its role in the Lux-Hanzo-Zoo ecosystem.

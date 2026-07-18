@@ -1,5 +1,5 @@
 ---
-hip: 240
+hip: 0240
 title: AI Incident Response
 tags: [ai-ethics, safety, incident-response, governance]
 description: Framework for responding to AI safety and ethics incidents.
