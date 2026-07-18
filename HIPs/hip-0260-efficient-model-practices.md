@@ -1,5 +1,5 @@
 ---
-hip: 260
+hip: 0260
 title: Efficient Model Practices
 tags: [sustainability, efficiency, optimization, energy]
 description: Best practices for developing and deploying energy-efficient AI models.

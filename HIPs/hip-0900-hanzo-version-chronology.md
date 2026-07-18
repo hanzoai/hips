@@ -1,5 +1,5 @@
 ---
-hip: 900
+hip: 0900
 title: Hanzo Version Chronology --- 1.0 / 2.0 / 3.0 / 4.0
 description: Canonical version timeline for the Hanzo Network from initial AI compute infrastructure through the GPU-native 4.0 activation on 2026-02-14.
 author: Zach Kelling, Antje Worring
