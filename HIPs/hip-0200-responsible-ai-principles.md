@@ -1,5 +1,5 @@
 ---
-hip: 200
+hip: 0200
 title: Responsible AI Principles and Commitments
 author: Hanzo AI Team
 type: Meta

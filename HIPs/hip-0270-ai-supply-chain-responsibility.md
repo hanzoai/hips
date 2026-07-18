@@ -1,5 +1,5 @@
 ---
-hip: 270
+hip: 0270
 title: AI Supply Chain Responsibility
 tags: [sustainability, supply-chain, ethics, governance]
 description: Framework for responsible sourcing of compute, hardware, and data for AI systems.
