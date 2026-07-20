@@ -13,13 +13,28 @@ requires: HIP-0027, HIP-0033
 
 ## Abstract
 
-This proposal defines the CI/CD build system standard for the Hanzo ecosystem. All 260+ repositories under the `hanzoai` GitHub organization MUST follow this specification for automated testing, building, releasing, and deploying software artifacts.
+This proposal defines the CI standard for the Hanzo ecosystem: **one way to turn a commit into an image, with no overlapping implementation.**
 
-Hanzo Build provides standardized GitHub Actions workflows, reusable composite actions, and deployment patterns that enforce consistent quality gates across every project -- from the IAM identity provider to the LLM Gateway, from Rust ML frameworks to React frontends.
+This HIP owns exactly two arrows of the deployment algebra defined in **HIP-0014**; it owns no others, and no other component may implement them:
 
-**Repository**: [github.com/hanzoai/build](https://github.com/hanzoai/build)
+| Arrow | Type | Sole home |
+|---|---|---|
+| source | `Repo x Ref -> Commit` | **git.hanzo.ai** -- the native `/v1/git` plane in the cloud binary |
+| build | `Commit -> Image` | **native Actions** (Gitea-dialect workflows) on **our own runners** -> `ghcr.io/hanzoai` |
+
+Both values are immutable and content-addressed: a `Commit` is a SHA, an `Image` is a digest. That is what makes the arrows composable — a build is reproducible from its commit, and a deployment names a digest rather than a moving tag.
+
+The output of `build` is consumed by HIP-0014's `declare` arrow (the App CR). CI **stops at the image**. It does not apply manifests, patch CRs, or talk to a cluster — that is the operator's arrow, and duplicating it is the defect this standard exists to prevent.
+
+**Source of truth**: [git.hanzo.ai](https://git.hanzo.ai) (self-hosted, native `/v1/git`)
+**Runners**: self-hosted `git-runner` (forked act_runner, `GIT_*` dialect) on our clusters
 **Secret Management**: [kms.hanzo.ai](https://kms.hanzo.ai) (Hanzo KMS, HIP-0033)
-**Primary Registry**: [ghcr.io/hanzoai](https://ghcr.io/hanzoai)
+**Primary Registry**: [ghcr.io/hanzoai](https://ghcr.io/hanzoai) -- per-org: `luxfi/*`, `zooai/*` never mixed
+
+### Superseded
+
+- **GitHub-hosted builders are not used.** Workflows run on Hanzo runners against git.hanzo.ai. GitHub remains a mirror, not the build plane.
+- **The dokploy PaaS build stack is retired** (`hanzoai/platform` `services/ci/*`: build-job, buildkit-job, build-scheduler, build-watcher, build-completion, publish-job, github-webhook). It was a second implementation of `build` and a second push trigger; a commit MUST have one builder.
 
 ## Motivation
 

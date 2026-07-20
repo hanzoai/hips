@@ -13,15 +13,38 @@ requires: HIP-0026, HIP-0027, HIP-0029
 
 ## Abstract
 
-This proposal defines the application deployment standard for the Hanzo ecosystem. The Hanzo Platform is a self-hosted PaaS (Platform as a Service) built as a fork of [Dokploy](https://github.com/Dokploy/dokploy), an open-source application deployment platform. It provides a standardized pipeline for building, deploying, scaling, and monitoring all Hanzo services -- from the LLM Gateway to the Chat frontend to internal tooling.
+This proposal defines the application deployment standard for the Hanzo ecosystem: **one way to get source into running compute, with no overlapping implementation.**
 
-Every Hanzo service MUST be deployable through Platform. The deployment flow is: git push to repository, Platform detects the change, builds a container image, pushes it to the registry, deploys it to the target environment, runs health checks, and either promotes the deployment or rolls back. Developers interact with Platform through a web UI at **platform.hanzo.ai** or through the `hanzo` CLI. They never run `kubectl apply` or `docker compose up` on production infrastructure directly.
+Deployment decomposes into five arrows. Each arrow has exactly one home. Composed left to right they are complete — nothing else is required, and nothing may duplicate a step:
 
-**Repository**: [github.com/hanzoai/platform](https://github.com/hanzoai/platform)
-**Production**: https://platform.hanzo.ai
-**Port**: 3000 (Platform UI), 5173 (legacy admin)
-**Docker**: `ghcr.io/hanzoai/platform:latest`
-**Cluster**: hanzo-k8s (`24.199.76.156`)
+```
+Repo x Ref --source--> Commit --build--> Image --declare--> App(CR) --reconcile--> Actual
+                                                              ^                      |
+                                                              +-------- act ---------+
+```
+
+| Arrow | Type | Sole home |
+|---|---|---|
+| source | `Repo x Ref -> Commit` | `/v1/git` (git.hanzo.ai, HIP-0036) |
+| build | `Commit -> Image` | native Actions runners -> `ghcr.io/hanzoai` (HIP-0036) |
+| declare | `Image -> App` | the **App CR** (`hanzo.ai/v1`) -- the single desired-state value |
+| reconcile | `App -> Actual` | the Hanzo operator |
+| observe | `App -> Status` | `/v1/deploy` projection (read) |
+| act | `App x Image -> App'` | `/v1/deploy` sync/rollback (patches the CR) |
+
+The **App CR is the atom**. Everything that deploys writes an App CR; everything that watches reads the `/v1/deploy` projection of it. Static sites are not an exception: they are served by the **ingress `staticFiles` plugin** from object storage (no per-site pod), declared by the same CR.
+
+Surfaces are faces on these arrows, never re-implementations:
+
+- **cd.hanzo.ai** -- the CD standard: fleet, health, sync, resource tree, sync/rollback (`@hanzo/gitops` over `/v1/deploy`).
+- **console.hanzo.ai** -- the same components mounted as a module of the one console.
+- **hanzo.app / platform.hanzo.ai** -- *authoring* surfaces that write App CRs. Authoring desired state and observing actual state are different arrows, so they do not overlap.
+
+### Superseded
+
+The dokploy-derived PaaS at `hanzoai/platform` MUST NOT carry a second build or deploy implementation. Its `services/ci/*` (build-job, buildkit-job, build-scheduler, build-watcher, build-completion, publish-job, github-webhook) duplicates `build`, and `deploy-executor` duplicates `declare`+`reconcile`. Both are retired in favour of the homes above; platform is rewired to Kubernetes + the DO-backed cluster through cloud's `clients/platform`, which authors App CRs and nothing else.
+
+**Spec homes** (there are only two, and they do not overlap): this HIP owns `declare -> reconcile -> observe -> act`; **HIP-0036** owns `source -> build`.
 
 ## Motivation
 
