@@ -32,7 +32,7 @@ Repo x Ref --source--> Commit --build--> Image --declare--> App(CR) --reconcile-
 | observe | `App -> Status` | `/v1/deploy` projection (read) |
 | act | `App x Image -> App'` | `/v1/deploy` sync/rollback (patches the CR) |
 
-The **App CR is the atom**. Everything that deploys writes an App CR; everything that watches reads the `/v1/deploy` projection of it. Static sites are not an exception: they are served by the **ingress `staticFiles` plugin** from object storage (no per-site pod), declared by the same CR.
+The **App CR is the atom**. Everything that deploys writes an App CR; everything that watches reads the `/v1/deploy` projection of it. Static sites are not an exception: they are served by the **ingress `staticFiles` plugin** from object storage (no per-site pod), declared by the same CR. Content reaches that storage by a server-side promote into an immutable content-addressed release plus a pointer flip, never by an upload API -- see Static Sites: Releases and Pointers.
 
 Surfaces are faces on these arrows, never re-implementations:
 
@@ -280,6 +280,38 @@ Platform DB → Generate K8s manifests → kubectl apply → Wait for rollout �
 ```
 
 The Kubernetes target requires a kubeconfig with appropriate RBAC permissions. Platform creates one namespace per organization and one Deployment per application.
+
+### Static Sites: Releases and Pointers
+
+Static sites are declared by the same App CR and served by the ingress `staticFiles` plugin from object storage, with no per-site pod. This section defines how content GETS to the prefix that plugin reads.
+
+Content is not uploaded. A builder's output already exists inside object storage -- it is what the build wrote -- so pushing those bytes out through an HTTP API and back in again is waste. Publishing is a server-side promote: the control plane copies within the object store using its own credentials, no bytes traverse the API, and no client ever holds an object-store credential.
+
+The model is a value plus a pointer:
+
+```
+Build output → promote (server-side copy) → Release (immutable) → flip pointer → site serves it
+```
+
+A **Release** is an immutable prefix under the org's own release space. Its id is content-addressed: a digest of the manifest of objects it was promoted from, so identical content always yields the identical release id and different content can never reuse one. A release is written once and never mutated. The **pointer** is a single field on the site record naming the release the site currently serves; serving resolves the prefix through it.
+
+Four properties follow, and they are the reason for the model:
+
+1. **Publishing is idempotent.** Re-promoting an unchanged build output resolves to the same release id and copies nothing.
+2. **Activation is atomic.** The pointer is flipped by one statement whose condition requires a matching release record to exist. A release record is written only after every object has landed, so a partially-copied release has no record and therefore cannot be pointed at. A partial publish is unreachable, not merely unlikely.
+3. **Rollback is free.** Releases are immutable and retained, so rolling back is the same pointer flip aimed at an older release. Nothing is rebuilt and nothing is re-copied -- the static-site analogue of the image-tag revert in Rollback below.
+4. **Promote and activate are separable.** A release may be created without being served, so a deployment can be staged and checked before it takes traffic. Creating and activating in one call is the common path.
+
+The promote source is a path relative to the caller's own org storage space, never a URL and never an absolute object key. The org segment is supplied by the control plane from the validated principal, and the bucket is never read from the request. A caller therefore has no syntax with which to name another tenant's data, and the server-side copy MUST NOT be reachable as a way to read a prefix the caller does not already own. Sources and object keys are rooted and cleaned before use, so no relative segment can escape the org prefix; a source containing an unsafe key is refused whole rather than rewritten. Promotes are bounded by the same object-count and total-byte budget as any other way content arrives, enforced while listing.
+
+Releases live in a space that is a sibling of the site's serving prefix, not a child of it. A full-artifact deploy replaces the serving prefix and reclaims the pointer, and must not be able to destroy a retained release in doing so.
+
+| Operation | Effect | Cost |
+|-----------|--------|------|
+| Promote | Server-side copy into a new immutable release prefix | One copy per object, once per distinct content |
+| Activate | Pointer flip | One statement |
+| Roll back | Pointer flip to an older release | One statement |
+| List | Release history, newest first, active one marked | Read |
 
 ### Rolling Updates and Health Check Gates
 
