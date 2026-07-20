@@ -734,3 +734,72 @@ roles:
 ## Copyright
 
 Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+## Host-as-project-ref: the app host IS the Base project reference (normative)
+
+A deployed app's backend MUST be addressable by the **app host**, not the visitor's token — the
+Supabase `<ref>.supabase.co` model. On a published site host (`<slug>.hanzo.app`, `<slug>.<org>.hanzo.app`,
+or a bound custom domain), cloud serves three planes, all scoped to the org the host resolves to:
+
+```
+<host>/                     → the static site (S3 prefix)                    [today]
+<host>/v1/base/*  /v1/realtime → the org's Base data plane (LANE 2)          [keystone]
+<host>/_/                   → the org's Base ADMIN (owner-gated)             [keystone]
+```
+
+The org comes ONLY from the validated subdomain slug via the `clients/sites` Resolver
+(`Site{Org,Slug,...}`), NEVER from a request header or the caller's token — the same server-supplied
+tenant key the site file plane already trusts. This is why a public contact form needs no login: the
+host already names the org.
+
+### The auth split (the load-bearing rule)
+- **Data plane** (`/v1/base/collections/*/records`, `/v1/realtime`): reachable by an ANONYMOUS caller.
+  Access is governed ENTIRELY by the collection's own rules (`listRule`/`viewRule`/`createRule`/…) —
+  Base's row-rule engine is the gate, exactly as designed. A collection with a public `createRule`
+  accepts a form submit with no token; an empty (null) rule is admin-only and refuses anon. A
+  signed-in end-user's token (the customer's OWN IAM app, below) layers on for authed collections.
+- **Admin plane** (`/_/`): MUST NOT be anonymous. It is gated by the org's OWNER identity via the
+  org's IAM app (the Base engine's `ExternalAuthOnly` JWKS trust). Anon or a non-owner principal on
+  `<host>/_/` fails closed.
+
+### Composition (one seam, no cycle)
+`base.Mount` registers a host-handler seam into `sites` (mirroring `sites.SetResolver`): a
+`func(org string) http.Handler` backed by the per-org pool. The `sites` middleware, on a `/v1/base`,
+`/v1/realtime`, or `/_/` path AND with the feature enabled, calls the seam with the resolved
+`Site.Org` instead of falling through to the static file plane. `sites` never imports `base`.
+
+### Staged rollout (fail-closed)
+Gated by `CLOUD_BASE_PUBLIC_HOST` (default OFF), the same pattern as `CLOUD_BASE_EMBED`. Absent the
+flag the host serves only static files (today's behaviour) — the anon data plane is inert. Flipping
+the flag is a deliberate, review-gated action; it MUST NOT ship enabled without an adversarial
+cross-tenant review (anon on org A's host cannot read/write org B; `/_/` refuses anon and non-owner;
+a foreign host label 404s with no oracle).
+
+## Publishable keys (the anon-write identity)
+
+A **publishable key** (`pk_<org>_<random>`) is an org-scoped, non-secret data key a customer embeds in
+their page. It is NOT an OAuth client and NOT the secret `hk-` key. It identifies the org for anon
+API calls where the host cannot (embedding a Hanzo widget on the customer's OWN external domain).
+Same shape and threat model as the Hanzo Sentry ingest DSN (per-project HMAC, domain-separated,
+fail-closed, rotate = watermark). On a Hanzo-hosted app-host the publishable key is redundant (the
+host names the org); it is required only off-host. It carries no ability beyond what the collection
+rules already permit an anon caller. Minted + rotated + revoked under project settings; surfaced there
+for easy copy, next to the app host and the org's IAM login URL.
+
+## Per-org embedded login (the customer's brand, not hanzo.id)
+
+A customer's end-users authenticate against the CUSTOMER'S org, never hanzo.id. IAM (Casdoor-derived)
+is already multi-tenant: each org has its own Application with its own branded signin page and its own
+user pool. A deployed app embeds the org's OWN login (an `@hanzo/ui` login widget pointed at the org's
+IAM app), and the resulting token is a maxpower-org token used for authed collections. hanzo.id is
+Hanzo's IdP for Hanzo's own staff/console — it is NOT what a customer's users see.
+
+## Base admin views (Airtable parity, @hanzo/ui on @hanzo/gui)
+
+The Base admin (collections, records, rules, keys, automations, realtime) is a set of shared views in
+`@hanzo/ui` built on `@hanzo/gui`, assembled on the existing `@hanzo/data` `DataTable` +
+`grid-def` primitives over the `/v1/base/collections` + `/records` API. Airtable-grade: typed columns
+(text/number/date/select/media/relation), filtering + sorting, multiple saved views (grid/kanban/
+gallery/calendar), inline + expanded-record editing, media/file fields, and formats. Mounted at
+`<host>/_/` (owner-gated, above) AND as a console module (BaseModule), AND linked from every project's
+dashboard / settings / config page. One view set, three mount points. This is the "agentic Wix" surface.
