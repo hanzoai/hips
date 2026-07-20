@@ -775,16 +775,37 @@ the flag is a deliberate, review-gated action; it MUST NOT ship enabled without 
 cross-tenant review (anon on org A's host cannot read/write org B; `/_/` refuses anon and non-owner;
 a foreign host label 404s with no oracle).
 
-## Publishable keys (the anon-write identity)
+## API keys: exactly two — publishable (`pk_`) and secret (`sk_`) — native in IAM
 
-A **publishable key** (`pk_<org>_<random>`) is an org-scoped, non-secret data key a customer embeds in
-their page. It is NOT an OAuth client and NOT the secret `hk-` key. It identifies the org for anon
-API calls where the host cannot (embedding a Hanzo widget on the customer's OWN external domain).
-Same shape and threat model as the Hanzo Sentry ingest DSN (per-project HMAC, domain-separated,
-fail-closed, rotate = watermark). On a Hanzo-hosted app-host the publishable key is redundant (the
-host names the org); it is required only off-host. It carries no ability beyond what the collection
-rules already permit an anon caller. Minted + rotated + revoked under project settings; surfaced there
-for easy copy, next to the app host and the org's IAM login URL.
+There are **exactly two** data-plane API key types, and they are a **native IAM primitive**, not a
+per-product concept. Every Hanzo surface that needs anonymous or published API access — Base, public
+writes to Hanzo SQL, or anything similar — validates against the SAME two keys through the SAME IAM
+key-validation path. One way to do it.
+
+```
+IAM Key { type: publishable | secret, owner(org), project?, prefix, digest, scopes[], createdAt, lastUsedAt, revokedAt }
+  pk_<org>[_<project>]…  PUBLISHABLE — non-secret, DISPLAYABLE, embeddable in a page. Identifies the
+                         org/project for an ANON call. Carries no ability beyond what the surface's
+                         OWN rules already permit an anon caller (Base collection rules; SQL grants).
+                         Safe to expose. Fine for any org's public Base/SQL/etc. use.
+  sk_<org>[_<project>]…  SECRET — hashed at rest, shown ONCE, full API power. Server-side only, never
+                         in a page. Revoke + rotate under project settings.
+```
+
+- **OAuth `clientId`/`clientSecret` is a DIFFERENT concept** — it drives login/OIDC flows, not data
+  API access, and stays on the IAM Application. Do NOT conflate it with `pk`/`sk`. (The prior per-user
+  `hk-` cloud key collapses into `sk_` — one secret-key concept, not two.)
+- **`pk` is the anon-access identity everywhere.** On a Hanzo app-host the host already names the org
+  (host-as-project-ref, above), so `pk` is redundant there; it is REQUIRED when a Hanzo widget is
+  embedded on the customer's OWN external domain, or for any published write where there is no host to
+  resolve. Same fail-closed threat model as the Sentry ingest DSN (per-org/project, domain-separated,
+  rotate = watermark).
+- Minted / rotated / revoked in IAM, surfaced under project settings for easy copy, next to the app
+  host and the org's IAM login URL. `pk` is returned in the clear; `sk` is shown exactly once.
+
+The authz is always the SURFACE's own rules: `pk` says *which org/project*, and the collection rule
+(Base) or grant (SQL) says *what an anon caller may do*. A signed-in user's IAM token supersedes the
+key (org/project from the token, per the "obvious via IAM" rule) — keys exist for the tokenless case.
 
 ## Per-org embedded login (the customer's brand, not hanzo.id)
 
