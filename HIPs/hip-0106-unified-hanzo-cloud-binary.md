@@ -246,6 +246,34 @@ Each subsystem flag enables that subsystem's HTTP routes, ZAP services,
 and background workers. Disabled subsystems contribute zero runtime
 cost beyond the compiled code in the binary.
 
+### Node membership — `link`
+
+The same artifact is both the server (`hanzo cloud` / `hanzo <subsystem>`,
+serve mode) and the control CLI (`hanzo <verb>`, client mode). The client
+surface includes the node-membership verbs, which bring the machine the
+binary runs on into the fleet:
+
+- **`hanzo link`** — bring THIS machine in as a node. It composes the two
+  memberships under one verb: (1) join the **fabric** by starting hanzod
+  via the canonical `hanzo node up` (best-effort — a machine with no hanzod
+  still joins the compute fleet; `--no-fabric` skips it), and (2) register
+  as a **compute worker**, advertising the host's full inventory — CPU
+  (logical cores + model), memory, and each GPU as its own resource — as a
+  heartbeating presence in the org's `fleet` tasks namespace, then claiming
+  jobs from `gpu-jobs`. `--serve-engine` additionally advertises a local
+  hanzo-engine model endpoint for gateway routing. Works on a CPU-only node.
+- **`hanzo unlink`** — leave: deregister the node, then stop hanzod
+  (`hanzo node stop`).
+- **`hanzo status`** — the fleet view: every node with each of its GPUs
+  shown distinctly, this machine highlighted.
+
+Registration rides the public tasks surface
+(`POST /v1/tasks/namespaces/fleet/activities` + heartbeat); the fleet is
+read at `GET /v1/fleet/workers` and folded into the console's Machines +
+GPUs pages (provider `byo`). One IAM identity authorizes every call — the
+`hanzo login` token, tenant derived from its claims; no secrets live on the
+node. The worker dials out only (NAT-safe); nothing dials in.
+
 ### Subsystem boundaries
 
 Each Hanzo Go service exposes a single
