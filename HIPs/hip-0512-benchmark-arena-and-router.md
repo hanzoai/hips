@@ -44,12 +44,14 @@ under a cost, latency, and risk contract.**
 Two measured facts from Hanzo's own harness set the direction.
 
 **Published numbers are not measured numbers.** Under one standardized single-attempt
-harness on GPQA-Diamond, provider-reported scores run materially hot: a model card's
-94.6 measures 81.3 here (a +13.3 gap); Fugu's reported 95.5 measures 94.4 (answered) /
-91.9 (fault-inclusive). The gap is not noise to average away — it is the difference in
+harness on GPQA-Diamond, provider-reported scores diverge from what the same model scores
+here: one model card's reported 94.6 measures 81.3 (a +13.3 gap); another's reported 95.5
+reconciles to 94.4 answered / 91.9 fault-inclusive — a two-item near-match under a
+different protocol. The divergence is not noise to average away — it is the difference in
 prompting, pass@k, tools, exclusions, and unpublished scaffolding, and surfacing it is a
-product no vendor can offer about itself. A neutral arena that can **replicate or
-disprove** any provider's claim is a defensible position only the unified gateway holds.
+product no vendor can offer about itself. A neutral arena that can independently
+**reconcile any provider-reported claim** against a standardized measurement, with full
+request/response/scorer provenance, is a defensible position only the unified gateway holds.
 
 **The routing win is not yet detectable at current data scale.** Selecting one model per
 request is bounded by the pool's per-item oracle (98.5% on the current pool) and by
@@ -87,8 +89,9 @@ POST   /v1/benchmark/runs/{id}/retry      selective retry of faulted items
 GET/POST /v1/benchmark/presets            author a router blend, served as enso-<name>
 ```
 
-The **canonical set** is the benchmarks every major provider reports and the set needed
-to replicate-or-disprove the strongest published orchestrators: GPQA-Diamond, Humanity's
+The **canonical set** is the standard public benchmarks the field reports on, the set
+against which Hanzo measures its own models (enso, zen) and reconciles any external
+provider-reported claim: GPQA-Diamond, Humanity's
 Last Exam, LiveCodeBench (+ Pro), SWE-Bench (Verified + Pro), Terminal-Bench, MMLU-Pro,
 AIME/MathArena, MMMU-Pro, CharXiv, τ²-Bench, SciCode, MRCRv2. Each is a versioned
 `benchmark_revision` (exact dataset, split, label, scoring revision); a run pins one so a
