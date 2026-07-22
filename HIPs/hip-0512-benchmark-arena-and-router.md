@@ -263,11 +263,29 @@ surface (HIP-0112) — and follows the house canon so no layer is reinvented:
   declaration, one way.
 - **OpenAPI is generated** from the cloud surface (`~/work/hanzo/openapi`), never
   hand-maintained.
-- **Synth is training-only, firewalled.** `/v1/synth` grows the seed corpus for Scout/
-  Critic; synthetic items are flagged `synthetic:true` and are **never** admitted to a
-  benchmark leaderboard claim or the public commons (real questions are the locked test
-  set). Fabricated questions in a leaderboard would be the exact integrity violation the
-  arena exists to prevent.
+- **One dataset noun (`/v1/datasets`), not three.** A dataset is a versioned collection
+  of items with `source` provenance (`hf | synthetic | production-captured |
+  user-uploaded`) — it is not owned by eval. `/v1/eval` *scores* a dataset, `/v1/benchmark`
+  *runs models against* one, and `/v1/synth` *generates into* one. Today eval owns
+  `/v1/evals/datasets`; the canon is to promote it to the shared top-level `/v1/datasets`
+  so the three surfaces compose on one primitive rather than each carrying its own item
+  store (eval-datasets vs benchmark-items vs synth-output collapse to one way).
+- **Hugging Face is the native dataset remote (bidirectional).** Hanzo already loads the
+  public benchmarks *from* HF (`hendrydong/gpqa_diamond_mc`, `macabdul9/hle_text_only`),
+  so a dataset is naturally `hf://<repo>@<commit>` — and the HF **commit sha pins the
+  immutable `benchmark_revision`**, solving versioning for free (a re-labeled upstream is
+  a new sha, a new revision, never a silent rewrite). Bidirectional via HF Pro: (1) *pull*
+  — the canonical set resolves to pinned HF datasets; (2) *push* — the **verified commons
+  publishes as open, citable HF datasets** (consented Hanzo-measured results become a
+  public HF dataset the community can cite, the arena's trust made concrete); (3)
+  *private* — synth corpora and μRouter training exports save to org-private HF repos as
+  the versioned training corpus. One remote, `hf` CLI / Hub API, no bespoke dataset store.
+- **Synth is training-only, firewalled.** `/v1/synth` generates INTO a dataset
+  (`source:synthetic`) to grow the seed corpus for Scout/Critic; synthetic items are
+  **never** admitted to a benchmark leaderboard claim or the public commons (real
+  questions are the locked test set). Fabricated questions in a leaderboard would be the
+  exact integrity violation the arena exists to prevent — the `source` field on the
+  unified dataset is what enforces the firewall.
 
 ## Backwards Compatibility
 
