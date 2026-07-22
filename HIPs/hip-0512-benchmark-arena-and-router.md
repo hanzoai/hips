@@ -241,6 +241,30 @@ catalog entries, never a new serving path.
   not a proof of impossibility), and the build order follows from that honest state — a
   data plane and a learning curve to confirm the diagnosis — rather than preceding it.
 
+## Hanzo Research — the R&D evidence category
+
+The Arena is one face of a larger primitive: **Hanzo Research** (`/v1/research`), the layer
+that captures every experiment across every product as immutable, queryable evidence. A
+benchmark run is one **kind** of experiment; the same store records kernel-performance runs
+(hanzo-engine — e.g. a prefill throughput measurement), training runs (hanzo-ml), ablations,
+and inference-policy evaluations. One discriminator, `kind ∈ benchmark | kernel-perf |
+training | ablation | policy-eval`, so all of Hanzo's empirical R&D — not just model scores —
+accrues in one place as products are built.
+
+- **Two planes, named.** Each research project owns a transactional **SQLite** (per
+  HIP-0302; the enso-bench project's `hanzo_research.db` is the first) that rolls up into
+  **`hanzoai/datastore`** — Hanzo's open column-oriented OLAP — for the unified, real-time,
+  cross-project query/visualize/study surface. `hanzoai/datastore` is the aggregate plane;
+  it is never reinvented.
+- **Latest-run canonical, deterministic.** A model's number on a benchmark is the latest
+  complete run, read mechanically from the store — never a cherry-picked flattering run.
+  Multi-run variance is surfaced as an optimization target, not hidden (the unification
+  caught a stale enso LiveCodeBench 91.4 that had regressed to 69.7).
+- **Production experiments via `/v1/flags`.** Experiments, benchmarks, and A/B tests run in
+  production behind feature flags. When a customer runs a supported standard benchmark on a
+  model they paid for, that verified score is captured (with consent) into the commons —
+  crowdsourced, trustworthy because Hanzo executed it.
+
 ## Architectural canon (one way, unified)
 
 Everything above lands on the single `hanzoai/cloud` Go binary — the unified product
