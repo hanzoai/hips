@@ -268,6 +268,58 @@ accrues in one place as products are built.
   model they paid for, that verified score is captured (with consent) into the commons —
   crowdsourced, trustworthy because Hanzo executed it.
 
+## The router research program (canon)
+
+The Router (§6) is realized through a fixed execution order, each stage gated by evidence,
+each optimized on **held-out paired recovery-minus-damage** (never AUC, never a single-draw
+oracle). The measured foundation: question-only routing has weak signal at current scale
+(no detectable value at n=198); candidate responses, execution results, prefill
+activations, and interaction history carry far stronger signal. The winning object is an
+adaptive inference controller `query/state → (model, reasoning strategy, samples, tools,
+verifier, next action, stop)`, not a question→model classifier.
+
+1. **Oracle audit + pool curation.** Measure each model×item repeatedly to separate a
+   **reproducible** oracle (`(1/N)Σ maxₘ pᵢₘ`) from single-draw luck, the **co-failure
+   ceiling** (fraction where all arms reliably fail — the hard cap no selector beats), and
+   each arm's **marginal coverage** `Δ(m|S)=P(m right ∧ S all wrong)/cost(m)`. Curate the
+   pool by marginal coverage, not top-K-by-accuracy. **Enso Genome** is the mechanism: an
+   evolutionary (GA / CMA-ES / MAP-Elites) search over pool composition — combinatorial,
+   non-differentiable, expensive-fitness, exactly where evolution beats greedy. MAP-Elites
+   keeps one elite pool per (size × cost-band) niche; the archive IS the auto-curated
+   preset set (§9) — each niche a shippable `enso-<name>` blend, diversity preserved to
+   protect oracle headroom. Proven: on GPQA the elite pool captures +4pp held-out net at a
+   cost band greedy misses; cheap-only pools correctly evaluate negative. Genome curates
+   the pool and evolves typed-Conductor topologies + Controller policy params — it does
+   **not** train Scout/Critic weights (those are gradient/GRPO-trained; evolution is
+   sample-inefficient for weights).
+2. **Critic** (candidate-aware selector) — the fastest score lever; trained first on mixed
+   correct/incorrect candidate sets with anonymized identities + randomized order; measured
+   on recovery / damage / abstention separately.
+3. **Verifier-signal compiler** — classify the task's truth signal (tests, symbolic,
+   entailment, environment state, prover-verifier deliberation, or calibrated abstention)
+   and invoke the right verifier; collaboration gain is governed by recoverable mass ×
+   signal fidelity − harm, not agent count.
+4. **Scout** (prefill-activation capability twin) — cheap pre-generation per-arm P(correct)
+   + champion/challenger 4-state; distilled from Critic; held out by model- and
+   benchmark-family, not random questions.
+5. **Value-of-information Controller** — after each action choose stop / resample / reroute
+   / verify / challenge / buy-deeper-workflow, maximizing `E[Δcorrect] − λ·cost − μ·latency`;
+   trained from propensity-logged production data via causal regret minimization.
+6. **Typed Conductor** — route the reasoning paradigm + workflow topology (a typed DSL,
+   branch-local contexts to prevent herding, shared artifacts not private reasoning).
+7. **Cold-start + drift** — a new model gets a learned capability vector from a small anchor
+   suite (admit in hundreds of items, not another 10⁴ tensor); log the exact provider model
+   revision (silent updates corrupt labels).
+8. **Robust multi-benchmark promotion** — optimize `maxₚ minᵦ gᵦ` (per-benchmark normalized
+   gap capture) with per-benchmark no-regression constraints; promote only on a positive
+   lower-confidence-bound of paired net gain.
+
+**Stop-list (do not fund):** kNN/domain routing on ~198 examples; multiclass
+"which arm won this sample" labels; blind majority vote; adding correlated models without
+measuring marginal coverage; LLM-as-judge as ground truth; training on benchmark
+paraphrases; reporting a single-draw union oracle as fully capturable; optimizing router
+AUC instead of paired recovery-minus-damage.
+
 ## Architectural canon (one way, unified)
 
 Everything above lands on the single `hanzoai/cloud` Go binary — the unified product
