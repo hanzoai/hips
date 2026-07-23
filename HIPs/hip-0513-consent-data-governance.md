@@ -50,33 +50,46 @@ structural invariants, not policies bolted on.
   hoarded; only the sanitized, training-eligible subset (below) and our own research runs
   persist.
 
-### 1. Explicit consent at onboarding — mandatory for all, pre-state jurisdiction-aware
+### 1. Four data-use states — service-only default, affirmative election for training
 
-Every user makes an **explicit training-consent choice during onboarding** — a consent
-step at account creation that no one skips. The choice is recorded on the tenant record
-(HIP-0111), carried on every request's provenance, checked at ingestion, and revocable
-anytime (§4). One consent surface for everyone; the only regional difference is the
-checkbox's **default state**:
+The customer-facing Terms (the Hanzo legal stack, counsel-authored) are the **authority**
+on posture; this section is the engineering contract that must match them exactly — a
+spec that contradicts the ToS is the FTC-deceptive failure the legal stack exists to
+prevent. The Terms establish four enforceable data-use states, and the ingestion path
+enforces the SAME four:
 
-- **US / permitted regions** — the training-consent box is **pre-checked** (opt-out): the
-  user is shown it explicitly and may uncheck.
-- **EU / GDPR regions** — the box is **unchecked** (affirmative opt-in required): a
-  pre-checked box is not valid consent under GDPR, so the EU user must actively check it.
+```
+service_only         — data serves the request only; NOT used for training. DEFAULT for
+                       all API + enterprise traffic, every region.
+private_improvement  — tenant-scoped model improvement for that tenant only; never the
+                       shared base. Explicit election.
+research_training    — sanitized, de-identified data may train the shared Enso router/
+                       models. A SEPARATE affirmative election (never a default, never
+                       acquired by a policy update — the retroactive-training trap).
+public_commons       — a specific artifact is contributed to the Verified Commons
+                       (HIP-0512), naming the exact material, repository, and license. A
+                       further explicit contribution confirmation per artifact.
+```
 
-Region resolves from residency (HIP-0111); when unknown, default to the **unchecked
-(EU-strict)** state. The mandatory explicit step is what makes either default defensible —
-no one is enrolled silently. Two tiers: `outcomes-only` (scores, trains Scout) and
-`sanitized-content` (§3 de-identified I/O, trains Critic); customer content is never
-training data without the explicit `sanitized-content` grant. The §3 sanitization pipeline
-runs regardless, so even the operational-retention path (§4) never holds PII.
+Each state is recorded on the tenant/record (HIP-0111), carried on every request's
+provenance, checked at ingestion, and revocable. The transition to any training state is
+**affirmative** everywhere — this supersedes any earlier opt-out/pre-checked notion; a
+pre-checked training box is not used, because the ToS default is `service_only` globally
+and the FTC has warned that quietly acquiring training rights is deceptive. Safety review
+is **not** a hidden generalized-training override — a safety inspection never promotes
+data to a training state. The §3 sanitization pipeline runs regardless of state, so even
+`service_only` operational retention (§4) never holds PII.
 
-### 2. First-party treatment of train-eligible data
+### 2. First-party treatment — only under an explicit training state
 
-Customer token I/O that is train-eligible (not opted out, in an opt-out region — or
-opted in, in an opt-in region) is, after §3, treated as **first-party**: Hanzo may use
-the sanitized, de-identified example to train and improve the shared router and models.
-It does **not** extend to an opted-out tenant, whose per-org policy still trains only on
-its own traffic (HIP-0510 tenancy), never the shared base.
+Customer token I/O is treated as **first-party** for shared-model training **only** in
+the `research_training` state (or, for that tenant alone, `private_improvement`), and
+only after the §3 pipeline. `service_only` data — the default — is never training data.
+The shared base trains only on `research_training` data plus Hanzo's own research runs;
+a `private_improvement` tenant's data improves that tenant's policy only (HIP-0510
+tenancy), never the shared base. This is the reciprocity the election authorizes, scoped
+to exactly the state the tenant chose — nothing acquired by default or by a later policy
+change.
 
 ### 3. The `hanzoai/guard` sanitization pipeline (one way, at ingestion)
 
@@ -140,10 +153,17 @@ the pipeline, and the attestation is a separate legal/audit workstream.
 
 The customer-facing `hanzo.ai/terms` and `hanzo.ai/privacy` language, the consent-UI
 copy, and the SOC2/FedRAMP/GDPR attestations are **counsel-reviewed legal deliverables**.
-This HIP specifies the engineering behavior those documents describe and must not
-contradict; it does not write binding legal text. The build exposes the mechanisms
-(consent flags, retention config, deletion API, audit log); the terms explain them to
-the customer.
+A drafted Hanzo legal stack now exists (Terms, Privacy Policy, Benchmark Arena
+supplemental terms, AI Research & Data Contribution terms, DPA, training-data
+transparency template) covering the four states, the Benchmark Rights Registry
+(user terms cannot override a provider's or dataset owner's restrictions; unresolved runs
+default private), CA AB 2013 training-data documentation, CPPA 2026, GDPR/EDPB 28/2024,
+and EU AI Act Art. 50 — all marked DRAFT pending counsel (entity address, DPO/EU-rep
+analysis, subprocessor list, retention jobs, cookie inventory). **The Terms are the
+authority on posture; this HIP is the engineering contract that must not contradict
+them** (§1's four states mirror the Terms exactly). The build exposes the mechanisms
+(state flags, retention config, deletion API, audit log, the Benchmark Rights Registry
+gate); the Terms explain them to the customer. This HIP does not write binding legal text.
 
 ## Rationale
 
