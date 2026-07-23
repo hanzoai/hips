@@ -50,24 +50,25 @@ structural invariants, not policies bolted on.
   hoarded; only the sanitized, training-eligible subset (below) and our own research runs
   persist.
 
-### 1. Training is opt-OUT, jurisdiction-aware, always sanitized
+### 1. Explicit consent at onboarding — mandatory for all, pre-state jurisdiction-aware
 
-For customer token I/O the default is **train-eligible**: after the §3 pipeline
-(always-on PII strip + anonymize + sanitize), the de-identified example is retained for
-training. A tenant may **opt out** — "do not train on my data" — a flag on the tenant
-record (HIP-0111), carried on every request's provenance, checked at ingestion.
+Every user makes an **explicit training-consent choice during onboarding** — a consent
+step at account creation that no one skips. The choice is recorded on the tenant record
+(HIP-0111), carried on every request's provenance, checked at ingestion, and revocable
+anytime (§4). One consent surface for everyone; the only regional difference is the
+checkbox's **default state**:
 
-The default is **jurisdiction-aware**, because a global opt-out training default is sound
-under US practice but not under GDPR (EU consent must be affirmative; opt-out is not valid
-consent, and "legitimate interest" for training is regulator-contested):
+- **US / permitted regions** — the training-consent box is **pre-checked** (opt-out): the
+  user is shown it explicitly and may uncheck.
+- **EU / GDPR regions** — the box is **unchecked** (affirmative opt-in required): a
+  pre-checked box is not valid consent under GDPR, so the EU user must actively check it.
 
-- **US / opt-out regions** — default train-eligible; explicit opt-out excludes.
-- **EU / GDPR regions** — default **excluded**; training requires affirmative opt-in.
-
-The region is resolved from the tenant's residency (HIP-0111). This is the standing CTO
-decision to get broad first-party data where lawful without importing EU consent risk;
-the exact regional mapping and the "legitimate interest vs consent" basis are counsel
-calls (§6), and this HIP states the mechanism, not the legal defensibility.
+Region resolves from residency (HIP-0111); when unknown, default to the **unchecked
+(EU-strict)** state. The mandatory explicit step is what makes either default defensible —
+no one is enrolled silently. Two tiers: `outcomes-only` (scores, trains Scout) and
+`sanitized-content` (§3 de-identified I/O, trains Critic); customer content is never
+training data without the explicit `sanitized-content` grant. The §3 sanitization pipeline
+runs regardless, so even the operational-retention path (§4) never holds PII.
 
 ### 2. First-party treatment of train-eligible data
 
