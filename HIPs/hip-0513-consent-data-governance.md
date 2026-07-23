@@ -39,25 +39,43 @@ structural invariants, not policies bolted on.
 
 ## Specification
 
-### 1. Consent is opt-in, tenant-scoped, revocable (default: excluded)
+### 0. Two data classes (the clean split)
 
-The default for every tenant is **excluded**: no request or response content enters the
-training corpus. A tenant (org, per HIP-0511) may opt in explicitly; consent is stored
-on the tenant record, carried on every request's provenance, and checked at ingestion.
-Opt-in is revocable — revocation stops new ingestion immediately and triggers deletion
-of that tenant's retained data (§4). Consent is granular: a tenant may share
-`outcomes-only` (scores, per-arm correctness — no content) or `sanitized-content`
-(§3 output). Customer content is **never** training data absent an explicit
-`sanitized-content` opt-in.
+- **Hanzo's own research runs** — every benchmark/eval/kernel-perf/training experiment
+  Hanzo executes (HIP-0512) is **first-party, retained indefinitely, no consent gate**:
+  it is our data, produced by our harness. This is the evidence base and it is preserved
+  forever.
+- **Customer token I/O** — request/response content flowing through the gateway. This is
+  the class §1–§4 govern. The cloud is otherwise non-retentive: raw traffic is not
+  hoarded; only the sanitized, training-eligible subset (below) and our own research runs
+  persist.
 
-### 2. First-party treatment of shared data
+### 1. Training is opt-OUT, jurisdiction-aware, always sanitized
 
-Data a tenant explicitly shares under `sanitized-content` consent is, after §3, treated
-as **first-party**: Hanzo may use it to train and improve the shared router and models.
-This is the reciprocal contract — the tenant gets a continuously-improving router
-(HIP-0512), Hanzo gets the corpus — and it is exactly what the consent grant authorizes.
-It does **not** extend to a non-consenting tenant, whose per-org policy still trains only
-on its own traffic (HIP-0510 tenancy), never the shared base.
+For customer token I/O the default is **train-eligible**: after the §3 pipeline
+(always-on PII strip + anonymize + sanitize), the de-identified example is retained for
+training. A tenant may **opt out** — "do not train on my data" — a flag on the tenant
+record (HIP-0111), carried on every request's provenance, checked at ingestion.
+
+The default is **jurisdiction-aware**, because a global opt-out training default is sound
+under US practice but not under GDPR (EU consent must be affirmative; opt-out is not valid
+consent, and "legitimate interest" for training is regulator-contested):
+
+- **US / opt-out regions** — default train-eligible; explicit opt-out excludes.
+- **EU / GDPR regions** — default **excluded**; training requires affirmative opt-in.
+
+The region is resolved from the tenant's residency (HIP-0111). This is the standing CTO
+decision to get broad first-party data where lawful without importing EU consent risk;
+the exact regional mapping and the "legitimate interest vs consent" basis are counsel
+calls (§6), and this HIP states the mechanism, not the legal defensibility.
+
+### 2. First-party treatment of train-eligible data
+
+Customer token I/O that is train-eligible (not opted out, in an opt-out region — or
+opted in, in an opt-in region) is, after §3, treated as **first-party**: Hanzo may use
+the sanitized, de-identified example to train and improve the shared router and models.
+It does **not** extend to an opted-out tenant, whose per-org policy still trains only on
+its own traffic (HIP-0510 tenancy), never the shared base.
 
 ### 3. The `hanzoai/guard` sanitization pipeline (one way, at ingestion)
 
@@ -80,17 +98,24 @@ composed at the ingestion boundary:
 The pipeline is fail-closed at every step: any stage's uncertainty drops the example.
 `hanzoai/guard` is the one sanitizer; no surface writes training data around it.
 
-### 4. Retention is customizable, 30-day default, deletion is real
+### 4. Retention: train-eligible persists, opted-out is 30-day operational, deletion is real
 
-Sanitized examples carry a retention deadline: **30 days by default**, customizable per
-tenant (a tenant may shorten it, or lengthen it within the compliance ceiling). After
-the deadline the example is **hard-deleted** from the corpus and every derived store.
-Deletion is also on-demand: a tenant's deletion request (or consent revocation) purges
+Retention follows the data class:
+
+- **Hanzo's own research runs (§0)** — retained **indefinitely**. The evidence base is
+  never expired.
+- **Train-eligible customer I/O** — the sanitized, de-identified example is retained for
+  training (**no fixed expiry** by default; it is already PII-free and first-party under
+  §1–§2). Retention is customizable per tenant (a tenant may set a shorter window).
+- **Opted-out customer I/O** — kept only for the **30-day operational window** (billing,
+  abuse, debugging), never trained on, then **hard-deleted**. This is the "we don't retain
+  most shit" default for anyone who opts out.
+
+Deletion is real and on-demand: a tenant's deletion request (or an opt-out toggle) purges
 its retained examples within the SLA, across the transactional plane and the aggregate
 OLAP (`hanzoai/datastore`, HIP-0512). A model already trained on an example is not
 retroactively untrained — the contract is that the *data* is deleted and no *future*
-training uses it; this boundary is stated plainly to the tenant (it is a legal-copy point,
-§6).
+training uses it; this boundary is stated plainly to the tenant (a legal-copy point, §6).
 
 ### 5. Compliance control mapping (SOC2 / FedRAMP / GDPR)
 
