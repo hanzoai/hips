@@ -14,7 +14,7 @@ created: 2025-01-15
 
 This proposal defines the observability and metrics standard for the Hanzo ecosystem. **Hanzo Zap** provides unified observability -- metrics, traces, and structured logs -- across all services in the Hanzo infrastructure.
 
-Zap is a Go binary that runs as a sidecar container or standalone service alongside every Hanzo workload. It collects infrastructure telemetry, exports Prometheus metrics, forwards OpenTelemetry traces, and ships structured JSON logs to ClickHouse. Together with Grafana dashboards, it forms the single pane of glass for all Hanzo operations.
+Zap is a Go binary that runs as a sidecar container or standalone service alongside every Hanzo workload. It collects infrastructure telemetry, exports Prometheus metrics, forwards OpenTelemetry traces, and ships structured JSON logs to Hanzo Datastore. Together with Grafana dashboards, it forms the single pane of glass for all Hanzo operations.
 
 **Repository**: [github.com/hanzoai/zap](https://github.com/hanzoai/zap)
 **Docker**: `ghcr.io/hanzoai/zap:latest`
@@ -34,7 +34,7 @@ Observability SaaS pricing scales with data volume. At Hanzo's throughput -- mil
 | Splunk | $10,000-20,000 | Log volume-based pricing |
 | **Self-hosted** | **~$200** | **Compute cost on existing K8s** |
 
-The self-hosted stack (Prometheus + Grafana + ClickHouse) runs on resources already allocated in our DOKS clusters. The marginal cost is near zero.
+The self-hosted stack (Prometheus + Grafana + Datastore) runs on resources already allocated in our DOKS clusters. The marginal cost is near zero.
 
 ### The Integration Problem
 
@@ -73,7 +73,7 @@ Go is the natural choice for three reasons:
 
 The full ZAP (Zero-copy Agent Protocol) specification lives in [HIP-007-zap.md](./HIP-007-zap.md). The key insight for observability:
 
-Cap'n Proto gives us **zero-copy serialization**. When a Zap sidecar receives a metric payload from a co-located service, it can forward that payload to Prometheus or ClickHouse without deserializing and reserializing the data. The sidecar reads field offsets directly from the wire bytes.
+Cap'n Proto gives us **zero-copy serialization**. When a Zap sidecar receives a metric payload from a co-located service, it can forward that payload to Prometheus or Datastore without deserializing and reserializing the data. The sidecar reads field offsets directly from the wire bytes.
 
 Benchmarks on commodity hardware (4-core, 8GB):
 
@@ -115,7 +115,7 @@ The observability stack has two layers with distinct granularity:
 │ Error rates          │ Feature adoption               │
 │ Pod health           │ Revenue events                │
 ├──────────────────────┼───────────────────────────────┤
-│ Prometheus + OTLP    │ ClickHouse + TimescaleDB      │
+│ Prometheus + OTLP    │ Datastore + TimescaleDB       │
 │ Scrape interval: 15s │ Event-driven, real-time       │
 └──────────────────────┴───────────────────────────────┘
 ```
@@ -284,7 +284,7 @@ processors:
 
 exporters:
   clickhouse:
-    endpoint: tcp://clickhouse.hanzo.svc:9000
+    endpoint: tcp://datastore.hanzo.svc:9000
     database: traces
     ttl: 720h  # 30 days retention
 
@@ -304,9 +304,9 @@ service:
       exporters: [prometheus]
 ```
 
-### Logs: Structured JSON to ClickHouse
+### Logs: Structured JSON to Datastore
 
-All services MUST emit structured JSON logs to stdout. The Zap sidecar (or a node-level Fluentd DaemonSet) forwards these to ClickHouse.
+All services MUST emit structured JSON logs to stdout. The Zap sidecar (or a node-level Fluentd DaemonSet) forwards these to Datastore.
 
 #### Log Format
 
@@ -331,7 +331,7 @@ All services MUST emit structured JSON logs to stdout. The Zap sidecar (or a nod
 }
 ```
 
-#### ClickHouse Schema
+#### Datastore Schema
 
 ```sql
 CREATE TABLE hanzo_logs (
@@ -351,7 +351,7 @@ TTL ts + INTERVAL 90 DAY
 SETTINGS index_granularity = 8192;
 ```
 
-ClickHouse is chosen for logs because:
+Datastore is chosen for logs because:
 1. Columnar storage compresses JSON logs 10-20x
 2. SQL query interface familiar to all engineers
 3. Already deployed as the Zap datastore backend
@@ -601,7 +601,7 @@ As of January 2025, the observability stack is deployed in standalone mode on th
 │               └────┬─────┘                              │
 │                    │                                    │
 │               ┌────▼─────┐     ┌────────────┐          │
-│               │ Grafana  │────▶│ ClickHouse │          │
+│               │ Grafana  │────▶│ Datastore  │          │
 │               │ :3000    │     │ :8123      │          │
 │               └──────────┘     └────────────┘          │
 │                                                         │
