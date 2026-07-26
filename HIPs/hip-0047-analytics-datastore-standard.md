@@ -14,11 +14,11 @@ requires: HIP-0017, HIP-0029
 ## Abstract
 
 This proposal defines the analytics datastore standard for the Hanzo ecosystem.
-Hanzo Datastore provides columnar analytics storage via ClickHouse, deployed as
-a replicated cluster on each DOKS Kubernetes cluster. Every Hanzo service that
-requires high-throughput event ingestion, OLAP queries, or time-series
-aggregation MUST use the cluster-local ClickHouse instance following this
-specification.
+Hanzo Datastore, our Apache-2.0 ClickHouse fork, provides columnar analytics
+storage, deployed as a replicated cluster on each DOKS Kubernetes cluster.
+Every Hanzo service that requires high-throughput event ingestion, OLAP
+queries, or time-series aggregation MUST use the cluster-local Datastore
+instance following this specification.
 
 **Repository**: [github.com/hanzoai/datastore](https://github.com/hanzoai/datastore)
 **Image**: `ghcr.io/hanzoai/datastore:latest`
@@ -220,13 +220,13 @@ Separate processes, separate storage, separate scaling.
                           (port 8123)       (HIP-0030)
                                    │            │
                           ┌────────▼────────────▼───────────┐
-                          │         ClickHouse Cluster       │
+                          │         Datastore Cluster        │
                           │  ┌──────────┐  ┌──────────┐     │
                           │  │ Shard 1  │  │ Shard 1  │     │
                           │  │ Replica A│  │ Replica B│     │
                           │  └──────────┘  └──────────┘     │
                           │  ┌──────────────────────┐       │
-                          │  │  ClickHouse Keeper    │       │
+                          │  │  Datastore Keeper     │       │
                           │  │  (coordination)       │       │
                           │  └──────────────────────┘       │
                           └─────────────────────────────────┘
@@ -241,7 +241,7 @@ Separate processes, separate storage, separate scaling.
 ### Engine: MergeTree Family
 
 All tables MUST use a MergeTree-family engine. The MergeTree engine is the
-foundation of ClickHouse's performance. It provides:
+foundation of Datastore's performance. It provides:
 
 - **Sorted storage**: Data is stored sorted by the `ORDER BY` key, enabling
   efficient range queries and binary search.
@@ -259,15 +259,16 @@ CREATE TABLE events ON CLUSTER '{cluster}'
 (
     -- columns defined below
 )
-ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/events', '{replica}')
+ENGINE = ReplicatedMergeTree('/datastore/tables/{shard}/events', '{replica}')
 PARTITION BY toYYYYMM(timestamp)
 ORDER BY (team_id, toDate(timestamp), event, cityHash64(distinct_id), uuid)
 SETTINGS index_granularity = 8192;
 ```
 
 The ZooKeeper path template `{shard}` and `{replica}` are resolved from the
-ClickHouse server configuration. Since ClickHouse 24.x, ClickHouse Keeper
-(a built-in Raft-based coordination service) replaces ZooKeeper.
+Datastore server configuration. Datastore Keeper (a built-in Raft-based
+coordination service, inherited from the upstream 24.x engine) replaces
+ZooKeeper.
 
 ### Schema Design
 
@@ -330,7 +331,7 @@ CREATE TABLE events ON CLUSTER '{cluster}'
     api_key_id          String DEFAULT ''
 )
 ENGINE = ReplicatedMergeTree(
-    '/clickhouse/tables/{shard}/events',
+    '/datastore/tables/{shard}/events',
     '{replica}'
 )
 PARTITION BY toYYYYMM(timestamp)
@@ -341,7 +342,7 @@ SETTINGS index_granularity = 8192;
 **Design decisions in this schema**:
 
 - **`LowCardinality(String)`** for columns with few distinct values (browser,
-  OS, country). ClickHouse stores these as dictionary-encoded integers,
+  OS, country). Datastore stores these as dictionary-encoded integers,
   reducing storage 5-10x and speeding equality comparisons.
 - **`FixedString(2)`** for country codes. All ISO 3166-1 alpha-2 codes are
   exactly 2 bytes. Fixed-size storage avoids length prefix overhead.
@@ -425,9 +426,9 @@ WHERE event = '$llm_request'
 GROUP BY organization_id, model, provider, day;
 ```
 
-**Why materialized views**: ClickHouse materialized views are triggers that
+**Why materialized views**: Datastore materialized views are triggers that
 run on INSERT. They are not periodic batch jobs. When a batch of events is
-inserted into the `events` table, ClickHouse automatically updates the
+inserted into the `events` table, Datastore automatically updates the
 materialized view target tables. This means rollup tables are always
 up-to-date with sub-second latency.
 
@@ -436,11 +437,11 @@ up-to-date with sub-second latency.
 #### Batch HTTP Inserts
 
 The primary ingestion path for Insights (HIP-0017). The Rust capture service
-buffers events in memory (or Kafka, per HIP-0030) and flushes to ClickHouse
+buffers events in memory (or Kafka, per HIP-0030) and flushes to Datastore
 in batches via HTTP.
 
 ```
-POST http://clickhouse:8123/?query=INSERT+INTO+events+FORMAT+JSONEachRow
+POST http://datastore:8123/?query=INSERT+INTO+events+FORMAT+JSONEachRow
 Content-Type: application/json
 
 {"uuid":"...","team_id":1,"event":"$pageview","timestamp":"2026-02-23T12:00:00.000Z","distinct_id":"user_42","properties":"{\"url\":\"/dashboard\"}"}
@@ -457,13 +458,13 @@ Content-Type: application/json
 | Flush interval | 5-10 seconds | Balance latency vs batch size |
 
 Services MUST NOT insert single rows per HTTP request. Single-row inserts
-create thousands of tiny data parts that ClickHouse must merge, consuming
+create thousands of tiny data parts that Datastore must merge, consuming
 CPU and degrading query performance. The `too many parts` exception is a
 hard failure mode caused by excessive single-row inserts.
 
 #### Kafka Consumer (Streaming)
 
-For high-throughput services that cannot batch in-process, ClickHouse's
+For high-throughput services that cannot batch in-process, Datastore's
 built-in Kafka engine consumes directly from Kafka topics (HIP-0030).
 
 ```sql
@@ -480,7 +481,7 @@ ENGINE = Kafka
 SETTINGS
     kafka_broker_list = 'kafka:9092',
     kafka_topic_list = 'hanzo_events',
-    kafka_group_name = 'clickhouse_events_consumer',
+    kafka_group_name = 'datastore_events_consumer',
     kafka_format = 'JSONEachRow',
     kafka_num_consumers = 4,
     kafka_max_block_size = 65536;
@@ -499,21 +500,21 @@ FROM events_kafka;
 ```
 
 This pattern decouples ingestion from query serving. Kafka absorbs traffic
-spikes; ClickHouse consumes at its own pace.
+spikes; Datastore consumes at its own pace.
 
 ### Query Interface
 
-ClickHouse uses SQL with extensions. All Hanzo services MUST query ClickHouse
+Datastore uses SQL with extensions. All Hanzo services MUST query Datastore
 using standard SQL via the HTTP interface or the native TCP protocol.
 
 #### HTTP Interface (Port 8123)
 
 ```bash
 # Simple query
-curl 'http://clickhouse:8123/?query=SELECT+count()+FROM+events+WHERE+team_id=1'
+curl 'http://datastore:8123/?query=SELECT+count()+FROM+events+WHERE+team_id=1'
 
 # Parameterized query (prevents SQL injection)
-curl 'http://clickhouse:8123/' \
+curl 'http://datastore:8123/' \
   --data-urlencode "param_team_id=1" \
   --data-urlencode "param_start=2026-02-01" \
   -d "query=SELECT count() FROM events WHERE team_id = {team_id:UInt64} AND timestamp >= {start:Date}"
