@@ -546,7 +546,7 @@ Notify is a trusted service in the IAM ecosystem. It authenticates to IAM using 
 **User resolution**: When `to.user_id` is provided, Notify calls IAM's internal API to resolve the user's contact information:
 
 ```
-GET https://hanzo.id/api/get-user?id=hanzo/zach
+GET https://hanzo.id/v1/iam/get-user?id=hanzo/zach
 Authorization: Bearer <service-token>
 
 Response:

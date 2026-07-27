@@ -308,7 +308,7 @@ AI agents (HIP-0009, HIP-0025) authenticate to Hanzo services using short-lived 
 ```
 Agent                    IAM (hanzo.id)              LLM Gateway
   │                          │                           │
-  │ POST /api/login/oauth    │                           │
+  │ POST /v1/iam/login/oauth │                           │
   │ (client_credentials)     │                           │
   ├─────────────────────────►│                           │
   │                          │                           │
