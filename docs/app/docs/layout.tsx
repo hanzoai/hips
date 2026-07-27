@@ -16,7 +16,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         title: <LogoWithText size={24} />,
       }}
       sidebar={{
-        defaultOpenLevel: 1,
+        defaultOpenLevel: 0,
         banner: (
           <div className="flex flex-col gap-3">
             {/* Search Trigger */}
