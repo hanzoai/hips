@@ -12,7 +12,7 @@ created: 2026-05-19
 
 ## Abstract
 
-Hanzo Login (`hanzoai/id`) is the custom login UI that fronts IAM. Multi-tenant: resolves IAM app/org dynamically via `/api/get-app-login` from the request hostname. Forkable for per-org branding.
+Hanzo Login (`hanzoai/id`) is the custom login UI that fronts IAM. Multi-tenant: resolves IAM app/org dynamically via `/v1/iam/get-app-login` from the request hostname. Forkable for per-org branding.
 
 ## CRD Kind
 

@@ -180,9 +180,9 @@ Access tokens are JWTs signed with the application's certificate (e.g., `cert-ha
 
 When a request arrives, IAM resolves the organization context through the following chain:
 
-1. **Application lookup via `/api/get-app-login`**: The login UI (hosted at hanzo.id, served by the `hanzo.id-worker` Cloudflare Worker) calls this endpoint with the `clientId` from the OAuth authorize URL. IAM returns the application name and organization name. This is the source of truth.
+1. **Application lookup via `/v1/iam/get-app-login`**: The login UI (hosted at hanzo.id, served by the `hanzo.id-worker` Cloudflare Worker) calls this endpoint with the `clientId` from the OAuth authorize URL. IAM returns the application name and organization name. This is the source of truth.
 
-2. **Direct login via `/api/login`**: The payload includes `application` and `organization` fields. These must match the application's configured organization. Hardcoding `organization: "hanzo"` for all requests breaks scoped SSO clients (e.g., KMS has its own client ID and expects the correct org context).
+2. **Direct login via `/v1/iam/login`**: The payload includes `application` and `organization` fields. These must match the application's configured organization. Hardcoding `organization: "hanzo"` for all requests breaks scoped SSO clients (e.g., KMS has its own client ID and expects the correct org context).
 
 3. **Domain-based fallback**: If no application context is provided, IAM falls back to matching the request `Host` header against known origins. Each application configures `origin` and `originFrontend` to enable this.
 
@@ -216,20 +216,20 @@ Client secrets use KMS-managed placeholders (`${IAM_APP_HANZO_CLIENT_SECRET}`) r
 Every user has a `balance` field (float64, USD-denominated). The flow:
 
 ```
-Commerce (payment)              IAM (balance)              Cloud (AI usage)
-       │                            │                            │
-       │  POST /api/add-balance     │                            │
-       │  { user: "z", amount: 50 } │                            │
-       ├───────────────────────────►│                            │
-       │                            │  balance: 50 → 100        │
-       │                            │                            │
-       │                            │  POST /api/add-transaction │
-       │                            │◄────────────────────────────┤
-       │                            │  { category: "Purchase",   │
-       │                            │    amount: -0.02,          │
-       │                            │    subtype: "llm-tokens" } │
-       │                            │                            │
-       │                            │  balance: 100 → 99.98     │
+Commerce (payment)              IAM (balance)                 Cloud (AI usage)
+       │                            │                               │
+       │  POST /v1/iam/add-balance  │                               │
+       │  { user: "z", amount: 50 } │                               │
+       ├───────────────────────────►│                               │
+       │                            │  balance: 50 → 100            │
+       │                            │                               │
+       │                            │  POST /v1/iam/add-transaction │
+       │                            │◄──────────────────────────────┤
+       │                            │  { category: "Purchase",      │
+       │                            │    amount: -0.02,             │
+       │                            │    subtype: "llm-tokens" }    │
+       │                            │                               │
+       │                            │  balance: 100 → 99.98         │
 ```
 
 The `Transaction` model records every balance-affecting event:
@@ -248,7 +248,7 @@ type Transaction struct {
 }
 ```
 
-Services check balance before executing expensive operations. The LLM Gateway (HIP-4) reads the user's balance from the JWT claims or via `/api/get-account` and rejects requests when balance is insufficient.
+Services check balance before executing expensive operations. The LLM Gateway (HIP-4) reads the user's balance from the JWT claims or via `/v1/iam/get-account` and rejects requests when balance is insufficient.
 
 ### Bootstrap: init_data.json
 
@@ -314,8 +314,8 @@ These `/v1/iam/oauth/*` paths are the only OIDC endpoints. There is no `/oauth/*
 
 | Method | Endpoint | RFC | Description |
 |--------|----------|-----|-------------|
-| GET | `/api/get-app-login` | — | Resolve application and org from client ID |
-| POST | `/api/login` | — | Password login (returns session or redirects) |
+| GET | `/v1/iam/get-app-login` | — | Resolve application and org from client ID |
+| POST | `/v1/iam/login` | — | Password login (returns session or redirects) |
 | GET | `/v1/iam/oauth/authorize` | RFC 6749 §3.1 | Authorization endpoint (PKCE `S256` required) |
 | POST | `/v1/iam/oauth/token` | RFC 6749 §3.2 | Token exchange (`client_secret_basic` for confidential clients) |
 | GET | `/v1/iam/oauth/userinfo` | OIDC Core §5.3 | UserInfo endpoint |
@@ -327,21 +327,21 @@ These `/v1/iam/oauth/*` paths are the only OIDC endpoints. There is no `/oauth/*
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/get-account` | Get current user (from session/token) |
-| GET | `/api/userinfo` | OIDC UserInfo endpoint |
-| GET | `/api/get-user` | Get user by ID |
-| POST | `/api/update-user` | Update user profile |
-| POST | `/api/add-user` | Create new user (admin) |
-| POST | `/api/delete-user` | Delete user (admin) |
+| GET | `/v1/iam/get-account` | Get current user (from session/token) |
+| GET | `/v1/iam/userinfo` | OIDC UserInfo endpoint |
+| GET | `/v1/iam/get-user` | Get user by ID |
+| POST | `/v1/iam/update-user` | Update user profile |
+| POST | `/v1/iam/add-user` | Create new user (admin) |
+| POST | `/v1/iam/delete-user` | Delete user (admin) |
 
 #### Billing
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/add-transaction` | Record a balance-affecting event |
-| GET | `/api/get-transactions` | List transactions for org |
-| GET | `/api/get-user-transactions` | List transactions for user |
-| POST | `/api/add-balance` | Add credits to user balance |
+| POST | `/v1/iam/add-transaction` | Record a balance-affecting event |
+| GET | `/v1/iam/get-transactions` | List transactions for org |
+| GET | `/v1/iam/get-user-transactions` | List transactions for user |
+| POST | `/v1/iam/add-balance` | Add credits to user balance |
 
 #### Discovery
 

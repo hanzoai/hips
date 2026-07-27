@@ -494,7 +494,7 @@ export const auth = betterAuth({
       issuer: iamUrl,
       authorization: `${iamUrl}/oauth/authorize`,
       token: `${iamUrl}/oauth/token`,
-      userinfo: `${iamUrl}/api/userinfo`,
+      userinfo: `${iamUrl}/v1/iam/userinfo`,
     },
   },
 });

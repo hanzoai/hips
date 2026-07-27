@@ -167,10 +167,10 @@ interface Organization {
 ```
 
 Operations:
-- **Create organization**: Calls IAM `POST /api/add-organization`. Automatically creates default OAuth application and certificate.
-- **Update organization**: Calls IAM `POST /api/update-organization`. Supports branding, password policy, and MFA settings.
-- **List organizations**: Calls IAM `GET /api/get-organizations`. Filtered by operator's membership.
-- **Delete organization**: Calls IAM `POST /api/delete-organization`. Requires OWNER role. Cascades to applications, users (membership only), and projects.
+- **Create organization**: Calls IAM `POST /v1/iam/add-organization`. Automatically creates default OAuth application and certificate.
+- **Update organization**: Calls IAM `POST /v1/iam/update-organization`. Supports branding, password policy, and MFA settings.
+- **List organizations**: Calls IAM `GET /v1/iam/get-organizations`. Filtered by operator's membership.
+- **Delete organization**: Calls IAM `POST /v1/iam/delete-organization`. Requires OWNER role. Cascades to applications, users (membership only), and projects.
 
 ### User Management
 
@@ -413,11 +413,11 @@ On first startup, Console executes the following bootstrap sequence:
 2. Connect to ClickHouse and initialize analytics schema
 3. Read HANZO_INIT_ORG_IDS environment variable
 4. For each org ID:
-   a. Call IAM GET /api/get-organization/{orgId}
-   b. If not found: Call IAM POST /api/add-organization
-   c. If found: Call IAM POST /api/update-organization (upsert)
+   a. Call IAM GET /v1/iam/get-organization/{orgId}
+   b. If not found: Call IAM POST /v1/iam/add-organization
+   c. If found: Call IAM POST /v1/iam/update-organization (upsert)
 5. Read HANZO_INIT_USER_EMAIL
-   a. Call IAM GET /api/get-user to find or create user
+   a. Call IAM GET /v1/iam/get-user to find or create user
    b. Grant OWNER membership for all initialized orgs
 6. Read HANZO_INIT_PROJECT_ORG_ID
    a. Create default project in specified org

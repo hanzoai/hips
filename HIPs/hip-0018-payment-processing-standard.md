@@ -93,7 +93,7 @@ The correct approach is **both**: the native PSP for fiat, blockchain for crypto
 
 ### Why IAM Holds Balances
 
-Every authenticated API call already hits IAM to validate the JWT. The LLM Gateway (HIP-4) receives a request, extracts the bearer token, and validates it against IAM's public key or calls `/api/get-account`. This round-trip is unavoidable -- you must authenticate before executing.
+Every authenticated API call already hits IAM to validate the JWT. The LLM Gateway (HIP-4) receives a request, extracts the bearer token, and validates it against IAM's public key or calls `/v1/iam/get-account`. This round-trip is unavoidable -- you must authenticate before executing.
 
 If balance lived in Commerce, every LLM call would require two round-trips:
 
@@ -295,8 +295,8 @@ Free-tier credits reset monthly and do not accumulate. Paid-tier included credit
 5. PSP fires webhook: checkout.session.completed
 6. Commerce verifies webhook signature (HMAC-SHA256)
 7. Commerce checks idempotency key in Redis (prevent double-processing)
-8. Commerce calls IAM: POST /api/add-balance { owner: "hanzo", user: "z", amount: 21.0 }
-9. Commerce records transaction: POST /api/add-transaction
+8. Commerce calls IAM: POST /v1/iam/add-balance { owner: "hanzo", user: "z", amount: 21.0 }
+9. Commerce records transaction: POST /v1/iam/add-transaction
    { category: "Recharge", user: "z", amount: 21.0, name: "txn_psp_cs_..." }
 10. User's IAM balance updated. Credits available immediately.
 ```
@@ -401,14 +401,14 @@ The LLM Gateway and Cloud services do not interact with Commerce directly for de
 LLM Gateway receives request
     |
     +-- 1. Validate JWT (IAM)
-    +-- 2. Check balance from JWT claims or /api/get-account
+    +-- 2. Check balance from JWT claims or /v1/iam/get-account
     +-- 3. If insufficient balance: return 402 Payment Required
     +-- 4. Execute LLM request (provider API)
     +-- 5. Calculate cost:
     |      input_tokens * input_rate + output_tokens * output_rate
     |      -> convert to USD -> round to credits
     +-- 6. Submit debit transaction to IAM:
-    |      POST /api/add-transaction
+    |      POST /v1/iam/add-transaction
     |      {
     |        "category": "Purchase",
     |        "user": "<user>",
@@ -519,8 +519,8 @@ When the metering pipeline detects a balance crossing below the threshold, it en
 
 - [x] Native PSP checkout integration for one-time credit purchases
 - [x] Webhook handler for `checkout.session.completed`
-- [x] IAM balance update via `/api/add-balance`
-- [x] Transaction recording via `/api/add-transaction`
+- [x] IAM balance update via `/v1/iam/add-balance`
+- [x] Transaction recording via `/v1/iam/add-transaction`
 - [x] Balance and transaction query endpoints
 - [x] Idempotency key tracking in Redis
 
