@@ -1,92 +1,65 @@
-# Hanzo Improvement Proposals (HIPs)
+# HIPs
 
-## Repository
+Hanzo Improvement Proposals: the specs in `HIPs/`, indexed by `README.md`, and
+the site at https://hips.hanzo.ai built from `docs/`.
 
-Formal specifications and governance for Hanzo AI L1 blockchain.
+## How this ships
 
-```
-HIPs/          # Individual proposals
-docs/          # Supporting documentation
-README.md      # Index
-```
+One way, and it runs on our own stack:
 
-## Active HIPs
+    push  ->  github.com/hanzoai/hips        (a mirror)
+              .github/workflows/sync.yml      carries refs onward
+      ->  git.hanzo.ai/hanzoai/hips           CANONICAL
+              .hanzo/workflows/ci.yml         checks the index
+              .hanzo/workflows/deploy.yml     builds ghcr.io/hanzoai/hips
+      ->  hanzoai/universe crs/hips.yaml      names the tag that is live
+      ->  hanzoai/operator                    reconciles the App
+      ->  hanzoai/static behind hanzoai/ingress serves hips.hanzo.ai
 
-| HIP | Status | Title | Key Points |
-|-----|--------|-------|------------|
-| 0 | Final | L1 Architecture | Sovereign L1 via Lux, PoI consensus, 2s blocks, GPU validators, HANZO token |
-| 1 | Draft | Hamiltonian LLMs | Unified multimodal (text/vision/audio/3D). Variants: 7B/32B/175B/1T. Named "Hamiltonian" not "Hanzo" |
-| 5 | Final | Post-Quantum Crypto | ML-KEM-768, ML-DSA-65, liboqs v0.11. 5 privacy tiers (Open to GPU TEE-I/O) |
-| 6 | Draft | Per-User Fine-Tuning | Per-USER models (not domain-specific). On-chain training ledger, encrypted training |
-| 7 | Draft | Active Inference | VERSES/Active Inference, EFE minimization, IEEE 2874 Spatial Web |
-| 26 | Draft | IAM Standard | OIDC IAM server, per-brand origins, PKCE, credit balances. Client contract: HIP-0111 |
-| 111 | Active | IAM Auth Standard | The one way: `@hanzo/iam` SDK + canonical `/v1/iam/oauth/*` endpoints. No legacy paths |
-| 112 | Active | Cloud Topology | ingress→gateway→services, IAM, KMS, observability, per-brand. Ties HIP-0044/0068/0026/0027/0031 |
+**git.hanzo.ai is canonical; GitHub is a mirror.** `.github/workflows/` holds
+exactly one file, `sync.yml`, and its only job is getting refs to the forge. Every
+build, check and deploy is a workflow under `.hanzo/workflows/`, which the forge
+reads. `.hanzo/workflows` uses GitHub Actions syntax, so a workflow moves between
+the two by changing directory and nothing else.
 
-## Related Ecosystems
+The forge takes the FIRST workflow directory that exists, so `.hanzo/workflows`
+also shadows `.github/workflows` there — mirrored GitHub workflows cannot execute
+on the forge by accident.
 
-- **Zoo (ZIPs)**: EVM L2 on Lux (not sovereign L1). Eco-1 with z-JEPA. 501(c)(3), 100% airdrop genesis
-- **Lux (LPs)**: LP-25 appchain launching, LP-102 immutable training ledger, LP-103 cross-chain AI
+No GitHub Pages and no Cloudflare Pages. The site is an image the operator runs,
+like every other Hanzo surface.
 
-## HANZO Tokenomics (1B total)
+## What checks what
 
-| Allocation | % |
-|-----------|---|
-| Training Rewards | 30% |
-| Compute Providers | 20% |
-| Model Developers | 15% |
-| Community Treasury | 15% |
-| Team (4yr vest) | 10% |
-| Public Sale | 5% |
-| Liquidity | 5% |
+`.hanzo/workflows/ci.yml` compares the index against `HIPs/` on every push and
+FAILS on any of:
 
-Utility: 0.01 HANZO/interaction, 0.001-0.1/1K tokens, 10+ to mint Model NFT, veHANZO governance.
+- a `README.md` link to a file that does not exist
+- a spec in `HIPs/` unreachable from the index
+- two files claiming one number
+- frontmatter (`hip`, `title`, `status`, `author`) missing
+- a `hip:` number disagreeing with its own filename
 
-## Proposal Process
+Every one of those has happened. Five specs were unreachable, two files both
+claimed `hip: 0127`, and the check found three more unindexed on its first run.
+The GitHub workflow it replaces printed the same errors and exited 0, so a HIP
+with no status shipped green.
 
-1. Copy `docs/templates/hip-template.md` to `HIPs/hip-X.md`
-2. Submit PR, community discussion, Last Call (14 days), Final
-3. Status flow: Draft -> Review -> Last Call -> Final (or Withdrawn/Superseded)
+## Deploying the site
 
-## Commands
+A build never deploys itself. `deploy.yml` publishes
+`ghcr.io/hanzoai/hips:<sha>`; a human sets `spec.image.tag` in
+`hanzoai/universe` `infra/k8s/operator/crs/hips.yaml` and adds `- hips.yaml` to
+that directory's `kustomization.yaml`. The CR is inert until both are done, which
+is deliberate: an App promoted with an empty tag takes the host down instead of
+leaving it alone.
 
-```bash
-make validate-hip HIP=hip-X   # Format check
-make check-links               # Reference check
-act -j validate                # Local CI
-cargo test --package hanzo-pqc # PQC tests
-```
+Order: publish an image -> set the tag -> add the line -> confirm the pod is
+Running -> only then repoint `hips.hanzo.ai` off Pages.
 
-## Performance Targets
+## Writing a HIP
 
-- First token <100ms (32B), streaming 50+ tok/s, training feedback <1s
-- 10K+ concurrent users, 1M+ daily interactions, 100K+ active models
-- BitDelta 10x memory savings, 4-bit inference, 90% cache hit
-
-## Integration
-
-- Hanzo <-> Lux: sovereign L1 via LP-25, shared PQC
-- Hanzo <-> Zoo: shared HLLM architecture, model portability
-- IEEE 2874: HSML, HSTP, Universal Data Graph
-
-## IAM auth: one way (HIP-0111)
-
-Canonical OIDC endpoints, relative to brand `serverUrl`. No `/oauth/*`, no `/api/login/*`, no `/api/` prefix. One way; no backward compatibility.
-
-| Path | Purpose |
-|------|---------|
-| `/.well-known/openid-configuration` | OIDC discovery (host-relative) |
-| `/v1/iam/oauth/authorize` | Authorization (PKCE `S256`) |
-| `/v1/iam/oauth/token` | Token exchange (`client_secret_basic`) |
-| `/v1/iam/oauth/userinfo` | UserInfo |
-| `/v1/iam/.well-known/jwks` | JSON Web Key Set |
-| `/v1/iam/oauth/logout` | End session |
-
-JS/TS integrate only via `@hanzo/iam` (`/server`, `/betterauth`, `/nextauth`, `/react`, `/browser`, `/passport`); Go via `iamsdk`. IAM serves a `200 text/html` catch-all for unregistered paths — never let path or discovery drift. See **HIP-0111** (auth) and **HIP-0112** (cloud topology).
-
-## References
-
-- VERSES/AXIOM, Friston Active Inference, NIST FIPS 203/204
-- liboqs v0.11, MCP, FlashAttention-2, BitDelta
-- RFC 6749 (OAuth 2.0), RFC 7636 (PKCE), RFC 7662 (Introspection), RFC 7009 (Revocation)
-- RFC 8414 (AS Metadata), RFC 8628 (Device Auth), OIDC Core 1.0, OIDC Discovery 1.0
+Copy `docs/templates/hip-template.md` to `HIPs/hip-<NNNN>-<slug>.md`, add its row
+to the table in `README.md`, and keep the frontmatter number equal to the
+filename. `ci.yml` enforces all of that, so a missing row fails the build rather
+than going unnoticed.

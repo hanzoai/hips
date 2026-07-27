@@ -1,0 +1,41 @@
+name: deploy
+
+# Builds hips.hanzo.ai and publishes the image the operator runs. This replaces
+# the GitHub Pages workflow: the site is served by hanzoai/static behind
+# hanzoai/ingress, so there is no Pages and no CF Pages in the path.
+#
+# The image tag is the run's commit, and the operator CR in hanzoai/universe
+# names which tag is live — a build never deploys itself.
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', 'Dockerfile', '.hanzo/workflows/deploy.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: build and push
+        env:
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${REGISTRY_TOKEN:-}" ]; then
+            echo "::error::REGISTRY_TOKEN is unset, so nothing was published. Add the org secret."
+            exit 1
+          fi
+          tag="$(git rev-parse --short HEAD)"
+          image="ghcr.io/hanzoai/hips:${tag}"
+          echo "${REGISTRY_TOKEN}" | docker login ghcr.io -u hanzo-dev --password-stdin
+          docker build -t "${image}" .
+          docker push "${image}"
+          echo "published ${image} — set spec.image.tag in universe crs/hips.yaml to ${tag}"
