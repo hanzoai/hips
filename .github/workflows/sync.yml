@@ -30,7 +30,12 @@ jobs:
     # would push the forge to itself. server_url is the forge's AppURL, which
     # makes this the test for "running on GitHub".
     if: github.server_url == 'https://github.com'
-    runs-on: hanzo-build-linux-amd64
+    # GitHub-hosted on purpose. This is the one workflow that must run ON GitHub,
+    # and the self-hosted pool that used to serve it is retired — a job asking for
+    # it now queues forever against a label nothing answers. Carrying refs is a
+    # push, not a build, so it does not belong on the build fabric anyway: builds
+    # run natively on git.hanzo.ai, which is the whole point of this file.
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
