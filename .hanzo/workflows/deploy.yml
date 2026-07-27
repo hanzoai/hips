@@ -8,13 +8,15 @@ name: deploy
 # for exactly this shape: build the export, POST the tar, done. No image, no CR,
 # no replicas.
 #
-#   pnpm build -> docs/out -> POST /v1/projects/hips/deploy (tar)
-#     -> publishSite uploads to S3 under <org>/<slug>/ and flips the site live
+#   pnpm build -> docs/out
+#     -> POST /v1/projects/hips/deploy {"source":"git"}   (202, queued)
+#     -> aws s3 sync docs/out s3://<bucket>/<prefix>      (bytes skip the API)
+#     -> POST .../deployments/<id>/complete {"status":"live"}
 #
-# publishSite is the ONE deploy core in cloud (clients/projects/deploy.go): every
-# write path funnels through it, so versioning, the S3 write, host binding, the
-# lifecycle emit and the status transitions happen in one place. A failed upload
-# marks the deployment "error" and never flips the live site or bills for it.
+# The bytes never pass through the API, which is the whole point: this export is
+# ~170 MB raw / ~25 MB gzipped and BodyLimit is 16 MiB, so an artifact POST is
+# refused by fasthttp before any handler runs. cloud names the bucket and prefix
+# in the 202 so CI writes exactly where the site is served from.
 #
 # WHERE THINGS FIT, since these are orthogonal and composable:
 #   Project  — IAM-owned (iam/internal/schema/project.go); the billing bucket.
@@ -63,32 +65,98 @@ jobs:
           test -d out || { echo "::error::pnpm build produced no docs/out"; exit 1; }
           echo "exported $(find out -type f | wc -l) files"
 
-      - name: deploy the site
+      # THE GIT-SOURCE FLOW, not an artifact POST. cloud's deploy handler is explicit
+      # about which is which: the artifact path is for "small artifacts, bounded by
+      # the app/gateway BodyLimit", and the git path is the "link repo -> build (CI,
+      # never local) -> deploy" route "for large sites".
+      #
+      # This site is the large case and not marginally so. The export is ~170 MB raw
+      # and ~25 MB gzipped against a 16 MiB BodyLimit, so an artifact POST is refused
+      # by fasthttp BEFORE any handler runs — and it fails as an opaque
+      # 400 "Error when parsing request" that reads like a malformed payload rather
+      # than a size cap. Measured, not assumed: that is exactly what a 25 MB POST
+      # returned here, while a 468-byte one went live in the same second.
+      #
+      # So: enqueue -> sync to the SAME S3 prefix cloud names -> tell cloud it is live.
+      # Three steps because the bytes never pass through the API at all.
+      - name: enqueue the deployment
+        id: enqueue
         env:
           DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
         run: |
           set -euo pipefail
           if [ -z "${DEPLOY_TOKEN:-}" ]; then
-            echo "::error::HANZO_DEPLOY_TOKEN is unset, so nothing was deployed. Add it as a REPO secret — org secrets do not reach private repos on the Free plan."
+            echo "::error::HANZO_DEPLOY_TOKEN is unset. Add it as a REPO secret — org secrets do not reach private repos on the Free plan."
             exit 1
           fi
-
-          # Tar the export ITSELF, not the directory that holds it: publishSite
-          # writes each member under <org>/<slug>/, so a leading out/ component
-          # would bury index.html one level down and the site would 404 at its root.
-          tar -C docs/out -czf /tmp/site.tgz .
-
-          CODE=$(curl -sS -o /tmp/deploy.json -w '%{http_code}' \
+          CODE=$(curl -sS -o /tmp/enq.json -w '%{http_code}' \
             -X POST "https://api.hanzo.ai/v1/projects/hips/deploy" \
             -H "Authorization: Bearer ${DEPLOY_TOKEN}" \
-            -H 'Content-Type: application/gzip' \
-            --data-binary @/tmp/site.tgz)
+            -H 'Content-Type: application/json' \
+            -d "{\"source\":\"git\",\"commit\":\"${GITHUB_SHA}\",\"branch\":\"main\"}")
+          # 202 Accepted is the success code here — the deployment is queued, not live.
+          if [ "$CODE" != "202" ]; then
+            echo "::error::enqueue returned HTTP $CODE"; head -c 600 /tmp/enq.json; exit 1
+          fi
+          # bucket and prefix come FROM cloud. Never hardcode them: prefix is
+          # sitePrefix(org, slug) server-side, so a local guess drifts the moment the
+          # org or slug changes and the sync would land bytes nobody serves.
+          echo "id=$(jq -r .id /tmp/enq.json)"         >> "$GITHUB_OUTPUT"
+          echo "bucket=$(jq -r .bucket /tmp/enq.json)" >> "$GITHUB_OUTPUT"
+          echo "prefix=$(jq -r .prefix /tmp/enq.json)" >> "$GITHUB_OUTPUT"
+          jq -c '{id,version,status,bucket,prefix}' /tmp/enq.json
 
-          if [ "$CODE" != "200" ] && [ "$CODE" != "201" ]; then
-            echo "::error::deploy returned HTTP $CODE"
-            head -c 600 /tmp/deploy.json
+      - name: sync the export to S3
+        id: sync
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.SITES_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SITES_S3_SECRET_ACCESS_KEY }}
+          BUCKET: ${{ steps.enqueue.outputs.bucket }}
+          PREFIX: ${{ steps.enqueue.outputs.prefix }}
+        run: |
+          set -euo pipefail
+          if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+            echo "::error::SITES_S3_* secrets unset — cannot sync. These are the hanzo-sites bucket credentials."
             exit 1
           fi
-          head -c 600 /tmp/deploy.json
-          echo
-          echo "deployed — the site is live at its <slug>.<apex> host; hips.hanzo.ai serves it once the custom domain is bound"
+          # CNAME is a GitHub Pages artifact. It means nothing to S3 and would ship a
+          # stale hostname claim into the bucket, so it does not travel.
+          rm -f docs/out/CNAME
+          # --delete so a removed spec actually disappears: without it the prefix only
+          # ever grows and deleted pages keep serving.
+          aws s3 sync docs/out "s3://${BUCKET}/${PREFIX}" \
+            --endpoint-url https://s3.hanzo.ai --delete --only-show-errors
+          echo "files=$(find docs/out -type f | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          echo "bytes=$(du -sk docs/out | awk '{print $1*1024}')"   >> "$GITHUB_OUTPUT"
+
+      - name: flip it live
+        env:
+          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
+          DEP: ${{ steps.enqueue.outputs.id }}
+          FILES: ${{ steps.sync.outputs.files }}
+          BYTES: ${{ steps.sync.outputs.bytes }}
+        run: |
+          set -euo pipefail
+          CODE=$(curl -sS -o /tmp/done.json -w '%{http_code}' \
+            -X POST "https://api.hanzo.ai/v1/projects/hips/deployments/${DEP}/complete" \
+            -H "Authorization: Bearer ${DEPLOY_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"status\":\"live\",\"commit\":\"${GITHUB_SHA}\",\"files\":${FILES},\"bytes\":${BYTES}}")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::complete returned HTTP $CODE"; head -c 600 /tmp/done.json; exit 1
+          fi
+          jq -c '{status,liveUrl,version,files,bytes}' /tmp/done.json
+
+      # A build that dies after the enqueue would leave the deployment "queued" and
+      # the project stuck "building" forever. Report the failure so cloud records an
+      # honest terminal state instead of a lie by omission.
+      - name: report a failed build
+        if: failure() && steps.enqueue.outputs.id != ''
+        env:
+          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
+          DEP: ${{ steps.enqueue.outputs.id }}
+        run: |
+          curl -sS -X POST "https://api.hanzo.ai/v1/projects/hips/deployments/${DEP}/complete" \
+            -H "Authorization: Bearer ${DEPLOY_TOKEN}" -H 'Content-Type: application/json' \
+            -d '{"status":"error","message":"CI build or sync failed"}' >/dev/null || true
+          echo "marked deployment ${DEP} as error"
