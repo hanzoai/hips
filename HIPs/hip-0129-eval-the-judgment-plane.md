@@ -1,5 +1,5 @@
 ---
-hip: 0128
+hip: 0129
 title: Eval — The Judgment Plane
 author: Hanzo AI Team
 type: Standards Track
@@ -9,7 +9,7 @@ created: 2026-07-27
 requires: HIP-0031, HIP-0106, HIP-0111, HIP-0114, HIP-0119, HIP-0120, HIP-0122
 ---
 
-# HIP-128: Eval — The Judgment Plane
+# HIP-129: Eval — The Judgment Plane
 
 ## Abstract
 
