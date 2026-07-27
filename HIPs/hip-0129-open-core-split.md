@@ -364,28 +364,62 @@ was duplicating.
 Repo identity is load-bearing at runtime in places that do not follow a GitHub
 transfer.
 
-1. **The release gate.** `clients/platform/release.go:46` pins
-   `releaseRepoURL = "https://github.com/hanzoai/cloud"`, and
+1. **The release gate — silent, and the worst of these.**
+   `clients/platform/release.go:46` pins
+   `releaseRepoURL = "https://github.com/hanzoai/cloud"`;
    `clients/platform/push.go:107` gates every release on
-   `sameRepo(releaseRepoURL, ev.CloneURL)`. If production builds from
-   `hanzo-inc/cloud`, the clone URL stops matching and **releases stop firing
-   with no error** — the push lands, the build runs, the tag is cut, and nothing
-   rolls. This exact failure occurred on v1.801.248 and .249: built, tagged,
-   never deployed. The constant must become configuration resolved from the
-   running deployment, not a literal.
-2. **Image paths.** `ghcr.io/hanzoai/*` is org-scoped and does not follow a repo
-   transfer. Per `~/work/CLAUDE.md` the canonical push target is
-   `registry.hanzo.ai` regardless; the split is the moment to finish that move.
-3. **Module path.** 51 `go.mod` files reference `hanzoai/cloud` and 34
-   reference `hanzoai/commerce`. The OSS module keeps the path
-   `github.com/hanzoai/cloud` — that is the point of the split, and it means
-   **51 files need no edit**. The private build takes a new path and imports the
-   public one. Go modules stay v1.x.x; this is not a v2.
-4. **The App CR.** `infra/k8s/operator/crs/cloud.yaml` pins the image and is
-   reconciled with selfHeal, so a manual edit reverts. The image change is a
-   universe commit, never a `kubectl edit`.
+   `sameRepo(releaseRepoURL, ev.CloneURL)`. There is **no `else` branch** on
+   `if isReleasePush(ev)` in `buildFromPush` (`push.go:28`) — no log, no metric,
+   no error. If the clone URL stops matching, a merge to `main` produces zero
+   image, zero tag, and zero log lines. This exact failure hit v1.801.248 and
+   .249: built, tagged, never rolled. The constant must become configuration
+   resolved from the running deployment.
 
-Ordering: fix (1) **before** the move, not after. It is the one that fails
+   Confirmed exhaustive: `release.go:44,45,46` are the **only** runtime string
+   literals of `hanzoai/cloud` in non-test Go. Every other match repo-wide is
+   prose in a comment.
+
+2. **Tenant builds resolve a hardcoded GitHub owner.**
+   `clients/git/build_on_push.go:303` — `brandGitHubOwner = {"hanzo": "hanzoai"}`
+   — builds the clone coordinate for **every** native-git-triggered tenant build
+   (`ghRepo := githubOwnerFor(ev.Org) + "/" + normalizeName(ev.Repo)`, line 207),
+   which platform's BuildKit then clones. This is as load-bearing as (1) and has
+   wider blast radius: it affects all tenant builds, not just cloud's own
+   release. Two sibling bindings of the same `hanzo→hanzoai` identity:
+   `clients/platform/runner.go:60,75` (registry push authorization — fails
+   **closed**, so it is loud) and `clients/authors/authors.go:1015` (revenue-share
+   attribution — silent misattribution).
+
+3. **Image paths.** `ghcr.io/hanzoai/*` is org-scoped and does not follow a repo
+   transfer. Beyond `release.go:44`, six more runtime literals:
+   `clients/platform/k8s.go:145` (`defaultBuildImagePrefix`, env-overridable via
+   `CLOUD_PLATFORM_IMAGE_PREFIX`), `k8s.go:772` (`packFrontendImage =
+   ghcr.io/hanzoai/pack:latest`, **no override**, used by every
+   zero-Dockerfile build), `clients/admin/infra/analyze.go:76` (first-party
+   image classification), and `clients/provisioning/dedicated.go:179,205,237,263`
+   (dedicated SQL/KV/datastore/docdb base images — only the *tag* is
+   env-overridable, the image path is hardcoded). Plus `Dockerfile`,
+   `Makefile:19`, `helm/cloud/values.yaml:8`, `deploy/compose.yml:17`,
+   `hanzo.yml:21`. Per `~/work/CLAUDE.md` the canonical target is
+   `registry.hanzo.ai`; the split is the moment to finish that move.
+
+4. **Module path — the blast radius is 12 repos, not 51 files.** Raw file
+   counts are inflated by ~16 live worktrees of the single `cloud` repo (this
+   very tree, `cloud-wt`, is one). Deduplicated by gitdir: **12 distinct repos**
+   require or replace `hanzoai/cloud` — `ai, vm, licensing, kms, commerce, o11y,
+   mpc, visor, gateway, iam, ml, mcp` — and **8** reference `hanzoai/commerce`.
+   The OSS module keeps the path `github.com/hanzoai/cloud`, so all 12 need **no
+   edit**. That is the point of importing rather than forking. The private build
+   takes a new path. Go modules stay v1.x.x; this is not a v2.
+
+5. **The App CR.** `infra/k8s/operator/crs/cloud.yaml` pins
+   `ghcr.io/hanzoai/cloud` (line 12) at `v1.801.250` (line 796). `selfHeal: true`
+   is declared for the whole `crs/` directory by
+   `infra/k8s/hanzo-cd/application.yaml:58-63` (`prune: false`), so a
+   `kubectl edit` of the live CR is reverted on the next poll. The image change
+   is a universe commit, never a manual patch.
+
+Ordering: fix (1) and (2) **before** the move. They are the ones that fail
 silently.
 
 ## 6. `hanzo cloud up`
