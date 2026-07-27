@@ -316,6 +316,21 @@ So the test becomes ordered:
 2. **Only then, is money the sole commercial concern?** → **OSS**, with the
    money behind the metering seam.
 
+**Third category: inherently remote capabilities get no local seam.** A
+capability whose function presupposes an account with a third party — or with us
+— has no local implementation to write. Do not design an interface for it; ship
+a **client**.
+
+`platform` splits at an interface because deploying containers genuinely works
+locally. Enso does not split at all because routing genuinely does not. Same
+rule, different physics — and the asymmetry is not an inconsistency, it is the
+rule reading the world correctly.
+
+This category decides **shape, not tier.** Conflating the two is the trap: a
+capability can be inherently remote and still perfectly OSS. It ships as a
+client either way; whether the *remote side* is ours and proprietary is a
+separate question, answered separately.
+
 This is the same seam pattern as the Enso router and as §3.2's "OSS records the
 fact, private prices it". One rule, applied consistently, now with a reason it
 is the right rule and not merely a convenient one.
@@ -349,6 +364,36 @@ surfaces in `visor` — an operator concern, and `visor` is private. The single-
 tenant cluster story is already served by a kubeconfig in `.hanzo/cloud.json`
 (§6.3); adding `venue` would add a cloud-credential custody surface for no local
 DX gain. It is not a money-only case, so it does not get the money-only remedy.
+
+### 2.5.1 Third-category audit — read, not assumed
+
+The three candidates were checked against their source. Two were not what they
+looked like.
+
+**`ai` — inherently remote. OSS ships a client.** Confirmed: `types.AIClient` is
+already an outbound interface, so this is a naming and default change, not new
+architecture. Stays **OSS**, as a client.
+
+**`websearch` — the exact opposite, and it stays OSS.** Its package doc is
+explicit: Web Search + Scrape "runs entirely on Hanzo infrastructure with **NO
+external SaaS provider**", "backed by Hanzo's own services — **never a
+third-party search API**", speaking self-hostable searxng and firecrawl
+contracts. It requires no third-party account, so it is not in the third
+category at all. Had shape been conflated with tier, this would have been pulled
+private for a reason that does not exist.
+
+**`gateway` — not remote, and it does not belong in my OSS primitives list.**
+This corrects my own §2.1. It is the runtime config plane for the cloud edge
+(CORS allowlist, per-IP flood cap, per-tenant rate ceiling), and it carries
+**two IAM-gated scopes**: platform policy is SuperAdmin-only, and a SuperAdmin
+"may target any tenant with `?org=<slug>`". That is cross-tenant authority
+reading an org **from a query parameter** — precisely the §1.1 question-3 red
+flag, found by the guard's own criterion.
+
+So `gateway` is a **BOTH**: the per-org self-service row (`OrgRPM`, cache TTL,
+method allowlist — org from `principal.Org`, never a raw header) is OSS; the
+platform policy plane and the cross-tenant `?org=` targeting are private. The
+interface is `gateway.PlatformPolicy`.
 
 **Structurally multi-tenant, unchanged:** `provisioning` (its own doc: "TRUE
 multitenancy by isolation-by-instance", co-tenanted backends with
@@ -605,12 +650,36 @@ override it: excluded even where the surrounding subsystem is OSS.
 4. **Memos, patents, confidential research** — *Why:* obvious, and a patent
    draft published before filing is a patent not granted.
 
-**The OSS build still works.** It defines `cloud.ModelRouter` and ships a
-straightforward default: send the request to the configured endpoint. A
-developer points it at any OpenAI-compatible URL and gets a real, working model
-plane. They do not get our routing judgement. That is the deal, stated plainly,
-and it is honest — the interface is not a stub that returns an error, it is a
-real implementation of the obvious policy.
+**The OSS build still works, and AI in OSS is a client — not a seam.**
+
+There is nothing to stub. Inference requires a provider: routing *across* models
+presupposes access to those models, which presupposes an account with someone.
+Enso is therefore not a capability with a degraded local mode, it is a **remote
+service the client calls**. So the OSS build ships an OpenAI-compatible client
+pointed at `api.hanzo.ai` by default, or at any provider configured in
+`.hanzo/cloud.json`.
+
+That interface already exists and is already the right shape: `types.AIClient`
+(`types/types.go:299`) is the outbound seam, with `ChatCompletion` and `Embed`
+resolving through "the SAME gateway + credential… never a static side-channel
+key."
+
+**Zero routing intelligence ships — not even an interface shape.** No dial, no
+allowlist, no scoring, no selection heuristics, no catalog weights. This is
+stronger than the seam it replaces: *an interface can leak a design.* Naming
+`ModelRouter` with methods shaped around cost-versus-quality would publish the
+architecture of the thing we are protecting, even with the algorithm removed. A
+plain OpenAI-compatible client cannot leak what it does not model.
+
+**Custom presets are a hosted feature, not a local file format.** Customers
+compose and save routing presets in the SaaS console against their org; presets
+live and apply server-side. A local preset format would put the router's
+vocabulary — the nouns of the algorithm — into the public repo. There is no
+`.hanzo/cloud.json` preset schema.
+
+This is a deliberate **product boundary, not an omission**, and it should be
+documented as one: the local stack is complete for building an application; the
+routing intelligence is a hosted service, because it could not be anything else.
 
 ### 3.0 Excluding Enso and Zen is a dependency drop, not an extraction
 
@@ -1186,9 +1255,33 @@ intact there. The routing exclusion is not.
 
 Designing an open-core boundary to protect this while it is served publicly is
 theatre. **Resolving the existing exposure is a prerequisite for the split, not
-a follow-on**, and it is a decision about `hanzoai/ai`'s visibility that belongs
-to the CTO. This HIP does not presume the answer; it refuses to pretend the
-question is closed.
+a follow-on.**
+
+### 9.1 This does not decompose into two problems
+
+It has been suggested that repo visibility and "does routing intelligence live
+there" are separate concerns that happen to share a repo. They are not. The
+routing intelligence **is** there, today, publicly readable — that is one
+problem, verified by fetching the files without a token. It resolves only when
+the code moves out. Until then, `hanzoai/ai`'s visibility is not a separable
+question, it is the mechanism of the exposure.
+
+### 9.2 The tier-3 reclassification makes this more urgent, not less
+
+Enso is now classified tier 3: proprietary, invisible, **possibly
+patent-bearing** (§10.4 of the exclusions rationale, and the CTO's own framing).
+
+That changes the character of the finding. A trade secret is defined by the
+effort taken to keep it secret, and published source is the clearest possible
+evidence of the opposite. Separately — and stated as a flag for counsel, not as
+a legal opinion, which I am not qualified to give — **public disclosure interacts
+with patent filing windows in most jurisdictions**, and a public GitHub
+repository with commit timestamps is an unusually well-documented disclosure
+record.
+
+If there is any intention to file on the routing work, the exposure date is a
+fact someone needs to establish, and `git log` on those eleven files establishes
+it precisely. **This should go to counsel before it goes into a sprint.**
 
 ## 10. Every OSS component is three things
 
