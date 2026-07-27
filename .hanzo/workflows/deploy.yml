@@ -10,7 +10,9 @@ name: deploy
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'Dockerfile', '.hanzo/workflows/deploy.yml']
+    # HIPs/** belongs here because the site renders it: without it, writing a
+    # spec never rebuilds hips.hanzo.ai.
+    paths: ['HIPs/**', 'docs/**', 'Dockerfile', '.hanzo/workflows/deploy.yml']
   workflow_dispatch:
 
 concurrency:
