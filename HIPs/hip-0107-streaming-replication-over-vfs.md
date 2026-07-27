@@ -343,10 +343,10 @@ follows the phases below.
 
 ## Non-goals
 
-- **`hanzoai/datastore` (ClickHouse fork).** ClickHouse already uses
+- **`hanzoai/datastore` (ClickHouse fork).** Datastore already uses
   ReplicatedMergeTree + S3-disk for its own replication. HIP-0107 does
   not touch it. The two systems share an S3 bucket via `vfs` prefix
-  separation: `s3://bucket/datastore/...` is ClickHouse-owned;
+  separation: `s3://bucket/datastore/...` is Datastore-owned;
   `s3://bucket/replicate/...` is HIP-0107-owned. No collision.
 - **Cross-region replication patterns.** Active-active, geo-failover,
   read replicas across regions — separate concern. HIP-0107 ships

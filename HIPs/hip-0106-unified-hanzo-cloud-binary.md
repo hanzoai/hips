@@ -696,7 +696,7 @@ shared CRD types. Decision required before Phase 5 starts.
 
 ### Phase 6 — Billing wiring (separate HIP follow-up)
 
-Commerce subsystem reads per-tenant usage from base + o11y/ClickHouse
+Commerce subsystem reads per-tenant usage from base + o11y/Datastore
 and applies the reseller revenue-share contract. **`commerce` is the
 canonical billing/pricing/subscription home** — the TS `billing` and
 `pricing` packages get absorbed into `commerce` via Go rewrites.

@@ -620,7 +620,7 @@ All workers consume from the Hanzo MQ (HIP-0055) NATS queue `mq.notify.>`, filte
 
 ### Database Schema
 
-Notify uses PostgreSQL (`hanzo_notify` on `postgres.hanzo.svc`) for templates, inbox, and webhook registrations. Delivery logs go to Insights (ClickHouse) via analytics events, not PostgreSQL.
+Notify uses PostgreSQL (`hanzo_notify` on `postgres.hanzo.svc`) for templates, inbox, and webhook registrations. Delivery logs go to Insights (Datastore) via analytics events, not PostgreSQL.
 
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|

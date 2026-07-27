@@ -203,7 +203,7 @@ when co-located:
    horizontally (shard by time, distribute across nodes). Combining them
    forces a compromise that serves neither well.
 
-**Decision**: PostgreSQL for OLTP (HIP-0029). ClickHouse for OLAP (this HIP).
+**Decision**: PostgreSQL for OLTP (HIP-0029). Datastore for OLAP (this HIP).
 Separate processes, separate storage, separate scaling.
 
 ## Specification
@@ -626,7 +626,7 @@ when creating partitions.
 
 ### Compression
 
-ClickHouse supports per-column codec selection. The default codec is LZ4,
+Datastore supports per-column codec selection. The default codec is LZ4,
 which provides fast compression/decompression with moderate ratios. For
 columns that benefit from higher compression, ZSTD is used.
 
@@ -834,7 +834,7 @@ ClickHouse exposes internal metrics through system tables. Hanzo Zap
 
 #### Grafana Dashboard
 
-The standard Grafana dashboard for ClickHouse includes panels for:
+The standard Grafana dashboard for Datastore includes panels for:
 
 1. **Ingestion rate**: Rows inserted per second (from `system.events`)
 2. **Query performance**: p50/p95/p99 query latency (from `system.query_log`)
@@ -1008,7 +1008,7 @@ SDK (browser/server) --> Capture Service (Rust) --> Kafka --> ClickHouse
                                                          --> PostgreSQL (metadata only)
 ```
 
-Insights queries ClickHouse for:
+Insights queries Datastore for:
 - Event trends and breakdowns
 - Funnel analysis (multi-step conversion)
 - Retention cohorts
@@ -1018,13 +1018,13 @@ Insights queries ClickHouse for:
 
 #### Metrics (HIP-0031)
 
-Zap (HIP-0031) ships structured logs to ClickHouse for long-term storage.
+Zap (HIP-0031) ships structured logs to Datastore for long-term storage.
 Prometheus handles short-term metrics (15-day retention). For queries
-spanning weeks or months, Grafana queries ClickHouse via the ClickHouse
+spanning weeks or months, Grafana queries Datastore via the ClickHouse
 data source plugin.
 
 ```
-Zap sidecar --> Prometheus (15-day) --> remote_write --> ClickHouse (36-month)
+Zap sidecar --> Prometheus (15-day) --> remote_write --> Datastore (36-month)
 ```
 
 #### Billing Analytics
@@ -1073,10 +1073,10 @@ ClickHouse:
    );
    ```
 
-3. **Dual-write period**: Write to both PostgreSQL and ClickHouse for 7 days.
+3. **Dual-write period**: Write to both PostgreSQL and Datastore for 7 days.
    Validate row counts and query results match.
 
-4. **Cutover**: Switch reads to ClickHouse. Stop writes to PostgreSQL.
+4. **Cutover**: Switch reads to Datastore. Stop writes to PostgreSQL.
    Drop PostgreSQL analytics tables after 30-day grace period.
 
 ### Version Upgrades
@@ -1123,7 +1123,7 @@ compatibility concerns for existing services because:
 2. Services currently using PostgreSQL for analytics will undergo a phased
    migration (see Migration Path).
 3. The ClickHouse query interface (SQL over HTTP) requires no new client
-   libraries -- any HTTP client can query ClickHouse.
+   libraries -- any HTTP client can query Datastore.
 
 ## Reference Implementation
 

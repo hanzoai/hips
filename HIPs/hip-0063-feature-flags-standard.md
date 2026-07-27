@@ -44,11 +44,11 @@ HIP-0017 specifies Hanzo Insights (PostHog fork), which includes basic feature f
 
 Hanzo Flags (this HIP) is a dedicated service for two reasons:
 
-**Separation of concerns.** Analytics (event ingestion, ClickHouse queries, session replay) and flag evaluation (sub-millisecond lookups, high fanout) have fundamentally different performance profiles. The Insights `/decide` endpoint queries PostgreSQL on every evaluation. At 10K flag evaluations per second (typical for a gateway handling inference traffic), PostgreSQL becomes the bottleneck. Hanzo Flags stores flag state in Redis with local in-process caching -- evaluation takes < 1ms with zero database queries on the hot path.
+**Separation of concerns.** Analytics (event ingestion, Datastore queries, session replay) and flag evaluation (sub-millisecond lookups, high fanout) have fundamentally different performance profiles. The Insights `/decide` endpoint queries PostgreSQL on every evaluation. At 10K flag evaluations per second (typical for a gateway handling inference traffic), PostgreSQL becomes the bottleneck. Hanzo Flags stores flag state in Redis with local in-process caching -- evaluation takes < 1ms with zero database queries on the hot path.
 
 **AI-native experiment types.** PostHog experiments measure conversion rates: "Did the user click the button?" AI experiments measure continuous distributions: "What is the p95 latency delta between model A and model B?" "Is the quality score distribution of prompt variant B statistically higher than variant A?" PostHog's Bayesian engine supports binomial metrics (conversion, retention). Hanzo Flags supports continuous metrics (latency, cost, quality scores) with both Bayesian and frequentist analysis.
 
-The two systems complement each other. Insights handles product analytics and product experiments. Flags handles infrastructure flags and AI experiments. Both emit events to the same Kafka pipeline (HIP-0030) and share the same ClickHouse storage for metric analysis.
+The two systems complement each other. Insights handles product analytics and product experiments. Flags handles infrastructure flags and AI experiments. Both emit events to the same Kafka pipeline (HIP-0030) and share the same Datastore storage for metric analysis.
 
 ## Design Philosophy
 
@@ -62,7 +62,7 @@ For AI inference routing, stale flags mean requests routed to the wrong model --
 
 **Unleash** is open-source (Apache 2.0) and self-hostable. It solves the data sovereignty problem. However, Unleash's evaluation engine is a Node.js/Java application backed by PostgreSQL. It does not support AI experiment types, continuous metric analysis, or integration with inference gateways. We would need to build those features on top of Unleash, effectively maintaining a fork with custom experiment logic, custom metric pipelines, and custom SDK extensions. At that point, we are building a custom system with Unleash's data model -- a worse starting point than building from first principles.
 
-**Decision**: Build Hanzo Flags as a Go service with Redis-backed evaluation, OpenFeature-compatible SDKs, and native support for AI experiment types. Total cost: infrastructure we already operate (Redis, ClickHouse, Kafka). Zero per-seat or per-MAU licensing.
+**Decision**: Build Hanzo Flags as a Go service with Redis-backed evaluation, OpenFeature-compatible SDKs, and native support for AI experiment types. Total cost: infrastructure we already operate (Redis, Datastore, Kafka). Zero per-seat or per-MAU licensing.
 
 ### Why OpenFeature
 
@@ -674,7 +674,7 @@ Response:
 └──────────────┘                               │ consume
                                                v
                                     ┌─────────────────────┐
-                                    │   ClickHouse          │
+                                    │   Datastore           │
                                     │  (experiment metrics, │
                                     │   shared w/ HIP-0017) │
                                     └─────────────────────┘
