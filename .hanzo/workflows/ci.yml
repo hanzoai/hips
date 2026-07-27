@@ -42,6 +42,19 @@ jobs:
           for n, v in sorted(collisions.items()):
               print(f'two files claim hip {n}: {", ".join(sorted(v))}')
 
+          # Required frontmatter. Ported from the GitHub workflow this replaces,
+          # which reported every missing field and then exited 0, so a HIP with no
+          # status shipped green.
+          for f in sorted(files):
+              head = open(os.path.join('HIPs', f), encoding='utf-8').read(600)
+              for field in ('hip', 'title', 'status'):
+                  if not re.search(rf'^{field}:', head, re.M):
+                      print(f'{f} has no {field}:')
+                      dead.append(f)
+              if not re.search(r'^authors?:', head, re.M):
+                  print(f'{f} has no author:')
+                  dead.append(f)
+
           # A HIP whose frontmatter number disagrees with its filename is the
           # shape a renumber leaves behind when only one of the two is edited.
           for f in sorted(files):
