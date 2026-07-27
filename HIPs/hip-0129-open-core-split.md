@@ -297,15 +297,107 @@ silently 404s" already true rather than aspirational.
 | `validators` | **All orgs' CRs share one fixed namespace** (`lux-validators`), disambiguated by name, not isolated by namespace. | private |
 | `venue`, `admin` | Per-org billing meter; `admin/infra` scans every DOKS cluster under one account token, spanning many customer orgs. | private |
 
-Two consequences worth carrying into the work:
+### 2.4 The rule sharpens: money is wiring, tenancy is structure
 
-**`platform` is private for the money, not the tenancy.** What tips it is
-`buildmeter.go`/`computemeter.go`, which meter every org's compute into a ledger
-a 20% author-royalty sweep later splits to third-party blueprint authors — a
-three-party marketplace mechanic that is meaningless to a lone self-hoster. Its
-k8s and tenancy code is reusable **as-is** if we later want a genuinely
-single-tenant OSS PaaS; only the royalty and metering wiring would need
-stripping. That is a real option we are keeping open, not a door closing.
+`platform` forced the distinction that should have been explicit from §1.1.
+
+> **Money is wiring. Tenancy is structure. Wiring is separable at an interface;
+> structure is not.**
+
+The three questions are not equal. A subsystem that merely *charges* for a clean
+single-tenant capability is not multi-tenant — it is a single-tenant capability
+with a commercial cable attached, and the cable unplugs. A subsystem whose
+*isolation model* assumes many customers cannot be unplugged from anything.
+
+So the test becomes ordered:
+
+1. **Is the tenancy structurally multi-tenant?** Cross-org authority, shared
+   namespaces across customers, co-tenanted backends → **private**, full stop.
+2. **Only then, is money the sole commercial concern?** → **OSS**, with the
+   money behind the metering seam.
+
+This is the same seam pattern as the Enso router and as §3.2's "OSS records the
+fact, private prices it". One rule, applied consistently, now with a reason it
+is the right rule and not merely a convenient one.
+
+### 2.5 What moves — `platform` and `ml` to OSS
+
+**`platform` → OSS (cluster-gated).** Its tenancy is the cleanest of the eleven:
+org only ever from the validated principal, `tenant-<org>` namespaces, no
+SuperAdmin cross-org bypass anywhere. It degrades honestly without a
+kubeconfig — 503, no crash — so a local dev with no cluster sees "needs a
+cluster" on the deploy routes, and with an opt-in k3s/kind/Docker Desktop it
+works fully.
+
+This makes the **cluster-gated OSS tier earn its place** rather than existing
+for one edge case, and it materially improves the product: a local developer
+gets a real PaaS that deploys their own app. "Deployment is a paid feature" was
+the weaker story.
+
+**`ml` → OSS (cluster-gated).** Same shape: namespace per `org[+project]`
+derived from `c.Org()`, honest 503 without a cluster. Its only commercial
+mechanism is the pre-create balance gate, which is money wiring.
+
+**`fleet` → OSS**, as a library. `ml` consumes it, it is per-org, KMS-gated, and
+fails closed when unconfigured.
+
+**`venue` stays private — and not for the money.** By the stated rule it would
+qualify: its tenancy is clean ("MULTI-CREDENTIAL, PER ORG… org is
+`principal.Org`… never a client field"). But it fails the prior question. Its
+*purpose* is aggregating many cloud accounts' clusters into "the ONE fleet" that
+surfaces in `visor` — an operator concern, and `visor` is private. The single-
+tenant cluster story is already served by a kubeconfig in `.hanzo/cloud.json`
+(§6.3); adding `venue` would add a cloud-credential custody surface for no local
+DX gain. It is not a money-only case, so it does not get the money-only remedy.
+
+**Structurally multi-tenant, unchanged:** `provisioning` (its own doc: "TRUE
+multitenancy by isolation-by-instance", co-tenanted backends with
+`"o"+hash(org)` name-spacing), `deploy` (all writes SuperAdmin-only,
+unconditionally), `paas` (LISTs every namespace in the cluster), `validators`
+(all orgs' CRs in one shared fixed namespace), `admin` (cross-tenant by
+definition). None of these is a money case and none moves.
+
+### 2.6 The metering seam — mostly already built
+
+The surgery is far smaller than expected, because the decomplection is already
+done in the code.
+
+`clients/platform/computemeter.go:133` already takes an **injected sink**:
+`emit func(org string, u metering.Usage)`. Its header states the property
+outright — "creator/treasury paid, **no code in this file that knows anything
+about royalties**" — and "the self-deploy exclusion that prevents a self-royalty
+lives entirely in the sweep", i.e. in `clients/authors`, which is private and
+stays private. `platform` already emits usage and knows nothing about what
+happens to it.
+
+`clients/ml` is the same: `s.State.bill.Gate(...)` and `s.State.bill.Meter(...)`
+behind an abstraction, with the fee resolved by `cloud.ResourceFeeCents` — and
+the code already documents the exact OSS behaviour: **"fee==0 or unconfigured
+billing makes this a no-op."**
+
+So there is no new interface to invent. The work is to make *unconfigured* the
+OSS **default** rather than a degraded state, and to give it a name.
+
+**`metering.Sink` — the one seam.** OSS ships a local recorder; `ee/` and
+hanzo-inc register the commercial one.
+
+**The OSS default meters locally with no royalty split.** Not "meters nothing" —
+usage visibility is genuinely useful to a self-hoster ("this build took four
+minutes; this app is holding two vCPU"), and discarding it would lose a real
+capability for no benefit. It records **usage**, never a charge:
+
+- no price is applied — `ResourceFeeCents` resolves to 0,
+- no balance gate can deny — an unconfigured gate allows,
+- **no royalty ledger entry is ever written.** A self-hoster deploying their own
+  app must never silently accrue entries for a marketplace they are not part
+  of. The royalty sweep lives in `clients/authors`, which is not in the OSS
+  build, so this is guaranteed by absence rather than by a flag.
+
+Note the OSS default must **allow**, not fail closed. `clients.DisabledCommerce()`
+fails closed by design, which is right for production and wrong here: in a build
+with no commerce, "no billing configured" means everything is free, not
+everything is denied. That is a new fourth implementation alongside the existing
+in-process/RPC/disabled trio (`deps.go:97`), not a change to any of them.
 
 **`membership` has no `Wire()` line to delete.** It is installed by
 `apps/install.go:19` — `init() { cloud.Peers = membership.K8s }` — assigning a
@@ -1098,7 +1190,132 @@ a follow-on**, and it is a decision about `hanzoai/ai`'s visibility that belongs
 to the CTO. This HIP does not presume the answer; it refuses to pretend the
 question is closed.
 
-## 10. Licensing
+## 10. Every OSS component is three things
+
+This reframes what the OSS tier *is*, and it is the difference between "here are
+the packages that make up our monolith" and a set of products.
+
+**Each OSS fork is three things at once, from one codebase:**
+
+1. **A standalone product** — its own binary, its own dashboard, its own domain.
+   Useful to someone who wants only that one thing.
+2. **A plugin** — compiles to a `zip.Plugin` the cloud binary mounts for local
+   development.
+3. **An enterprise component** — consumed by `hanzo-inc/cloud` in SaaS mode.
+
+What makes one codebase serve all three is **ZAP-native mounting**: a fork
+exposes a `zip` Service, and linked-in, `ee/`-composed, and
+downloaded-plugin are then the *same type* (§7.1). No adapter, no second entry
+point, no build matrix.
+
+### 10.1 The conformance shape
+
+Derived from `hanzoai/tasks`, which is the exemplar — live at `tasks.hanzo.ai`,
+and the durable engine cloud already runs the marketing drip on.
+
+| Requirement | Why |
+|---|---|
+| `cmd/` — a standalone binary | Role 1. It runs on its own or it is not a product. |
+| `ui/` — its own dashboard, `@hanzo/ui` on `@hanzo/gui` | **Svelte forbidden.** A product with no face is a library. |
+| **ZAP-native** — mounts as a `zip` Service | Role 2+3. This is the property that collapses the three roles into one build. |
+| **Hanzo IAM native** | Auth is the platform's. Never a second identity system. |
+| A published release artifact | Makes `zip.Plugin{URL, Sum}` work. |
+| Its own domain, when user-facing | `tasks.hanzo.ai`. |
+| A JS client package, where a browser or Node consumer needs one | Not every fork needs one. |
+
+### 10.2 Audit — measured, and better than expected
+
+Current visibility of the developer-facing stack:
+
+| Repo | Visibility | Language | `cmd/` | Own UI |
+|---|---|---|---|---|
+| `hanzoai/tasks` | **PUBLIC** | Go | yes | `ui/` + `sdk/` |
+| `hanzoai/base` | **PUBLIC** | Go | yes | `ui-react/` + `sdk/` |
+| `hanzoai/git` | **PUBLIC** | Go | yes | `web_src/` |
+| `hanzoai/deploy` | **PUBLIC** | Go | yes | `ui/` |
+| `hanzoai/ai` | **PUBLIC** | Go | yes | `web/` |
+| `hanzoai/cloud` | private | Go | — | `webui/` |
+| `hanzoai/console` | private | TypeScript | — | — |
+| `hanzoai/openapi` | private | Python | — | — |
+| `hanzoai/platform` | private | TypeScript | — | — |
+
+**All five public forks already conform.** Every one ships `cmd/` and its own
+web surface. The three-roles pattern is not aspirational — it is already
+universal across the developer stack, and this HIP documents it rather than
+proposing it.
+
+The only defect is **naming drift**: `ui/`, `ui-react/`, `web/`, `web_src/` are
+four names for one concept. Converge on `ui/`. That is the whole remediation.
+
+Two corrections to claims I was asked to carry:
+
+- **`@hanzo/tasks` does not exist on npm** — the registry returns 404. Do not
+  cite it. `hanzoai/tasks` does ship an `sdk/` directory; if a published JS
+  client is wanted, it needs publishing under a verified name, and the claim
+  should not be repeated until it resolves.
+- **`hanzoai/platform` is not stale.** It was pushed *today*
+  (2026-07-27T23:18Z) and is described as "Hanzo Platform — unified PaaS for
+  deploying AI applications". So there are two live things called Platform: this
+  TypeScript repo, and the Go `clients/platform` subsystem the CTO just moved to
+  OSS (§2.5). I will not guess which is canonical on this evidence — "shares a
+  name" is not "same product", and calling an actively-developed repo legacy
+  would be exactly the wrong call. **This needs a direct answer from whoever
+  owns it**, and it is the one open question blocking the `platform` OSS move.
+
+### 10.3 Resolving the two directives that look contradictory
+
+"Hold back as much as we can" (§2.0) and "everything a developer touches must be
+open" are not in conflict once scoped:
+
+> **The hold-back rule governs the commercial side only. It resolves ambiguity
+> within tiers 2 and 3. It is never a reason to close something a developer
+> needs.**
+
+- **Developer-facing → OSS, public.** `ai`, `base`, `tasks`, `git`, `deploy`,
+  `platform`. Openness is the product.
+- **Commercial / multi-tenant → `ee/` or private.** Enso internals, Zen, pricing,
+  plans, admin, metering and royalty.
+
+Applied, this **reverses several of my §2.2 hold-backs**: `git`, `code`,
+`index`, `analytics`, `websearch`, `graph`, `deploy`, and `cron` are developer
+stack and go **OSS**. `git` and `deploy` are already public repos, so holding
+back their in-cloud subsystems would have been incoherent. The hold-back list
+now contains only Hanzo's own business applications and the commercial plane.
+
+### 10.4 Two consequences
+
+**The plugin work gets cheaper, not larger.** Because each fork already builds
+its own release binary, `zip.Plugin{URL, Sum}` has an artifact to point at
+today. §7.1's `LoadLazy` becomes the last small piece of an existing pipeline
+rather than the start of a new one.
+
+**The OSS tier is not a hollowed-out core.** Each component is a real product
+with its own users, and `hanzo-inc/cloud` composing them in SaaS mode is *one
+more consumer*, not the only one. That is also the honest answer to "is this a
+real open source project or a lead magnet" — five of them already run
+standalone.
+
+This reconciles cleanly with the k8s finding (§2.3): a standalone `platform`
+binary that degrades honestly without a kubeconfig is exactly the wanted shape —
+it runs locally, embedded or standalone, and gains cluster features only when a
+cluster is configured.
+
+### 10.5 `console` and `openapi` — recommendations, not flips
+
+- **`openapi` → make it PUBLIC.** A private API contract is a strange artifact:
+  it is the thing SDK generation and customer integration consume, and every
+  route it describes is already reachable on `api.hanzo.ai`. It documents a
+  public surface; keeping the description private protects nothing and obstructs
+  the integrators we want. Check it for unreleased-endpoint leakage first — that
+  is a real risk and the only one.
+- **`console` → keep private for now, revisit.** It passes the tenancy line (it
+  is a client), so there is no correctness reason to hold it. But it is the
+  customer UI whose admin surfaces are gated by SuperAdmin checks, and it is
+  `go:embed`-ed into the cloud binary. Publishing it is a real project — auditing
+  what the gated modules reveal — with a smaller payoff than `openapi`. Sequence
+  it after the split lands.
+
+## 11. Licensing
 
 > **Not legal advice.** The structure below is drafted by mirroring an existing
 > house license. It must be reviewed by counsel before publication. Nothing here
@@ -1173,7 +1390,7 @@ Being straight about this, because the alternative is security theatre:
 No phone-home. No time bomb. No usage telemetry as a gate. Those punish honest
 customers and are trivially defeated by dishonest ones.
 
-## 11. Sequencing
+## 12. Sequencing
 
 1. Fix the release gate (§5.1) — it fails silently and it fails now.
 2. Resolve the `hanzoai/ai` exposure (§9).
