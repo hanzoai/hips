@@ -1,0 +1,58 @@
+name: ci
+
+# Native CI on git.hanzo.ai. Checks the index against the HIPs directory,
+# because both defects it catches were found by hand: five specs existed as
+# files while unreachable from the index, and two files claimed hip: 0127.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  index:
+    runs-on: hanzo-build-linux-amd64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: index matches the HIPs directory
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+
+          src = open('README.md', encoding='utf-8').read()
+          linked = set(re.findall(r'\]\(\./HIPs/([^)]+)\)', src))
+          files = {f for f in os.listdir('HIPs') if f.endswith('.md')}
+
+          dead = sorted(linked - files)
+          missing = sorted(files - linked)
+
+          numbers = {}
+          for f in files:
+              m = re.match(r'hip-(\d{4})', f)
+              if m:
+                  numbers.setdefault(m.group(1), []).append(f)
+          collisions = {n: v for n, v in numbers.items() if len(v) > 1}
+
+          for f in dead:
+              print(f'index links a file that does not exist: {f}')
+          for f in missing:
+              print(f'HIP is unreachable from the index: {f}')
+          for n, v in sorted(collisions.items()):
+              print(f'two files claim hip {n}: {", ".join(sorted(v))}')
+
+          # A HIP whose frontmatter number disagrees with its filename is the
+          # shape a renumber leaves behind when only one of the two is edited.
+          for f in sorted(files):
+              m = re.match(r'hip-(\d{4})', f)
+              if not m:
+                  continue
+              head = open(os.path.join('HIPs', f), encoding='utf-8').read(400)
+              d = re.search(r'^hip:\s*(\d+)', head, re.M)
+              if d and d.group(1).zfill(4) != m.group(1):
+                  print(f'{f} declares hip: {d.group(1)}')
+                  dead.append(f)
+
+          sys.exit(1 if (dead or missing or collisions) else 0)
+          PY
