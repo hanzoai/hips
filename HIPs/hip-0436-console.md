@@ -12,7 +12,7 @@ created: 2026-05-19
 
 ## Abstract
 
-Hanzo Console is the observability & admin surface (HIP-038): LLM traces, scores, datasets, prompt management, evaluations. Sister UI to Langfuse but Hanzo-branded and IAM SSO-only.
+Hanzo Console is the observability & admin surface (HIP-038): LLM traces, scores, datasets, prompt management, evaluations. Hanzo-branded and IAM SSO-only.
 
 ## CRD Kind
 
@@ -39,7 +39,7 @@ Fork of `langfuse/langfuse` (MIT), Hanzo brand and IAM patches.
 
 ## Dependencies
 
-SQL (traces/observations), ClickHouse (events), KV (queue), IAM SSO (app-console).
+SQL (traces/observations), Datastore (events), KV (queue), IAM SSO (app-console).
 
 ## Status
 

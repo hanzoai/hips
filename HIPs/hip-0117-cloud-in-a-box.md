@@ -77,7 +77,7 @@ The binary IS the cloud:
 - Storage is per-tenant SQLite (HIP-0029, HIP-0302) under
   `--data-dir`. No external database exists in this mode — SQLite is
   the default, not the fallback.
-- **datastore** (ClickHouse-derived columnar store; the one non-Go
+- **datastore** (columnar analytics store; the one non-Go
   exception per HIP-0106) runs as a locally supervised subprocess when
   present. When absent, analytics-dependent surfaces degrade
   fail-closed (503 on their prefixes) while everything else serves —

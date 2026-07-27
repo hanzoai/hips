@@ -12,7 +12,7 @@ created: 2026-05-19
 
 ## Abstract
 
-Hanzo PaaS (HIP-014) at `platform.hanzo.ai` — Dokploy fork that deploys arbitrary Docker apps with IAM SSO, KMS-managed secrets, and DNS provisioning.
+Hanzo PaaS (HIP-014) at `platform.hanzo.ai` — deploys arbitrary Docker apps with IAM SSO, KMS-managed secrets, and DNS provisioning.
 
 ## CRD Kind
 

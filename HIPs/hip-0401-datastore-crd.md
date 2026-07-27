@@ -12,7 +12,7 @@ created: 2026-05-19
 
 ## Abstract
 
-The `Datastore` CRD models a stateful workload with persistent storage. It is the canonical primitive backing ClickHouse (`hanzoai/datastore`). Type-routed siblings — `SQL`, `KV`, `DocDB`, `S3` — are thin facades that delegate to the same reconciler with a `spec.type` discriminator. The operator materializes a `StatefulSet`, headless and ClusterIP `Service`s, `PersistentVolumeClaim` templates, and `KMSSecret` references.
+The `Datastore` CRD models a stateful workload with persistent storage. It is the canonical primitive backing Hanzo Datastore (`hanzoai/datastore`). Type-routed siblings — `SQL`, `KV`, `DocDB`, `S3` — are thin facades that delegate to the same reconciler with a `spec.type` discriminator. The operator materializes a `StatefulSet`, headless and ClusterIP `Service`s, `PersistentVolumeClaim` templates, and `KMSSecret` references.
 
 ## Specification
 
@@ -24,7 +24,7 @@ The `Datastore` CRD models a stateful workload with persistent storage. It is th
 
 | Field | Type | Description |
 |---|---|---|
-| `type` | string | `clickhouse`, `postgresql`, `valkey`, `docdb`, `minio` |
+| `type` | string | `datastore`, `postgresql`, `valkey`, `docdb`, `minio` |
 | `image` | ImageSpec | repository, tag, pullPolicy |
 | `replicas` | int | StatefulSet replica count |
 | `storage` | StorageSpec | storageClassName, size, retentionPolicy |
@@ -49,7 +49,7 @@ metadata:
   name: datastore
   namespace: hanzo
 spec:
-  type: clickhouse
+  type: datastore
   image:
     repository: ghcr.io/hanzoai/datastore
     tag: "26"
@@ -58,7 +58,7 @@ spec:
     storageClassName: do-block-storage
     size: 50Gi
     retentionPolicy: Retain
-  credentialsSecret: clickhouse-credentials
+  credentialsSecret: datastore-credentials
 ```
 
 ### Generated K8s resources
@@ -76,7 +76,7 @@ spec:
 
 ### Related services
 
-- `Datastore` (ClickHouse): HIP-496 (datastore)
+- `Datastore`: HIP-496 (datastore)
 - `SQL` (Postgres): HIP-502 (sql)
 - `KV` (Valkey): HIP-498 (kv)
 - `S3` (MinIO): HIP-476 (s3), HIP-477 (s3-demo)

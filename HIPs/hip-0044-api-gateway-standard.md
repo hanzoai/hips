@@ -97,14 +97,14 @@ If Hanzo later needs service mesh capabilities (mTLS between pods, traffic split
 
 ### Why Declarative Configuration
 
-The `krakend.json` file is the single source of truth. It lives in Git, is reviewed in pull requests, and is deployed via CI/CD. No Admin API, no database, no runtime mutation.
+The `gateway.json` file is the single source of truth. It lives in Git, is reviewed in pull requests, and is deployed via CI/CD. No Admin API, no database, no runtime mutation.
 
-- **Reproducibility**: `git checkout <sha> && krakend run` reproduces any past configuration exactly.
-- **Auditability**: `git log krakend.json` shows every routing change, who made it, and why.
+- **Reproducibility**: `git checkout <sha> && gateway run` reproduces any past configuration exactly.
+- **Auditability**: `git log gateway.json` shows every routing change, who made it, and why.
 - **Rollback**: `git revert <sha>` rolls back any bad config change in seconds.
 - **No state corruption**: There is no database to corrupt, no cache to invalidate, no cluster state to synchronize.
 
-The tradeoff is that changes require a restart (or graceful reload). KrakenD supports zero-downtime reloads via `krakend run -d`. In Kubernetes, a ConfigMap update triggers a rolling restart with zero dropped connections.
+The tradeoff is that changes require a restart (or graceful reload). The gateway supports zero-downtime reloads via `gateway run -d`. In Kubernetes, a ConfigMap update triggers a rolling restart with zero dropped connections.
 
 ## Specification
 
@@ -397,7 +397,7 @@ spec:
           limits: { cpu: "1000m", memory: "512Mi" }
         volumeMounts:
         - name: config
-          mountPath: /etc/krakend
+          mountPath: /etc/gateway
       volumes:
       - name: config
         configMap:
@@ -413,11 +413,11 @@ services:
     image: ghcr.io/hanzoai/gateway:latest
     ports: ["8080:8080", "9091:9091"]
     volumes:
-      - ./krakend.json:/etc/krakend/krakend.json
+      - ./gateway.json:/etc/gateway/gateway.json
     environment:
       - FC_ENABLE=1
-      - FC_SETTINGS=/etc/krakend/settings
-      - FC_PARTIALS=/etc/krakend/partials
+      - FC_SETTINGS=/etc/gateway/settings
+      - FC_PARTIALS=/etc/gateway/partials
 ```
 
 ### Bare Metal
@@ -426,8 +426,8 @@ services:
 curl -L https://github.com/hanzoai/gateway/releases/latest/download/gateway-linux-amd64 \
   -o /usr/local/bin/hanzo-gateway && chmod +x /usr/local/bin/hanzo-gateway
 
-hanzo-gateway check -c /etc/hanzo/krakend.json   # Validate
-hanzo-gateway run -c /etc/hanzo/krakend.json -d   # Run with hot-reload
+hanzo-gateway check -c /etc/hanzo/gateway.json   # Validate
+hanzo-gateway run -c /etc/hanzo/gateway.json -d   # Run with hot-reload
 ```
 
 ### Flexible Configuration
@@ -443,8 +443,8 @@ configs/
 For large deployments, configurations can be split into partials:
 
 ```
-/etc/krakend/
-  krakend.tmpl                # Main template (Go text/template)
+/etc/gateway/
+  gateway.tmpl                # Main template (Go text/template)
   settings/
     production.json           # Environment-specific values
     staging.json
@@ -457,7 +457,7 @@ For large deployments, configurations can be split into partials:
       iam.tmpl                # /v1/auth/* routes
 ```
 
-CI/CD pipelines run `krakend check -tlc krakend.json` on every PR. Merges are blocked if validation fails.
+CI/CD pipelines run `gateway check -tlc gateway.json` on every PR. Merges are blocked if validation fails.
 
 ## Relationship to Other HIPs
 
