@@ -267,7 +267,7 @@ CatalogEntry:
   id: string                        # UUID
   name: string                      # Human-readable name
   type: enum                        # table | bucket | collection | dataset | model | index
-  backend: enum                     # postgresql | object_storage | documentdb | qdrant | clickhouse
+  backend: enum                     # postgresql | object_storage | documentdb | qdrant | datastore
   location: string                  # Connection-specific path (schema.table, s3://bucket/prefix, etc.)
   organization: string              # Owning org in Hanzo IAM
   owner: string                     # IAM user ID of the data owner
@@ -618,7 +618,7 @@ AuditEntry:
   user_agent: string
 ```
 
-Audit entries are written to ClickHouse (HIP-0047 via Hanzo DB) for high-throughput
+Audit entries are written to Datastore (HIP-0047 via Hanzo DB) for high-throughput
 ingestion and fast analytical queries. The Analytics layer (HIP-0017) can correlate
 data access patterns with product usage patterns for security analysis.
 
@@ -747,7 +747,7 @@ lineage:
   async: true                       # Fire-and-forget lineage events
 
 audit:
-  storage: clickhouse               # HIP-0047 via Hanzo DB
+  storage: datastore                # HIP-0047 via Hanzo DB
   retention: "2y"                   # Audit logs retained for 2 years
 ```
 

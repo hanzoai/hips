@@ -232,7 +232,7 @@ Operations:
 
 ### LLM Observability
 
-Console inherits Langfuse's tracing and evaluation capabilities, extended for multi-org use:
+Console provides tracing and evaluation capabilities, extended for multi-org use:
 
 - **Traces**: Hierarchical view of LLM calls, with latency, token counts, cost, and model metadata.
 - **Evaluations**: LLM-as-a-judge, manual labeling, and custom evaluation pipelines.

@@ -39,7 +39,7 @@ no CR yet (managed directly via `infra/k8s/<svc>/deployment.yaml`)
 
 ## Dependencies
 
-SQL, KV, ClickHouse via Datastore.
+SQL, KV, Datastore.
 
 ## Status
 

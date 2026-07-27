@@ -12,7 +12,7 @@ created: 2026-05-19
 
 ## Abstract
 
-Kafka-protocol stream broker used by Insights for event buffering before ClickHouse ingest. Powered by `hanzoai/stream` (HIP-030).
+Kafka-protocol stream broker used by Insights for event buffering before Datastore ingest. Powered by `hanzoai/stream` (HIP-030).
 
 ## CRD Kind
 

@@ -39,7 +39,7 @@ no CR yet (managed directly via `infra/k8s/<svc>/deployment.yaml`)
 
 ## Dependencies
 
-Insights-SQL, Insights-KV, Datastore (ClickHouse via shared `clickhouse-events`), Insights-Kafka, IAM SSO.
+Insights-SQL, Insights-KV, Datastore (shared `clickhouse-events` instance), Insights-Kafka, IAM SSO.
 
 ## Status
 

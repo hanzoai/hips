@@ -12,7 +12,7 @@ created: 2026-05-19
 
 ## Abstract
 
-Primary ClickHouse cluster (HIP-047). Backing store for Console traces, Insights events, O11y metrics/logs.
+Primary Datastore cluster (HIP-047). Backing store for Console traces, Insights events, O11y metrics/logs.
 
 ## CRD Kind
 
