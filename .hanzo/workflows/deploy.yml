@@ -1,18 +1,35 @@
 name: deploy
 
-# Builds hips.hanzo.ai and publishes the image the operator runs. This replaces
-# the GitHub Pages workflow: the site is served by hanzoai/static behind
-# hanzoai/ingress, so there is no Pages and no CF Pages in the path.
+# hips.hanzo.ai is a SITE, not an App.
 #
-# The image tag is the run's commit, and the operator CR in hanzoai/universe
-# names which tag is live — a build never deploys itself.
+# It is a Next.js static export. Baking that into a container so a Go binary can
+# serve /public means building an image, pushing it, pinning a tag in a CR, and
+# running pods — all to hand back files that never execute. The Sites plane exists
+# for exactly this shape: build the export, POST the tar, done. No image, no CR,
+# no replicas.
+#
+#   pnpm build -> docs/out -> POST /v1/projects/hips/deploy (tar)
+#     -> publishSite uploads to S3 under <org>/<slug>/ and flips the site live
+#
+# publishSite is the ONE deploy core in cloud (clients/projects/deploy.go): every
+# write path funnels through it, so versioning, the S3 write, host binding, the
+# lifecycle emit and the status transitions happen in one place. A failed upload
+# marks the deployment "error" and never flips the live site or bills for it.
+#
+# WHERE THINGS FIT, since these are orthogonal and composable:
+#   Project  — IAM-owned (iam/internal/schema/project.go); the billing bucket.
+#              One project holds MANY sites.
+#   Site     — this. /v1/sites + /v1/projects/:slug/deploy. Static, no compute.
+#   Function — /v1/functions (Fission). Per-request compute, no server.
+#   App      — an App CR the operator reconciles. Long-running containers.
+# A docs site is the first of those and only the first.
 
 on:
   push:
     branches: [main]
     # HIPs/** belongs here because the site renders it: without it, writing a
     # spec never rebuilds hips.hanzo.ai.
-    paths: ['HIPs/**', 'docs/**', 'Dockerfile', '.hanzo/workflows/deploy.yml']
+    paths: ['HIPs/**', 'docs/**', '.hanzo/workflows/deploy.yml']
   workflow_dispatch:
 
 concurrency:
@@ -20,24 +37,58 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  image:
-    runs-on: ubuntu-latest
+  site:
+    # NOT ubuntu-latest. These run on the in-cluster act_runner, whose fleet
+    # advertises hanzo-build-linux-amd64 — ci.yml in this repo already targets it
+    # correctly. deploy.yml did not, so every run queued against a label no runner
+    # answers and nothing was ever published; GHCR still reports NAME_UNKNOWN for
+    # hanzoai/hips. insights sat un-deployed on the identical bug.
+    runs-on: hanzo-build-linux-amd64
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
-      - name: build and push
-        env:
-          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+      - name: build the static export
         run: |
           set -euo pipefail
-          if [ -z "${REGISTRY_TOKEN:-}" ]; then
-            echo "::error::REGISTRY_TOKEN is unset, so nothing was published. Add the org secret."
+          corepack enable
+          # Build from docs/ with HIPs/ as its SIBLING. source.config.ts,
+          # lib/source.ts and scripts/generate-search-index.mjs each resolve
+          # ../HIPs from the working directory; run this anywhere else and
+          # generate-search-index.mjs readdirSyncs a path that does not exist and
+          # dies in prebuild with an unguarded ENOENT.
+          cd docs
+          pnpm install --frozen-lockfile
+          pnpm build
+          test -d out || { echo "::error::pnpm build produced no docs/out"; exit 1; }
+          echo "exported $(find out -type f | wc -l) files"
+
+      - name: deploy the site
+        env:
+          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_TOKEN:-}" ]; then
+            echo "::error::HANZO_DEPLOY_TOKEN is unset, so nothing was deployed. Add it as a REPO secret — org secrets do not reach private repos on the Free plan."
             exit 1
           fi
-          tag="$(git rev-parse --short HEAD)"
-          image="ghcr.io/hanzoai/hips:${tag}"
-          echo "${REGISTRY_TOKEN}" | docker login ghcr.io -u hanzo-dev --password-stdin
-          docker build -t "${image}" .
-          docker push "${image}"
-          echo "published ${image} — set spec.image.tag in universe crs/hips.yaml to ${tag}"
+
+          # Tar the export ITSELF, not the directory that holds it: publishSite
+          # writes each member under <org>/<slug>/, so a leading out/ component
+          # would bury index.html one level down and the site would 404 at its root.
+          tar -C docs/out -czf /tmp/site.tgz .
+
+          CODE=$(curl -sS -o /tmp/deploy.json -w '%{http_code}' \
+            -X POST "https://api.hanzo.ai/v1/projects/hips/deploy" \
+            -H "Authorization: Bearer ${DEPLOY_TOKEN}" \
+            -H 'Content-Type: application/gzip' \
+            --data-binary @/tmp/site.tgz)
+
+          if [ "$CODE" != "200" ] && [ "$CODE" != "201" ]; then
+            echo "::error::deploy returned HTTP $CODE"
+            head -c 600 /tmp/deploy.json
+            exit 1
+          fi
+          head -c 600 /tmp/deploy.json
+          echo
+          echo "deployed — the site is live at its <slug>.<apex> host; hips.hanzo.ai serves it once the custom domain is bound"
