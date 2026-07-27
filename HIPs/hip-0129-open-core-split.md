@@ -269,6 +269,51 @@ The k8s finding (§1.3) still stands and still validates the tenancy line; it
 simply no longer produces a "cluster-gated OSS" tier, because everything that
 would have populated it is now held back.
 
+### 2.3 The k8s eleven, resolved on evidence
+
+Read in full. The tenancy line held everywhere, and two of the eleven turned out
+not to be subsystems at all.
+
+**All eleven degrade gracefully. None crashes without a kubeconfig.** Nine build
+their own client and every one follows an identical pattern:
+`rest.InClusterConfig()` → `clientcmd` fallback → store the error in `initErr`
+and return a **non-nil** wrapper with a nil inner client → `Mount` returns `nil`
+unconditionally, logging a warning → handlers call a `ready()` guard and answer
+an honest `503`. Zero `panic`, `log.Fatal`, or `os.Exit` across all eleven. So
+the OSS build *could* safely link them; it holds them back by policy, not by
+necessity. That uniform pattern is itself worth preserving as a conformance
+property — it is what makes §6.3's "reports honestly, never crashes, never
+silently 404s" already true rather than aspirational.
+
+| Subsystem | Decisive evidence | Tier |
+|---|---|---|
+| `cron` | Uses **ConfigMaps + `batchv1.Job`**, never CronJob objects; all timing is in-process via the embedded tasks engine. With no operator-authored ConfigMaps — the OSS default — the k8s path is never exercised. | **OSS** |
+| `membership` | LISTs Pods in the binary's **own** namespace for HA peer discovery. Nothing tenant-related. | **`ee/`** (moves with `internal/org`) |
+| `fleet` | **Not a subsystem** — no `Mount`, absent from `Wire()`. A KMS-backed registry library. | private (with its consumers) |
+| `platform` | Tenant isolation is the **cleanest of the eleven** — org only ever from the validated principal, no SuperAdmin bypass anywhere. | private, **for money** |
+| `deploy` | SuperAdmin sees the whole fleet; a normal org gets a read-only reflection and **all writes are SuperAdmin-only, unconditionally** — it cannot act even on its own app. | private |
+| `paas` | `discoverNamespaces` LISTs **every namespace in the cluster**. | private |
+| `ml` | Namespace per `org[+project]`, plus a **live balance gate before every create** ("so an unfunded org cannot run free GPU compute"). | private |
+| `validators` | **All orgs' CRs share one fixed namespace** (`lux-validators`), disambiguated by name, not isolated by namespace. | private |
+| `venue`, `admin` | Per-org billing meter; `admin/infra` scans every DOKS cluster under one account token, spanning many customer orgs. | private |
+
+Two consequences worth carrying into the work:
+
+**`platform` is private for the money, not the tenancy.** What tips it is
+`buildmeter.go`/`computemeter.go`, which meter every org's compute into a ledger
+a 20% author-royalty sweep later splits to third-party blueprint authors — a
+three-party marketplace mechanic that is meaningless to a lone self-hoster. Its
+k8s and tenancy code is reusable **as-is** if we later want a genuinely
+single-tenant OSS PaaS; only the royalty and metering wiring would need
+stripping. That is a real option we are keeping open, not a door closing.
+
+**`membership` has no `Wire()` line to delete.** It is installed by
+`apps/install.go:19` — `init() { cloud.Peers = membership.K8s }` — assigning a
+package-level func-var in package `cloud`. Excluding it means editing
+`install.go`, not removing a spec. This is the one subsystem the `apps.Order` /
+`Compose` mechanism (§4) does not cover, and a split that only edits `Wire()`
+would ship it by accident.
+
 Scope note from the inventory: `clients/` holds 126 directories but only ~102
 are independently-registered subsystems. 18 are libraries (`principal`, `money`,
 `metering`, `payout`, `finance`, `fleet`, `membership`, …), 2 are framework
