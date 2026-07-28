@@ -285,6 +285,56 @@ Google, GitHub, and Web3 are configured **once per network** as org-level provid
 - An app selects a method with one knob: `startLogin({ provider })` adds `&provider=<name>` to `/v1/iam/oauth/authorize`. Omit `provider` for the IAM login page (password + whatever it offers). **One flow; the provider is a parameter, not a separate code path** — adding a provider is a config entry plus a button, and every app inherits it.
 - Login buttons are presentation, wired through `@hanzo/ui` `<SignIn providers={…}>` to the SDK. A surface that lacks a working button has it *disabled in config* — it is never *deleted from code*, because the shared provider is always available.
 
+## Conformance status
+
+The prohibitions in §Anti-patterns are **not yet met by the deployment.** Measured
+against `https://hanzo.id` on 2026-07-28; unauthenticated probes, so a `401`
+means the route exists and demands auth, and a `404` would mean it is genuinely
+gone:
+
+| Surface | This HIP says | Production returns |
+|---|---|---|
+| `/v1/iam/get-users` | gone | `401` — route live |
+| `/v1/iam/get-user` | gone | `401` — route live |
+| `/v1/iam/add-user` | gone | `401` — route live |
+| `/v1/iam/get-organizations` | gone | `401` — route live |
+| `/v1/iam/get-application` | gone | `401` — route live |
+| `/v1/iam/issue-user-token` | gone | `401` — route live |
+| `/v1/iam/get-records` | gone | `401` — route live |
+| `/v1/iam/get-account` | gone | **`200`** with `{"status":"error","msg":"please sign in first"}` |
+
+Two further deviations:
+
+- **Two spellings for the token endpoint.** `/v1/iam/oauth/access_token` answers
+  alongside the standard `/v1/iam/oauth/token`. Only the standard one appears in
+  OIDC discovery, so the alias is live but undiscoverable — the worst of both.
+- **`200` carrying an error.** `get-account` returns HTTP 200 with an error
+  envelope where the standard requires `401`. This is the vendor error shape this
+  HIP exists to eliminate, and a client that branches on the status code reads
+  "signed in".
+
+The standard surfaces this HIP mandates are all present and correct
+(`/v1/iam/scim/v2/Users`, `/v1/iam/oauth/{token,userinfo,introspect}`, jwks at
+`/v1/iam/.well-known/jwks`, and `grant_types_supported` including RFC 8693
+token-exchange and device_code). So this is not a gap in the implementation of
+the standard — both surfaces are live at once, which is precisely the "two ways to
+do one thing" the HIP forbids.
+
+**Removal order matters.** The compat aliases cannot simply be deleted:
+`hanzoai/cloud` calls `get-application` today, and `internal/authz` carries an
+`entityNoun` fold specifically so capability checks keep working on the alias
+path. Retire in this order, or the deletion is an outage:
+
+1. Migrate every caller to the native/RFC route (`/v1/iam/applications`,
+   SCIM for users, `oauth/token` for tokens).
+2. Verify no traffic remains on the alias paths.
+3. Delete `internal/compat/aliases.go` and the `access_token` alias, and drop the
+   `entityNoun` fold that exists only to serve them.
+
+Until step 3 lands, this HIP describes the intended contract, not the deployed
+one, and that difference is the point of recording it here rather than leaving
+the prohibition list looking satisfied.
+
 ## Security Considerations
 
 - **PKCE `S256` mandatory** for all flows. Authorization-code interception is the most common OAuth attack; PKCE eliminates it.
