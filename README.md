@@ -148,6 +148,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0127](./HIPs/hip-0127-v8-architecture-distribution-language-seam.md) | V8 · Open Edition — Architecture, Distribution & the... | Standards Track | Meta | Active |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | Resource Surface Standard — Generated REST over ZAP | Standards Track | Core | Draft |
 | [HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) | Eval — The Judgment Plane | Standards Track | Infrastructure | Draft |
+| [HIP-0130](./HIPs/hip-0130-open-core-split.md) | "Open-Core Split — the Tenancy Line, the Composition Root, and Lazy Subsystems" | Standards Track | Core | Draft |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
@@ -274,7 +275,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0504](./HIPs/hip-0504-unified-design-system.md) | Unified Cross-Platform Design System | Standards Track | Interface | Draft |
 | [HIP-0505](./HIPs/hip-0505-switchboard-agentescrow-zapapp.md) | AgentEscrow + ZAP Envelope as a Cloud Subsystem (Swi... | Standards Track | Service | Draft |
 | [HIP-0506](./HIPs/hip-0506-hanzo-studio-agentic-creative-runtime.md) | Hanzo Studio — Agentic Multi-Modal Creative Runtime | Standards Track | Application | Draft |
+| [HIP-0512](./HIPs/hip-0512-research-the-evidence-plane.md) | Research — The Evidence Plane | Standards Track | Infrastructure | Active |
 | [HIP-0516](./HIPs/hip-0516-translate.md) | Translate — One Endpoint, Two Tiers, Permissive Weights | Standards Track | Core | Draft |
+| [HIP-0517](./HIPs/hip-0517-branch-naming.md) | Branch Naming — main is the Trunk, Everywhere | Process | Meta | Draft |
 | [HIP-0900](./HIPs/hip-0900-hanzo-version-chronology.md) | Hanzo Version Chronology --- 1.0 / 2.0 / 3.0 / 4.0 | Informational | Meta | Final |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Final |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
