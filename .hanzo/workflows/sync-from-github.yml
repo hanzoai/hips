@@ -1,0 +1,71 @@
+name: Sync from GitHub
+
+# git.hanzo.ai is CANONICAL and builds natively; development also lands on
+# github.com/hanzoai/HIPs. This job carries GitHub's commits to the forge.
+#
+# WITHOUT IT THIS REPO GOES DARK, and did: the forge sat at 9f792bf from
+# 2026-07-26 while GitHub moved on 15 commits. 3047c73 deleted
+# .github/workflows/sync.yml — the GitHub->forge transport — on the belief that
+# "the Hanzo GitHub App pushes a webhook, so the forge tracks GitHub without a
+# per-repo workflow". There is no such webhook: `gh api repos/hanzoai/HIPs/hooks`
+# is empty. The mirror froze on the exact commit before the deletion, so
+# deploy.yml (added after) never reached a runner and hips.hanzo.ai stopped
+# publishing entirely. This is the mechanism that actually works in this fleet —
+# hanzoai/commerce carries the same file and stays current.
+#
+# ONE deterministic direction: an in-cluster PULL. The runner reaches both ends,
+# so the sync has no ingress dependency and nothing has to push INTO the forge
+# from outside.
+#
+# NO CREDENTIAL. hanzoai/HIPs is public, so the fetch is anonymous. commerce is
+# private and needs a PAT here; this repo must never grow one — a token in a
+# public-repo sync is a secret held for no reason.
+#
+# Fast-forward ONLY. A divergence fails LOUDLY rather than force-pushing either
+# side and destroying whichever history lost the race.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: sync-from-github
+  cancel-in-progress: false
+
+jobs:
+  ff-main:
+    runs-on: [hanzo-build-linux-amd64]
+    steps:
+      - name: Checkout main (full history for the ancestry check)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Fast-forward main from github.com/hanzoai/HIPs
+        run: |
+          set -euo pipefail
+          git fetch --quiet https://github.com/hanzoai/HIPs.git main
+          LOCAL="$(git rev-parse HEAD)"
+          REMOTE="$(git rev-parse FETCH_HEAD)"
+          if [ "$LOCAL" = "$REMOTE" ]; then
+            echo "in sync at $LOCAL"
+            exit 0
+          fi
+          if git merge-base --is-ancestor "$LOCAL" "$REMOTE"; then
+            echo "fast-forwarding $LOCAL -> $REMOTE"
+            git push origin "$REMOTE:refs/heads/main"
+            # A push made with the workflow token does NOT trigger other workflows
+            # (loop prevention), so synced commits would never publish. Dispatch it
+            # explicitly — a real fast-forward means real commits arrived.
+            curl -fsS --max-time 20 -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              "${{ github.server_url }}/v1/repos/${{ github.repository }}/actions/workflows/deploy.yml/dispatches" \
+              -d '{"ref":"main"}' || echo "deploy dispatch failed (non-fatal)"
+          else
+            echo "DIVERGED: native $LOCAL is not an ancestor of GitHub $REMOTE." >&2
+            echo "Resolve by hand; this job will not force-push either side." >&2
+            exit 1
+          fi

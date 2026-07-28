@@ -26,8 +26,12 @@ name: deploy
 # `keys` on completion and cloud prunes the prefix, because a write-only grant
 # cannot delete.
 #
-# The one secret this needs: HANZO_DEPLOY_TOKEN, at REPO scope (org secrets do
-# not reach private repos on the Free plan).
+# The one secret this needs: HANZO_DEPLOY_TOKEN, set on the FORGE. This file
+# lives under .hanzo/workflows/, which only git.hanzo.ai reads, so the secret
+# comes from the forge's store and GitHub's plan rules never enter into it. An
+# earlier revision of this comment said "REPO scope, because org secrets do not
+# reach private repos on the Free plan" — wrong twice over: the job does not run
+# on GitHub, and hanzoai/HIPs is public anyway.
 #
 # WHERE THINGS FIT, since these are orthogonal and composable:
 #   Project  — IAM-owned (iam/internal/schema/project.go); the billing bucket.
@@ -97,7 +101,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${DEPLOY_TOKEN:-}" ]; then
-            echo "::error::HANZO_DEPLOY_TOKEN is unset. Add it as a REPO secret — org secrets do not reach private repos on the Free plan."
+            echo "::error::HANZO_DEPLOY_TOKEN is unset. Set it on the forge (git.hanzo.ai), which is what reads .hanzo/workflows — not on GitHub."
             exit 1
           fi
           CODE=$(curl -sS -o /tmp/enq.json -w '%{http_code}' \
