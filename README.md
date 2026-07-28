@@ -151,6 +151,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0130](./HIPs/hip-0130-open-core-split.md) | "Open-Core Split — the Tenancy Line, the Composition Root, and Lazy Subsystems" | Standards Track | Core | Draft |
 | [HIP-0131](./HIPs/hip-0131-the-method.md) | The Method — How We Build and Grow Autonomous Companies | Informational | Meta | Active |
 | [HIP-0132](./HIPs/hip-0132-one-telemetry-plane.md) | One Telemetry Plane — One Door, One Schema, Many Lenses | Standards Track | Infrastructure | Draft |
+| [HIP-0133](./HIPs/hip-0133-entity-groups.md) | Entity Groups — Placement, Durability, Splitting and Promotion | Standards Track | Core | Draft |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
