@@ -179,6 +179,42 @@ developed. There are ZERO migration Jobs, so DDL runs in-process at service star
 which is why disagreeing schema paths never announce themselves. One collector, and DDL
 owned by one thing that runs once, is the target.
 
+### §8 The four surfaces, and where LLM obs and eval sit
+
+The whole point is that these are FOUR VIEWS OF ONE PLANE, not four systems:
+
+| surface | reads | it is |
+|---|---|---|
+| `o11y.hanzo.ai` | spans · records · samples | the engineering lens |
+| `analytics.hanzo.ai` | records where `kind='event'` | the product lens |
+| `insights.hanzo.ai` | the same records | the **paid BI** lens |
+| `sentry.hanzo.ai` | records where `kind='error'`, grouped by `fingerprint` | the error lens |
+
+Not one of them owns storage. Adding a fifth surface is a query, not a database.
+
+**LLM observability is not a fourth signal.** A `gen_ai` span IS a span — the wire already
+carries `gen_ai.system`, `gen_ai.request.model`, `gen_ai.response.model`,
+`gen_ai.operation.name`, `gen_ai.hanzo.org_id`, `gen_ai.hanzo.project` as span attributes.
+It lands in `o11y.spans` like any other span and needs no table, no database and no door
+of its own. That an LLM call is expensive does not make it a different KIND of thing; it
+makes it a span with a cost attribute.
+
+Note what §3's `org` column fixes here: today only `gen_ai` spans carry a tenant
+(`gen_ai.hanzo.org_id`) because there is no general org column, which is why
+`/v1/sentry/traces/{id}` cannot read the span plane at all. One tenant key on every span
+removes that asymmetry — LLM spans stop being the only ones that are tenant-scoped.
+
+**Spend is a projection, not a signal.** Cost per call is derived from the span, and the
+billing ledger (`cloud_usage`) stays the money record of authority. Telemetry never
+becomes a second source of truth about what a customer owes.
+
+**Eval is a genuinely separate plane, and stays one.** HIP-0129 (`/v1/eval`) is judgment —
+was the output any good — and HIP-0512 (`/v1/experiment`) is the verdict of a falsifiable
+claim. Both CONSUME this plane; neither is stored in it. The dependency runs one way, and
+must: telemetry records what happened, eval decides whether it was good, experiment
+records whether a change helped. Collapsing them would put an opinion in the same table as
+an observation.
+
 ## Conformance
 
 1. One ingest door. A second door is a shim that forwards, or it is deleted.
@@ -190,6 +226,7 @@ owned by one thing that runs once, is the target.
    it is not built.
 7. OTLZ from everything we instrument. One log tailer per node, one collector, and DDL
    owned by one thing that runs once — never by whichever pod starts first.
+8. A new surface is a query. If it wants a table, it is not a surface.
 
 ## References
 
