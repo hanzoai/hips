@@ -15,6 +15,23 @@ name: bootstrap-forge
 #
 # Dispatch-only: no push trigger, so this can never fire on its own.
 # Fast-forward only: no '+', no --force, no --prune, no --mirror.
+#
+# BLOCKED ON ONE OWNER ACTION. Two dispatches proved that ORG SECRETS ARE INERT
+# on this org: GIT_TOKEN, HANZO_GIT_TOKEN and DOCKERHUB_USERNAME all arrive
+# empty here, despite visibility=all and this repo being public, because the org
+# is on the Free plan. That is not a hips quirk — hanzoai/iam's sync has failed
+# on every run since 2026-07-27 for the same reason ("FORGE_TOKEN is not set"),
+# and any repo relying on an org secret is silently broken the same way.
+#
+# So: set GIT_TOKEN as a REPO secret on hanzoai/HIPs, then dispatch this once.
+# It fast-forwards the forge, which registers sync-from-github.yml's */10
+# schedule, after which the forge maintains itself and this file is deleted.
+#
+#   gh secret set GIT_TOKEN --repo hanzoai/HIPs
+#   gh workflow run bootstrap-forge.yml --repo hanzoai/HIPs --ref main
+#
+# Dispatch as an account whose Actions are enabled: hanzo-dev's are DISABLED by
+# GitHub ("Actions has been disabled for this user"), zooqueen's and zeekay's work.
 
 on:
   workflow_dispatch: {}
