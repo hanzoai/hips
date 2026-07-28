@@ -147,12 +147,33 @@ type GroupManager interface {
 }
 ```
 
-**What exists today, measured:** `orm` has the adapters (`OpenSQLite`, `OpenZap`,
-`OpenKV`, `OpenDatastore`, `OpenDocumentDB`) and a cache layer (`cache.go` `GetCache()`).
-So this is an addition, not a rewrite. What is absent is the group as a first-class unit —
-`GetCache()` is a package-level singleton, and a global per-file cache cannot express
-"these files belong together", cannot warm them as a set, and cannot evict at group
-granularity. Per-group budgets are the specific change.
+**What exists today, measured — the logical model is DONE.** `orm` already carries the
+Datastore ancestor model, generically: `Model[T any]` with `Namespace()`/`SetNamespace()`
+for tenant isolation, `NewKey(kind, id, 0, parent)`, `key.Parent()`, and `WithParent[T]`
+in `options.go` for declaring an entity's parent function. Plus the adapters
+(`OpenSQLite`, `OpenZap`, `OpenKV`, `OpenDatastore`, `OpenDocumentDB`) and a cache layer.
+
+So `GroupKey` above is NOT a third key type. `Organization` and `Namespace` map onto what
+`Model[T]` already has; `Entity` is the existing ancestor path. Expressing it any other
+way would create the second key model this HIP exists to prevent.
+
+**ONE key, one namespace, one derivation.** `orm`'s `Model[T]` + `Namespace` + `WithParent`
+is the sole key surface. Every physical name — SQLite path, S3 prefix, cache slot,
+placement lease — is DERIVED from it and never independently authored. A subsystem that
+builds its own path string has created a second way, and that is checkable: any storage
+path not produced by the derivation is a defect.
+
+`hanzoai/commerce` holds an older CONCRETE copy of the same model
+(`datastore/key/key.go`, 423 lines; `models/mixin/model.go`, 566; 549 files importing it,
+including `AllocateOrphanKey` — the explicit "starts its own group" case worth preserving
+in the generic form). It is the duplicate, and it is deleted in favour of `orm`. It is
+also prior art with production mileage: read it before changing the generic surface.
+
+**What is genuinely absent is only the PHYSICAL layer** — the manifest, placement,
+warm/evict at group granularity, writer lease, promotion. `GetCache()` is a package-level
+singleton, and a global per-file cache cannot express "these files belong together",
+cannot warm them as a set, and cannot evict at group granularity. Per-group budgets are
+the specific change.
 
 ### §6 Invariants
 
