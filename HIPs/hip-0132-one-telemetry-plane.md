@@ -140,6 +140,33 @@ Because the old plane is destroyed rather than migrated, these stop being risks 
 system and become a completeness requirement: every one of the 48 files moves, and the
 count is the acceptance test.
 
+### §7 Transport is OTLZ; the node keeps one job
+
+**OTLZ** is the OpenTelemetry data model over the ZAP transport. Same semantics as OTLP,
+our wire. Cloud already speaks it — `cmd/cloud/telemetry.go` exports through
+`zaptrace.New(:4319)` and has never needed a collector hop.
+
+Everything we instrument moves to OTLZ. An OTLP receiver exists only to relay apps that
+are not ZAP-native yet, which makes it a compatibility layer by this HIP's own rule, and
+it is removed as each app moves.
+
+**What stays on the node, and why it is not negotiable.** The `otel-agent` DaemonSet
+(18 pods for 18 nodes — one per NODE, not per pod, and not a sidecar) runs exactly two
+receivers: `otlp` and `filelog`. The first is the relay above. The second tails
+`/var/log/pods/*` — stdout from containers that emit no telemetry at all: the datastore,
+Postgres, every third-party image, and any process that **dies before an SDK
+initializes**. No transport reaches that; the log is on disk and nothing is left running
+to send it. A telemetry plane that cannot explain a crash-on-startup is not finished.
+
+So the end state is one small log tailer per node, and OTLZ direct from everything else.
+
+**Also measured and unresolved:** TWO collector images run side by side in `ns hanzo` —
+`ghcr.io/hanzoai/otel-collector:v0.1.0` (the `otel-agent` DaemonSet) and
+`ghcr.io/hanzoai/analytics-collector:v0.7.390`. The version spread says which has been
+developed. There are ZERO migration Jobs, so DDL runs in-process at service startup —
+which is why disagreeing schema paths never announce themselves. One collector, and DDL
+owned by one thing that runs once, is the target.
+
 ## Conformance
 
 1. One ingest door. A second door is a shim that forwards, or it is deleted.
@@ -149,6 +176,8 @@ count is the acceptance test.
 5. All 48 o11y reference sites move. The count is the acceptance test.
 6. No shim, no view, no dual-write, no aliased column. If it exists only to ease the cut,
    it is not built.
+7. OTLZ from everything we instrument. One log tailer per node, one collector, and DDL
+   owned by one thing that runs once — never by whichever pod starts first.
 
 ## References
 
