@@ -169,7 +169,7 @@ plaintext.
 
 #### Tenant + project scoping via the edge JWT
 
-The org boundary is enforced by the edge, decode-once, per HIP-0110 / HIP-0112:
+The org boundary is enforced once, at the principal's owner, per HIP-0134 / HIP-0112:
 
 - The gateway **strips** any inbound `X-Org-Id` / `X-Project-Id`, then **mints**
   them from the validated JWT: the `owner` claim → `X-Org-Id`; the token's
@@ -494,7 +494,7 @@ everywhere.
 3. [HIP-0053: Visor Monitoring & Supervision Standard](./hip-0053-visor-monitoring-standard.md) — the machine/cluster control plane
 4. [HIP-0106: Unified Hanzo Cloud Binary](./hip-0106-unified-hanzo-cloud-binary.md) — `clients/fleet`, `clients/visor`, `clients/ml` in one binary
 5. [HIP-0107: Streaming Replication over VFS](./hip-0107-streaming-replication-over-vfs.md) — the HA substrate for the visor→cloud persistence port
-6. [HIP-0110: Gateway as Edge Process](./hip-0110-gateway-as-edge-process.md) — strip + mint `X-Org-Id` / `X-Project-Id`
+6. [HIP-0134: One Process, One Socket, One Identity](./hip-0134-one-process-one-socket-one-identity.md) — IAM establishes the org; plugins scope on it
 7. [HIP-0111: IAM Authentication Standard](./hip-0111-iam-authentication-standard.md) — the Bearer JWT contract
 8. [HIP-0112: Cloud Infrastructure Topology Standard](./hip-0112-cloud-infrastructure-topology-standard.md) — ingress → gateway → services, tenant scoping
 9. [HIP-0302: Encrypted SQLite Replication Standard](./hip-0302-encrypted-sqlite-replication-standard.md) — per-org data isolation for visor's Base store

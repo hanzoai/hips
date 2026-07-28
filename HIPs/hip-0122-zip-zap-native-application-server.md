@@ -109,7 +109,7 @@ zip; adapted routes are replaced when feasible.
 ### Identity and request context
 
 `zip.Ctx` (`ctx.go`) carries the gateway-minted identity of HIP-0026 /
-HIP-0110 as first-class accessors — services never parse headers:
+HIP-0134 as first-class accessors — services never parse headers:
 
 ```go
 c.Org()        // X-Org-Id      (gateway-minted from the JWT owner claim)
@@ -228,7 +228,7 @@ module path forward.
   behind `Module`)
 - HIP-0106 — Cloud — Unified Hanzo Binary (the reference host; stack
   table, adapters, measured capacity budget)
-- HIP-0110 — Gateway as Edge Process (who mints the X-* headers)
+- HIP-0134 — One Process, One Socket, One Identity (who owns the principal)
 - HIP-0114 — ZAP — Inter-VM Cognitive Transport (the primary wire)
 - HIP-0116 — Hanzo Plugin & VM Model (the shapes mounted on this core)
 - HIP-0120 — ZAP-Native Transport & gRPC Elimination (the permitted

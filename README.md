@@ -128,7 +128,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0107](./HIPs/hip-0107-streaming-replication-over-vfs.md) | Streaming Replication over VFS | Standards Track | Infrastructure | Review |
 | [HIP-0108](./HIPs/hip-0108-on-demand-supervisor.md) | On-Demand Subsystem Supervisor + Warm Pool | Standards Track | Infrastructure | Draft |
 | [HIP-0109](./HIPs/hip-0109-hanzo-ml-cloud-toolkit.md) | Hanzo ML Cloud Toolkit | Standards Track | Infrastructure | Draft |
-| [HIP-0110](./HIPs/hip-0110-gateway-as-edge-process.md) | Gateway as Edge Process | Standards Track | Infrastructure | Draft |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | Hanzo IAM Authentication Standard | Standards Track | Infrastructure | Active |
 | [HIP-0112](./HIPs/hip-0112-cloud-infrastructure-topology-standard.md) | Cloud Infrastructure Topology Standard | Standards Track | Infrastructure | Active |
 | [HIP-0113](./HIPs/hip-0113-cognitive-sidecar-and-hanzo-engine-provider-runtime.md) | Cognitive Sidecar & Hanzo Engine Provider Runtime fo... | Standards Track | Core | Draft |
@@ -152,6 +151,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0131](./HIPs/hip-0131-the-method.md) | The Method — How We Build and Grow Autonomous Companies | Informational | Meta | Active |
 | [HIP-0132](./HIPs/hip-0132-one-telemetry-plane.md) | One Telemetry Plane — One Door, One Schema, Many Lenses | Standards Track | Infrastructure | Draft |
 | [HIP-0133](./HIPs/hip-0133-entity-groups.md) | Entity Groups — Placement, Durability, Splitting and Promotion | Standards Track | Core | Draft |
+| [HIP-0134](./HIPs/hip-0134-one-process-one-socket-one-identity.md) | One Process, One Socket, One Identity | Standards Track | Core | Final |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
