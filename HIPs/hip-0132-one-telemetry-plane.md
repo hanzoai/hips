@@ -136,6 +136,18 @@ schema**: it creates `o11y_index_v2`, never the `o11y_index_v3` production actua
 The v3 table is created by the chain. Re-authoring the squashed path at the final schema
 is the centre of mass of this work.
 
+**WRONG a third time: that the migration chain has one consumer.** It has two, in two
+BINARIES. `cmd/o11yschemamigrator` is the standalone migrator; `cmd/o11yotelcollector` is
+the collector itself — the image running as the `otel-agent` DaemonSet on every node — and
+its `migrate/sync_check.go` and `migrate/sync_up.go` call `schemamigrator.TracesMigrations`,
+`LogsMigrations` and `LogsMigrationsV2` directly.
+
+A branch that deleted the chain therefore broke a LIVE binary while reporting a green
+build, because the build was scoped to `./cmd/o11yschemamigrator/...` rather than `./...`.
+The acceptance bar is `go build ./...`, always. Deleting a package-level var requires a
+symbol search across the module, not the package — checking functions when vars are the
+consumers is the same error twice.
+
 Because the old plane is destroyed rather than migrated, these stop being risks to a live
 system and become a completeness requirement: every one of the 48 files moves, and the
 count is the acceptance test.
