@@ -244,6 +244,52 @@ Core Tools:
     - semantic_search
 ```
 
+### Language Intelligence
+
+Language intelligence is one tool, not one tool per language. The `lsp` tool takes an action, a file, and a position, and returns the same shapes whichever server answers. The server for a file's language is installed and started on first use and reused for the rest of the session.
+
+| Language | Server | Features |
+|----------|--------|----------|
+| Go | `gopls` | Definition, references, rename, diagnostics, formatting |
+| Python | `pyright` | Type checking, definition, references, completions |
+| TypeScript/JavaScript | `typescript-language-server` | Full TS/JS intelligence |
+| Rust | `rust-analyzer` | Comprehensive Rust support |
+| Java | `jdtls` | Eclipse JDT-based Java support |
+| C/C++ | `clangd` | LLVM-based C/C++ intelligence |
+| Ruby | `solargraph` | Ruby language server |
+| Lua | `lua-language-server` | Lua intelligence |
+
+```python
+lsp(action="definition", file="main.go", line=42, character=15)
+# -> Starts gopls if not running
+# -> Returns: {"file": "handler.go", "line": 10, "character": 5}
+
+lsp(action="references", file="auth.py", line=20, character=8)
+# -> Starts pyright if not running
+# -> Returns: [{"file": "auth.py", "line": 20}, {"file": "test_auth.py", "line": 5}, ...]
+
+lsp(action="diagnostics", file="server.ts")
+# -> Returns: [{"line": 15, "message": "Type 'string' is not assignable to type 'number'", "severity": "error"}]
+```
+
+### Structural Search
+
+The `ast` tool parses with tree-sitter — incremental and error-tolerant, so a file that does not compile is still searchable — across Rust, JavaScript, TypeScript, Python, Go, Java, C and C++. Queries match syntax rather than text:
+
+```python
+# Find all async functions in Python files
+ast("async def", "./src", line_number=True)
+
+# Find all struct definitions in Go
+ast("type.*struct", "./pkg", line_number=True)
+
+# Find all test functions
+ast("func Test", "./tests")
+
+# Find all React components (capitalized function exports)
+ast("export.*function [A-Z]", "./components")
+```
+
 ### Tool Implementation Examples
 
 #### Web Search Tool
@@ -352,6 +398,22 @@ class MCPContext:
         
         return [list(self.entries.values())[i] for i in top_indices]
 ```
+
+### The Agent Loop
+
+A model driving these tools follows one loop, and the server enforces the order rather than trusting the model to keep it:
+
+**1. Think**: Analyze the request. Identify constraints, dependencies, and risks. Use the `think` tool to record reasoning without taking action.
+
+**2. Plan**: Outline the sequence of changes. Identify files to read, edits to make, tests to run. Summarize the plan for human review.
+
+**3. Implement**: Execute the plan through tool calls. Make changes incrementally — one file at a time, one logical edit at a time. Prefer `edit` (surgical string replacement) over `write` (full file overwrite).
+
+**4. Validate**: Run tests, linters, type checkers and build commands. Observe the output. If validation fails, return to step 1 with the error context.
+
+**5. Learn**: Record insights, architectural decisions and project conventions in the memory system, so the next session starts where this one ended.
+
+Validation cannot be skipped and planning cannot be bypassed. The agent summarizes what it did and awaits confirmation before starting the next task.
 
 ### Claude Desktop Integration
 

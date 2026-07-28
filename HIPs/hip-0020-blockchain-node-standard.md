@@ -7,7 +7,7 @@ category: Core
 status: Draft
 created: 2025-01-09
 updated: 2026-02-23
-requires: 0000, 0001, 0008, 0019, 0023
+requires: 0000, 0001, 0008, 0019
 ---
 
 # HIP-20: Blockchain Node Standard
@@ -614,6 +614,87 @@ Every compute job progresses through a deterministic state machine tracked in th
 - Computing to Verifying: Depends on `latency_budget_ms` from the request. If the provider exceeds the budget, the job is reassigned.
 - Verifying to Complete/Disputed: 2 block intervals (400ms). Verification is fast because it checks only a subset.
 
+### Piece Decomposition
+
+A job is scheduled as pieces, not as a whole. The state machine above runs per piece; a job that fits on one provider is the degenerate case of a single piece. How a job decomposes follows from its `job_type`.
+
+**Inference**: one piece if the model fits in a single provider's VRAM. If it does not, one piece per pipeline stage — a contiguous group of transformer layers.
+
+**Embedding**: one piece per batch of texts. Pieces are embarrassingly parallel.
+
+**Training**: data-parallel. Each piece processes a shard of the dataset on a separate provider, and the block producer that scheduled the job aggregates gradients.
+
+**Batch inference**: one piece per request, or per group of requests sharing a model.
+
+```rust
+pub struct Piece {
+    /// References the originating ComputeRequest
+    pub job_id: [u8; 16],
+    /// Index of this piece within the job
+    pub index: usize,
+    /// Position in the compute job state machine
+    pub state: JobState,
+    /// Serialized input for this piece
+    pub input: Vec<u8>,
+    /// SHA-256 hash of the input, for verification
+    pub input_hash: [u8; 32],
+    /// Providers holding this piece (more than one when redundancy > 1)
+    pub assigned_providers: Vec<PeerId>,
+    /// Results received so far, keyed by provider
+    pub results: HashMap<PeerId, ComputeResultData>,
+    /// The result that reached PoAI consensus
+    pub verified_result: Option<Vec<u8>>,
+    /// Set when this piece is a pipeline stage
+    pub pipeline_stage: Option<PipelineStage>,
+    /// Number of providers the piece is computed on
+    pub redundancy: usize,
+    /// Derived from the request's latency_budget_ms
+    pub deadline: Option<u64>,
+    pub priority: u32,
+    pub retry_count: usize,
+    /// Default: 3
+    pub max_retries: usize,
+}
+```
+
+### Pipeline Parallelism
+
+A model too large for any single provider's VRAM is split across providers, one pipeline stage per piece.
+
+```
+  +--------------+   +--------------+   +--------------+   +--------------+
+  |   Node A     |   |   Node B     |   |   Node C     |   |   Node D     |
+  | Layers 0-15  |-->| Layers 16-31 |-->| Layers 32-47 |-->| Layers 48-63 |
+  | (16 GB VRAM) |   | (16 GB VRAM) |   | (16 GB VRAM) |   | (16 GB VRAM) |
+  +--------------+   +--------------+   +--------------+   +--------------+
+      Stage 0            Stage 1            Stage 2            Stage 3
+```
+
+1. The scheduler derives the number of stages from model size and the free VRAM reported in GPU inventory
+2. Layers are assigned to stages; each stage is a piece
+3. Providers are chosen per stage, preferring low mutual latency
+4. Inference flows in order: stage 0 consumes the input and passes hidden states to stage 1, and so on
+5. Inter-stage tensors travel over direct libp2p streams between providers, never through the scheduler
+6. Micro-batching keeps every stage busy across concurrent requests
+
+```rust
+pub struct PipelineStage {
+    /// Position of this stage in the pipeline
+    pub stage_index: usize,
+    pub total_stages: usize,
+    /// Start and end layer indices this stage holds
+    pub layer_range: (usize, usize),
+    /// Provider running the previous stage
+    pub upstream_peer: Option<PeerId>,
+    /// Provider running the next stage
+    pub downstream_peer: Option<PeerId>,
+    /// Size of the inter-stage tensor transfer
+    pub activation_size_bytes: u64,
+}
+```
+
+Pipeline parallelism trades VRAM for network, so the protocol pays that cost down: stages prefer providers in the same geographic region, activation tensors are transferred in FP16 or quantized, micro-batch size is tuned to amortize the hop, and a provider must advertise at least 1 Gbps to be eligible for a stage.
+
 ### GPU Inventory Protocol
 
 Compute providers advertise their GPU capabilities via the `/hanzo/inventory/1.0.0` gossipsub topic. Advertisements are sent every 30 seconds and included in block bodies for state tracking.
@@ -703,6 +784,48 @@ pub fn schedule_job(
 ```
 
 Providers that have the requested model already loaded in VRAM receive a significant bonus because they avoid the cold-start latency of model loading (which can take 10-60 seconds for large models).
+
+### Peer Reputation
+
+Every provider carries a reputation score in chain state. It gates which work a provider may be assigned and which roles it may hold, and it is the filter applied before the scheduler scores anyone.
+
+```rust
+pub struct NodeReputation {
+    pub peer_id: PeerId,
+    /// 0.0 to 1.0
+    pub score: f64,
+    pub total_tasks: u64,
+    pub successful_tasks: u64,
+    pub failed_tasks: u64,
+    pub slashed_count: u32,
+    /// Rolling 30-day uptime
+    pub uptime_ratio: f64,
+    pub avg_latency_ms: u64,
+    pub joined_at: u64,
+}
+```
+
+Score changes are applied when a piece leaves the state machine, or when a heartbeat is missed:
+
+| Event | Score Change |
+|-------|-------------|
+| Verified computation (correct) | +0.01 (capped at 1.0) |
+| Failed verification (incorrect) | -0.10 |
+| Slashed (malicious) | -0.25 |
+| Task timeout (no result) | -0.05 |
+| Heartbeat missed | -0.02 |
+| Consistent uptime (30 days) | +0.05 bonus |
+
+A node below the threshold for an action is not a low-ranked candidate for it, it is not a candidate at all:
+
+| Action | Minimum Score |
+|--------|--------------|
+| Accept compute tasks | 0.3 |
+| Accept high-priority tasks | 0.7 |
+| Serve as validator | 0.8 |
+| Produce blocks | 0.9 |
+
+New nodes start at 0.5 and must earn the rest through honest participation. Reputation is not transferable and is not purchasable with stake; stake bounds the loss from misbehavior, reputation records it.
 
 ### RPC API
 
@@ -1139,13 +1262,12 @@ Hanzo Node is not wire-compatible with Lux Node. They communicate only through t
 3. [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 4. [HIP-0008: HMM Market Maker](./hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md)
 5. [HIP-0019: Tensor Operations Standard (Candle)](./hip-0019-tensor-operations-standard.md)
-6. [HIP-0023: Decentralized AI Compute Swarm Protocol](./hip-0023-decentralized-ai-compute-swarm-protocol.md)
-7. [HIP-0024: Hanzo Sovereign L1 Chain Architecture](./hip-0024-hanzo-sovereign-l1-chain-architecture.md)
-8. [ZIP-002: Proof of AI Consensus](https://zips.zoo.ngo/zip-002)
-9. [libp2p Specification](https://github.com/libp2p/specs)
-10. [Gossipsub v1.1 Protocol](https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.1.md)
-11. [Kademlia DHT](https://github.com/libp2p/specs/blob/master/kad-dht/README.md)
-12. [RocksDB](https://rocksdb.org/)
+6. [HIP-0024: Hanzo Sovereign L1 Chain Architecture](./hip-0024-hanzo-sovereign-l1-chain-architecture.md)
+7. [ZIP-002: Proof of AI Consensus](https://zips.zoo.ngo/zip-002)
+8. [libp2p Specification](https://github.com/libp2p/specs)
+9. [Gossipsub v1.1 Protocol](https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.1.md)
+10. [Kademlia DHT](https://github.com/libp2p/specs/blob/master/kad-dht/README.md)
+11. [RocksDB](https://rocksdb.org/)
 
 ## Copyright
 

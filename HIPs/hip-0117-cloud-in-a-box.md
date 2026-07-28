@@ -7,7 +7,7 @@ category: Infrastructure
 status: Review
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0036, HIP-0037, HIP-0106, HIP-0116, HIP-0400
+requires: HIP-0036, HIP-0106, HIP-0116, HIP-0400
 ---
 
 # HIP-0117: Cloud-in-a-Box — One Binary, Three Modes
@@ -178,16 +178,14 @@ running estate; HIP-0117 is how that estate comes to exist.
 ## References
 
 - HIP-0106 — Cloud — Unified Hanzo Binary (the artifact all three
-  modes run; realized state documents `cloud.Serve`, the embeds, and
-  the measured binary)
+  modes run and the product surface it serves; realized state documents
+  `cloud.Serve`, the embeds, and the measured binary)
 - HIP-0116 — Hanzo Plugin & VM Model (what runs: plugins/subsystems +
   the single-node vs HA state substrate)
 - HIP-0400 — Service CRD (the operator/CR family `cluster init`
   installs and defers to)
 - HIP-0036 — CI/CD Build System Standard (the lanes that build the
   images the operator pulls)
-- HIP-0037 — AI Cloud Platform Standard (the product surface served in
-  every mode)
 - HIP-0112 — Cloud Infrastructure Topology Standard (the estate shape
   Mode 2/3 converge to)
 - HIP-0107 / HIP-0302 — replication used for serve→cluster graduation

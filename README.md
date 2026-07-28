@@ -40,9 +40,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | Payment Processing Standard | Standards Track | Interface | Draft |
 | [HIP-0019](./HIPs/hip-0019-tensor-operations-standard.md) | Tensor Operations Standard | Standards Track | Core | Draft |
 | [HIP-0020](./HIPs/hip-0020-blockchain-node-standard.md) | Blockchain Node Standard | Standards Track | Core | Draft |
-| [HIP-0021](./HIPs/hip-0021-hanzo-ide-integrated-development-environment.md) | Hanzo IDE - Integrated Development Environment | Standards Track | Interface | Draft |
-| [HIP-0022](./HIPs/hip-0022-personalized-ai-own-your-ai.md) | Personalized AI - Own Your AI | Standards Track | Core | Draft |
-| [HIP-0023](./HIPs/hip-0023-decentralized-ai-compute-swarm-protocol.md) | Decentralized AI Compute Swarm Protocol | Standards Track | Core | Draft |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | Hanzo Sovereign L1 Chain Architecture | Standards Track | Core | Draft |
 | [HIP-0025](./HIPs/hip-0025-bot-agent-wallet-rpc-billing-protocol.md) | Bot Agent Wallet & RPC Billing Protocol | Standards Track | Core | Draft |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | Identity & Access Management Standard | Standards Track | Infrastructure | Active |
@@ -53,7 +50,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0033](./HIPs/hip-0033-container-registry-standard.md) | Container Registry Standard | Standards Track | Infrastructure | Final |
 | [HIP-0035](./HIPs/hip-0035-image-video-generation-standard.md) | Image & Video Generation Standard | Standards Track | Interface | Draft |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | CI/CD Build System Standard | Standards Track | Infrastructure | Draft |
-| [HIP-0037](./HIPs/hip-0037-ai-cloud-platform-standard.md) | AI Cloud Platform Standard | Standards Track | Core | Draft |
 | [HIP-0039](./HIPs/hip-0039-zen-model-architecture.md) | Zen Model Architecture | Standards Track | Core | Draft |
 | [HIP-0040](./HIPs/hip-0040-multi-language-sdk-standard.md) | Multi-Language SDK Standard | Standards Track | Interface | Draft |
 | [HIP-0041](./HIPs/hip-0041-cli-standard.md) | CLI Standard | Standards Track | Interface | Draft |
@@ -62,7 +58,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0045](./HIPs/hip-0045-documentation-framework-standard.md) | Documentation Framework Standard | Standards Track | Interface | Draft |
 | [HIP-0046](./HIPs/hip-0046-embeddings-standard.md) | Embeddings Standard | Standards Track | Interface | Draft |
 | [HIP-0047](./HIPs/hip-0047-analytics-datastore-standard.md) | Analytics Datastore Standard | Standards Track | Infrastructure | Active |
-| [HIP-0048](./HIPs/hip-0048-decentralized-identity-standard.md) | Decentralized Identity (DID) Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0049](./HIPs/hip-0049-dns-service-standard.md) | DNS Service Standard | Standards Track | Infrastructure | Active |
 | [HIP-0050](./HIPs/hip-0050-edge-computing-standard.md) | Hanzo Edge — Edge AI Runtime Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) | Serverless Functions (FaaS) Standard | Standards Track | Infrastructure | Active |
@@ -72,7 +67,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0065](./HIPs/hip-0065-backup-disaster-recovery-standard.md) | Backup & Disaster Recovery Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0068](./HIPs/hip-0068-ingress-standard.md) | Ingress Standard | Standards Track | Infrastructure | Active |
 | [HIP-0069](./HIPs/hip-0069-service-discovery-and-auto-bridge.md) | Service Discovery & Auto-Bridge | Standards Track | Infrastructure | Final |
-| [HIP-0073](./HIPs/hip-0073-quantum-random-number-generation-standard.md) | Quantum Random Number Generation Standard | Standards Track | Security | Draft |
 | [HIP-0074](./HIPs/hip-0074-software-bill-of-materials-standard.md) | Software Bill of Materials & Git Stamp Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | Mesh Identity, Gossip & Payments (PQ) | Standards Track | Infrastructure | Draft |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | Z-Chain — Post-Quantum Identity & Attestation Rollup | Standards Track | Infrastructure | Draft |
@@ -82,10 +76,10 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0086](./HIPs/hip-0086-tx-auth-envelope.md) | TxAuthEnvelope (typed PQ transaction signing) | Standards Track | Cryptography | Implemented |
 | [HIP-0087](./HIPs/hip-0087-pq-permit.md) | PQ Permit (replaces EIP-2612) | Standards Track | Cryptography | Implemented |
 | [HIP-0088](./HIPs/hip-0088-session-kem.md) | Session KEM (ML-KEM-768/1024 for P2P) | Standards Track | Cryptography | Implemented |
-| [HIP-0089](./HIPs/hip-0089-drbg-randomness-beacon.md) | DRBG / Randomness Beacon (SP 800-90A) | Standards Track | Cryptography | Proposed |
+| [HIP-0089](./HIPs/hip-0089-drbg-randomness-beacon.md) | DRBG / Randomness Beacon (SP 800-90A/B) | Standards Track | Cryptography | Proposed |
 | [HIP-0095](./HIPs/hip-0095-qos-challenge-system.md) | QoS Challenge System | Standards Track | Compute Protocol | Draft |
 | [HIP-0096](./HIPs/hip-0096-ai-compute-contribution-rewards.md) | AI Compute Contribution Rewards | Standards Track | Economic Protocol | Draft |
-| [HIP-0097](./HIPs/hip-0097-clean-node-identity-did-hanzo-name.md) | Clean Node Identity (did:hanzo:<name>) | Standards Track | Core | Draft |
+| [HIP-0097](./HIPs/hip-0097-clean-node-identity-did-hanzo-name.md) | Node Identity and the did:hanzo: DID Method | Standards Track | Core | Draft |
 | [HIP-0098](./HIPs/hip-0098-governance-upgrade-keys.md) | Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold ... | Standards Track | Cryptography | Proposed |
 | [HIP-0101](./HIPs/hip-0101-hanzo-lux-bridge-protocol-integration.md) | Hanzo-Lux Bridge Protocol Integration | Standards Track | Bridge | Draft |
 | [HIP-0102](./HIPs/hip-0102-omnichain-bridge.md) | Omnichain Bridge Integration | Standards Track | Bridge | Final |

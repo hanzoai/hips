@@ -607,7 +607,7 @@ arrives.
 | **HIP-26** (IAM) | Ingress routes `hanzo.id`, `lux.id`, `zoo.id`, `pars.id` to IAM. No auth at the ingress layer; auth is handled by the API Gateway or services themselves. |
 | **HIP-27** (KMS) | Ingress routes `kms.hanzo.ai` to KMS. TLS certificates for strict SSL mode are stored as K8s Secrets provisioned by CertManager. |
 | **HIP-31** (Observability) | Ingress exports Prometheus metrics consumed by Grafana dashboards. Access logs feed into the log aggregation pipeline. |
-| **HIP-37** (AI Cloud Platform) | Ingress routes `cloud.hanzo.ai` and `cloud.lux.network` to their respective cloud services. |
+| **HIP-106** (Cloud) | Ingress routes `cloud.hanzo.ai` and `cloud.lux.network` to their respective cloud services. |
 | **HIP-44** (API Gateway) | The API Gateway (KrakenD) is a backend behind Ingress. Ingress handles L7 host routing; the API Gateway handles application-level concerns (auth, rate limiting, circuit breaking). |
 | **HIP-49** (DNS) | DNS records point domains to the DigitalOcean LoadBalancer IP. Cloudflare proxies these records for DDoS protection and edge TLS. |
 

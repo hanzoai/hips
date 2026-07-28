@@ -1012,7 +1012,7 @@ User function code is injected into these base images at deployment time. The co
 | **HIP-30** (Event Streaming) | Stream trigger consumes Kafka topics. Functions publish to Stream. |
 | **HIP-31** (Observability) | Prometheus metrics and structured logging. |
 | **HIP-32** (Object Storage) | Model cache storage. Container snapshot storage. Function access via `ctx.storage`. |
-| **HIP-37** (AI Cloud) | Functions are a deployment target within the Cloud platform. |
+| **HIP-106** (Cloud) | Functions are a deployment target within the Cloud platform. |
 | **HIP-43** (Inference Engine) | Persistent serving complement. Engine for steady-state; Functions for bursty. |
 | **HIP-50** (Edge Computing) | TypeScript functions sync to Edge for latency-sensitive CPU workloads. |
 | **HIP-55** (Message Queue) | MQ trigger consumes NATS subjects. Functions publish to MQ via `ctx.publish`. |

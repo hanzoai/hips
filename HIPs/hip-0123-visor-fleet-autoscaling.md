@@ -7,7 +7,7 @@ category: Infrastructure
 status: Review
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0037, HIP-0116, HIP-0117, HIP-0121, HIP-0400
+requires: HIP-0106, HIP-0116, HIP-0117, HIP-0121, HIP-0400
 ---
 
 # HIP-0123: Visor — Fleet & Fabric Autoscaling Across Any Provider
@@ -203,7 +203,6 @@ itself and bills honestly.
 
 ## References
 
-- HIP-0037 — AI Cloud Platform Standard (the product the fleet serves)
 - HIP-0053 — Visor Monitoring & Supervision Standard (probes/alerts
   the autoscaler consumes)
 - HIP-0106 — Cloud — Unified Hanzo Binary (hybrid split mode; the

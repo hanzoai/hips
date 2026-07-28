@@ -7,7 +7,7 @@ category: Infrastructure
 status: Final
 created: 2026-05-19
 updated: 2026-07-08
-requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0037, HIP-0105, HIP-0302
+requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0105, HIP-0302
 ---
 
 # HIP-106: Cloud — Unified Hanzo Binary
@@ -595,6 +595,169 @@ Multi-tenant deployments MUST gate `AllowedRuntimes` on `zip.Config` to
 exclude runtimes lacking hard sandbox (pyvm, v8go). `AllowedRuntimes:
 nil` accepts whatever the Loader has registered.
 
+### API keys
+
+The credential for programmatic access is an API key. IAM mints and
+verifies it, `gateway` resolves it to a principal at the edge, and no
+subsystem downstream reads it again. There are two types, and the
+prefix is what every consumer switches on:
+
+| Type | Prefix | Where it belongs |
+|---|---|---|
+| publishable | `pk-` | browser and client code; identifies an org, authorizes nothing that spends |
+| secret | `sk-` | server side only; carries the caller's full scope |
+
+`hk-` is the older name for a secret key. Verification still accepts
+one; nothing has minted one since `iam` v1.33.9.
+
+```
+GET    /v1/keys    # the caller's keys: { type, prefix, createdAt }
+POST   /v1/keys    # mint or rotate the key of { type }
+DELETE /v1/keys    # revoke the key of that type
+```
+
+**The secret is returned exactly once, at mint.** Every later read
+returns type, prefix and creation time. What is stored is a hash of
+the key, never the key — a plaintext credential at rest is a defect,
+not a configuration choice. The subject a key is minted for is derived
+from the validated identity headers and never from the request body,
+so a caller can mint and revoke only their own.
+
+A key carries a scope, and the scope is enforced at the gateway edge
+before any subsystem sees the request:
+
+| Field | Meaning |
+|---|---|
+| `models` | which models the key may address; `*` for all |
+| `services` | which subsystems it may invoke — `llm`, `agents`, `mcp`, `embeddings`, `images`, `audio` |
+| `rateLimit` | requests per minute; default 60 |
+| `spendLimit` | ceiling in USD cents per billing period; unset means the org balance is the only ceiling |
+| `allowedIPs` | CIDR allowlist; unset means any address |
+| `expiresAt` | expiry; unset means the key lives until revoked |
+
+### Credit metering
+
+Spend is prepaid. An org buys credits and every priced request draws
+the balance down, so spend cannot exceed what was bought and there is
+no surprise bill. One credit is one US cent — the arithmetic and the
+display are the same unit. One balance covers every subsystem:
+inference, agent runs, MCP tool calls, storage.
+
+`commerce` owns the balance. The metering client is the one place this
+binary asks about money, and it wraps every priced request in two
+calls:
+
+1. **Authorize**, before the handler runs. Sufficient balance passes.
+   Insufficient balance is `402 insufficient_balance` and the handler
+   never runs. An unreachable `commerce` is `503 balance_unavailable`.
+2. **Record**, after the handler returns, with the units the request
+   actually consumed.
+
+**Fail-closed is the default**: when `commerce` cannot be reached the
+request is denied rather than served unpriced. Fail-open is a
+deliberate per-deployment choice, never the consequence of an outage.
+Free routes declare a price of zero and skip both calls.
+
+A usage event says who spent, what served it, what it consumed and how
+it went. It carries no prompt content and no PII.
+
+```go
+type UsageEvent struct {
+    ID        string
+    Timestamp time.Time
+
+    // Who spent
+    OrgID     string
+    ProjectID string
+    UserID    string
+    KeyID     string
+
+    // What served it
+    Service  ServiceScope
+    Model    string
+    Provider string // the upstream that actually answered
+
+    // What it consumed
+    PromptTokens     int
+    CompletionTokens int
+    TotalTokens      int
+    Cost             int64 // USD cents
+
+    // How it went
+    LatencyMs int64
+    TTFTMs    int64 // time to first token, streaming
+    Status    UsageStatus
+
+    // Agent runs attribute each tool call separately
+    AgentID    string
+    AgentRunID string
+    ToolCalls  []ToolCall
+
+    Metadata map[string]string
+}
+
+type ToolCall struct {
+    Name       string // tool
+    Provider   string // MCP server that served it
+    DurationMs int64
+    Status     UsageStatus
+}
+```
+
+Events are written to the calling tenant's own store, so a usage read
+is org-scoped by construction rather than by a `WHERE` clause, and
+`commerce` aggregates them for invoicing and reseller revenue share.
+
+```
+GET /v1/usage/summary       # current billing period
+GET /v1/usage/timeseries    # hourly, daily or monthly buckets
+GET /v1/usage/by-model
+GET /v1/usage/by-user
+GET /v1/usage/by-key
+GET /v1/usage/events        # paginated raw events
+```
+
+All six accept `start`, `end`, `granularity` and `filter`. An alert is
+the same data read against a threshold — spend, request count or error
+count, over a daily, weekly or monthly period — delivered to a
+webhook, an email address or a Slack hook when it is crossed.
+
+### OpenAI-compatible surface
+
+The inference surface is OpenAI's, so an existing application moves by
+changing two strings:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="sk-...",
+    base_url="https://api.hanzo.ai/v1",
+)
+
+response = client.chat.completions.create(
+    model="zen-8b-instruct",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+```
+
+```
+POST /v1/chat/completions      # streaming and non-streaming
+POST /v1/completions           # legacy
+POST /v1/embeddings
+POST /v1/images/generations
+POST /v1/audio/transcriptions
+POST /v1/audio/translations
+GET  /v1/models
+```
+
+The `ai` subsystem holds the model catalog and the routing policy;
+`gateway` speaks the OpenAI shape at the edge and absorbs
+provider-specific differences. Both are subsystems of this binary, so
+a request arriving at `/v1/chat/completions` is authenticated,
+authorized against the balance, routed, served and recorded without
+leaving the process.
+
 ### Deployment surfaces this enables
 
 | Deployment | Brand | Enabled subsystems | Domain |
@@ -661,7 +824,7 @@ a dev domain first.
 10. **o11y** — heaviest multi-tenant footprint (309 X-Org-Id call-sites
     per audit). Get this right and the per-tenant routing pattern is
     proven for everything else.
-11. **ai** (LLM control plane per HIP-0037) — mount existing routes
+11. **ai** (LLM control plane) — mount existing routes
 12. **mcp** — depends on iam
 13. **mq** — depends on base for durability
 14. **ingress** — depends on gateway routes
@@ -876,8 +1039,6 @@ vault or payments operator.
   today)
 - HIP-0026 — IAM (unified auth across the deployment)
 - HIP-0027 — KMS (unified secrets store)
-- HIP-0037 — AI Cloud Platform (the **subsystem** the existing
-  `~/work/hanzo/cloud` provides — NOT the unified binary)
 - HIP-0105 — In-Process Extension Runtime (the user-code substrate
   inside the unified binary)
 - HIP-0010 — Model Context Protocol Integration Standards (the MCP subsystem inside

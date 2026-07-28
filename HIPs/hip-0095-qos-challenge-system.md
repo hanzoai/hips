@@ -6,7 +6,7 @@ category: Compute Protocol
 status: Draft
 author: Hanzo AI
 created: 2026-01-24
-requires: HIP-0023 (Decentralized AI Compute Swarm)
+requires: HIP-0020 (Blockchain Node Standard)
 ---
 
 ## Abstract

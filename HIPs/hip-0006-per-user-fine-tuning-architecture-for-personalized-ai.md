@@ -123,6 +123,40 @@ class RealtimeFineTuning:
         return gradient
 ```
 
+### BitDelta Compression
+
+A fork is stored as its delta from the base, at one bit per weight — the sign of the change — plus a scale factor. Reconstruction is the base plus the sign matrix times the scale, so a node holds one copy of the base model and one small delta per user rather than one model per user.
+
+```python
+class BitDeltaCompressor:
+    """One bit per weight: the sign of the delta, plus a scale factor"""
+
+    def compress(self, base_model, fine_tuned_model):
+        # Compute weight deltas
+        delta = fine_tuned_model - base_model
+
+        # 1-bit quantization
+        sign_matrix = torch.sign(delta)
+        scale_factor = torch.abs(delta).mean()
+
+        # Pack bits efficiently
+        packed = self.pack_bits(sign_matrix)
+
+        return {
+            'bits': packed,
+            'scale': scale_factor,
+            'metadata': {...}
+        }
+
+    def decompress(self, base_model, bitdelta):
+        # Unpack bits
+        sign_matrix = self.unpack_bits(bitdelta['bits'])
+
+        # Reconstruct model
+        delta = sign_matrix * bitdelta['scale']
+        return base_model + delta
+```
+
 ### Training Record Structure
 
 ```protobuf
@@ -153,7 +187,39 @@ message UserTrainingRecord {
 }
 ```
 
+### Privacy Tiers
+
+Where a user's training runs is the user's choice, not a platform default. Four tiers, weakest guarantee first; a user's tier is a property of the fork and applies to every update made to it.
+
+```yaml
+tier_0:
+  name: Cloud Training
+  location: Hanzo servers
+  encryption: TLS
+  suitable_for: Non-sensitive data
+
+tier_1:
+  name: Edge Training
+  location: User's edge device
+  encryption: Local only
+  suitable_for: Personal data
+
+tier_2:
+  name: TEE Training
+  location: Confidential compute
+  encryption: Hardware-backed
+  suitable_for: Sensitive enterprise
+
+tier_3:
+  name: Homomorphic Training
+  location: Encrypted computation
+  encryption: FHE
+  suitable_for: Maximum privacy
+```
+
 ### Privacy-Preserving Implementation
+
+Tier 3 in code — training and inference without ever holding the plaintext:
 
 ```python
 class PrivateUserModel:

@@ -1,5 +1,5 @@
 {
-  "hip_count": 137,
+  "hip_count": 131,
   "hips": [
     {
       "number": 0,
@@ -222,39 +222,6 @@
       "created": "2025-01-09"
     },
     {
-      "number": 21,
-      "file": "hip-0021-hanzo-ide-integrated-development-environment.md",
-      "title": "Hanzo IDE - Integrated Development Environment",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Interface",
-      "created": "2025-01-20"
-    },
-    {
-      "number": 22,
-      "file": "hip-0022-personalized-ai-own-your-ai.md",
-      "title": "Personalized AI - Own Your AI",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2025-01-20"
-    },
-    {
-      "number": 23,
-      "file": "hip-0023-decentralized-ai-compute-swarm-protocol.md",
-      "title": "Decentralized AI Compute Swarm Protocol",
-      "description": "Protocol for distributing AI inference and training across a decentralized GPU network with model-aware scheduling, pipeline parallelism, and Proof of AI verification",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2024-11-30"
-    },
-    {
       "number": 24,
       "file": "hip-0024-hanzo-sovereign-l1-chain-architecture.md",
       "title": "Hanzo Sovereign L1 Chain Architecture",
@@ -365,17 +332,6 @@
       "created": "2025-01-15"
     },
     {
-      "number": 37,
-      "file": "hip-0037-ai-cloud-platform-standard.md",
-      "title": "AI Cloud Platform Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2025-01-15"
-    },
-    {
       "number": 39,
       "file": "hip-0039-zen-model-architecture.md",
       "title": "Zen Model Architecture",
@@ -459,17 +415,6 @@
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Active",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 48,
-      "file": "hip-0048-decentralized-identity-standard.md",
-      "title": "Decentralized Identity (DID) Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -574,17 +519,6 @@
       "created": "2026-05-08"
     },
     {
-      "number": 73,
-      "file": "hip-0073-quantum-random-number-generation-standard.md",
-      "title": "Quantum Random Number Generation Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Security",
-      "created": "2026-02-23"
-    },
-    {
       "number": 74,
       "file": "hip-0074-software-bill-of-materials-standard.md",
       "title": "Software Bill of Materials & Git Stamp Standard",
@@ -686,7 +620,7 @@
     {
       "number": 89,
       "file": "hip-0089-drbg-randomness-beacon.md",
-      "title": "DRBG / Randomness Beacon (SP 800-90A)",
+      "title": "DRBG / Randomness Beacon (SP 800-90A/B)",
       "description": "",
       "author": "Hanzo AI",
       "status": "Proposed",
@@ -719,7 +653,7 @@
     {
       "number": 97,
       "file": "hip-0097-clean-node-identity-did-hanzo-name.md",
-      "title": "Clean Node Identity (did:hanzo:<name>)",
+      "title": "Node Identity and the did:hanzo: DID Method",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Draft",

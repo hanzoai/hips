@@ -1,15 +1,15 @@
 ---
 hip: 0097
-title: Clean Node Identity (did:hanzo:<name>)
+title: Node Identity and the did:hanzo: DID Method
 author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Draft
 created: 2026-05-31
-requires: HIP-0048 (Decentralized Identity), HIP-0005 (Post-Quantum Security), HIP-0024 (Sovereign L1), HIP-0026 (IAM), HIP-0027 (KMS)
+requires: HIP-0005 (Post-Quantum Security), HIP-0024 (Sovereign L1), HIP-0026 (IAM), HIP-0027 (KMS)
 ---
 
-# HIP-97: Clean Node Identity (`did:hanzo:<name>`)
+# HIP-97: Node Identity and the `did:hanzo:` DID Method
 
 ## Abstract
 
@@ -22,13 +22,19 @@ identity registration (Base Sepolia, contract
 label — it is consensus- and wire-critical.
 
 This HIP proposes one clean replacement scheme: the **canonical node identity is a
-`did:hanzo:<name>` Decentralized Identifier**, aligned to the `did:hanzo:` method
-already standardized in HIP-48. The legacy `@@…<suffix>` and the
+`did:hanzo:<name>` Decentralized Identifier** — the same W3C DID method this HIP
+specifies for every Hanzo subject. The legacy `@@…<suffix>` and the
 `network-in-the-string` design are retired. The network/chain is expressed as DID
 query parameters or resolved from the registry, never embedded in the human-readable
 name. A precise grammar and charset are defined, the signing and on-chain
 registration impact is specified, and a backward-compatible, three-phase migration
 and rollout is given so that no in-flight message or already-registered name breaks.
+
+The same method serves every Hanzo subject — humans, agents, services and devices —
+so this HIP also specifies the DID Document a `did:hanzo:` identifier resolves to
+(§8), the resolution contract and lifecycle against the on-chain registry (§9), and
+the Verifiable Credential format that carries everything which is an attribute of a
+subject rather than its identity (§10).
 
 ## Motivation
 
@@ -45,9 +51,9 @@ four concrete problems, all of which touch code that is live today in
    worst property of the legacy scheme.
 
 2. **`@@` is non-standard and non-interoperable.** It is not a URI, not a DID, not a
-   DNS name. Nothing outside Hanzo can resolve it. Meanwhile HIP-48 already ships
-   `did:hanzo:` as the W3C-compliant identity method for humans, agents, services,
-   and devices, with a resolver at `did.hanzo.ai` and an on-chain registry
+   DNS name. Nothing outside Hanzo can resolve it. Meanwhile `did:hanzo:` is the
+   W3C-compliant identity method for every other Hanzo subject — humans, agents,
+   services and devices — with a W3C resolver and an on-chain registry
    (`IHanzoDIDRegistry`). Node identity and DID identity are needlessly two
    different namespaces.
 
@@ -70,7 +76,7 @@ four concrete problems, all of which touch code that is live today in
 Because the name is signed and on-chain, we will *already* have to do a careful,
 versioned migration for any change at all (see Migration). Given that cost is
 unavoidable, we should land on the format we actually want long-term rather than a
-second interim hack. HIP-48 already committed the ecosystem to `did:hanzo:`; node
+second interim hack. The ecosystem is already committed to `did:hanzo:`; node
 identity should converge onto it rather than maintain a parallel `@@` namespace
 forever.
 
@@ -88,13 +94,13 @@ Two candidate clean schemes were considered:
 
 | Criterion | `<name>.hanzo` (A) | `did:hanzo:<name>` (B) — chosen |
 |---|---|---|
-| Aligns with existing standard | No — new third namespace | **Yes — same method as HIP-48** |
+| Aligns with existing standard | No — new third namespace | **Yes — the `did:hanzo:` method itself** |
 | Already parseable by `HanzoName` | No | **Partly — `did:hanzo:` path exists today** |
 | Network kept out of the name | Yes | **Yes** (query param / registry, never the label) |
 | Globally resolvable / W3C interop | No (looks like a DNS host but isn't) | **Yes — resolves at `did.hanzo.ai`, `did:` URI scheme** |
 | Collides with real DNS / TLD confusion | Yes (`.hanzo` reads as a gTLD) | No |
 | One identity across testnet/mainnet | Yes | **Yes** |
-| Verifiable Credentials, `alsoKnownAs` cross-chain (`did:lux:`, `did:ai:`) | No native hook | **Native (HIP-48)** |
+| Verifiable Credentials, `alsoKnownAs` cross-chain (`did:lux:`, `did:ai:`) | No native hook | **Native (§8, §10)** |
 
 `A` reads more cleanly to a human, but it manufactures a *third* identity grammar
 (after `@@…` and `did:…`) and looks deceptively like a DNS hostname while resolving
@@ -226,7 +232,7 @@ identity string are inside the signature preimage.** Consequences:
    both be constructed and then lower-cased.
 3. **PQ readiness.** Outer/inner signatures stay ed25519 for wire compatibility in
    this HIP. The `did:hanzo:<name>` DID Document MAY additionally carry an
-   `MLDSAVerificationKey2025` key (HIP-5 / HIP-48) so the *same node identity* can be
+   `MLDSAVerificationKey2025` key (HIP-5, §8) so the *same node identity* can be
    verified post-quantum without another rename. PQ message signing is deferred to a
    follow-up but is unblocked by using the DID form now.
 
@@ -249,10 +255,10 @@ Changes required:
    `@@alice.sepolia-hanzo` to `did:hanzo:alice`. A node registers its DID form; the
    suffix-sniffing (`.sepolia-hanzo`) branch is replaced by reading the
    `?network=`/`?chain=` hint (default `sepolia` during migration, `36963` after).
-2. **Converge onto `IHanzoDIDRegistry` (HIP-48).** The end-state registry is the
-   HIP-48 `did:hanzo:` registry on Hanzo L1 (chain `36963`), which stores
-   `documentHash`, `controller`, `version`, `active` per DID. Node registration and
-   HIP-48 DID registration become the **same on-chain record**: a node *is* a DID.
+2. **Converge onto `IHanzoDIDRegistry`.** The end-state registry is the
+   `did:hanzo:` registry on Hanzo L1 (chain `36963`), which stores
+   `documentHash`, `controller`, `version`, `active` per DID (§9). Node registration
+   and DID registration become the **same on-chain record**: a node *is* a DID.
    This removes the separate Base Sepolia identity contract entirely at end-of-life
    (Phase 3).
 3. **Dual-read during migration.** The resolver MUST, given a query, attempt
@@ -269,10 +275,10 @@ To preserve readability lost by dropping the short `@@alice` look:
   `did:hanzo:alice/main/agent/researcher` renders as
   **`alice › researcher`**.
 * `alsoKnownAs` in the DID Document MAY list `did:lux:alice`, `did:ai:alice`
-  (HIP-48 cross-chain links). These are display/interop aliases, never the signed
+  (§8 cross-chain links). These are display/interop aliases, never the signed
   identity.
 * A node MAY publish a human label and avatar in its DID Document `service` /
-  profile credential (HIP-48 `HanzoAgentCredential`), so the short name is a
+  profile credential (the `HanzoAgentCredential` of §10), so the short name is a
   resolvable attribute, not part of the cryptographic identity.
 
 ### 7. `HanzoName` type changes (normative, Rust)
@@ -296,6 +302,230 @@ In `hanzo-libs/hanzo-messages/src/schemas/hanzo_name.rs`:
 * Equality across forms: provide `HanzoName::same_identity(a, b)` that compares the
   canonical DID form after applying the §M1 legacy→DID mapping, so routing/dedup
   treat a legacy name and its migrated DID as one identity.
+
+### 8. DID Document
+
+A `did:hanzo:<name>` resolves to a document conforming to W3C DID Core 1.0. The
+identity is the identifier; the document is the key material and the endpoints it
+currently points at, and it MAY be rotated without the identity changing.
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/jws-2020/v1",
+    "https://hanzo.ai/ns/did/v1"
+  ],
+  "id": "did:hanzo:dev",
+  "controller": "did:hanzo:hanzo",
+  "alsoKnownAs": [
+    "did:lux:dev",
+    "did:ai:dev"
+  ],
+
+  "verificationMethod": [
+    {
+      "id": "did:hanzo:dev#key-1",
+      "type": "EcdsaSecp256k1VerificationKey2019",
+      "controller": "did:hanzo:dev",
+      "blockchainAccountId": "eip155:36963:0xAgentAddress"
+    },
+    {
+      "id": "did:hanzo:dev#key-2",
+      "type": "JsonWebKey2020",
+      "controller": "did:hanzo:dev",
+      "publicKeyJwk": {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "x": "base64url-encoded-public-key"
+      }
+    },
+    {
+      "id": "did:hanzo:dev#key-pq",
+      "type": "MLDSAVerificationKey2025",
+      "controller": "did:hanzo:dev",
+      "publicKeyMultibase": "z6Mk..."
+    }
+  ],
+
+  "authentication": [
+    "did:hanzo:dev#key-1",
+    "did:hanzo:dev#key-2"
+  ],
+
+  "assertionMethod": [
+    "did:hanzo:dev#key-1"
+  ],
+
+  "keyAgreement": [
+    {
+      "id": "did:hanzo:dev#key-agree-1",
+      "type": "X25519KeyAgreementKey2020",
+      "controller": "did:hanzo:dev",
+      "publicKeyMultibase": "z6LS..."
+    }
+  ],
+
+  "capabilityInvocation": [
+    "did:hanzo:dev#key-1"
+  ],
+
+  "capabilityDelegation": [
+    "did:hanzo:dev#key-1"
+  ],
+
+  "service": [
+    {
+      "id": "did:hanzo:dev#rpc",
+      "type": "AgentRPCService",
+      "serviceEndpoint": "https://bot.hanzo.ai/rpc/dev"
+    },
+    {
+      "id": "did:hanzo:dev#wallet",
+      "type": "SafeWallet",
+      "serviceEndpoint": "safe:eip155:36963:0xSafeAddress"
+    },
+    {
+      "id": "did:hanzo:dev#iam",
+      "type": "OIDCProvider",
+      "serviceEndpoint": "https://hanzo.id"
+    }
+  ]
+}
+```
+
+The `#key-2` ed25519 method is the node's message-signing key from §4, and
+`#key-pq` is the `MLDSAVerificationKey2025` that makes the same identity
+verifiable post-quantum without a second rename.
+
+Each verification relationship answers a different question, and a verifier MUST
+check the one that matches what it is about to allow:
+
+| Relationship | Purpose | Example |
+|-------------|---------|---------|
+| `authentication` | Prove you are the DID subject | Node login to another node's API |
+| `assertionMethod` | Sign Verifiable Credentials | Agent attesting it completed a task |
+| `keyAgreement` | Establish encrypted channels | Node-to-node encrypted messaging |
+| `capabilityInvocation` | Invoke capabilities on resources | Agent executing a delegated action |
+| `capabilityDelegation` | Delegate capabilities to others | Organization granting agent authority |
+
+A single key MAY appear in several relationships. Separate keys for
+`authentication` and `keyAgreement` are RECOMMENDED, so compromising one does not
+hand over the other.
+
+### 9. Resolution
+
+The registry record of §5 is authoritative: `documentHash`, `controller`,
+`version`, `active`, keyed by the params-stripped `did:hanzo:<name>`. The document
+itself lives off-chain, so a resolver MUST recompute `SHA-256(document)` and
+compare it against the registry `documentHash` before returning it. A document
+that does not match its on-chain hash MUST NOT be returned.
+
+Resolution follows the W3C DID Resolution specification, and the `versionId` and
+`versionTime` params of §2 are its query parameters:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/1.0/identifiers/{did}` | Resolve to the current document |
+| GET | `/1.0/identifiers/{did}?versionId={n}` | Resolve a specific version |
+| GET | `/1.0/identifiers/{did}?versionTime={iso8601}` | Resolve as of a point in time |
+| POST | `/1.0/create` | Register a DID |
+| POST | `/1.0/update` | Publish a new document version |
+| POST | `/1.0/deactivate` | Deactivate a DID |
+
+The response carries the document plus resolution metadata: content type, created
+and updated timestamps, version, and the deactivated flag. Like every other
+resolution hint, these params are stripped from the signed and registry-key forms
+(§3).
+
+The lifecycle is four operations:
+
+* **Create.** The subject generates its keypair locally or in KMS (HIP-27),
+  constructs the document, computes `documentHash`, calls
+  `IHanzoDIDRegistry.register(did, documentHash)`, and publishes the document.
+* **Resolve.** The verifier fetches the document, checks it against the registry
+  hash, and takes the verification method for the relationship it needs.
+* **Update.** The controller publishes a new document, computes the new hash, and
+  calls `update(did, newDocumentHash)`. The version counter increments and prior
+  versions stay in chain history, which is what makes `versionId` and
+  `versionTime` answerable. Only the controller may update; control moves only via
+  `changeController()`.
+* **Deactivate.** The controller calls `deactivate(did)`; resolution then returns
+  `deactivated=true`. Credentials issued before deactivation remain historically
+  verifiable, but a verifier MUST NOT accept a credential issued after it.
+
+Deactivation is irreversible. A reactivated DID would leave verifiers unable to
+tell which validity window a credential belongs to; a subject that needs an
+identity after deactivation creates a new one.
+
+### 10. Verifiable Credentials
+
+Attributes that are not identity — capabilities, org membership, evaluation
+results — are Verifiable Credentials about the DID rather than fields inside it.
+IAM (HIP-26) is the issuer for identity and membership claims:
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://hanzo.ai/ns/credentials/v1"
+  ],
+  "type": ["VerifiableCredential", "HanzoAgentCredential"],
+  "issuer": "did:hanzo:iam",
+  "issuanceDate": "2026-02-23T00:00:00Z",
+  "expirationDate": "2027-02-23T00:00:00Z",
+  "credentialSubject": {
+    "id": "did:hanzo:dev",
+    "type": "AIAgent",
+    "name": "dev",
+    "organization": "hanzo",
+    "capabilities": [
+      "code-generation",
+      "code-review",
+      "mcp-tool-use"
+    ],
+    "safetyEvaluation": {
+      "framework": "HIP-0210",
+      "result": "pass",
+      "evaluatedAt": "2026-02-20T12:00:00Z"
+    },
+    "computeTier": "tier-3",
+    "maxTokenBudget": 1000000
+  },
+  "credentialStatus": {
+    "id": "https://did.hanzo.ai/credentials/status/1",
+    "type": "StatusList2021Entry",
+    "statusPurpose": "revocation",
+    "statusListIndex": "42",
+    "statusListCredential": "https://did.hanzo.ai/credentials/status-list/1"
+  },
+  "proof": {
+    "type": "EcdsaSecp256k1Signature2019",
+    "created": "2026-02-23T00:00:00Z",
+    "verificationMethod": "did:hanzo:iam#key-1",
+    "proofPurpose": "assertionMethod",
+    "proofValue": "z58DAdFfa9SkqZMVPxAQpic7ndTn..."
+  }
+}
+```
+
+The `proof.verificationMethod` MUST appear in the issuer's `assertionMethod` set;
+a credential signed by a key the issuer never listed for assertion is invalid
+however well-formed it looks.
+
+| Credential Type | Issuer | Subject | Purpose |
+|----------------|--------|---------|---------|
+| `HanzoAgentCredential` | IAM | Agent DID | Attest agent identity and capabilities |
+| `SafetyEvaluationCredential` | Safety framework (HIP-210) | Agent DID | Attest safety evaluation results |
+| `OrganizationMembershipCredential` | IAM | User or agent DID | Attest org membership and role |
+| `ComputeAuthorizationCredential` | Cloud (HIP-106) | Agent DID | Authorize compute resource access |
+| `ModelTrainingCredential` | Training pipeline | Model DID | Attest training data provenance |
+| `BiasAuditCredential` | Bias framework (HIP-220) | Model DID | Attest bias evaluation results |
+
+Revocation is StatusList2021: a bitstring where flipping bit *n* revokes the
+credential holding `statusListIndex` *n*. A verifier downloads the whole list
+rather than asking about one credential, so checking revocation does not tell the
+issuer which credential is being verified.
 
 ## Backward Compatibility & Migration
 
@@ -352,14 +582,14 @@ and `same_identity` (§7).
   no signature ever fails due to form mismatch.
 * `correct_node_name` auto-`@@`/`.hanzo` injection is **disabled by default**.
 * New nodes are *born* as `did:hanzo:<name>` and register under the DID key on the
-  HIP-48 registry (chain `36963`); legacy Base Sepolia entries remain dual-read.
+  `IHanzoDIDRegistry` (chain `36963`); legacy Base Sepolia entries remain dual-read.
 
 ### Phase 3 — DID-only (cutover)
 
 * A flag-block height / date is announced. After it, nodes refuse
   `IdentityProtocolVersion::Legacy`; only `did:hanzo:` is signed, registered, and
   accepted.
-* The Base Sepolia identity contract is frozen; the canonical registry is the HIP-48
+* The Base Sepolia identity contract is frozen; the canonical registry is
   `IHanzoDIDRegistry` on chain `36963`. Legacy `@@` parsing is removed from
   `HanzoName` (kept only in an offline migration tool).
 * `VALID_ENDINGS` and the `@@` regex are deleted.
@@ -412,7 +642,6 @@ and `same_identity` (§7).
 
 ## References
 
-* HIP-48 — Decentralized Identity (DID) Standard (`did:hanzo:` method, registry, VCs)
 * HIP-5 — Post-Quantum Security (`ML-DSA-65`, `MLDSAVerificationKey2025`)
 * HIP-24 — Hanzo Sovereign L1 (chain `36963`)
 * HIP-26 — IAM (credential issuer); HIP-27 — KMS (key custody)
