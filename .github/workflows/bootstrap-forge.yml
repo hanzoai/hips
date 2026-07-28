@@ -32,6 +32,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Presence only, never values. GIT_TOKEN arrived empty on the first run
+      # despite visibility=all on a public repo, and the fix differs entirely
+      # depending on why: an empty stored value, or org secrets not reaching
+      # this repo at all (in which case every org secret is empty here too and
+      # it has to be set at REPO scope).
+      - name: Which org secrets actually arrive
+        run: |
+          echo "GIT_TOKEN set:          ${{ secrets.GIT_TOKEN != '' }}"
+          echo "HANZO_GIT_TOKEN set:    ${{ secrets.HANZO_GIT_TOKEN != '' }}"
+          echo "DOCKERHUB_USERNAME set: ${{ secrets.DOCKERHUB_USERNAME != '' }}"
+
       - name: Push main to git.hanzo.ai
         env:
           FORGE: https://git.hanzo.ai
