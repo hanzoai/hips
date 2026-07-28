@@ -1,6 +1,6 @@
 ---
 hip: 0512
-title: Research — The Evidence Plane
+title: Experiment — The Evidence Plane
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
@@ -9,11 +9,11 @@ created: 2026-07-27
 requires: HIP-0111, HIP-0119, HIP-0129
 ---
 
-# HIP-512: Research — The Evidence Plane
+# HIP-512: Experiment — The Evidence Plane
 
 ## Abstract
 
-`/v1/research` is the durable record of what we measured and what it turned out to
+`/v1/experiment` is the durable record of what we measured and what it turned out to
 mean. Every falsifiable claim across the company — a kernel A/B, a training ablation,
 a pricing test, an ad creative — states a hypothesis, records its arms, and concludes
 **proven**, **refuted**, or **inconclusive**. A refutation is a first-class result,
@@ -111,11 +111,15 @@ production path where no key is provisioned.
 
 ### §4 Surface
 
-`POST /v1/research/experiments` ingests a batch (`{experiments:[], attempts:[]}`, both
-arrays always present); `GET` the same path lists canonical rows. `GET
-/v1/research/totals` is the headline aggregate, `GET /v1/research/projects` the
-per-project roll-up, `POST /v1/research/artifacts` files a content-addressed diary
-artifact, and `POST /v1/research/grants` sets visibility.
+`POST /v1/experiment` ingests a batch (`{experiments:[], attempts:[]}`, both arrays
+always present); `GET` the same path lists canonical rows. `GET /v1/experiment/total` is
+the headline aggregate, `GET /v1/experiment/project` the per-project roll-up, `POST
+/v1/experiment/artifact` files a content-addressed diary artifact, and `POST
+/v1/experiment/grant` sets visibility.
+
+**What ships today is `/v1/research/*` with plural sub-resources.** The rename to the
+paths above moves the cloud subsystem and all four producers in ONE pass — a surface
+half-renamed is two surfaces, which is the thing this HIP exists to prevent.
 
 Auth is the per-org key ONLY. The client MUST NOT send `X-User-Id` or `X-Org-Id` — the
 gateway mints the validated principal, and a client-supplied tenant is a forgery the
@@ -127,20 +131,26 @@ Recording is not publishing. Records are private; `trainable` and `publishable` 
 each a SEPARATE authorized grant against a stable id. Nothing becomes training data or
 a public claim as a side effect of being measured.
 
-## Open question — the noun
+## The noun — decided
 
-The routes ship as `/v1/research`, but "research" also names a product capability
-(agentic deep research, a `mode` on `/v1/answer`). The plane's own code already calls
-itself "the R&D EVIDENCE plane". Renaming the surface to `/v1/evidence` — the record —
-beside `/v1/experiment` — the process that produces it — would free the word and name
-each thing what it is. That rename touches four SDKs and a live surface, so it is
-recorded here as the open decision rather than made silently.
+The surface is **`/v1/experiment`**, and the framework repo is **`hanzoai/method`**.
 
-Related: §4's sub-resources are plural, which HIP-0119 §2's resource grammar would
-write singular. The tension is stated rather than quietly broken; resolving it belongs
-with the rename, in one pass.
+`research` named the wrong thing twice over: it is also a product capability (agentic
+deep research, a `mode` on `/v1/answer`), and as a noun it describes an activity rather
+than the thing recorded. What is recorded is an **experiment** — a falsifiable claim with
+arms and a verdict — whether the arms are kernels, prices, or ad creatives. One surface
+for R&D, product, growth and marketing, because they are the same shape and splitting
+them is how a company ends up unable to ask whether a change helped.
+
+The repo is `method` rather than `science`: `science` names a field, and a field is a
+basket. `method` names the discipline actually being applied, and it is the discipline —
+not the domain — that generalizes from a kernel A/B to an ad test.
+
+Paths under it are singular per HIP-0119 §2: `/v1/experiment`, `/v1/experiment/{id}`.
+The plural sub-resources this HIP documented (`experiments`, `grants`, `artifacts`) move
+with the rename, in one pass, across the four producers.
 
 ## References
 
 HIP-0111 (identity) · HIP-0119 (service conventions) · HIP-0129 (the eval plane) ·
-`hanzoai/cloud/clients/research` · `hanzoai/research`
+`hanzoai/cloud/clients/research` · `hanzoai/method`
