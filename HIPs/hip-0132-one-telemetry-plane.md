@@ -172,12 +172,29 @@ to send it. A telemetry plane that cannot explain a crash-on-startup is not fini
 
 So the end state is one small log tailer per node, and OTLZ direct from everything else.
 
-**Also measured and unresolved:** TWO collector images run side by side in `ns hanzo` —
-`ghcr.io/hanzoai/otel-collector:v0.1.0` (the `otel-agent` DaemonSet) and
-`ghcr.io/hanzoai/analytics-collector:v0.7.390`. The version spread says which has been
-developed. There are ZERO migration Jobs, so DDL runs in-process at service startup —
-which is why disagreeing schema paths never announce themselves. One collector, and DDL
-owned by one thing that runs once, is the target.
+**Two claims here were WRONG and were disproved by measurement.** Recorded, because both
+were mine and both were confident.
+
+**WRONG: "the two collector images are duplicates."** They are unrelated.
+`otel-collector:v0.1.0` is the `otel-agent` DaemonSet — filelog only, no DB credential.
+`analytics-collector:v0.7.390` is the Huly-lineage `team-analytics` service: a ~150-line
+Express app with ONE token-gated route (`POST /collect`) that re-emits product events as
+OTLP. Its config struct has no database field at all. They do not collapse, and a rename
+that merged them would have destroyed a working service. (Three unrelated things share
+the name "analytics collector"; only that one is deployed.)
+
+**WRONG: "DDL runs in-process at service startup."** Nothing runs telemetry DDL in this
+cluster. `cmd/o11yschemamigrator` owns it and is deployed NOWHERE; the collector CAN
+migrate but only via a `migrate` subcommand the DaemonSet never passes. Proved by control:
+across 2,180,316 queries in the retention window, DDL touching any `o11y_*` database = **0**,
+while the same window shows 715,678 inserts into `o11y_logs` — so the window captures
+o11y activity and the absence is real. cloud restarted twice inside it and emitted no DDL.
+
+**Who actually writes:** neither collector — `cloud` does, in-process, importing
+`datastorelogsexporter` and `datastoretracesexporter` from this repo
+(`clients/o11y/ingest.go:65-66`). It is the only workload holding the telemetry DSN. That
+is why §6's deletion broke a live binary: the exporters and the migration chain live in
+one repo consumed by three different processes.
 
 ### §8 The four surfaces, and where LLM obs and eval sit
 
