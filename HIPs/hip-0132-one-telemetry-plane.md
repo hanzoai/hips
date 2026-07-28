@@ -4,7 +4,7 @@ title: One Telemetry Plane — One Door, One Schema, Many Lenses
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-07-27
 requires: HIP-0119, HIP-0131, HIP-0512
 ---
@@ -17,7 +17,8 @@ Hanzo ingests telemetry through one door, stores it in one flat schema, and pres
 through as many product surfaces as the business needs. Today it has two doors, nine
 databases, three DDL paths and a version suffix on the table taking production writes.
 
-This HIP states the target and — because production is not empty — the path to it.
+This HIP states the target, and the cut that reaches it: the old plane is destroyed,
+not migrated. No compatibility layer survives this document.
 
 ## Motivation
 
@@ -48,8 +49,9 @@ shape, so it earns a door. Error grouping is not, so it does not.
 and one word for two concepts is the defect this HIP removes.
 
 `/v1/insights/e` is a live SECOND door today (verified 200, against a 404 control on a
-sibling path). It becomes a compatibility shim that forwards into `/v1/event` — PostHog
-SDKs in the wild post to `/e/`, so a shim is defensible; a second plane behind it is not.
+sibling path). It is **deleted**, not shimmed. A forwarding shim exists to serve SDKs you
+do not control; we own `@hanzo/event`, so the client moves and the door closes. A shim
+here would be permanent debt bought for nothing.
 
 ### §2 Lenses, not planes
 
@@ -81,48 +83,62 @@ columnar table has exactly one `distributed_<name>` mirror.
 
 `org` is the tenant key on every table, mapping 1:1 to the IAM org. Not `team_id`.
 
-This is NOT a rename. Two facts make it a migration:
+It is not a rename of an existing column, because there is nothing to rename: spans today
+carry **no general org column at all** — only `gen_ai` spans have `gen_ai.hanzo.org_id`,
+which is precisely why `/v1/sentry/traces/{id}` cannot read the span plane. The column is
+new, and it exists from the first row written.
 
-1. Spans today have **no general org column at all** — only `gen_ai` spans carry
-   `gen_ai.hanzo.org_id`. That absence is why `/v1/sentry/traces/{id}` refuses to read
-   the span plane.
-2. The insights plane carries `team_id` as a real column across live rows, threaded
-   through a large Django application.
+`team_id` does not survive anywhere. The insights queries move to `org` with the schema.
 
 Projects map to IAM projects on the same 1:1 basis.
 
-### §5 Production is not empty — this is a migration
+### §5 The old plane is destroyed, not migrated
 
-**499,250,285 rows / 11.37 GiB across 15 populated databases**, verified by direct query
-against the live server, taking writes hours before observation. The database was created
-2026-03-12 and incrementally migrated since; `schema_migrations_v2` holds 38 applied rows.
+Production held 499,250,285 rows / 11.37 GiB across 15 databases when this was written.
+They are **deliberately destroyed**. The decision is explicit and it is correct: this is
+15-day-TTL operational telemetry with no customers behind it. A span from twelve days ago
+has no value, and carrying it forward would buy a schema with ancestry — the exact thing
+this cut exists to remove.
 
-Deleting the migrations and creating fresh DESTROYS that data. The suffixes still go and
-the chain still dies — but by migration, not by recreation.
+So there is NO migration, NO dual-write, NO translation view, and NO compatibility shim.
+The new schema is created at its final names and the old databases are dropped. A
+discontinuity in dashboards is the whole cost, and it is paid once.
 
-**Why the opposite was believed, because the trap will catch the next person too:**
-`/usr/bin/datastore-client` silently runs in EMBEDDED LOCAL mode — `uptime()=0`,
+Anything that would survive the cut only to be renamed later is not built.
+
+**The trap that made this look unnecessary, documented because it will catch the next
+person:** `/usr/bin/datastore-client` silently runs in EMBEDDED LOCAL mode — `uptime()=0`,
 `currentUser()=''`, `SHOW DATABASES` returning only `default` and `system`. It reports an
-empty in-process engine while the real server sits behind it. `/usr/bin/clickhouse-client`
-is a dangling symlink, so no canonical-name client works in that pod. The control that
-exposed it: `uptime()=0` on a 16-day-old pod. The correct invocation is
-`hanzo-datastore client --host 127.0.0.1 --port 9000 --user $DATASTORE_USER`.
+empty in-process engine while the real server sits behind it, and
+`/usr/bin/clickhouse-client` is a dangling symlink, so no canonical-name client works in
+that pod. The control that exposed it: `uptime()=0` on a 16-day-old pod. Correct
+invocation: `hanzo-datastore client --host 127.0.0.1 --port 9000 --user $DATASTORE_USER`.
 
-### §6 The centre of mass
+### §6 The centre of mass, measured
+
+Two claims in an earlier draft of this HIP were WRONG, and an adversarial pass disproved
+both. They are recorded because the errors are instructive, not embarrassing.
+
+**WRONG: "main.go is already single-path."** It is not. `main.go:147` calls `Bootstrap()`
+and `:153` calls `RunSquashedMigrations()`, but `:164` still calls `MigrateUpSync(...)`.
+The incremental chain is reachable from the entrypoint. Any plan that assumed otherwise —
+including deleting the chain first — is built on a misreading of one file.
+
+**WRONG: the change-site inventory was complete.** It cited exact line numbers and warned
+that a missed site "breaks the guide silently". In `hanzoai/o11y`, **48 non-test `.go`
+files** reference the renamed vocabulary and **34 are absent from that list** — including
+`pkg/modules/tracefunnel/datastore_queries.go`, which hardcodes
+`FROM o11y_traces.distributed_o11y_index_v3` in all six of its query sites, and
+`pkg/modules/tracedetail/impltracedetail/store.go`, which reaches the names indirectly.
 
 `squashed_traces_migrations.go` is 1029 lines / 27 migration records, **all at v2-era
-schema**: it creates `o11y_index_v2`, never the `o11y_index_v3` that production actually
-writes. The v3 table is created by the incremental chain.
+schema**: it creates `o11y_index_v2`, never the `o11y_index_v3` production actually writes.
+The v3 table is created by the chain. Re-authoring the squashed path at the final schema
+is the centre of mass of this work.
 
-So "delete the migrations" is not a deletion. The squashed path must be RE-AUTHORED at the
-final schema before the chain can go. Until it is:
-
-- `o11y_index_v3` (3.53M rows) is created by **nobody** in any repo — the table taking
-  production writes has no DDL.
-- `distributed_spans` and `distributed_records` exist **nowhere** — no DDL, no table.
-  A branch reading them ships two empty dashboards and no error.
-
-A half-renamed surface is two surfaces. Writer and reader move in ONE commit.
+Because the old plane is destroyed rather than migrated, these stop being risks to a live
+system and become a completeness requirement: every one of the 48 files moves, and the
+count is the acceptance test.
 
 ## Conformance
 
@@ -130,8 +146,9 @@ A half-renamed surface is two surfaces. Writer and reader move in ONE commit.
 2. One database. The table never restates it.
 3. No version suffix on any live table.
 4. `org` on every table, 1:1 with IAM.
-5. Writer DDL, exporter and reader change together, never separately.
-6. Nothing is created fresh over populated tables.
+5. All 48 o11y reference sites move. The count is the acceptance test.
+6. No shim, no view, no dual-write, no aliased column. If it exists only to ease the cut,
+   it is not built.
 
 ## References
 
