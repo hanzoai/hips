@@ -933,7 +933,7 @@ The execution engine resolves secrets by calling KMS with the user's IAM token. 
 
 ## References
 
-1. [HIP-1: LLM Gateway Standard](./hip-0001-llm-gateway-provider-proxy-standard.md)
+1. [HIP-1: LLM Gateway Standard](./hip-0001-ai-coin-hanzos-native-currency.md)
 2. [HIP-9: Agent SDK](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md)
 3. [HIP-10: MCP Integration](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 4. [HIP-18: Payment Processing](./hip-0018-payment-processing-standard.md)

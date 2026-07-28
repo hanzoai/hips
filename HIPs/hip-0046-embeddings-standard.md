@@ -689,7 +689,7 @@ The reference implementation lives in the LLM Gateway codebase:
 - [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 - [HIP-0009: Agent SDK](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md)
 - [HIP-0012: Search Interface Standard](./hip-0012-search-interface-standard.md)
-- [HIP-0042: Vector Store Standard](./hip-0042-vector-store-standard.md)
+- [HIP-0042: Vector Store Standard](./hip-0042-vector-search-standard.md)
 - [OpenAI Embeddings API Reference](https://platform.openai.com/docs/api-reference/embeddings)
 - [Cohere Embed API Reference](https://docs.cohere.com/reference/embed)
 - [Matryoshka Representation Learning (Kusupati et al., 2022)](https://arxiv.org/abs/2205.13147)

@@ -599,7 +599,7 @@ pnpm build:check
 
 1. [HIP-4: LLM Gateway Standard](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - AI provider interface (usage metrics source)
 2. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - User/org CRUD, authentication, balances
-3. [HIP-27: KMS Secrets Management](./hip-0027-kms-secrets-management.md) - Secret resolution and rotation
+3. [HIP-27: KMS Secrets Management](./hip-0027-secrets-management-standard.md) - Secret resolution and rotation
 4. [Langfuse](https://github.com/langfuse/langfuse) - Open-source LLM engineering platform (upstream fork)
 5. [Hanzo Console Repository](https://github.com/hanzoai/console)
 6. [shadcn/ui](https://ui.shadcn.com/) - UI component library (Radix + Tailwind)

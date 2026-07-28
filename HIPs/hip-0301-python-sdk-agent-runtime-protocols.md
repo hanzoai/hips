@@ -6,7 +6,7 @@ type: Standards Track
 category: Core
 status: Draft
 created: 2026-03-31
-requires: HIP-9, HIP-10, HIP-300
+requires: HIP-9, HIP-10
 ---
 
 # HIP-0301: Agent Runtime Protocols & Cross-Platform Parity
@@ -687,7 +687,7 @@ Unified conformance test suite verifying that Python, Rust, and JS implementatio
 
 1. [HIP-9: Agent SDK](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md)
 2. [HIP-10: MCP Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
-3. [HIP-300: Unified MCP Tools Architecture](./hip-0300-unified-mcp-tools-architecture.md)
+3. [HIP-0010: Model Context Protocol Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 4. [RFC 7636: PKCE for OAuth](https://datatracker.ietf.org/doc/html/rfc7636)
 5. [RFC 9126: OAuth 2.0 Pushed Authorization Requests](https://datatracker.ietf.org/doc/html/rfc9126)
 6. [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)

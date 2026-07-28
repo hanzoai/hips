@@ -807,7 +807,7 @@ Infrastructure twins can inject failures into simulated representations of produ
 2. [HIP-0032: Object Storage Standard](./hip-0032-object-storage-standard.md)
 3. [HIP-0057: ML Pipeline & Training Standard](./hip-0057-ml-pipeline-standard.md)
 4. [HIP-0059: Timeseries Database Standard](./hip-0059-timeseries-database-standard.md)
-5. [HIP-0080: Robotics Standard](./hip-0080-robotics-standard.md)
+5. [HIP-0080: Robotics Standard](./hip-0080-robotics-integration-standard.md)
 6. [Universal Scene Description (USD) Specification](https://openusd.org/release/index.html)
 7. [NVIDIA Omniverse Platform](https://developer.nvidia.com/omniverse)
 8. [MuJoCo: Multi-Joint dynamics with Contact](https://mujoco.org/)

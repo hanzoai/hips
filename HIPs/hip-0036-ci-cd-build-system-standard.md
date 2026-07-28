@@ -749,7 +749,7 @@ gh repo create hanzoai/my-new-service \
 4. [Semantic Release](https://github.com/semantic-release/semantic-release)
 5. [SLSA Supply Chain Security Framework](https://slsa.dev/)
 6. [HIP-0014: Application Deployment Standard](./hip-0014-application-deployment-standard.md)
-7. [HIP-0033: KMS Secret Management](./hip-0033-kms-secret-management.md)
+7. [HIP-0033: KMS Secret Management](./hip-0033-container-registry-standard.md)
 8. [Hanzo IAM CI/CD](https://github.com/hanzoai/iam/tree/main/.github/workflows) -- Reference implementation
 9. [Hanzo Build Repository](https://github.com/hanzoai/build)
 

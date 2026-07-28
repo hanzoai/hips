@@ -47,7 +47,7 @@ This proposal defines the Model Context Protocol (MCP) integration standards for
 - **Unified search**: Multi-modal search (Text, AST, Symbol, Vector, Memory, File)
 - **Zero-copy parsing**: Efficient JSON-RPC handling
 
-See [HIP-0300](./hip-0300-unified-mcp-tools-architecture.md) for unified tools architecture.
+The tool surface itself is whatever `hanzo/mcp` ships; this HIP governs the protocol, not the catalogue.
 
 ## Motivation
 

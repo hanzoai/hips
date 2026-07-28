@@ -7,7 +7,7 @@ category: Infrastructure
 status: Final
 created: 2026-05-19
 updated: 2026-07-08
-requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0037, HIP-0105, HIP-0302, HIP-0422
+requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0037, HIP-0105, HIP-0302
 ---
 
 # HIP-106: Cloud — Unified Hanzo Binary
@@ -880,7 +880,7 @@ vault or payments operator.
   `~/work/hanzo/cloud` provides — NOT the unified binary)
 - HIP-0105 — In-Process Extension Runtime (the user-code substrate
   inside the unified binary)
-- HIP-0300 — Unified MCP Tools Architecture (the MCP subsystem inside
+- HIP-0010 — Model Context Protocol Integration Standards (the MCP subsystem inside
   the binary)
 - HIP-0301 — Agent Runtime Protocols & Cross-Platform Parity (agents
   subsystem must satisfy)

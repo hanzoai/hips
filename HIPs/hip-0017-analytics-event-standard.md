@@ -1013,7 +1013,7 @@ LIMIT 10;
 ## References
 
 1. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
-2. [HIP-5: Secrets Management (KMS)](./hip-0005-secrets-management-standard.md)
+2. [HIP-5: Secrets Management (KMS)](./hip-0005-post-quantum-security-for-ai-infrastructure.md)
 3. [HIP-30: Event Streaming Standard (Kafka)](./hip-0030-event-streaming-standard.md)
 4. [PostHog Documentation](https://posthog.com/docs)
 5. [ClickHouse Documentation](https://clickhouse.com/docs)

@@ -4,9 +4,8 @@ title: Translate — One Endpoint, Two Tiers, Permissive Weights
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-07-26
-requires: HIP-0001, HIP-0111, HIP-0510
 ---
 
 # HIP-516: Translate

@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-07-27
-requires: HIP-0119, HIP-0131, HIP-0512
+requires: HIP-0119, HIP-0512
 ---
 
 # HIP-132: One Telemetry Plane — One Door, One Schema, Many Lenses
@@ -247,4 +247,4 @@ an observation.
 
 ## References
 
-HIP-0119 (service conventions) · HIP-0131 (the method) · HIP-0512 (the evidence plane)
+HIP-0119 (service conventions) · HIP-0512 (the evidence plane)

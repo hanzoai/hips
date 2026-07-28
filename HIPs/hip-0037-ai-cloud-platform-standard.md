@@ -816,7 +816,7 @@ Cloud maintains backwards compatibility with all previous API versions through U
 - [HIP-0010: MCP Integration](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 - [HIP-0018: Payment Processing](./hip-0018-payment-processing-standard.md)
 - [HIP-0026: Identity & Access Management](./hip-0026-identity-access-management-standard.md)
-- [HIP-0027: KMS Standard](./hip-0027-key-management-service-standard.md)
+- [HIP-0027: KMS Standard](./hip-0027-secrets-management-standard.md)
 - [OpenAI API Reference](https://platform.openai.com/docs/api-reference)
 - [TimescaleDB Documentation](https://docs.timescale.com)
 

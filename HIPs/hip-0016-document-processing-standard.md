@@ -840,8 +840,8 @@ make docker   # Build production Docker image
 
 ## References
 
-1. [HIP-4: LLM Gateway](./hip-0004-llm-gateway.md) - Unified LLM proxy for embeddings and vision models
-2. [HIP-29: Vector Store Standard](./hip-0029-vector-store-standard.md) - pgvector storage and retrieval
+1. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Unified LLM proxy for embeddings and vision models
+2. [HIP-29: Vector Store Standard](./hip-0029-relational-database-standard.md) - pgvector storage and retrieval
 3. [unstructured.io](https://unstructured.io/) - Inspiration for format-agnostic extraction
 4. [pdfplumber](https://github.com/jsvine/pdfplumber) - PDF text and table extraction
 5. [tree-sitter](https://tree-sitter.github.io/) - AST-based code parsing

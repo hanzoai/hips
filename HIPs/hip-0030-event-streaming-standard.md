@@ -488,7 +488,7 @@ Single-broker failure causes full outage. Mitigations: persistent volume survive
 1. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 2. [HIP-17: Analytics Event Standard](./hip-0017-analytics-event-standard.md)
 3. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md)
-4. [HIP-28: Insights Analytics Platform](./hip-0028-insights-analytics-platform.md)
+4. [HIP-28: Insights Analytics Platform](./hip-0028-key-value-store-standard.md)
 5. [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
 6. [KRaft: Apache Kafka Without ZooKeeper](https://cwiki.apache.org/confluence/display/KAFKA/KIP-500)
 7. [Kafka on Kubernetes - Strimzi](https://strimzi.io/)

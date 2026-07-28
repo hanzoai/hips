@@ -40,7 +40,6 @@ This document records Hanzo-specific adoption details and the commit log; the no
 
 - [LP-0010](https://github.com/luxfi/lps/blob/main/LPs/lp-0010-brand-sovereignty-and-federation-discovery.md) — canonical spec
 - [ZIP-0031](https://github.com/zooai/zips/blob/main/ZIPs/zip-0031-brand-sovereignty-and-federation-discovery.md) — Zoo's adoption pointer
-- HIP-0304 — onchain registry sibling (adopts LP-0011)
 - HIP-0005 — Post-Quantum Security for AI Infrastructure
 - HIP-0010 — Model Context Protocol (MCP) Integration Standards
 - HIP-0014 — Application Deployment Standard

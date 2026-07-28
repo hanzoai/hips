@@ -488,7 +488,7 @@ Every registration, update, deletion, pause, resume, and manual trigger is logge
 1. [HIP-0029: Relational Database Standard](./hip-0029-relational-database-standard.md) -- Execution history storage
 2. [HIP-0031: Observability & Metrics Standard](./hip-0031-observability-metrics-standard.md) -- Metrics and alerting
 3. [HIP-0055: Message Queue Standard](./hip-0055-message-queue-standard.md) -- Task dispatch via NATS
-4. [HIP-0060: Functions Standard](./hip-0060-functions-standard.md) -- Task execution runtime
+4. [HIP-0060: Functions Standard](./hip-0060-serverless-functions-standard.md) -- Task execution runtime
 5. [HIP-0057: ML Pipeline Standard](./hip-0057-ml-pipeline-standard.md) -- Model retraining triggers
 6. [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) -- Provider health checks
 7. [HIP-0026: IAM Standard](./hip-0026-identity-access-management-standard.md) -- Authentication

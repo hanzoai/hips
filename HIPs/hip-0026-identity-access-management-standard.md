@@ -689,8 +689,8 @@ The key design principle: **IAM authenticates users and issues scoped tokens. Se
 6. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Unified AI provider interface (consumes IAM tokens)
 7. [HIP-18: Payment Processing Standard](./hip-0018-payment-processing-standard.md) - Commerce billing (feeds credits into IAM)
 8. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) - Agent identity (built on IAM)
-9. [HIP-27: KMS for Secrets Management](./hip-0027-kms-secrets-management.md) - Secret resolution at startup
-10. [HIP-29: PostgreSQL Storage Standard](./hip-0029-postgresql-storage-standard.md) - Database layer
+9. [HIP-27: KMS for Secrets Management](./hip-0027-secrets-management-standard.md) - Secret resolution at startup
+10. [HIP-29: PostgreSQL Storage Standard](./hip-0029-relational-database-standard.md) - Database layer
 11. [Hanzo IAM Repository](https://github.com/hanzoai/iam)
 
 ## Copyright

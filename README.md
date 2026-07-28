@@ -148,7 +148,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | Resource Surface Standard — Generated REST over ZAP | Standards Track | Core | Draft |
 | [HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) | Eval — The Judgment Plane | Standards Track | Infrastructure | Draft |
 | [HIP-0130](./HIPs/hip-0130-open-core-split.md) | "Open-Core Split — the Tenancy Line, the Composition Root, and Lazy Subsystems" | Standards Track | Core | Draft |
-| [HIP-0131](./HIPs/hip-0131-the-method.md) | The Method — How We Build and Grow Autonomous Companies | Informational | Meta | Active |
 | [HIP-0132](./HIPs/hip-0132-one-telemetry-plane.md) | One Telemetry Plane — One Door, One Schema, Many Lenses | Standards Track | Infrastructure | Draft |
 | [HIP-0133](./HIPs/hip-0133-entity-groups.md) | Entity Groups — Placement, Durability, Splitting and Promotion | Standards Track | Core | Draft |
 | [HIP-0134](./HIPs/hip-0134-one-process-one-socket-one-identity.md) | One Process, One Socket, One Identity | Standards Track | Core | Final |
@@ -162,14 +161,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0251](./HIPs/hip-0251-ai-compute-carbon-footprint.md) | AI Compute Carbon Footprint | Meta | - | Draft |
 | [HIP-0260](./HIPs/hip-0260-efficient-model-practices.md) | Efficient Model Practices | Meta | - | Draft |
 | [HIP-0270](./HIPs/hip-0270-ai-supply-chain-responsibility.md) | AI Supply Chain Responsibility | Meta | - | Draft |
-| [HIP-0280](./HIPs/hip-0280-ai-for-sustainability.md) | AI for Sustainability | Meta | - | Draft |
-| [HIP-0290](./HIPs/hip-0290-evidence-locker-index.md) | Evidence Locker Index | Meta | - | Draft |
-| [HIP-0295](./HIPs/hip-0295-hanzo-ai-impact-thesis.md) | Hanzo AI Impact Thesis | Meta | - | Draft |
-| [HIP-0300](./HIPs/hip-0300-unified-mcp-tools-architecture.md) | Unified MCP Tools Architecture | Standards Track | Interface | Review |
 | [HIP-0301](./HIPs/hip-0301-python-sdk-agent-runtime-protocols.md) | Agent Runtime Protocols & Cross-Platform Parity | Standards Track | Core | Draft |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | Hanzo Replicate: Encrypted SQLite Durability for Bas... | Standards Track | Infrastructure | Final |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Hanzo adopts LP-0010: Brand Sovereignty and Federati... | Meta | Governance | Final |
-| [HIP-0304](./HIPs/hip-0304-onchain-federation-registry.md) | Hanzo adopts LP-0011: Onchain Federation Registry | Standards Track | Interface | Draft |
 | [HIP-0305](./HIPs/hip-0305-esign-shared-db-tenancy.md) | esign: shared-DB tenancy via team-where, not file-pe... | Standards Track | Infrastructure | Accepted |
 | [HIP-0400](./HIPs/hip-0400-service-crd.md) | Service CRD | Standards Track | Operator | Final |
 | [HIP-0401](./HIPs/hip-0401-datastore-crd.md) | Datastore CRD | Standards Track | Operator | Final |
@@ -186,102 +180,13 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0412](./HIPs/hip-0412-gateway-crd.md) | Gateway CRD | Standards Track | Operator | Final |
 | [HIP-0413](./HIPs/hip-0413-mpc-crd.md) | MPC CRD | Standards Track | Operator | Final |
 | [HIP-0414](./HIPs/hip-0414-network-crd.md) | Network CRD | Standards Track | Operator | Final |
-| [HIP-0415](./HIPs/hip-0415-chain-crd.md) | Chain CRD | Standards Track | Operator | Final |
-| [HIP-0416](./HIPs/hip-0416-validator-crd.md) | Validator CRD | Standards Track | Operator | Final |
-| [HIP-0417](./HIPs/hip-0417-subnet-crd.md) | Subnet CRD | Standards Track | Operator | Final |
 | [HIP-0418](./HIPs/hip-0418-indexer-crd.md) | Indexer CRD | Standards Track | Operator | Final |
 | [HIP-0419](./HIPs/hip-0419-explorer-crd.md) | Explorer CRD | Standards Track | Operator | Final |
-| [HIP-0420](./HIPs/hip-0420-analytics.md) | analytics | Informational | Service Catalog | Final |
-| [HIP-0421](./HIPs/hip-0421-auto.md) | auto | Informational | Service Catalog | Final |
-| [HIP-0422](./HIPs/hip-0422-billing.md) | billing | Informational | Service Catalog | Final |
-| [HIP-0423](./HIPs/hip-0423-bot-docs.md) | bot-docs | Informational | Service Catalog | Final |
-| [HIP-0424](./HIPs/hip-0424-bot-gateway.md) | bot-gateway | Informational | Service Catalog | Final |
-| [HIP-0425](./HIPs/hip-0425-bot-hub.md) | bot-hub | Informational | Service Catalog | Final |
-| [HIP-0426](./HIPs/hip-0426-captable.md) | captable | Informational | Service Catalog | Final |
-| [HIP-0427](./HIPs/hip-0427-cdn.md) | cdn | Informational | Service Catalog | Final |
-| [HIP-0428](./HIPs/hip-0428-chat.md) | chat | Informational | Service Catalog | Final |
-| [HIP-0429](./HIPs/hip-0429-chat-meilisearch.md) | chat-meilisearch | Informational | Service Catalog | Final |
-| [HIP-0430](./HIPs/hip-0430-cloud.md) | cloud | Informational | Service Catalog | Final |
-| [HIP-0431](./HIPs/hip-0431-cloud-agent.md) | cloud-agent | Informational | Service Catalog | Final |
-| [HIP-0432](./HIPs/hip-0432-cloud-api.md) | cloud-api | Informational | Service Catalog | Final |
-| [HIP-0433](./HIPs/hip-0433-commerce.md) | commerce | Informational | Service Catalog | Final |
-| [HIP-0434](./HIPs/hip-0434-commerce-admin.md) | commerce-admin | Informational | Service Catalog | Final |
-| [HIP-0435](./HIPs/hip-0435-commerce-site.md) | commerce-site | Informational | Service Catalog | Final |
-| [HIP-0436](./HIPs/hip-0436-console.md) | console | Informational | Service Catalog | Final |
-| [HIP-0437](./HIPs/hip-0437-console-worker.md) | console-worker | Informational | Service Catalog | Final |
-| [HIP-0438](./HIPs/hip-0438-crawl.md) | crawl | Informational | Service Catalog | Final |
-| [HIP-0439](./HIPs/hip-0439-dataroom.md) | dataroom | Informational | Service Catalog | Final |
-| [HIP-0440](./HIPs/hip-0440-dns.md) | dns | Informational | Service Catalog | Final |
-| [HIP-0441](./HIPs/hip-0441-flow.md) | flow | Informational | Service Catalog | Final |
-| [HIP-0442](./HIPs/hip-0442-flow-site.md) | flow-site | Informational | Service Catalog | Final |
-| [HIP-0443](./HIPs/hip-0443-gateway.md) | gateway | Informational | Service Catalog | Final |
-| [HIP-0444](./HIPs/hip-0444-grafana.md) | grafana | Informational | Service Catalog | Final |
-| [HIP-0445](./HIPs/hip-0445-hanzo-app.md) | hanzo-app | Informational | Service Catalog | Final |
-| [HIP-0446](./HIPs/hip-0446-hanzo-bot-site.md) | hanzo-bot-site | Informational | Service Catalog | Final |
-| [HIP-0447](./HIPs/hip-0447-hanzo-idv.md) | hanzo-idv | Informational | Service Catalog | Final |
-| [HIP-0448](./HIPs/hip-0448-hanzo-ingress.md) | hanzo-ingress | Informational | Service Catalog | Final |
-| [HIP-0449](./HIPs/hip-0449-hanzo-login.md) | hanzo-login | Informational | Service Catalog | Final |
-| [HIP-0450](./HIPs/hip-0450-hanzo-playground.md) | hanzo-playground | Informational | Service Catalog | Final |
-| [HIP-0451](./HIPs/hip-0451-iam.md) | iam | Informational | Service Catalog | Final |
-| [HIP-0452](./HIPs/hip-0452-insights-capture.md) | insights-capture | Informational | Service Catalog | Final |
-| [HIP-0453](./HIPs/hip-0453-insights-kafka.md) | insights-kafka | Informational | Service Catalog | Final |
-| [HIP-0454](./HIPs/hip-0454-insights-kv.md) | insights-kv | Informational | Service Catalog | Final |
-| [HIP-0455](./HIPs/hip-0455-insights-plugin.md) | insights-plugin | Informational | Service Catalog | Final |
-| [HIP-0456](./HIPs/hip-0456-insights-sql.md) | insights-sql | Informational | Service Catalog | Final |
-| [HIP-0457](./HIPs/hip-0457-insights-web.md) | insights-web | Informational | Service Catalog | Final |
-| [HIP-0458](./HIPs/hip-0458-insights-worker.md) | insights-worker | Informational | Service Catalog | Final |
-| [HIP-0459](./HIPs/hip-0459-kms.md) | kms | Informational | Service Catalog | Final |
-| [HIP-0460](./HIPs/hip-0460-livekit.md) | livekit | Informational | Service Catalog | Final |
-| [HIP-0461](./HIPs/hip-0461-models.md) | models | Informational | Service Catalog | Final |
-| [HIP-0462](./HIPs/hip-0462-monitor.md) | monitor | Informational | Service Catalog | Final |
-| [HIP-0463](./HIPs/hip-0463-nats-box.md) | nats-box | Informational | Service Catalog | Final |
-| [HIP-0464](./HIPs/hip-0464-neon-compute.md) | neon-compute | Informational | Service Catalog | Final |
-| [HIP-0465](./HIPs/hip-0465-neon-storage-broker.md) | neon-storage-broker | Informational | Service Catalog | Final |
-| [HIP-0466](./HIPs/hip-0466-o11y.md) | o11y | Informational | Service Catalog | Final |
-| [HIP-0467](./HIPs/hip-0467-openfaas-controller.md) | openfaas-controller | Informational | Service Catalog | Final |
-| [HIP-0468](./HIPs/hip-0468-openfaas-gateway.md) | openfaas-gateway | Informational | Service Catalog | Final |
-| [HIP-0469](./HIPs/hip-0469-openfaas-queue-worker.md) | openfaas-queue-worker | Informational | Service Catalog | Final |
-| [HIP-0470](./HIPs/hip-0470-operative.md) | operative | Informational | Service Catalog | Final |
-| [HIP-0471](./HIPs/hip-0471-otel-collector.md) | otel-collector | Informational | Service Catalog | Final |
-| [HIP-0472](./HIPs/hip-0472-paas.md) | paas | Informational | Service Catalog | Final |
-| [HIP-0473](./HIPs/hip-0473-pricing.md) | pricing | Informational | Service Catalog | Final |
-| [HIP-0474](./HIPs/hip-0474-rag-api.md) | rag-api | Informational | Service Catalog | Final |
-| [HIP-0475](./HIPs/hip-0475-registry.md) | registry | Informational | Service Catalog | Final |
-| [HIP-0476](./HIPs/hip-0476-s3.md) | s3 | Informational | Service Catalog | Final |
-| [HIP-0477](./HIPs/hip-0477-s3-demo.md) | s3-demo | Informational | Service Catalog | Final |
-| [HIP-0478](./HIPs/hip-0478-search.md) | search | Informational | Service Catalog | Final |
-| [HIP-0479](./HIPs/hip-0479-sentry-cron.md) | sentry-cron | Informational | Service Catalog | Final |
-| [HIP-0480](./HIPs/hip-0480-sentry-web.md) | sentry-web | Informational | Service Catalog | Final |
-| [HIP-0481](./HIPs/hip-0481-sentry-worker.md) | sentry-worker | Informational | Service Catalog | Final |
-| [HIP-0482](./HIPs/hip-0482-sign.md) | sign | Informational | Service Catalog | Final |
-| [HIP-0483](./HIPs/hip-0483-status.md) | status | Informational | Service Catalog | Final |
-| [HIP-0484](./HIPs/hip-0484-status-lux.md) | status-lux | Informational | Service Catalog | Final |
-| [HIP-0485](./HIPs/hip-0485-stream.md) | stream | Informational | Service Catalog | Final |
-| [HIP-0486](./HIPs/hip-0486-studio.md) | studio | Informational | Service Catalog | Final |
-| [HIP-0487](./HIPs/hip-0487-sync.md) | sync | Informational | Service Catalog | Final |
-| [HIP-0488](./HIPs/hip-0488-tasks.md) | tasks | Informational | Service Catalog | Final |
-| [HIP-0489](./HIPs/hip-0489-vector.md) | vector | Informational | Service Catalog | Final |
-| [HIP-0490](./HIPs/hip-0490-visor.md) | visor | Informational | Service Catalog | Final |
-| [HIP-0491](./HIPs/hip-0491-vm.md) | vm | Informational | Service Catalog | Final |
-| [HIP-0492](./HIPs/hip-0492-vmd.md) | vmd | Informational | Service Catalog | Final |
-| [HIP-0493](./HIPs/hip-0493-webhook.md) | webhook | Informational | Service Catalog | Final |
-| [HIP-0494](./HIPs/hip-0494-world.md) | world | Informational | Service Catalog | Final |
-| [HIP-0495](./HIPs/hip-0495-world-gw.md) | world-gw | Informational | Service Catalog | Final |
-| [HIP-0496](./HIPs/hip-0496-datastore.md) | datastore | Informational | Service Catalog | Final |
-| [HIP-0497](./HIPs/hip-0497-hanzo-mpc.md) | hanzo-mpc | Informational | Service Catalog | Final |
-| [HIP-0498](./HIPs/hip-0498-kv.md) | kv | Informational | Service Catalog | Final |
-| [HIP-0499](./HIPs/hip-0499-nats.md) | nats | Informational | Service Catalog | Final |
-| [HIP-0500](./HIPs/hip-0500-neon-pageserver.md) | neon-pageserver | Informational | Service Catalog | Final |
-| [HIP-0501](./HIPs/hip-0501-neon-safekeeper.md) | neon-safekeeper | Informational | Service Catalog | Final |
-| [HIP-0502](./HIPs/hip-0502-sql.md) | sql | Informational | Service Catalog | Final |
-| [HIP-0503](./HIPs/hip-0503-vmsingle-victoria-metrics-single-server.md) | vmsingle-victoria-metrics-single-server | Informational | Service Catalog | Final |
 | [HIP-0504](./HIPs/hip-0504-unified-design-system.md) | Unified Cross-Platform Design System | Standards Track | Interface | Draft |
-| [HIP-0505](./HIPs/hip-0505-switchboard-agentescrow-zapapp.md) | AgentEscrow + ZAP Envelope as a Cloud Subsystem (Swi... | Standards Track | Service | Draft |
 | [HIP-0506](./HIPs/hip-0506-hanzo-studio-agentic-creative-runtime.md) | Hanzo Studio — Agentic Multi-Modal Creative Runtime | Standards Track | Application | Draft |
 | [HIP-0512](./HIPs/hip-0512-experiment-the-evidence-plane.md) | Experiment — The Evidence Plane | Standards Track | Infrastructure | Active |
 | [HIP-0516](./HIPs/hip-0516-translate.md) | Translate — One Endpoint, Two Tiers, Permissive Weights | Standards Track | Core | Draft |
 | [HIP-0517](./HIPs/hip-0517-branch-naming.md) | Branch Naming — main is the Trunk, Everywhere | Process | Meta | Draft |
-| [HIP-0900](./HIPs/hip-0900-hanzo-version-chronology.md) | Hanzo Version Chronology --- 1.0 / 2.0 / 3.0 / 4.0 | Informational | Meta | Final |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Final |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |

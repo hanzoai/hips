@@ -712,7 +712,7 @@ Developers can use the Hanzo IDE MCP tools alongside any existing editor. The to
 4. [HIP-0020: Blockchain Node](./hip-0020-blockchain-node-standard.md)
 5. [HIP-0022: Personalized AI](./hip-0022-personalized-ai-own-your-ai.md)
 6. [HIP-0026: Identity and Access Management](./hip-0026-identity-access-management-standard.md)
-7. [HIP-0300: Unified MCP Tools Architecture](./hip-0300-unified-mcp-tools-architecture.md)
+7. [HIP-0010: Model Context Protocol Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 8. [Model Context Protocol Specification](https://modelcontextprotocol.io)
 9. [Language Server Protocol Specification](https://microsoft.github.io/language-server-protocol/)
 10. [Tree-sitter Documentation](https://tree-sitter.github.io/tree-sitter/)

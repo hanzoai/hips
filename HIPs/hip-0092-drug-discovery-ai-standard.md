@@ -861,7 +861,7 @@ Docking and generation jobs from different organizations run in separate Kuberne
 
 1. [HIP-0032: Object Storage Standard](./hip-0032-object-storage-standard.md)
 2. [HIP-0057: ML Pipeline & Training Standard](./hip-0057-ml-pipeline-standard.md)
-3. [HIP-0070: Quantum Computing Standard](./hip-0070-quantum-computing-standard.md)
+3. [HIP-0070: Quantum Computing Standard](./hip-0070-quantum-computing-integration-standard.md)
 4. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md)
 5. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
 6. DiMasi, J.A., et al. "Innovation in the pharmaceutical industry: New estimates of R&D costs." *Journal of Health Economics* 47 (2016): 20-33.

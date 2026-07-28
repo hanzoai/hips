@@ -905,7 +905,7 @@ QPU execution is metered per circuit evaluation. Each organization has a QPU bud
 
 1. [HIP-0019: Tensor Operations Standard (Candle)](./hip-0019-tensor-operations-standard.md)
 2. [HIP-0057: ML Pipeline & Training Standard](./hip-0057-ml-pipeline-standard.md)
-3. [HIP-0070: Quantum Computing Standard](./hip-0070-quantum-computing-standard.md)
+3. [HIP-0070: Quantum Computing Standard](./hip-0070-quantum-computing-integration-standard.md)
 4. [PennyLane: Automatic Differentiation of Hybrid Quantum-Classical Computations](https://arxiv.org/abs/1811.04968)
 5. [Power of Data in Quantum Machine Learning](https://arxiv.org/abs/2011.01938)
 6. [Supervised Learning with Quantum-Enhanced Feature Spaces](https://arxiv.org/abs/1804.11326)
