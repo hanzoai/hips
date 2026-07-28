@@ -7,7 +7,7 @@ category: Interface
 status: Review
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0004, HIP-0010, HIP-0034, HIP-0052, HIP-0105, HIP-0116
+requires: HIP-0004, HIP-0010, HIP-0105, HIP-0116
 ---
 
 # HIP-0126: Integrations, Connectors & the Extension Runtime — One Registry, One Way

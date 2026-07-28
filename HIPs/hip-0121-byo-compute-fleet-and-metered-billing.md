@@ -6,7 +6,7 @@ type: Standards Track
 category: Core
 status: Review
 created: 2026-07-07
-requires: HIP-0026, HIP-0027, HIP-0053, HIP-0106, HIP-0111, HIP-0112
+requires: HIP-0026, HIP-0027, HIP-0106, HIP-0111
 ---
 
 # HIP-0121: BYO Compute Fleet & Metered Billing
@@ -491,12 +491,12 @@ everywhere.
 
 1. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) — the org boundary, JWT `owner` claim
 2. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS; per-org sealed credentials
-3. [HIP-0053: Visor Monitoring & Supervision Standard](./hip-0053-visor-monitoring-standard.md) — the machine/cluster control plane
+3. HIP-0053: Visor Monitoring & Supervision Standard — the machine/cluster control plane
 4. [HIP-0106: Unified Hanzo Cloud Binary](./hip-0106-unified-hanzo-cloud-binary.md) — `clients/fleet`, `clients/visor`, `clients/ml` in one binary
 5. [HIP-0107: Streaming Replication over VFS](./hip-0107-streaming-replication-over-vfs.md) — the HA substrate for the visor→cloud persistence port
 6. [HIP-0134: One Process, One Socket, One Identity](./hip-0134-one-process-one-socket-one-identity.md) — IAM establishes the org; plugins scope on it
 7. [HIP-0111: IAM Authentication Standard](./hip-0111-iam-authentication-standard.md) — the Bearer JWT contract
-8. [HIP-0112: Cloud Infrastructure Topology Standard](./hip-0112-cloud-infrastructure-topology-standard.md) — ingress → gateway → services, tenant scoping
+8. HIP-0112: Cloud Infrastructure Topology Standard — ingress → gateway → services, tenant scoping
 9. [HIP-0302: Encrypted SQLite Replication Standard](./hip-0302-encrypted-sqlite-replication-standard.md) — per-org data isolation for visor's Base store
 10. `cloud/clients/fleet/fleet.go`, `cloud/clients/visor/byo.go`, `cloud/resource_billing.go` — reference implementation
 11. `visor/service/{cloud_cost,cost_aws,cost_do,cost_azure,cost_gcp,metering}.go`, `visor/object/{cost_cursor,fleet_worker,billing_lease,meter_lease}.go`, `visor/chain/validator.go` — billing primitives

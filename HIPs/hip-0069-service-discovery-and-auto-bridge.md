@@ -3,7 +3,7 @@ hip: 0069
 title: Service Discovery & Auto-Bridge
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 author: Hanzo AI
 created: 2026-05-08
 requires: HIP-007 (ZAP), HIP-0010 (MCP Integration), HIP-0068 (Ingress)

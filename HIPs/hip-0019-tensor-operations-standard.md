@@ -901,7 +901,7 @@ fn test_quantized_load() {
 5. [HIP-0008: HMM Hanzo Market Maker](./hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md)
 6. [HIP-0010: Model Context Protocol](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 7. [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)
-8. [HIP-0032: Object Storage Standard](./hip-0032-object-storage-standard.md)
+8. HIP-0032: Object Storage Standard
 9. [HIP-0035: Image & Video Generation Standard](./hip-0035-image-video-generation-standard.md)
 10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
 11. [HuggingFace Candle](https://github.com/huggingface/candle) -- upstream repository

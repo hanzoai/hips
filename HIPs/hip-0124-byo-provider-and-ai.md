@@ -7,7 +7,7 @@ category: Platform
 status: Final
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0004, HIP-0018, HIP-0038, HIP-0121, HIP-0123
+requires: HIP-0004, HIP-0018, HIP-0121, HIP-0123
 ---
 
 # HIP-0124: Bring-Your-Own Provider & AI — Unified Dashboard and Usage

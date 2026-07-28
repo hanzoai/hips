@@ -4,7 +4,7 @@ title: Hanzo Edge — Edge AI Runtime Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-02-23
 updated: 2026-02-24
 requires: HIP-0019, HIP-0043
@@ -487,7 +487,7 @@ Edge binaries are signed with Hanzo's code signing keys. Model weights are distr
 8. [AWQ: Activation-aware Weight Quantization](https://arxiv.org/abs/2306.00978)
 9. [GPTQ: Accurate Post-Training Quantization](https://arxiv.org/abs/2210.17323)
 10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
-11. [HIP-0044: Hanzo Gateway Standard](./hip-0044-api-gateway-standard.md)
+11. HIP-0044: Hanzo Gateway Standard
 12. [HIP-0010: MCP Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 
 ## Copyright

@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-02-24
-requires: HIP-0026, HIP-0044
+requires: HIP-0026
 ---
 
 # HIP-68: Ingress Standard
@@ -577,6 +577,27 @@ In development mode, the Docker provider watches container labels for routing co
 
 Hanzo Ingress registers itself as the default IngressClass (`hanzo-ingress`). Any Ingress resource without an explicit `ingressClassName` is handled by Hanzo Ingress. Services that need a different ingress controller (e.g., for testing) can specify an alternate IngressClass.
 
+## Per-brand replication
+
+Each brand runs the identical topology with its own values:
+
+| Concern | Per-brand value |
+|---------|-----------------|
+| Identity origin | `iam.hanzo.ai` / `lux.id` / `zoo.id` / `id.bootno.de` / `pars.id` |
+| API host | `api.<brand-domain>` |
+| Apps | brand-scoped `<org>-<app>` client IDs (HIP-0111) |
+| Secrets | KMS project per brand |
+| Container registry | `ghcr.io/hanzoai/*` (Hanzo), `ghcr.io/luxfi/*` (Lux), `ghcr.io/zooai/*` (Zoo) |
+
+Nothing in the topology is brand-special-cased. A brand is a set of values
+plugged into the same shape.
+
+Ingress is configured with `ingress.kubernetes.io/*` annotations ONLY.
+A `traefik.*` annotation is silently ignored, which leaves a route believing
+it has a rate limit it does not have — the failure is invisible until load
+arrives.
+
+
 ## Relationship to Other HIPs
 
 | HIP | Relationship |
@@ -677,9 +698,9 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 4. [Kubernetes Ingress Specification](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 5. [Cloudflare SSL/TLS Modes](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/)
 6. [DigitalOcean Load Balancer](https://docs.digitalocean.com/products/networking/load-balancers/)
-7. [HIP-44: API Gateway Standard](./hip-0044-api-gateway-standard.md)
+7. HIP-44: API Gateway Standard
 8. [HIP-26: Identity & Access Management](./hip-0026-identity-access-management-standard.md)
-9. [HIP-31: Observability & Metrics](./hip-0031-observability-metrics-standard.md)
+9. HIP-31: Observability & Metrics
 10. [Ingress Repository](https://github.com/hanzoai/ingress)
 
 ## Copyright

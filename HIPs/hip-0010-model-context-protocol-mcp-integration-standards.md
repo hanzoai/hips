@@ -4,7 +4,7 @@ title: Model Context Protocol (MCP) Integration Standards
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2025-01-09
 requires: HIP-2, HIP-9
 ---

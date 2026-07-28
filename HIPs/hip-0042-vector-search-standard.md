@@ -4,7 +4,7 @@ title: Vector Search Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-02-23
 requires: HIP-0004
 ---
@@ -1148,7 +1148,7 @@ alongside vector similarity.
 3. [HIP-9: Agent SDK](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md)
 4. [HIP-10: MCP Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 5. [HIP-28: Key-Value Store Standard](./hip-0028-key-value-store-standard.md)
-6. [HIP-32: Object Storage Standard](./hip-0032-object-storage-standard.md)
+6. HIP-32: Object Storage Standard
 7. [Qdrant Documentation](https://qdrant.tech/documentation/)
 8. [HNSW Algorithm Paper](https://arxiv.org/abs/1603.09320) -- Malkov & Yashunin, 2018
 9. [Product Quantization for Nearest Neighbor Search](https://hal.inria.fr/inria-00514462v2/document) -- Jegou et al., 2011

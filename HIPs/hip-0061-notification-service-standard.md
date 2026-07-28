@@ -6,7 +6,7 @@ type: Standards Track
 category: Interface
 status: Draft
 created: 2026-02-23
-requires: HIP-0026, HIP-0017, HIP-0055
+requires: HIP-0026, HIP-0017
 ---
 
 # HIP-61: Notification & Messaging Service Standard
@@ -703,7 +703,7 @@ Outbound webhooks carry potentially sensitive notification data. Security measur
 4. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) -- User resolution, preferences, contact info
 5. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) -- Provider credential storage
 6. [HIP-0030: Event Streaming Standard](./hip-0030-event-streaming-standard.md) -- IAM user update events
-7. [HIP-0055: Message Queue Standard](./hip-0055-message-queue-standard.md) -- Delivery task distribution
+7. HIP-0055: Message Queue Standard -- Delivery task distribution
 8. [SendGrid API Documentation](https://docs.sendgrid.com/api-reference)
 9. [Twilio SMS API Documentation](https://www.twilio.com/docs/sms)
 10. [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)

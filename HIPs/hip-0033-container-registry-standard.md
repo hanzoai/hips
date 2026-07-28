@@ -4,9 +4,8 @@ title: Container Registry Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2025-01-15
-requires: HIP-0032
 ---
 
 # HIP-33: Container Registry Standard

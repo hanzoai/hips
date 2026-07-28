@@ -4,9 +4,9 @@ title: DNS Service Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-02-23
-requires: HIP-0014, HIP-0026, HIP-0027, HIP-0044
+requires: HIP-0014, HIP-0026, HIP-0027
 ---
 
 # HIP-49: DNS Service Standard
@@ -487,7 +487,7 @@ The DNS server enforces per-source rate limits to mitigate DNS amplification att
 9. [HIP-14: Application Deployment Standard](./hip-0014-application-deployment-standard.md)
 10. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md)
 11. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
-12. [HIP-44: API Gateway Standard](./hip-0044-api-gateway-standard.md)
+12. HIP-44: API Gateway Standard
 13. [Hanzo DNS Repository](https://github.com/hanzoai/dns)
 
 ## Copyright

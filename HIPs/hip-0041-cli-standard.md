@@ -584,7 +584,7 @@ The CLI follows semantic versioning and will remain at v1.x.x. Breaking changes 
 3. [HIP-10: Model Context Protocol Integration](./hip-0010-model-context-protocol-mcp-integration-standards.md) -- MCP plugin integration
 4. [HIP-14: Application Deployment Standard](./hip-0014-application-deployment-standard.md) -- `hanzo deploy` target platform
 5. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) -- OAuth authentication via hanzo.id
-6. [HIP-31: Observability & Metrics Standard](./hip-0031-observability-metrics-standard.md) -- `hanzo logs` data source
+6. HIP-31: Observability & Metrics Standard -- `hanzo logs` data source
 7. [HIP-33: Container Registry Standard](./hip-0033-container-registry-standard.md) -- Image push target for deployments
 8. [HIP-40: SDK Standard](./hip-0040-multi-language-sdk-standard.md) -- SDK conventions the CLI follows
 9. [OpenAI CLI](https://github.com/openai/openai-python) -- Command naming conventions

@@ -4,9 +4,9 @@ title: Serverless Functions (FaaS) Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-02-23
-requires: HIP-0030, HIP-0050, HIP-0055
+requires: HIP-0030, HIP-0050
 ---
 
 # HIP-60: Serverless Functions (FaaS) Standard
@@ -1029,8 +1029,8 @@ User function code is injected into these base images at deployment time. The co
 6. [HIP-30: Event Streaming Standard](./hip-0030-event-streaming-standard.md)
 7. [HIP-43: LLM Inference Engine Standard](./hip-0043-llm-inference-engine-standard.md)
 8. [HIP-50: Edge Computing Standard](./hip-0050-edge-computing-standard.md)
-9. [HIP-55: Message Queue Standard](./hip-0055-message-queue-standard.md)
-10. [HIP-57: ML Pipeline & Training Standard](./hip-0057-ml-pipeline-standard.md)
+9. HIP-55: Message Queue Standard
+10. HIP-57: ML Pipeline & Training Standard
 11. [OpenFaaS Architecture](https://docs.openfaas.com/architecture/stack/)
 12. [AWS Lambda Execution Environment](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
 13. [Hanzo Functions Repository](https://github.com/hanzoai/functions)

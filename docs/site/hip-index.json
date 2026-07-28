@@ -1,5 +1,5 @@
 {
-  "hip_count": 253,
+  "hip_count": 137,
   "hips": [
     {
       "number": 0,
@@ -117,7 +117,7 @@
       "title": "Model Context Protocol (MCP) Integration Standards",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Final",
       "type": "Standards Track",
       "category": "Interface",
       "created": "2025-01-09"
@@ -170,17 +170,6 @@
       "number": 15,
       "file": "hip-0015-computer-control-standard.md",
       "title": "Computer Control Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Interface",
-      "created": "2025-01-09"
-    },
-    {
-      "number": 16,
-      "file": "hip-0016-document-processing-standard.md",
-      "title": "Document Processing Standard",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Draft",
@@ -271,7 +260,7 @@
       "title": "Hanzo Sovereign L1 Chain Architecture",
       "description": "",
       "author": "Hanzo AI",
-      "status": "Final",
+      "status": "Draft",
       "type": "Standards Track",
       "category": "Core",
       "created": "2025-12-27"
@@ -293,7 +282,7 @@
       "title": "Identity & Access Management Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2025-01-15"
@@ -304,7 +293,7 @@
       "title": "Secrets Management Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Final",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2025-01-15"
@@ -315,7 +304,7 @@
       "title": "Key-Value Store Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2025-01-15"
@@ -326,7 +315,7 @@
       "title": "Relational Database Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2025-01-15"
@@ -343,47 +332,14 @@
       "created": "2025-01-15"
     },
     {
-      "number": 31,
-      "file": "hip-0031-observability-metrics-standard.md",
-      "title": "Observability & Metrics Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2025-01-15"
-    },
-    {
-      "number": 32,
-      "file": "hip-0032-object-storage-standard.md",
-      "title": "Object Storage Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2025-01-15"
-    },
-    {
       "number": 33,
       "file": "hip-0033-container-registry-standard.md",
       "title": "Container Registry Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Final",
       "type": "Standards Track",
       "category": "Infrastructure",
-      "created": "2025-01-15"
-    },
-    {
-      "number": 34,
-      "file": "hip-0034-automation-platform-standard.md",
-      "title": "Automation Platform Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Interface",
       "created": "2025-01-15"
     },
     {
@@ -417,17 +373,6 @@
       "status": "Draft",
       "type": "Standards Track",
       "category": "Core",
-      "created": "2025-01-15"
-    },
-    {
-      "number": 38,
-      "file": "hip-0038-admin-console-standard.md",
-      "title": "Admin Console Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Interface",
       "created": "2025-01-15"
     },
     {
@@ -469,7 +414,7 @@
       "title": "Vector Search Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -483,17 +428,6 @@
       "status": "Active",
       "type": "Standards Track",
       "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 44,
-      "file": "hip-0044-api-gateway-standard.md",
-      "title": "Hanzo Gateway Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Active",
-      "type": "Standards Track",
-      "category": "Infrastructure",
       "created": "2026-02-23"
     },
     {
@@ -524,7 +458,7 @@
       "title": "Analytics Datastore Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -546,7 +480,7 @@
       "title": "DNS Service Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -555,105 +489,6 @@
       "number": 50,
       "file": "hip-0050-edge-computing-standard.md",
       "title": "Hanzo Edge — Edge AI Runtime Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Active",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 51,
-      "file": "hip-0051-guard-security-standard.md",
-      "title": "Guard Security Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Security",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 52,
-      "file": "hip-0052-nexus-integration-hub-standard.md",
-      "title": "Nexus Integration Hub Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Interface",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 53,
-      "file": "hip-0053-visor-monitoring-standard.md",
-      "title": "Visor Monitoring & Supervision Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 54,
-      "file": "hip-0054-zero-trust-architecture-standard.md",
-      "title": "Zero Trust Architecture Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Security",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 55,
-      "file": "hip-0055-message-queue-standard.md",
-      "title": "Message Queue Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 56,
-      "file": "hip-0056-pubsub-standard.md",
-      "title": "PubSub Real-Time Messaging Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Interface",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 57,
-      "file": "hip-0057-ml-pipeline-standard.md",
-      "title": "ML Pipeline & Training Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 58,
-      "file": "hip-0058-unified-database-standard.md",
-      "title": "Unified Database Abstraction Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 59,
-      "file": "hip-0059-timeseries-database-standard.md",
-      "title": "Timeseries Database Standard",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Draft",
@@ -667,7 +502,7 @@
       "title": "Serverless Functions (FaaS) Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -681,17 +516,6 @@
       "status": "Draft",
       "type": "Standards Track",
       "category": "Interface",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 62,
-      "file": "hip-0062-scheduler-standard.md",
-      "title": "Cron & Job Scheduler Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
       "created": "2026-02-23"
     },
     {
@@ -711,7 +535,7 @@
       "title": "Log Aggregation & Search Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Draft",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-02-23"
@@ -725,28 +549,6 @@
       "status": "Draft",
       "type": "Standards Track",
       "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 66,
-      "file": "hip-0066-data-governance-standard.md",
-      "title": "Data Governance & Lineage Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 67,
-      "file": "hip-0067-federated-learning-standard.md",
-      "title": "Federated Learning Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
       "created": "2026-02-23"
     },
     {
@@ -766,43 +568,10 @@
       "title": "Service Discovery & Auto-Bridge",
       "description": "",
       "author": "Hanzo AI",
-      "status": "Draft",
+      "status": "Final",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-05-08"
-    },
-    {
-      "number": 70,
-      "file": "hip-0070-quantum-computing-integration-standard.md",
-      "title": "Quantum Computing Integration Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 71,
-      "file": "hip-0071-quantum-key-distribution-standard.md",
-      "title": "Quantum Key Distribution Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Security",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 72,
-      "file": "hip-0072-quantum-machine-learning-standard.md",
-      "title": "Quantum Machine Learning Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
     },
     {
       "number": 73,
@@ -824,28 +593,6 @@
       "status": "Draft",
       "type": "Standards Track",
       "category": "Infrastructure",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 75,
-      "file": "hip-0075-oss-contributor-payout-standard.md",
-      "title": "Open Source Contributor Tracking & Payout Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Review",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 76,
-      "file": "hip-0076-open-ai-protocol-standard.md",
-      "title": "Open AI Protocol & Decentralized Inference Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
       "created": "2026-02-23"
     },
     {
@@ -882,50 +629,6 @@
       "created": ""
     },
     {
-      "number": 80,
-      "file": "hip-0080-robotics-integration-standard.md",
-      "title": "Robotics & Embodied AI Integration Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 81,
-      "file": "hip-0081-computer-vision-pipeline-standard.md",
-      "title": "Computer Vision Pipeline Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 82,
-      "file": "hip-0082-digital-twin-simulation-standard.md",
-      "title": "Digital Twin & Simulation Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 83,
-      "file": "hip-0083-sensor-fusion-slam-standard.md",
-      "title": "Sensor Fusion & SLAM Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
       "number": 84,
       "file": "hip-0084-pulsar-m-dkg.md",
       "title": "Pulsar-M — Threshold ML-DSA DKG & Signing",
@@ -941,8 +644,8 @@
       "file": "hip-0085-wallet-pq-account-type.md",
       "title": "Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID)",
       "description": "",
-      "author": "TBD",
-      "status": "Proposed",
+      "author": "Hanzo AI",
+      "status": "Implemented",
       "type": "Standards Track",
       "category": "Cryptography",
       "created": "2026-05-11"
@@ -952,8 +655,8 @@
       "file": "hip-0086-tx-auth-envelope.md",
       "title": "TxAuthEnvelope (typed PQ transaction signing)",
       "description": "",
-      "author": "TBD",
-      "status": "Proposed",
+      "author": "Hanzo AI",
+      "status": "Implemented",
       "type": "Standards Track",
       "category": "Cryptography",
       "created": "2026-05-11"
@@ -963,8 +666,8 @@
       "file": "hip-0087-pq-permit.md",
       "title": "PQ Permit (replaces EIP-2612)",
       "description": "",
-      "author": "TBD",
-      "status": "Proposed",
+      "author": "Hanzo AI",
+      "status": "Implemented",
       "type": "Standards Track",
       "category": "Cryptography",
       "created": "2026-05-11"
@@ -974,8 +677,8 @@
       "file": "hip-0088-session-kem.md",
       "title": "Session KEM (ML-KEM-768/1024 for P2P)",
       "description": "",
-      "author": "TBD",
-      "status": "Proposed",
+      "author": "Hanzo AI",
+      "status": "Implemented",
       "type": "Standards Track",
       "category": "Cryptography",
       "created": "2026-05-11"
@@ -985,66 +688,11 @@
       "file": "hip-0089-drbg-randomness-beacon.md",
       "title": "DRBG / Randomness Beacon (SP 800-90A)",
       "description": "",
-      "author": "TBD",
+      "author": "Hanzo AI",
       "status": "Proposed",
       "type": "Standards Track",
       "category": "Cryptography",
       "created": "2026-05-11"
-    },
-    {
-      "number": 90,
-      "file": "hip-0090-brain-computer-interface-standard.md",
-      "title": "Brain-Computer Interface (BCI) Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 91,
-      "file": "hip-0091-genomics-pipeline-standard.md",
-      "title": "Genomics & Bioinformatics Pipeline Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 92,
-      "file": "hip-0092-drug-discovery-ai-standard.md",
-      "title": "Drug Discovery AI Pipeline Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 93,
-      "file": "hip-0093-synthetic-biology-standard.md",
-      "title": "Synthetic Biology & DNA Data Storage Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
-    },
-    {
-      "number": 94,
-      "file": "hip-0094-medical-ai-standard.md",
-      "title": "Medical AI & Clinical Decision Support Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Core",
-      "created": "2026-02-23"
     },
     {
       "number": 95,
@@ -1084,7 +732,7 @@
       "file": "hip-0098-governance-upgrade-keys.md",
       "title": "Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold roots)",
       "description": "",
-      "author": "TBD",
+      "author": "Hanzo AI",
       "status": "Proposed",
       "type": "Standards Track",
       "category": "Cryptography",
@@ -1117,7 +765,7 @@
       "file": "hip-0103-bridge-pq-only-profile.md",
       "title": "Bridge PQ-Only Profile",
       "description": "",
-      "author": "TBD",
+      "author": "Hanzo AI",
       "status": "Proposed",
       "type": "Standards Track",
       "category": "Infrastructure",
@@ -1128,7 +776,7 @@
       "file": "hip-0104-contract-auth-via-zchain-proof.md",
       "title": "Contract Auth via Z-Chain Proof",
       "description": "",
-      "author": "TBD",
+      "author": "Hanzo AI",
       "status": "Proposed",
       "type": "Standards Track",
       "category": "Infrastructure",
@@ -1140,7 +788,7 @@
       "title": "In-Process Extension Runtime Standard",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Review",
+      "status": "Final",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-05-19"
@@ -1190,31 +838,9 @@
       "created": "2026-05-18"
     },
     {
-      "number": 110,
-      "file": "hip-0110-gateway-as-edge-process.md",
-      "title": "Gateway as Edge Process",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": ""
-    },
-    {
       "number": 111,
       "file": "hip-0111-iam-authentication-standard.md",
       "title": "Hanzo IAM Authentication Standard",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Active",
-      "type": "Standards Track",
-      "category": "Infrastructure",
-      "created": "2026-06-16"
-    },
-    {
-      "number": 112,
-      "file": "hip-0112-cloud-infrastructure-topology-standard.md",
-      "title": "Cloud Infrastructure Topology Standard",
       "description": "",
       "author": "Hanzo AI Team",
       "status": "Active",
@@ -1388,6 +1014,72 @@
       "created": "2026-07-08"
     },
     {
+      "number": 128,
+      "file": "hip-0128-resource-surface-standard.md",
+      "title": "Resource Surface Standard — Generated REST over ZAP",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-07-27"
+    },
+    {
+      "number": 129,
+      "file": "hip-0129-eval-the-judgment-plane.md",
+      "title": "Eval — The Judgment Plane",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-07-27"
+    },
+    {
+      "number": 130,
+      "file": "hip-0130-open-core-split.md",
+      "title": "Open-Core Split — the Tenancy Line, the Composition Root, and Lazy Subsystems",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-07-27"
+    },
+    {
+      "number": 132,
+      "file": "hip-0132-one-telemetry-plane.md",
+      "title": "One Telemetry Plane — One Door, One Schema, Many Lenses",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Active",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-07-27"
+    },
+    {
+      "number": 133,
+      "file": "hip-0133-entity-groups.md",
+      "title": "Entity Groups — Placement, Durability, Splitting and Promotion",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-07-28"
+    },
+    {
+      "number": 134,
+      "file": "hip-0134-one-process-one-socket-one-identity.md",
+      "title": "One Process, One Socket, One Identity",
+      "description": "",
+      "author": "Hanzo AI",
+      "status": "Final",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-07-28"
+    },
+    {
       "number": 200,
       "file": "hip-0200-responsible-ai-principles.md",
       "title": "Responsible AI Principles and Commitments",
@@ -1498,50 +1190,6 @@
       "created": "2025-12-17"
     },
     {
-      "number": 280,
-      "file": "hip-0280-ai-for-sustainability.md",
-      "title": "AI for Sustainability",
-      "description": "Framework for applying Hanzo AI capabilities to sustainability challenges.",
-      "author": "Hanzo AI Team (@hanzoai)",
-      "status": "Draft",
-      "type": "Meta",
-      "category": "",
-      "created": "2025-12-17"
-    },
-    {
-      "number": 290,
-      "file": "hip-0290-evidence-locker-index.md",
-      "title": "Evidence Locker Index",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Draft",
-      "type": "Meta",
-      "category": "",
-      "created": "2025-12-16"
-    },
-    {
-      "number": 295,
-      "file": "hip-0295-hanzo-ai-impact-thesis.md",
-      "title": "Hanzo AI Impact Thesis",
-      "description": "Unified impact thesis for Hanzo AI and its role in the Lux-Hanzo-Zoo ecosystem.",
-      "author": "Hanzo AI Team (@hanzoai)",
-      "status": "Draft",
-      "type": "Meta",
-      "category": "",
-      "created": "2025-12-17"
-    },
-    {
-      "number": 300,
-      "file": "hip-0300-unified-mcp-tools-architecture.md",
-      "title": "Unified MCP Tools Architecture",
-      "description": "",
-      "author": "Hanzo AI Team",
-      "status": "Review",
-      "type": "Standards Track",
-      "category": "Interface",
-      "created": "2025-01-21"
-    },
-    {
       "number": 301,
       "file": "hip-0301-python-sdk-agent-runtime-protocols.md",
       "title": "Agent Runtime Protocols & Cross-Platform Parity",
@@ -1572,17 +1220,6 @@
       "status": "Final",
       "type": "Meta",
       "category": "Governance",
-      "created": "2026-05-29"
-    },
-    {
-      "number": 304,
-      "file": "hip-0304-onchain-federation-registry.md",
-      "title": "Hanzo adopts LP-0011: Onchain Federation Registry",
-      "description": "",
-      "author": "Zach Kelling (zach@hanzo.ai)",
-      "status": "Draft",
-      "type": "Standards Track",
-      "category": "Interface",
       "created": "2026-05-29"
     },
     {
@@ -1762,39 +1399,6 @@
       "created": "2026-05-19"
     },
     {
-      "number": 415,
-      "file": "hip-0415-chain-crd.md",
-      "title": "Chain CRD",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Standards Track",
-      "category": "Operator",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 416,
-      "file": "hip-0416-validator-crd.md",
-      "title": "Validator CRD",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Standards Track",
-      "category": "Operator",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 417,
-      "file": "hip-0417-subnet-crd.md",
-      "title": "Subnet CRD",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Standards Track",
-      "category": "Operator",
-      "created": "2026-05-19"
-    },
-    {
       "number": 418,
       "file": "hip-0418-indexer-crd.md",
       "title": "Indexer CRD",
@@ -1817,930 +1421,6 @@
       "created": "2026-05-19"
     },
     {
-      "number": 420,
-      "file": "hip-0420-analytics.md",
-      "title": "analytics",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 421,
-      "file": "hip-0421-auto.md",
-      "title": "auto",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 422,
-      "file": "hip-0422-billing.md",
-      "title": "billing",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 423,
-      "file": "hip-0423-bot-docs.md",
-      "title": "bot-docs",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 424,
-      "file": "hip-0424-bot-gateway.md",
-      "title": "bot-gateway",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 425,
-      "file": "hip-0425-bot-hub.md",
-      "title": "bot-hub",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 426,
-      "file": "hip-0426-captable.md",
-      "title": "captable",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 427,
-      "file": "hip-0427-cdn.md",
-      "title": "cdn",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 428,
-      "file": "hip-0428-chat.md",
-      "title": "chat",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 429,
-      "file": "hip-0429-chat-meilisearch.md",
-      "title": "chat-meilisearch",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 430,
-      "file": "hip-0430-cloud.md",
-      "title": "cloud",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 431,
-      "file": "hip-0431-cloud-agent.md",
-      "title": "cloud-agent",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 432,
-      "file": "hip-0432-cloud-api.md",
-      "title": "cloud-api",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 433,
-      "file": "hip-0433-commerce.md",
-      "title": "commerce",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 434,
-      "file": "hip-0434-commerce-admin.md",
-      "title": "commerce-admin",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 435,
-      "file": "hip-0435-commerce-site.md",
-      "title": "commerce-site",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 436,
-      "file": "hip-0436-console.md",
-      "title": "console",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 437,
-      "file": "hip-0437-console-worker.md",
-      "title": "console-worker",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 438,
-      "file": "hip-0438-crawl.md",
-      "title": "crawl",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 439,
-      "file": "hip-0439-dataroom.md",
-      "title": "dataroom",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 440,
-      "file": "hip-0440-dns.md",
-      "title": "dns",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 441,
-      "file": "hip-0441-flow.md",
-      "title": "flow",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 442,
-      "file": "hip-0442-flow-site.md",
-      "title": "flow-site",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 443,
-      "file": "hip-0443-gateway.md",
-      "title": "gateway",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 444,
-      "file": "hip-0444-grafana.md",
-      "title": "grafana",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 445,
-      "file": "hip-0445-hanzo-app.md",
-      "title": "hanzo-app",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 446,
-      "file": "hip-0446-hanzo-bot-site.md",
-      "title": "hanzo-bot-site",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 447,
-      "file": "hip-0447-hanzo-idv.md",
-      "title": "hanzo-idv",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 448,
-      "file": "hip-0448-hanzo-ingress.md",
-      "title": "hanzo-ingress",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 449,
-      "file": "hip-0449-hanzo-login.md",
-      "title": "hanzo-login",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 450,
-      "file": "hip-0450-hanzo-playground.md",
-      "title": "hanzo-playground",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 451,
-      "file": "hip-0451-iam.md",
-      "title": "iam",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 452,
-      "file": "hip-0452-insights-capture.md",
-      "title": "insights-capture",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 453,
-      "file": "hip-0453-insights-kafka.md",
-      "title": "insights-kafka",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 454,
-      "file": "hip-0454-insights-kv.md",
-      "title": "insights-kv",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 455,
-      "file": "hip-0455-insights-plugin.md",
-      "title": "insights-plugin",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 456,
-      "file": "hip-0456-insights-sql.md",
-      "title": "insights-sql",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 457,
-      "file": "hip-0457-insights-web.md",
-      "title": "insights-web",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 458,
-      "file": "hip-0458-insights-worker.md",
-      "title": "insights-worker",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 459,
-      "file": "hip-0459-kms.md",
-      "title": "kms",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 460,
-      "file": "hip-0460-livekit.md",
-      "title": "livekit",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 461,
-      "file": "hip-0461-models.md",
-      "title": "models",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 462,
-      "file": "hip-0462-monitor.md",
-      "title": "monitor",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 463,
-      "file": "hip-0463-nats-box.md",
-      "title": "nats-box",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 464,
-      "file": "hip-0464-neon-compute.md",
-      "title": "neon-compute",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 465,
-      "file": "hip-0465-neon-storage-broker.md",
-      "title": "neon-storage-broker",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 466,
-      "file": "hip-0466-o11y.md",
-      "title": "o11y",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 467,
-      "file": "hip-0467-openfaas-controller.md",
-      "title": "openfaas-controller",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 468,
-      "file": "hip-0468-openfaas-gateway.md",
-      "title": "openfaas-gateway",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 469,
-      "file": "hip-0469-openfaas-queue-worker.md",
-      "title": "openfaas-queue-worker",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 470,
-      "file": "hip-0470-operative.md",
-      "title": "operative",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 471,
-      "file": "hip-0471-otel-collector.md",
-      "title": "otel-collector",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 472,
-      "file": "hip-0472-paas.md",
-      "title": "paas",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 473,
-      "file": "hip-0473-pricing.md",
-      "title": "pricing",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 474,
-      "file": "hip-0474-rag-api.md",
-      "title": "rag-api",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 475,
-      "file": "hip-0475-registry.md",
-      "title": "registry",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 476,
-      "file": "hip-0476-s3.md",
-      "title": "s3",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 477,
-      "file": "hip-0477-s3-demo.md",
-      "title": "s3-demo",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 478,
-      "file": "hip-0478-search.md",
-      "title": "search",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 479,
-      "file": "hip-0479-sentry-cron.md",
-      "title": "sentry-cron",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 480,
-      "file": "hip-0480-sentry-web.md",
-      "title": "sentry-web",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 481,
-      "file": "hip-0481-sentry-worker.md",
-      "title": "sentry-worker",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 482,
-      "file": "hip-0482-sign.md",
-      "title": "sign",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 483,
-      "file": "hip-0483-status.md",
-      "title": "status",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 484,
-      "file": "hip-0484-status-lux.md",
-      "title": "status-lux",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 485,
-      "file": "hip-0485-stream.md",
-      "title": "stream",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 486,
-      "file": "hip-0486-studio.md",
-      "title": "studio",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 487,
-      "file": "hip-0487-sync.md",
-      "title": "sync",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 488,
-      "file": "hip-0488-tasks.md",
-      "title": "tasks",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 489,
-      "file": "hip-0489-vector.md",
-      "title": "vector",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 490,
-      "file": "hip-0490-visor.md",
-      "title": "visor",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 491,
-      "file": "hip-0491-vm.md",
-      "title": "vm",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 492,
-      "file": "hip-0492-vmd.md",
-      "title": "vmd",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 493,
-      "file": "hip-0493-webhook.md",
-      "title": "webhook",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 494,
-      "file": "hip-0494-world.md",
-      "title": "world",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 495,
-      "file": "hip-0495-world-gw.md",
-      "title": "world-gw",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 496,
-      "file": "hip-0496-datastore.md",
-      "title": "datastore",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 497,
-      "file": "hip-0497-hanzo-mpc.md",
-      "title": "hanzo-mpc",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 498,
-      "file": "hip-0498-kv.md",
-      "title": "kv",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 499,
-      "file": "hip-0499-nats.md",
-      "title": "nats",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 500,
-      "file": "hip-0500-neon-pageserver.md",
-      "title": "neon-pageserver",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 501,
-      "file": "hip-0501-neon-safekeeper.md",
-      "title": "neon-safekeeper",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 502,
-      "file": "hip-0502-sql.md",
-      "title": "sql",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
-      "number": 503,
-      "file": "hip-0503-vmsingle-victoria-metrics-single-server.md",
-      "title": "vmsingle-victoria-metrics-single-server",
-      "description": "",
-      "author": "Hanzo Platform Team",
-      "status": "Final",
-      "type": "Informational",
-      "category": "Service Catalog",
-      "created": "2026-05-19"
-    },
-    {
       "number": 504,
       "file": "hip-0504-unified-design-system.md",
       "title": "Unified Cross-Platform Design System",
@@ -2752,26 +1432,48 @@
       "created": "2026-06-24"
     },
     {
-      "number": 505,
-      "file": "hip-0505-switchboard-agentescrow-zapapp.md",
-      "title": "AgentEscrow + ZAP Envelope as a Cloud Subsystem (Switchboard)",
+      "number": 506,
+      "file": "hip-0506-hanzo-studio-agentic-creative-runtime.md",
+      "title": "Hanzo Studio — Agentic Multi-Modal Creative Runtime",
       "description": "",
-      "author": "Abhishek Krishna <invokerkrishna@gmail.com>",
+      "author": "Hanzo AI Team",
       "status": "Draft",
       "type": "Standards Track",
-      "category": "Service",
-      "created": "2026-06-10"
+      "category": "Application",
+      "created": "2026-07-15"
     },
     {
-      "number": 900,
-      "file": "hip-0900-hanzo-version-chronology.md",
-      "title": "Hanzo Version Chronology --- 1.0 / 2.0 / 3.0 / 4.0",
-      "description": "Canonical version timeline for the Hanzo Network from initial AI compute infrastructure through the GPU-native 4.0 activation on 2026-02-14.",
-      "author": "Zach Kelling, Antje Worring",
+      "number": 512,
+      "file": "hip-0512-experiment-the-evidence-plane.md",
+      "title": "Experiment — The Evidence Plane",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Active",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-07-27"
+    },
+    {
+      "number": 516,
+      "file": "hip-0516-translate.md",
+      "title": "Translate — One Endpoint, Two Tiers, Permissive Weights",
+      "description": "",
+      "author": "Hanzo AI Team",
       "status": "Final",
-      "type": "Informational",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-07-26"
+    },
+    {
+      "number": 517,
+      "file": "hip-0517-branch-naming.md",
+      "title": "Branch Naming — main is the Trunk, Everywhere",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Active",
+      "type": "Process",
       "category": "Meta",
-      "created": "2026-02-14"
+      "created": "2026-07-27"
     },
     {
       "number": 901,
@@ -2783,6 +1485,28 @@
       "type": "Standards Track",
       "category": "Core",
       "created": "2026-06-23"
+    },
+    {
+      "number": 902,
+      "file": "hip-0902-proof-of-code.md",
+      "title": "Proof of Code — Consensus over Git Refs",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Core",
+      "created": "2026-07-26"
+    },
+    {
+      "number": 903,
+      "file": "hip-0903-agentic-company.md",
+      "title": "The Agentic Company — Autonomous Firms on Hanzo",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Informational",
+      "category": "Meta",
+      "created": "2026-07-26"
     }
   ]
 }

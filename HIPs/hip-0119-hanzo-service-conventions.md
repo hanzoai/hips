@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-06-25
-requires: HIP-0027, HIP-0031, HIP-0044, HIP-0068, HIP-0111, HIP-0112, HIP-0400
+requires: HIP-0027, HIP-0068, HIP-0111, HIP-0400
 ---
 
 # HIP-119: Hanzo Service Conventions

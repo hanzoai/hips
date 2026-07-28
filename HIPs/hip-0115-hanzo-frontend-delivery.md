@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-06-25
-requires: HIP-0036, HIP-0068, HIP-0112, HIP-0119, HIP-0504
+requires: HIP-0036, HIP-0068, HIP-0119, HIP-0504
 ---
 
 # HIP-115: Hanzo Frontend Delivery

@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-02-23
-requires: HIP-0027, HIP-0028, HIP-0029, HIP-0032, HIP-0047
+requires: HIP-0027, HIP-0028, HIP-0029, HIP-0047
 ---
 
 # HIP-65: Backup & Disaster Recovery Standard
@@ -564,7 +564,7 @@ cloud provider experiences a global outage.
 1. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
 2. [HIP-0028: Key-Value Store Standard](./hip-0028-key-value-store-standard.md)
 3. [HIP-0029: Relational Database Standard](./hip-0029-relational-database-standard.md)
-4. [HIP-0032: Object Storage Standard](./hip-0032-object-storage-standard.md)
+4. HIP-0032: Object Storage Standard
 5. [HIP-0047: Analytics Datastore Standard](./hip-0047-analytics-datastore-standard.md)
 6. [Velero Documentation](https://velero.io/docs/)
 7. [PostgreSQL PITR](https://www.postgresql.org/docs/16/continuous-archiving.html)

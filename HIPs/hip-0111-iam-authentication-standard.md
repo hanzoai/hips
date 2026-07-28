@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-06-16
-requires: HIP-0026, HIP-0044, HIP-0068
+requires: HIP-0026, HIP-0068
 ---
 
 # HIP-111: Hanzo IAM Authentication Standard
@@ -347,10 +347,10 @@ the prohibition list looking satisfied.
 ## References
 
 1. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) — the IAM server
-2. [HIP-0044: Hanzo Gateway Standard](./hip-0044-api-gateway-standard.md) — JWT validation + `X-Org-Id` propagation at the gateway
+2. HIP-0044: Hanzo Gateway Standard — JWT validation + `X-Org-Id` propagation at the gateway
 3. [HIP-0068: Ingress Standard](./hip-0068-ingress-standard.md) — edge TLS and routing
 4. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS-managed client secrets
-5. [HIP-0112: Cloud Infrastructure Topology Standard](./hip-0112-cloud-infrastructure-topology-standard.md) — how IAM fits the estate
+5. HIP-0112: Cloud Infrastructure Topology Standard — how IAM fits the estate
 6. [`@hanzo/iam`](https://github.com/hanzo-js/iam) — the SDK; `src/paths.ts` is the canonical path source
 7. Standards this surface implements (the wire contract, in full):
    - [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) OAuth 2.0 — authorize, token (authorization_code / refresh_token / client_credentials / password grants)

@@ -708,7 +708,7 @@ func TestHealthEndpoint(t *testing.T) {
 1. [HIP-0005: Post-Quantum Security for AI Infrastructure](./hip-0005-post-quantum-security-for-ai-infrastructure.md)
 2. [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)
 3. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
-4. [HIP-0053: Visor Monitoring Standard](./hip-0053-visor-monitoring-standard.md)
+4. HIP-0053: Visor Monitoring Standard
 5. [NIST SP 800-90B: Recommendation for the Entropy Sources Used for Random Bit Generation](https://csrc.nist.gov/publications/detail/sp/800-90b/final)
 6. [NIST SP 800-90C: Recommendation for Random Bit Generator (RBG) Constructions (Draft)](https://csrc.nist.gov/publications/detail/sp/800-90c/draft)
 7. [Bell, J.S. "On the Einstein Podolsky Rosen Paradox" (1964)](https://doi.org/10.1103/PhysicsPhysiqueFizika.1.195)

@@ -6,7 +6,7 @@ type: Standards Track
 category: Interface
 status: Draft
 created: 2026-02-23
-requires: HIP-0017, HIP-0044
+requires: HIP-0017
 ---
 
 # HIP-63: Feature Flags & Experimentation Standard
@@ -914,7 +914,7 @@ The `flags-migrate` tool handles the schema translation and verifies evaluation 
 
 1. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 2. [HIP-17: Analytics Event Standard](./hip-0017-analytics-event-standard.md)
-3. [HIP-44: API Gateway Standard](./hip-0044-api-gateway-standard.md)
+3. HIP-44: API Gateway Standard
 4. [OpenFeature Specification](https://openfeature.dev/specification/)
 5. [OpenFeature Go SDK](https://github.com/open-feature/go-sdk)
 6. [Thompson Sampling for Multi-Armed Bandits](https://arxiv.org/abs/1707.02038)

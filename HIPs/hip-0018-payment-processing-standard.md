@@ -657,7 +657,7 @@ When a user's balance reaches zero during an API request:
 5. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - Balance storage and transaction ledger
 6. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for PSP keys and secrets
 7. [HIP-30: Event Streaming Standard](./hip-0030-event-streaming-standard.md) - Billing event distribution
-8. [HIP-32: Object Storage Standard](./hip-0032-object-storage-standard.md) - Invoice PDF storage
+8. HIP-32: Object Storage Standard - Invoice PDF storage
 9. [HIP-101: Hanzo-Lux Bridge Protocol](./hip-0101-hanzo-lux-bridge-protocol-integration.md) - Cross-chain payment acceptance
 10. [Hanzo Pay (native PSP) — `github.com/lux-pay`](https://github.com/lux-pay) (white-labeled `lux-pay` on Lux)
 11. [Hanzo Vault — PCI CDE / card tokenization](https://github.com/hanzoai/vault)

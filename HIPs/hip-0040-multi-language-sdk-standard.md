@@ -685,7 +685,7 @@ Through the LLM Gateway (HIP-4), the SDKs provide access to 100+ AI providers in
 2. [OpenAPI Specification](https://spec.openapis.org/oas/v3.1.0) - API description format
 3. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Unified AI provider interface (backend for all SDK requests)
 4. [HIP-26: Identity & Access Management](./hip-0026-identity-access-management-standard.md) - OAuth token validation for SDK authentication
-5. [HIP-38: Admin Console](./hip-0038-admin-console-standard.md) - Key management and budget UI
+5. HIP-38: Admin Console - Key management and budget UI
 6. [OpenAI API Reference](https://platform.openai.com/docs/api-reference) - Wire-compatible API specification
 7. [Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html) - Streaming protocol specification
 8. [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) - Bearer Token Usage (authentication scheme)

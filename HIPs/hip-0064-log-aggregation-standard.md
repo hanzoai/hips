@@ -4,9 +4,9 @@ title: Log Aggregation & Search Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-02-23
-requires: HIP-0031, HIP-0047
+requires: HIP-0047
 ---
 
 # HIP-64: Log Aggregation & Search Standard
@@ -996,7 +996,7 @@ migration path is:
 
 ## References
 
-1. [HIP-0031: Observability & Metrics Standard](./hip-0031-observability-metrics-standard.md) -- Metrics, traces, and Zap sidecar
+1. HIP-0031: Observability & Metrics Standard -- Metrics, traces, and Zap sidecar
 2. [HIP-0047: Analytics Datastore Standard](./hip-0047-analytics-datastore-standard.md) -- ClickHouse cluster and schema conventions
 3. [HIP-0017: Analytics Event Standard](./hip-0017-analytics-event-standard.md) -- Product analytics events (Insights)
 4. [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) -- LLM request logging source

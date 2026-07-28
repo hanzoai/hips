@@ -4,7 +4,7 @@ title: Key-Value Store Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2025-01-15
 ---
 

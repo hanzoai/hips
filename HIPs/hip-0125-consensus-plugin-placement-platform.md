@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-07-07
-requires: HIP-0026, HIP-0027, HIP-0105, HIP-0106, HIP-0107, HIP-0112, HIP-0114, HIP-0302
+requires: HIP-0026, HIP-0027, HIP-0105, HIP-0106, HIP-0107, HIP-0114, HIP-0302
 ---
 
 # HIP-125: Consensus-Backed Plugin-Placement Platform

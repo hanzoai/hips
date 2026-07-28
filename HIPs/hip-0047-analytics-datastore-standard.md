@@ -4,7 +4,7 @@ title: Analytics Datastore Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Active
 created: 2026-02-23
 requires: HIP-0017, HIP-0029
 ---

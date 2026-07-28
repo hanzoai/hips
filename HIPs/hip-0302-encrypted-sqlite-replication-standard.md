@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Final
 created: 2026-04-09
-requires: HIP-0027, HIP-0032, HIP-0065
+requires: HIP-0027, HIP-0065
 ---
 
 # HIP-302: Hanzo Replicate --- Encrypted SQLite + ZapDB Durability for Base Services
