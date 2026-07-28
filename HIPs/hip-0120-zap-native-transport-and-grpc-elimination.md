@@ -386,6 +386,35 @@ enforceable: **zero first-party gRPC imports.**
 - `github.com/zap-proto/pb2zap` — the syntactic `go/ast` protobuf→ZAP migration codemod.
 - OpenTelemetry OTLP specification — the span payload format ZAP carries unchanged (transport-substituted, not payload-modified).
 
+### 6. Same machine is a unix socket, not a network hop
+
+Cloud is one binary running plugins. When two of them sit on the same machine — which is
+the normal case, not the exception — a TCP hop to localhost is pure overhead: a syscall
+path, a checksum, a port, and a loopback round trip to reach a process sharing the same
+kernel.
+
+**ZAP over a unix socket is the PREFERRED transport for any plugin-to-plugin call inside
+cloud.** Network ZAP remains correct where the peer is genuinely on another machine.
+
+The rule, in order:
+
+1. **Same process** — a direct call. No transport at all.
+2. **Same machine** (plugin↔plugin, sidecar↔host) — **ZAP over UDS**.
+3. **Different machine** — ZAP over the network.
+
+A socket path is also an authorization boundary: filesystem permissions gate who may
+connect, with no port to scan and no interface to accidentally bind. A service reachable
+only through a socket in its own namespace cannot be reached from another pod at all.
+
+**Shipped:** `cloud/rpc.go` — the internal plane over `net.Listen("unix", path)` with a
+200ms dial probe to detect a live peer before binding, and `dial.go`/`serve.go` moving
+callers onto it (branch `feat/zap-uds-internal-plane`).
+
+**What UDS cannot do, so it is not claimed:** a per-node DaemonSet reading
+`/var/log/pods` does not share a filesystem namespace with a central service. That path
+stays network ZAP unless the reader becomes co-located with its consumer. UDS is chosen
+because processes are co-located; it never makes them so.
+
 ## Copyright
 
 Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
