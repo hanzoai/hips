@@ -1,0 +1,61 @@
+name: bootstrap-forge
+
+# TEMPORARY, AND DELETED THE MOMENT IT SUCCEEDS.
+#
+# sync-from-github.yml is the permanent transport, but it cannot bootstrap
+# itself: it runs ON the forge, and the forge is frozen at 9f792bf — the commit
+# before 3047c73 deleted the old push. So the file that would unfreeze the forge
+# is one of the commits the forge is missing.
+#
+# This breaks the cycle exactly once: a manual dispatch that pushes main to the
+# forge through its front door. A hand-push into the bare repo is refused by
+# pre-receive ("Hanzo Git environment not set") because the forge insists a push
+# be attributed and trigger its Actions — which is precisely what we need, since
+# landing sync-from-github.yml is what registers its */10 schedule.
+#
+# Dispatch-only: no push trigger, so this can never fire on its own.
+# Fast-forward only: no '+', no --force, no --prune, no --mirror.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  push-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push main to git.hanzo.ai
+        env:
+          FORGE: https://git.hanzo.ai
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GIT_TOKEN}" ]; then
+            echo "::error::GIT_TOKEN is unset; refusing to sync silently."
+            exit 1
+          fi
+          REMOTE="${FORGE}/${GITHUB_REPOSITORY}.git"
+          # The forge reads the token from the basic-auth password and ignores
+          # the username. base64 of a secret is not masked automatically.
+          AUTH="$(printf 'x-access-token:%s' "${GIT_TOKEN}" | base64 -w0)"
+          echo "::add-mask::${AUTH}"
+          # Host-scoped, so the forge token is never sent to github.com.
+          git config --local "http.${FORGE}/.extraheader" "Authorization: Basic ${AUTH}"
+
+          BEFORE="$(git ls-remote "${REMOTE}" refs/heads/main | cut -f1)"
+          echo "forge main before: ${BEFORE:-<none>}"
+          echo "pushing:           ${GITHUB_SHA}"
+
+          git push "${REMOTE}" "${GITHUB_SHA}:refs/heads/main"
+
+          AFTER="$(git ls-remote "${REMOTE}" refs/heads/main | cut -f1)"
+          echo "forge main after:  ${AFTER}"
+          [ "${AFTER}" = "${GITHUB_SHA}" ] || { echo "::error::forge did not advance"; exit 1; }
