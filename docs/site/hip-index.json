@@ -1,5 +1,5 @@
 {
-  "hip_count": 131,
+  "hip_count": 133,
   "hips": [
     {
       "number": 0,
@@ -1014,6 +1014,17 @@
       "created": "2026-07-28"
     },
     {
+      "number": 135,
+      "file": "hip-0135-what-is-public.md",
+      "title": "What Is Public",
+      "description": "",
+      "author": "Hanzo AI",
+      "status": "Final",
+      "type": "Process",
+      "category": "Governance",
+      "created": "2026-07-29"
+    },
+    {
       "number": 200,
       "file": "hip-0200-responsible-ai-principles.md",
       "title": "Responsible AI Principles and Commitments",
@@ -1408,6 +1419,17 @@
       "type": "Process",
       "category": "Meta",
       "created": "2026-07-27"
+    },
+    {
+      "number": 518,
+      "file": "hip-0518-aml-the-obligation-plane.md",
+      "title": "AML — The Obligation Plane",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Interface",
+      "created": "2026-07-29"
     },
     {
       "number": 901,
