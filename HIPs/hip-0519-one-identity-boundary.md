@@ -13,54 +13,74 @@ requires: HIP-0026
 
 ## Abstract
 
-Identity is verified **exactly once**, at the edge, by the gateway, against IAM.
-Everything behind that boundary READS the assertion and forwards it unchanged.
-No service re-validates a token. No service mints an identity header. No service
-carries its own copy of the rule.
+Identity is verified **exactly once, at the edge**, against IAM. Everything
+behind that boundary READS the assertion and forwards it unchanged. No service
+re-validates a token. No service mints an identity header. No service carries its
+own copy of the rule.
 
-This HIP names the one blessed path and forbids the others.
+**The edge is a ROLE, not a component.** This HIP is about the property — one
+verification, at the entry point, and nothing behind it re-deciding — never about
+which binary holds it. In this estate the role is held by the `cloud` binary's
+own edge (`SanitizeIdentity`): the standalone gateway was deliberately retired,
+`api.hanzo.ai` resolves through Traefik straight to `cloud`, and Traefik holds no
+JWKS client and mints none of the headers below. `cloud`'s middleware is
+therefore not a second implementation — **it is the one this HIP requires**, and
+deleting it deletes the estate's only identity boundary.
+
+A spec that named the component instead of the property would read as an
+instruction to delete the boundary. This one names the property.
 
 ## Motivation
 
-HIP-0026 says who issues identity: Hanzo IAM. It does not say who ENFORCES it,
-and in the absence of that sentence every service answered for itself. Cloud
-grew a full second implementation — a JWKS client, a trusted-issuer set, an
-audience allowlist, a claims cache, and a middleware that stripped the very
-headers the gateway had just minted so it could mint them again from the same
-token.
+HIP-0026 says who ISSUES identity: Hanzo IAM. It never said who ENFORCES it, and
+in the absence of that sentence two failures became possible, one of which
+happened and one of which nearly did.
 
-Two implementations of one rule is one too many, and the second is the one that
-drifts. It drifted: for a period, an internal call carried five of the nine
-identity headers the gateway asserts, and the four it dropped — project, minted
-name, owner, org-admin — are precisely the ones a callee DECIDES on. A billing
-subject prefers the minted name over the opaque id. Platform sudo is read off
-`owner`, never off `isOrgAdmin`. The same handler therefore reached one
-conclusion over REST and a different one over a service call, silently, in the
-direction that bills or admits the wrong principal.
+**What happened.** The identity a service-to-service call carried drifted from
+the identity the edge asserts. For a period an internal call forwarded five of
+the nine headers, and the four it dropped — project, minted name, owner,
+org-admin — are precisely the ones a callee DECIDES on. A billing subject prefers
+the minted name over the opaque id; platform sudo is read off `owner`, never off
+`isOrgAdmin`. The same handler therefore reached one conclusion over REST and a
+different one over a call, silently, in the direction that bills or admits the
+wrong principal.
 
-That class of bug is not fixed by making the second implementation better. It is
-fixed by there being no second implementation.
+**What nearly happened.** Reading the edge's own middleware as a *duplicate* of a
+gateway that no longer exists, and deleting it. The standalone gateway was
+retired and `cloud` inherited the role; a reader who knew the old topology and
+not the new one sees two verifiers where there is one. That reading gets as far
+as a demonstrated cross-tenant secret read.
+
+Both failures come from the same missing sentence, so this HIP states the
+property rather than the topology: **one verification, at whatever holds the
+edge, and nothing behind it re-deciding.** A count of implementations is not the
+rule; the rule is that exactly one of them is at the entrance.
 
 ## Specification
 
 ### The boundary
 
 ```
-  client ──► gateway ──────────────────► service ──► service ──► service
+  client ──► EDGE ─────────────────────► service ──► service ──► service
              │  VERIFY (once)             read       forward     forward
              │  · strip everything the client sent
              │  · validate the IAM token (JWKS / API key)
              │  · mint the headers below from the verified claims
 ```
 
-**The gateway MUST**, for every request entering the estate:
+Whoever holds the edge role holds all three steps. Today that is `cloud`
+(`SanitizeIdentity`, the estate's only JWKS client). If the role ever moves, it
+moves WHOLE — all three steps together, with the headers minted before the first
+service reads one. It is never split.
+
+**The edge MUST**, for every request entering the estate:
 
 1. Delete every identity header the client supplied, before anything reads one.
 2. Validate the caller's credential against IAM — a signed JWT verified against
    IAM's JWKS, or an IAM API key resolved through IAM.
 3. Mint the header set below from the VERIFIED claims, and only from those.
 
-**A service behind the gateway MUST NOT**:
+**A service behind the edge MUST NOT**:
 
 - validate a token, fetch a JWKS, or hold an issuer or audience list;
 - mint, rewrite, or default any header in the set below;
@@ -91,7 +111,7 @@ missing field is the one a callee decides on.
 for the other is a privilege escalation. Platform sudo is `owner == admin-org`
 and nothing else.
 
-### Behind the gateway: the trust domain
+### Behind the edge: the trust domain
 
 Services co-located on a host reach each other over ZAP on a unix socket. That
 socket is the boundary of the trust domain:
@@ -100,7 +120,7 @@ socket is the boundary of the trust domain:
 - `SO_PEERCRED` attests the peer process to the kernel, which the peer cannot
   forge because the peer never sends it.
 
-Inside the domain a caller forwards the gateway's assertion (`Ctx.Forward()`), or
+Inside the domain a caller forwards the edge's assertion (`Ctx.Forward()`), or
 — for background work with no request behind it — states the tenant it acts for
 explicitly (`zip.WithCaller`). **An inbound request always wins over a stated
 one**, so a job can supply an identity where there is none and can never launder
@@ -140,7 +160,7 @@ may grant a principal:
 
 A repository conforms when all of these hold:
 
-1. No JWKS client, issuer set, or audience allowlist outside the gateway and IAM.
+1. No JWKS client, issuer set, or audience allowlist outside the EDGE and IAM.
 2. No middleware that writes any header in the set above.
 3. Every authorization check reads the three predicates, and no other.
 4. Service-to-service calls forward the whole set — a projection that carries a
@@ -148,11 +168,43 @@ A repository conforms when all of these hold:
 
 ## Security Considerations
 
-**Direct reachability.** The model rests on the gateway being the only ingress.
-A service listener reachable without traversing it accepts whatever headers a
-caller sends. Deployments MUST keep service ports off the public network and
-reachable only from the gateway; this is a network-policy obligation, and it is
-the single assumption the whole boundary stands on.
+**Direct reachability.** The model rests on every request traversing the edge. A
+listener reachable without doing so accepts whatever headers a caller sends: a
+forged `X-Org-Id` + `X-User-Id` + `X-User-IsAdmin` reads another tenant's secret
+VALUE, which the estate's own red-team probe demonstrates. Deployments MUST keep
+service ports reachable only via the edge.
+
+This obligation is currently UNMET, and the two policies that appear to meet it
+do not:
+
+- `network-policy-cloud-api.yaml` selects `app: cloud`. Operator-rendered pods
+  carry `app.kubernetes.io/name` + `app.kubernetes.io/instance`, so the selector
+  matches ZERO pods and has never restricted anything.
+- `cilium-allow-cluster-ingress.yaml` allows every pod, every port, from the
+  whole cluster. Cilium UNIONS allows and has no deny that overrides one, so even
+  a correctly-selected policy is re-opened by it.
+
+Both are hand-applied and absent from every kustomization, so git and the cluster
+can disagree about the network boundary with nothing to detect it. A policy that
+selects nothing is worse than no policy: it reads as protection.
+
+**Why verifying twice is not defence in depth.** A second verifier does not add a
+check; it adds a second answer. When the two disagree the effective rule is
+whichever ran last, and nobody wrote that rule down.
+
+**Rules that live inside the boundary.** Four decisions live in the edge and have
+production incidents attached; whoever holds the role holds these, and moving the
+role without them reintroduces the incident:
+
+1. The tenant is `orgs[0]` of the signed membership set, NOT the `owner` claim —
+   IAM stamps the APPLICATION's org into `owner`, which made the tenant
+   caller-selectable (a hanzo user authenticating via lux-cloud billed lux).
+2. Org-admin is role ∈ {owner, admin}, with the org compared VERBATIM — matching
+   only "admin" refused every self-serve founder from their own admin surface.
+3. An IAM principal of type "application" never gets SuperAdmin, even carrying
+   `owner == adminOrg`.
+4. `X-Billing-Account-Id` and `X-Project-Id` are minted from signed claims only,
+   with the client copy deleted on ingress. **Who pays is an identity field.**
 
 **Why verifying twice is not defence in depth.** A second verifier does not add a
 check; it adds a second answer. When the two disagree the effective rule is
