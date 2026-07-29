@@ -127,6 +127,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | Hanzo Replicate: Encrypted SQLite Durability for Bas... | Standards Track | Infrastructure | Final |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Hanzo adopts LP-0010: Brand Sovereignty and Federati... | Meta | Governance | Final |
 | [HIP-0305](./HIPs/hip-0305-esign-shared-db-tenancy.md) | esign: shared-DB tenancy via team-where, not file-pe... | Standards Track | Infrastructure | Accepted |
+| [HIP-0306](./HIPs/hip-0306-aml-transaction-monitoring.md) | AML Transaction Monitoring, Screening and Case Manag... | Standards Track | Infrastructure | Draft |
 | [HIP-0400](./HIPs/hip-0400-service-crd.md) | Service CRD | Standards Track | Operator | Final |
 | [HIP-0401](./HIPs/hip-0401-datastore-crd.md) | Datastore CRD | Standards Track | Operator | Final |
 | [HIP-0402](./HIPs/hip-0402-sql-crd.md) | SQL CRD | Standards Track | Operator | Final |
