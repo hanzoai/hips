@@ -61,17 +61,29 @@ rule; the rule is that exactly one of them is at the entrance.
 ### The boundary
 
 ```
-  client ──► EDGE ─────────────────────► service ──► service ──► service
-             │  VERIFY (once)             read       forward     forward
-             │  · strip everything the client sent
-             │  · validate the IAM token (JWKS / API key)
-             │  · mint the headers below from the verified claims
+  client ──TLS──▶ ingress          TLS TERMINATION ONLY. No identity, no authz.
+         ──PQ ZAP/QUIC──▶ gateway  THE EDGE: JWT verify, authz, rate limit.
+         ─────────────▶ cloud      Holds NOTHING. Reads the assertion.
+         ──ZAP/UDS────▶ plugins    Capabilities, EAFP.
 ```
 
-Whoever holds the edge role holds all three steps. Today that is `cloud`
-(`SanitizeIdentity`, the estate's only JWKS client). If the role ever moves, it
-moves WHOLE — all three steps together, with the headers minted before the first
-service reads one. It is never split.
+One transport family end to end — ZAP over QUIC across hosts, ZAP over a unix
+socket on-host — and one identity verification, at the gateway.
+
+Each tier holds exactly one concern. Ingress terminates TLS and decides nothing.
+The gateway is the edge: it strips, verifies and mints. Cloud holds nothing and
+reads what the gateway asserted. Plugins receive capabilities and use them.
+
+**The edge role moves WHOLE or not at all.** All three steps below live in one
+tier, and the headers are minted before the first service reads one. Splitting
+them is how a tier ends up trusting a header nobody verified.
+
+**Two things named "gateway" are not the same thing.** `hanzoai/gateway` holds
+the edge — the JWT verify, the strip, the mint. `cloud/apps/gateway` is the edge
+CONFIG plane (`/v1/gateway/config`: CORS allowlist, rate-limit knobs, cache TTL)
+that the edge READS. A deployment carrying the second without the first has the
+edge's dials and none of its decision, which is precisely how a service behind
+the edge came to grow a boundary of its own.
 
 **The edge MUST**, for every request entering the estate:
 
@@ -171,11 +183,12 @@ A repository conforms when all of these hold:
 **Direct reachability.** The model rests on every request traversing the edge. A
 listener reachable without doing so accepts whatever headers a caller sends: a
 forged `X-Org-Id` + `X-User-Id` + `X-User-IsAdmin` reads another tenant's secret
-VALUE, which the estate's own red-team probe demonstrates. Deployments MUST keep
-service ports reachable only via the edge.
+VALUE, which the estate's own red-team probe demonstrates.
 
-This obligation is currently UNMET, and the two policies that appear to meet it
-do not:
+The obligation is met by the TOPOLOGY — ingress terminates TLS and forwards to
+the gateway, which is the only thing that reaches cloud — and a network policy
+merely enforces what the topology already says. Two policies that appear to
+enforce it today do not:
 
 - `network-policy-cloud-api.yaml` selects `app: cloud`. Operator-rendered pods
   carry `app.kubernetes.io/name` + `app.kubernetes.io/instance`, so the selector
@@ -185,8 +198,13 @@ do not:
   a correctly-selected policy is re-opened by it.
 
 Both are hand-applied and absent from every kustomization, so git and the cluster
-can disagree about the network boundary with nothing to detect it. A policy that
-selects nothing is worse than no policy: it reads as protection.
+can disagree with nothing to detect it. **A policy that selects nothing is worse
+than no policy: it reads as protection.**
+
+**Removing a service's own boundary is a REPLACEMENT, never a deletion.** A
+service that grew one because the edge was absent may drop it in the same change
+that puts the edge in front, so the boundary never stops running for a single
+request. Deleting first and wiring second is the cross-tenant read above.
 
 **Why verifying twice is not defence in depth.** A second verifier does not add a
 check; it adds a second answer. When the two disagree the effective rule is
