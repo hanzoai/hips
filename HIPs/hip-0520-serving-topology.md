@@ -86,6 +86,43 @@ Laziness is what makes many plugins affordable, and it is why a replica can
 serve ANY request: it need not hold every plugin resident to be able to answer
 for any of them.
 
+### Transport by locality, never by caller choice
+
+The address SHAPE picks the transport, and one rule serves the listener and the
+dialer alike, so a node can never bind one transport and be dialled on another:
+
+| locality | address | transport |
+|---|---|---|
+| same process | — | no transport at all; call the consumer directly |
+| same machine | a socket PATH (`/run/hanzo/x.sock`) | UDS — no kernel network stack, no port, no TLS to misconfigure |
+| remote host | `host:port` | QUIC |
+
+A cross-machine hop on plain TCP is the case worth naming: an agent shipping
+every pod's telemetry across the cluster network carries other services' bodies,
+which is exactly the traffic that must not be readable in transit.
+
+QUIC's TLS 1.3 negotiates **X25519MLKEM768** (X-Wing) by default on Go 1.26, so
+the session key is quantum-secure with no per-caller crypto configuration. That
+is the whole reason locality picks the transport rather than a flag: the secure
+choice is the default one, and a caller cannot opt out by forgetting.
+
+**A PQ transport needs an identity, and an identity is a KMS concern.** QUIC
+cannot start without server credentials, so "enable QUIC" is not a config flag —
+it is a key. Naming it in config and sourcing it anywhere but KMS is how a
+transport silently falls back to unencrypted or fails at start for a reason the
+operator cannot see.
+
+### KMS is the only source of identity and environment
+
+Every credential and every piece of environment comes from KMS: the transport's
+TLS identity, a plugin's scoped material, a service's tokens. Never a plaintext
+file, never a baked image layer, never an env var an operator pasted.
+
+This is what makes a lazily-started plugin safe to start: the host injects that
+child's own material, scoped to it, so a plugin holds exactly the secrets it was
+issued and no sibling's. A shared secret handed to every child proves nothing
+about any of them.
+
 ### Deployment
 
 Every change deploys natively through **cd.hanzo.ai**. No hand-applied
