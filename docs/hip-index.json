@@ -1,5 +1,5 @@
 {
-  "hip_count": 133,
+  "hip_count": 135,
   "hips": [
     {
       "number": 0,
@@ -729,11 +729,11 @@
     },
     {
       "number": 106,
-      "file": "hip-0106-unified-hanzo-cloud-binary.md",
-      "title": "Cloud — Unified Hanzo Binary",
+      "file": "hip-0106-hanzo-plugin-contract.md",
+      "title": "The Hanzo Plugin Contract",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Final",
+      "status": "Active",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-05-19"
@@ -818,10 +818,10 @@
     {
       "number": 116,
       "file": "hip-0116-plugin-vm-model.md",
-      "title": "Hanzo Plugin & VM Model — Standalone-plus-Plugin Services on Lux Consensus + ZapDB",
+      "title": "Hanzo Plugin & VM Model",
       "description": "",
       "author": "Hanzo AI Team",
-      "status": "Review",
+      "status": "Superseded",
       "type": "Standards Track",
       "category": "Infrastructure",
       "created": "2026-07-07"
@@ -1179,6 +1179,17 @@
       "created": "2026-06-21"
     },
     {
+      "number": 306,
+      "file": "hip-0306-aml-transaction-monitoring.md",
+      "title": "AML Transaction Monitoring, Screening and Case Management",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Draft",
+      "type": "Standards Track",
+      "category": "Infrastructure",
+      "created": "2026-07-29"
+    },
+    {
       "number": 400,
       "file": "hip-0400-service-crd.md",
       "title": "Service CRD",
@@ -1429,6 +1440,17 @@
       "status": "Draft",
       "type": "Standards Track",
       "category": "Interface",
+      "created": "2026-07-29"
+    },
+    {
+      "number": 519,
+      "file": "hip-0519-one-identity-boundary.md",
+      "title": "One Identity Boundary",
+      "description": "",
+      "author": "Hanzo AI Team",
+      "status": "Active",
+      "type": "Standards Track",
+      "category": "Infrastructure",
       "created": "2026-07-29"
     },
     {
