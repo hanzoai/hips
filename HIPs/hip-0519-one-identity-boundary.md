@@ -219,8 +219,12 @@ role without them reintroduces the incident:
    caller-selectable (a hanzo user authenticating via lux-cloud billed lux).
 2. Org-admin is role ∈ {owner, admin}, with the org compared VERBATIM — matching
    only "admin" refused every self-serve founder from their own admin surface.
-3. An IAM principal of type "application" never gets SuperAdmin, even carrying
-   `owner == adminOrg`.
+3. A machine principal never gets SuperAdmin, even carrying `owner == adminOrg`.
+   A machine is one with an EMPTY membership set: IAM signs `orgs: nil` on
+   exactly one path, client_credentials, and every human path resolves memberships
+   through the org store. It is not a principal carrying `type: "application"` —
+   IAM's signed claim set has no `type` field, so a reader keying on one admits
+   every machine it means to refuse. Authority is membership.
 4. `X-Billing-Account-Id` and `X-Project-Id` are minted from signed claims only,
    with the client copy deleted on ingress. **Who pays is an identity field.**
 
