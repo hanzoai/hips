@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-08-03
-requires: HIP-0119
+requires: HIP-0027, HIP-0119
 ---
 
 # HIP-136: One Secret, One Path
@@ -151,6 +151,28 @@ gateway needs STRIPE_SECRET_KEY  →  hanzo/gateway/STRIPE_SECRET_KEY@prod
 If answering (1) is hard, the secret is shared and the sharing is the thing to
 fix — not the path.
 
+## Relationship to HIP-0027
+
+HIP-0027 §"Secret Organization Model" specifies `Organization → Project →
+Environment → Folder → Key`, with **a project per deployable service** —
+`hanzo-iam`, `gateway`, `chat`, `cloud`, `console` — so that "a compromised
+service identity can only read its own secrets."
+
+**That is not what shipped.** Every `kmsSecrets` declaration in the fleet takes
+the chart default `projectSlug: hanzo`, one project for the whole org, with the
+service distinguished only by `secretsPath`. The sole exception is `base`
+(`hanzo-base`). The per-service projects that HIP-0027 tabulates as "current
+projects in production" are not what the charts address.
+
+This HIP states the rule for the tree that exists: one project per **org**, and
+the app in the **path**. Where the two disagree about where a service's secrets
+live, this one is normative and HIP-0027's project-per-service layout is
+superseded.
+
+What is **not** superseded is HIP-0027's *reason* for wanting it. That isolation
+goal remains unmet — see Security Considerations. Closing it is a change of
+identity topology, not of naming, and belongs in its own proposal.
+
 ## Rationale
 
 The path could have been keyed on the secret's *purpose* (`/cloud-sign`) or its
@@ -198,7 +220,21 @@ pipeline is one.
 ## Security Considerations
 
 Nothing here changes what a secret is protected by; it changes where it is
-found. Two properties are worth stating because the old sprawl weakened both.
+found. Three properties are worth stating.
+
+**The isolation HIP-0027 wanted is still missing, and this HIP does not add it.**
+One project per org means one machine identity per namespace —
+`hanzo-platform-iam-creds` in `hanzo` — so every app in that namespace can read
+every path in that project. `secretsPath` organizes; it does not authorize. A
+compromised app reads its neighbours' credentials, which is exactly what
+project-per-service was meant to prevent.
+
+Making the path derivable does not widen that: any app could already read any
+path, whether or not it could guess the name, and a convention nobody follows is
+not a control. But it should be recorded plainly that the boundary is the
+**namespace's credential**, not the path, and that closing the gap means one
+machine identity per app — a change to identity topology, deliberately out of
+scope here.
 
 **A path reveals its consumer.** `hanzo/gateway/STRIPE_SECRET_KEY@prod` says
 gateway holds a Stripe key. That is already true of the running deployment and of
