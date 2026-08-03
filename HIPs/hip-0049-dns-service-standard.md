@@ -151,7 +151,7 @@ Inside each Kubernetes cluster, CoreDNS resolves the `*.hanzo.svc` zone for inte
 | `redis.hanzo.svc` | 10.245.x.x | Valkey (HIP-28) |
 | `kms.hanzo.svc` | 10.245.x.x | KMS (HIP-27) |
 | `llm-gateway.hanzo.svc` | 10.245.x.x | LLM Gateway (HIP-4) |
-| `minio.hanzo.svc` | 10.245.x.x | Object Storage (HIP-32) |
+| `s3.hanzo.svc` | 10.245.x.x | Hanzo S3 (HIP-405) |
 | `gateway.hanzo.svc` | 10.245.x.x | API Gateway (HIP-44) |
 | `dns-api.hanzo.svc` | 10.245.x.x | DNS Management API |
 

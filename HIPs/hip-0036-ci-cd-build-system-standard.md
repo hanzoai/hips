@@ -483,7 +483,7 @@ CI workflows that require databases or caches MUST use Hanzo-maintained service 
 | PostgreSQL | `ghcr.io/hanzoai/sql:latest` | PostgreSQL with extensions |
 | Redis | `ghcr.io/hanzoai/kv:latest` | Redis-compatible KV store |
 | MongoDB | `mongo:7` | Upstream (no Hanzo fork needed) |
-| MinIO | `minio/minio:latest` | S3-compatible object storage |
+| Hanzo S3 | `ghcr.io/hanzoai/s3:v1.0.14` | S3-compatible object storage |
 
 ### Branch Protection Requirements
 
@@ -572,7 +572,7 @@ The preferred deployment target. The CI workflow:
 Services on hanzo-k8s (24.199.76.156):
   IAM, KMS, Platform, Cloud, Console, Gateway,
   Commerce, hanzo-app, web3, registry, bootnode-api
-  PostgreSQL, Redis, MongoDB, MinIO
+  PostgreSQL, Redis, MongoDB, Hanzo S3
 ```
 
 #### Target 2: Docker Compose (legacy)

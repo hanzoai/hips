@@ -492,7 +492,7 @@ Commerce generates monthly invoices for all users with non-zero activity. Each i
 - **Balance**: Opening balance, credits added, usage consumed, closing balance
 - **Payment**: Method used (card ending, wire reference, or $AI tx hash)
 
-Invoices are stored as PDFs in MinIO (HIP-32) and emailed to the user. Enterprise customers on Net-30 receive invoices with payment instructions instead of automatic billing.
+Invoices are stored as PDFs in Hanzo S3 (HIP-405) and emailed to the user. Enterprise customers on Net-30 receive invoices with payment instructions instead of automatic billing.
 
 ### Auto-Recharge
 

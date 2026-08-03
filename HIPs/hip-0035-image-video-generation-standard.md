@@ -569,7 +569,7 @@ Response:
 │                    Storage Layer                                  │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────────┐    │
 │  │ Model Storage │  │ Output Storage│  │ Workflow Storage  │    │
-│  │ (S3/MinIO)   │  │ (S3/MinIO)   │  │ (PostgreSQL)      │    │
+│  │ (Hanzo S3)   │  │ (Hanzo S3)   │  │ (PostgreSQL)      │    │
 │  │ safetensors   │  │ PNG/MP4      │  │ JSON documents    │    │
 │  └───────────────┘  └───────────────┘  └───────────────────┘    │
 └──────────────────────────────────────────────────────────────────┘
@@ -617,7 +617,7 @@ class GPUScheduler:
 
 ### Model Storage
 
-Models are stored in Object Storage (S3/MinIO) and cached locally on GPU workers:
+Models are stored in Object Storage (Hanzo S3) and cached locally on GPU workers:
 
 ```yaml
 Storage Layout:

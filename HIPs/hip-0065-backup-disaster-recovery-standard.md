@@ -15,7 +15,7 @@ requires: HIP-0027, HIP-0028, HIP-0029, HIP-0047
 
 This proposal defines the unified backup and disaster recovery (DR) standard
 for all stateful services in the Hanzo ecosystem. Every data store -- PostgreSQL
-(HIP-0029), Valkey/KV (HIP-0028), ClickHouse (HIP-0047), MinIO/S3 (HIP-0032),
+(HIP-0029), Valkey/KV (HIP-0028), ClickHouse (HIP-0047), Hanzo S3 (HIP-0405),
 model artifacts, training checkpoints, datasets, and configuration secrets --
 MUST be backed up, verified, and recoverable through the single Hanzo Backup
 service defined here.
@@ -33,7 +33,7 @@ lux-k8s). Each service adopted its own backup approach:
 - **PostgreSQL** runs a CronJob with `pg_dump` every 6 hours (HIP-0029).
 - **Valkey** relies on RDB snapshots that only persist to the local PVC.
 - **ClickHouse** has no automated backup; operators run manual `BACKUP` commands.
-- **MinIO** replicates buckets between clusters but has no off-site copy.
+- **Hanzo S3** replicates buckets between clusters but has no off-site copy.
 - **Model artifacts** are stored in S3 buckets with no versioning policy.
 - **KMS secrets** are backed up only through the KMS built-in export.
 
@@ -161,7 +161,7 @@ Every Hanzo service is assigned one of three tiers:
 | Tier | RPO | RTO | Backup Frequency | Replication | Examples |
 |------|-----|-----|------------------|-------------|----------|
 | **Critical** | 1 minute | 5 minutes | Continuous (WAL/AOF streaming) | Synchronous cross-region | PostgreSQL (IAM, Cloud), KMS secrets |
-| **Standard** | 1 hour | 1 hour | Hourly snapshots | Async cross-region | Valkey/KV, ClickHouse, MinIO buckets |
+| **Standard** | 1 hour | 1 hour | Hourly snapshots | Async cross-region | Valkey/KV, ClickHouse, Hanzo S3 buckets |
 | **Archival** | 24 hours | 4 hours | Daily snapshots | Async, single copy | Model artifacts, training datasets, logs |
 
 RPO = Recovery Point Objective (maximum acceptable data loss).
@@ -177,7 +177,7 @@ Backup Controller (:8065)
   ├── PostgreSQL (HIP-0029)  ── pg_basebackup + WAL archiving
   ├── Valkey/KV  (HIP-0028)  ── RDB snapshot export
   ├── ClickHouse (HIP-0047)  ── BACKUP DATABASE ... TO S3
-  ├── MinIO/S3   (HIP-0032)  ── mc mirror (bucket replication)
+  ├── Hanzo S3   (HIP-0405)  ── filer.sync (bucket replication)
   ├── Model Weights / Checkpoints / Datasets  ── versioned S3
   └── Config / Secrets  ── Velero + KMS export
           │
@@ -253,27 +253,30 @@ BACKUP DATABASE insights TO S3(
 Incremental backups are supported via `BACKUP ... SETTINGS base_backup`. Each
 hourly backup is incremental against the most recent daily full backup.
 
-#### MinIO/S3 Object Storage (Standard Tier)
+#### Hanzo S3 Object Storage (Standard Tier)
 
-MinIO buckets are replicated using `mc mirror` to a secondary S3 endpoint.
-This provides both backup and geographic redundancy.
+Hanzo S3 replicates continuously at the filer layer rather than by polling the
+S3 API, so an object is mirrored as its metadata change is committed instead of
+on the next sweep:
 
 ```bash
-# Mirror production bucket to backup region
-mc mirror --watch --overwrite \
-  prod/hanzo-storage s3backup/hanzo-storage
+# Continuous one-way replication to the backup region
+s3 filer.backup -filer=s3.hanzo.svc:8888
+
+# Or active-active between two clusters
+s3 filer.sync -a=s3.hanzo.svc:8888 -b=s3.dr.hanzo.svc:8888
 ```
 
-For versioned buckets (model weights, datasets), MinIO's built-in versioning
-preserves every object revision. The backup controller verifies that versioning
-is enabled on all critical buckets.
+For versioned buckets (model weights, datasets), bucket versioning preserves
+every object revision. The backup controller verifies that versioning is enabled
+on all critical buckets.
 
 #### Model Artifacts and Training Checkpoints (Archival Tier)
 
 AI artifacts are the most expensive data to reproduce. A single fine-tuning
 run can cost $500-10,000 in GPU compute. The backup strategy must preserve:
 
-1. **Model weights**: Final trained parameters. Stored in MinIO with versioning.
+1. **Model weights**: Final trained parameters. Stored in Hanzo S3 with versioning.
    Each model version is tagged with its training run ID, dataset hash, and
    hyperparameter fingerprint.
 
@@ -284,7 +287,7 @@ run can cost $500-10,000 in GPU compute. The backup strategy must preserve:
 3. **Datasets**: Training and evaluation data. Versioned using content-addressed
    hashing (SHA-256 of the dataset manifest). Immutable once published.
 
-All artifacts are stored in dedicated MinIO buckets with lifecycle rules:
+All artifacts are stored in dedicated Hanzo S3 buckets with lifecycle rules:
 
 | Artifact Type | Bucket | Versioning | Retention |
 |---------------|--------|------------|-----------|
@@ -414,7 +417,7 @@ Failures trigger PagerDuty alerts at the same severity as a production outage.
 | PostgreSQL base backups | 30 days | Oldest pruned when count exceeds 30 |
 | Valkey RDB snapshots | 30 days | Oldest pruned when count exceeds 720 (hourly) |
 | ClickHouse backups | 90 days | Oldest pruned when count exceeds 2160 |
-| MinIO bucket mirrors | Current + 1 previous | Continuous mirror, version history in bucket |
+| Hanzo S3 bucket mirrors | Current + 1 previous | Continuous mirror, version history in bucket |
 | Velero cluster backups | 30 days | TTL-based (720h) |
 | KMS secret exports | 90 days | Oldest pruned on schedule |
 | Model weights (released) | Permanent | Never pruned |
@@ -519,7 +522,7 @@ and stores both the encrypted payload and wrapped DEK in S3.
 
 A NetworkPolicy restricts the backup controller's egress to only the required
 ports within the `hanzo` namespace (5432 PostgreSQL, 6379 Valkey, 8123
-ClickHouse, 9000 MinIO) and port 443 for external HTTPS (KMS API, secondary
+ClickHouse, 9000 Hanzo S3) and port 443 for external HTTPS (KMS API, secondary
 S3 endpoint). All other egress is denied.
 
 ### Access Control
@@ -533,7 +536,7 @@ KMS.
 ### Backup Isolation
 
 Backup S3 buckets use separate credentials from production S3 buckets. A
-compromised production MinIO key cannot read or delete backups. Backup
+compromised production S3 key cannot read or delete backups. Backup
 buckets have Object Lock enabled (WORM -- write once read many) for
 Critical-tier backups to prevent ransomware-style deletion.
 
@@ -564,12 +567,12 @@ cloud provider experiences a global outage.
 1. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
 2. [HIP-0028: Key-Value Store Standard](./hip-0028-key-value-store-standard.md)
 3. [HIP-0029: Relational Database Standard](./hip-0029-relational-database-standard.md)
-4. HIP-0032: Object Storage Standard
+4. [HIP-0405: S3 CRD](./hip-0405-s3-crd.md)
 5. [HIP-0047: Analytics Datastore Standard](./hip-0047-analytics-datastore-standard.md)
 6. [Velero Documentation](https://velero.io/docs/)
 7. [PostgreSQL PITR](https://www.postgresql.org/docs/16/continuous-archiving.html)
 8. [ClickHouse BACKUP](https://clickhouse.com/docs/en/operations/backup)
-9. [MinIO Replication](https://min.io/docs/minio/linux/administration/bucket-replication.html)
+9. [Hanzo S3](https://github.com/hanzoai/s3) -- `filer.sync` / `filer.backup` replication
 
 ## Copyright
 

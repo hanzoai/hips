@@ -232,8 +232,8 @@ Separate processes, separate storage, separate scaling.
                           └─────────────────────────────────┘
                                         │
                                ┌────────▼────────┐
-                               │  MinIO (S3)     │
-                               │  (HIP-0032)     │
+                               │  Hanzo S3       │
+                               │  (HIP-0405)     │
                                │  Backups        │
                                └─────────────────┘
 ```
@@ -750,7 +750,7 @@ coordinate writes. With 3 nodes, the cluster tolerates 1 node failure.
 ### Backup and Recovery
 
 Backups follow the Hanzo backup standard using S3-compatible storage
-(MinIO, per HIP-0032).
+(Hanzo S3, per HIP-0405).
 
 #### Backup Strategy
 
@@ -765,9 +765,9 @@ clickhouse-backup create_remote --diff-from-remote daily_2026_02_23 incremental_
 
 | Backup Type | Frequency | Retention | Storage |
 |-------------|-----------|-----------|---------|
-| Full | Weekly (Sunday 02:00 UTC) | 4 weeks | MinIO (HIP-0032) |
-| Incremental | Daily (02:00 UTC) | 7 days | MinIO (HIP-0032) |
-| Partition-level | On TTL drop | 30 days | MinIO (HIP-0032) |
+| Full | Weekly (Sunday 02:00 UTC) | 4 weeks | Hanzo S3 (HIP-0405) |
+| Incremental | Daily (02:00 UTC) | 7 days | Hanzo S3 (HIP-0405) |
+| Partition-level | On TTL drop | 30 days | Hanzo S3 (HIP-0405) |
 
 #### Backup Configuration
 
@@ -779,10 +779,10 @@ general:
   backups_to_keep_remote: 28
 
 s3:
-  access_key: "${MINIO_ACCESS_KEY}"
-  secret_key: "${MINIO_SECRET_KEY}"
+  access_key: "${AWS_ACCESS_KEY_ID}"
+  secret_key: "${AWS_SECRET_ACCESS_KEY}"
   bucket: "clickhouse-backups"
-  endpoint: "http://minio:9000"
+  endpoint: "http://s3.hanzo.svc:9000"
   region: "us-east-1"
   path: "hanzo-k8s/"
   compression_format: "zstd"

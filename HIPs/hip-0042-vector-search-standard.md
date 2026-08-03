@@ -97,11 +97,11 @@ offering.
 
 Milvus is a capable open-source vector database, but its architecture is complex:
 
-- **Component count**: Milvus requires etcd (metadata), MinIO (object storage), and Pulsar
+- **Component count**: Milvus requires etcd (metadata), a separate object store, and Pulsar
   (message queue) as mandatory dependencies. A minimal Milvus deployment is four services.
   Qdrant is a single binary with embedded storage -- zero external dependencies.
 - **Operational overhead**: Each Milvus component has its own failure modes, upgrade
-  procedures, and resource requirements. etcd quorum loss, Pulsar topic compaction, MinIO
+  procedures, and resource requirements. etcd quorum loss, Pulsar topic compaction, object-store
   bucket corruption -- each adds a distinct class of incidents. Qdrant's failure mode is
   simple: the process crashes and restarts, replaying its WAL.
 - **Developer experience**: Milvus's SDK requires understanding its distributed concepts

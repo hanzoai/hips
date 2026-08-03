@@ -104,7 +104,7 @@ means we install any extension immediately.
 
 The primary trade-off is **backup responsibility**. We accept this trade-off
 because Kubernetes PVC snapshots plus scheduled pg_dump to S3-compatible storage
-(MinIO or DO Spaces) provides equivalent durability with full control over
+(Hanzo S3 or DO Spaces) provides equivalent durability with full control over
 retention policy.
 
 ### Why Single Instance over Patroni/Citus
@@ -554,7 +554,7 @@ spec:
 
 **Backup schedule**: Every 6 hours
 **Retention**: 30 days
-**Storage**: S3-compatible (MinIO in-cluster or DO Spaces)
+**Storage**: S3-compatible (Hanzo S3 in-cluster or DO Spaces)
 **Format**: pg_dump custom format (`-Fc`) for selective restore
 
 ### Restore Procedure

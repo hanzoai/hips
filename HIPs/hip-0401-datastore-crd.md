@@ -40,6 +40,11 @@ The `Datastore` CRD models a stateful workload with persistent storage. It is th
 | `serviceMonitor` | ServiceMonitorSpec | optional Prometheus scrape |
 | `command`, `args` | []string | container entrypoint |
 
+The `minio` discriminator selects `hanzoai/s3` (SeaweedFS-derived, Apache-2.0);
+it is a retained identity string — the `app.kubernetes.io/component` label and
+default service-port name, held byte-identical so adopted StatefulSets do not
+roll — and not a reference to any MinIO product. See HIP-405.
+
 ### Example CR
 
 ```yaml
@@ -79,7 +84,7 @@ spec:
 - `Datastore`: HIP-496 (datastore)
 - `SQL` (Postgres): HIP-502 (sql)
 - `KV` (Valkey): HIP-498 (kv)
-- `S3` (MinIO): HIP-476 (s3), HIP-477 (s3-demo)
+- `S3` (`hanzoai/s3`): HIP-476 (s3), HIP-477 (s3-demo)
 - `Insights-KV` (Valkey): HIP-454
 - `Insights-SQL` (Postgres): HIP-456
 

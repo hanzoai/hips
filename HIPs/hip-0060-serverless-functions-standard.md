@@ -800,7 +800,7 @@ services:
       DATABASE_URL: postgresql://hanzo:hanzo@postgres:5432/hanzo_functions
       NATS_URL: nats://nats:4222
       KAFKA_BROKERS: kafka:9092
-      OBJECT_STORAGE_URL: http://minio:9000
+      OBJECT_STORAGE_URL: http://s3:9000
       GPU_POOL_ENABLED: "false"  # No GPU in dev
     volumes:
       - ./config.yaml:/etc/functions/config.yaml
@@ -977,7 +977,7 @@ spec:
     - protocol: TCP
       port: 6379    # Valkey
     - protocol: TCP
-      port: 9000    # MinIO
+      port: 9000    # Hanzo S3
     - protocol: TCP
       port: 5432    # PostgreSQL
   policyTypes:

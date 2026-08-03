@@ -538,7 +538,7 @@ Examples:
 - `ghcr.io/hanzoai/hanzo-iam:latest`
 - `ghcr.io/hanzoai/lux-gateway:def456a`
 
-GHCR was chosen over self-hosted registries (Harbor, MinIO-backed) because it requires zero operational overhead and integrates natively with GitHub Actions for CI-triggered builds.
+GHCR was chosen over self-hosted registries because it requires zero operational overhead and integrates natively with GitHub Actions for CI-triggered builds.
 
 ### Reverse Proxy
 

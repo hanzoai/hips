@@ -42,7 +42,7 @@ tools, A2A for federation, and ZAP between Hanzo subsystems.
 Today every team that wants to ship a real ML workload on Hanzo has
 to either (a) bring in the entire open-source ML operator estate
 (seven projects, three CRD groups, two namespaces of pods, a
-PostgreSQL, a MinIO, a MySQL, a separate frontend), or (b)
+PostgreSQL, an object store, a MySQL, a separate frontend), or (b)
 re-implement training/serving by hand. Neither is acceptable.
 
 The Hanzo platform already ships every primitive that estate
@@ -51,7 +51,7 @@ re-invents:
 | Concern | Hanzo primitive | What replaces |
 |---|---|---|
 | Auth | `hanzoai/iam` | Open-source profile controller, Dex |
-| Artifact storage | `hanzoai/vfs` | MinIO, S3 directly |
+| Artifact storage | `hanzoai/vfs` | Raw object stores, S3 directly |
 | Experiment metrics | `hanzoai/datastore` | MySQL + tracking-server |
 | Run config / registry metadata | `hanzoai/base` | MySQL, PostgreSQL |
 | Pipeline DAG runner | `hanzoai/tasks` (HIP-0108) | Argo, KFP backend |
