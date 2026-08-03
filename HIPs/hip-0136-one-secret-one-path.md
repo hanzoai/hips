@@ -55,6 +55,32 @@ nothing:
 
 Five shapes is not a convention with exceptions. It is the absence of one.
 
+## There are two stores, and that is the deepest source of the confusion
+
+Before any path rule can help, this has to be said plainly, because it was found
+the hard way — by running a migration that read the wrong store and got `404` on
+every secret while those secrets were sitting healthy in the other one:
+
+| store | what it is | addressed by | who reads it |
+|---|---|---|---|
+| `kms.hanzo.svc` | `ghcr.io/luxfi/kms` — the Infisical fork HIP-0027 specifies | `projectSlug` / `envSlug` / `secretsPath` / key | **every** chart `kmsSecrets`, via the KMSSecret CRD |
+| cloud's `/v1/kms` | cloud's embedded KMS | `path` / `env` / `name`, resolving to `/orgs/<org>/<path>/<NAME>` | `apps/platform/pin.go`, the per-org cek stores |
+
+They are different services with different addressing, and a name that exists in
+one is absent from the other. `GET /v1/kms/secrets?path=chat-guest-key` returns
+`total: 0` not because the chat guest key is missing but because it lives in the
+KMSSecret plane. Reading that `0` as "the secret does not exist" is how a
+migration deletes a live credential.
+
+**This HIP's rule governs the KMSSecret plane** — the one every chart uses — where
+`<app>` is `secretsPath` and `<org>` is `projectSlug`. cloud's embedded plane
+spells the same four coordinates differently and already follows the rule
+(`orgs/hanzo/deploy/UNIVERSE_PIN_TOKEN@prod`).
+
+Whether two stores should exist is a real question and not this one's. Collapsing
+them is a change of substrate; naming can be made predictable first, and must be,
+because today a reader cannot tell from a path which store it names.
+
 ## Specification
 
 ### 1. The path
@@ -224,9 +250,25 @@ project a secret lives in, and a service that has earned its own is the directio
 of travel, not a deviation from it.
 
 Each move is **copy, repoint, verify, delete** — in that order, one app at a
-time. The old entry is removed only after the new path has been read by a running
-pod, because a secret that exists at neither path is an outage and a secret that
-exists at both is merely untidy.
+time, **against `kms.hanzo.svc`**, which is where these secrets live. The old
+entry is removed only after the new path has been read by a running pod, because
+a secret that exists at neither path is an outage and a secret that exists at
+both is merely untidy.
+
+Two rules learned from the first attempt, which read cloud's embedded store by
+mistake and would have destroyed live credentials:
+
+**A read that returns nothing STOPS the move.** Never write what a read did not
+return. An empty read followed by a write of that empty value, then a read-back
+comparing empty to empty, reports success for a migration that moved nothing —
+and the delete that follows then removes the only real copy. `admin-guard` gates
+SuperAdmin admission to every raw admin surface; that sequence would have left it
+booting with no `GUARD_HMAC_KEY`.
+
+**Absence must be proven in the right store, and by an unfiltered listing.** A
+path-filtered list returning `total: 0` is not evidence: the same token that
+reported zero for `/orgs/hanzo` returned five secrets when listed unfiltered.
+Absence is only established by enumerating the store the chart actually reads.
 
 An omitted `keys` list pulls the whole path, which is a different request from an
 empty list rather than a shorthand for one, and stays that way. `base` is the one
