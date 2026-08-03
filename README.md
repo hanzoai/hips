@@ -113,6 +113,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0133](./HIPs/hip-0133-entity-groups.md) | Entity Groups — Placement, Durability, Splitting and... | Standards Track | Core | Draft |
 | [HIP-0134](./HIPs/hip-0134-one-process-one-socket-one-identity.md) | One Process, One Socket, One Identity | Standards Track | Core | Final |
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | What Is Public | Process | Governance | Final |
+| [HIP-0136](./HIPs/hip-0136-one-secret-one-path.md) | One Secret, One Path | Standards Track | Infrastructure | Active |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
