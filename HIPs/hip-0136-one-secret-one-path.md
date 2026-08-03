@@ -63,9 +63,16 @@ A secret is addressed by four coordinates and nothing else:
 
     <org>/<app>/<NAME>@<env>
 
-**`org`** — the tenant that owns the secret. Platform services are `hanzo`. This
-is the store boundary already: KMS resolves `/orgs/<org>/…`, so stating it makes
-explicit what was implicit.
+**`org`** — the KMS project the secret lives in, which for a shared platform
+service is the tenant that owns it: `hanzo`. This is the store boundary already —
+KMS resolves `/orgs/<org>/…` — so stating it makes explicit what was implicit.
+
+A service with its OWN project (its own machine identity, e.g. `base` at
+`hanzo-base`) is addressed by that project instead, and keeps it. The project is
+the real authorization boundary; the path below it is organization. Anything
+holding material the rest of the namespace must not read belongs in its own
+project, and moving it into the shared one to satisfy a naming rule would be a
+downgrade.
 
 **`app`** — the app that **READS** the secret. Never the app that produced it,
 never a category, never a purpose. One question with one answer: *which process
@@ -193,7 +200,6 @@ Four of eleven declarations already conform. Seven move:
 | app | today | becomes |
 |---|---|---|
 | `admin-guard` | `/admin-guard-secrets` | `/admin-guard` |
-| `base` | `/` | `/base` |
 | `chat` | `/chat-guest-key` | `/chat` |
 | `cloud` | `/cloud-sign` | `/cloud` |
 | `cloud` | `/integrations/cloudflare` (env `default`) | `/cloud` (env `prod`) |
@@ -202,14 +208,30 @@ Four of eleven declarations already conform. Seven move:
 
 Already conforming: `aml`, `bot-browser`, `pkg`, `studio`.
 
+**`base` is deliberately NOT in that table, and must not be added to it.** It sets
+`projectSlug: hanzo-base` with its own `credentialsSecret`, so its `/` is the root
+of its OWN project, reached by its OWN machine identity — not a shared path
+carelessly left at the root of everyone else's. It holds
+`EMBEDDED_IAM_ROOT_PASSWORD` and the IAM signing keys, and no other app in the
+fleet can read them.
+
+That is HIP-0027's project-per-service isolation, actually implemented, and it is
+STRONGER than what this HIP describes. Folding it into `hanzo/base/*` would move
+the most sensitive material in the estate into the shared project where every app
+in the namespace could read it. An app with its own project keeps it. The rule
+below is how a service in the SHARED project is addressed; `<org>` names the
+project a secret lives in, and a service that has earned its own is the direction
+of travel, not a deviation from it.
+
 Each move is **copy, repoint, verify, delete** — in that order, one app at a
 time. The old entry is removed only after the new path has been read by a running
 pod, because a secret that exists at neither path is an outage and a secret that
 exists at both is merely untidy.
 
-`base` reads a whole path rather than named keys; it takes `/base` with its `keys`
-list still absent, which is a different request from an empty one and stays that
-way.
+An omitted `keys` list pulls the whole path, which is a different request from an
+empty list rather than a shorthand for one, and stays that way. `base` is the one
+service that makes it — reading the root of its own project — and neither the
+list nor the project moves.
 
 The one KMS reference in Go — `apps/platform/pin.go`'s
 `orgs/hanzo/deploy/UNIVERSE_PIN_TOKEN@prod` — already has this shape. `deploy` is
