@@ -55,31 +55,33 @@ nothing:
 
 Five shapes is not a convention with exceptions. It is the absence of one.
 
-## There are two stores, and that is the deepest source of the confusion
+## There is ONE KMS: `api.hanzo.ai/v1/kms`
 
-Before any path rule can help, this has to be said plainly, because it was found
-the hard way — by running a migration that read the wrong store and got `404` on
-every secret while those secrets were sitting healthy in the other one:
+It answers `path` / `env` / `name`, resolving to `/orgs/<org>/<path>/<NAME>`, and
+it is the only store any service reads.
 
-| store | what it is | addressed by | who reads it |
-|---|---|---|---|
-| `kms.hanzo.svc` | `ghcr.io/luxfi/kms` — the Infisical fork HIP-0027 specifies | `projectSlug` / `envSlug` / `secretsPath` / key | **every** chart `kmsSecrets`, via the KMSSecret CRD |
-| cloud's `/v1/kms` | cloud's embedded KMS | `path` / `env` / `name`, resolving to `/orgs/<org>/<path>/<NAME>` | `apps/platform/pin.go`, the per-org cek stores |
+There is currently a SECOND DEPLOYMENT of it — `kms.hanzo.svc` / `kms.hanzo.ai`,
+which every chart's `kmsSecrets` still points at through the KMSSecret CRD's
+`hostAPI`. That is not a second architecture and must never be written up as one.
+It is the same `luxfi/kms` binary serving the same `/v1/kms/secrets` routes under
+the same JWT boundary — its own source says of the two doors, *"gates on the same
+thing requireOrgJWT ultimately does: whether the caller's own org authorizes this
+deployment's home org. Two doors, one boundary."* One program, deployed twice,
+with its data split across the two.
 
-They are different services with different addressing, and a name that exists in
-one is absent from the other. `GET /v1/kms/secrets?path=chat-guest-key` returns
-`total: 0` not because the chat guest key is missing but because it lives in the
-KMSSecret plane. Reading that `0` as "the secret does not exist" is how a
-migration deletes a live credential.
+The split is what makes secrets unfindable, and it is a migration item, not a
+design. A name present in one deployment is absent from the other, so a query
+against the wrong one returns `total: 0` — indistinguishable from a secret that
+never existed, and exactly how a migration deletes a live credential. See the
+Migration section: the standalone's contents move into `api.hanzo.ai/v1/kms`,
+every `hostAPI` repoints there, and the standalone is scaled to zero.
 
-**This HIP's rule governs the KMSSecret plane** — the one every chart uses — where
-`<app>` is `secretsPath` and `<org>` is `projectSlug`. cloud's embedded plane
-spells the same four coordinates differently and already follows the rule
-(`orgs/hanzo/deploy/UNIVERSE_PIN_TOKEN@prod`).
-
-Whether two stores should exist is a real question and not this one's. Collapsing
-them is a change of substrate; naming can be made predictable first, and must be,
-because today a reader cannot tell from a path which store it names.
+**White-labelling is a frontend concern, not a second store.** `kms.lux.cloud`
+resolves to this same API with Lux branding, as `kms.hanzo.ai` does with Hanzo's;
+the org boundary already separates the data. A brand does not earn a deployment.
+An operator that needs its own MPC root — a Lux committee signing in `lux-k8s`
+rather than `hanzo-k8s` — configures that under one API too; the REK's location
+is deployment configuration, not a fork of the service.
 
 ## Specification
 
@@ -249,11 +251,29 @@ below is how a service in the SHARED project is addressed; `<org>` names the
 project a secret lives in, and a service that has earned its own is the direction
 of travel, not a deviation from it.
 
-Each move is **copy, repoint, verify, delete** — in that order, one app at a
-time, **against `kms.hanzo.svc`**, which is where these secrets live. The old
-entry is removed only after the new path has been read by a running pod, because
-a secret that exists at neither path is an outage and a secret that exists at
-both is merely untidy.
+### Collapsing the second deployment
+
+The path moves above are the small half. The larger one is that a second
+deployment of this same service holds most of the data, and it goes away:
+
+1. Copy every secret from the standalone (`kms.hanzo.ai`, ~1832 entries at root)
+   into `api.hanzo.ai/v1/kms`, preserving `path`/`env`/`name`, verifying each
+   value byte-identical after the write. Both speak the same API under the same
+   JWT boundary, so this is a read here / write there with one token — not an
+   envelope conversion.
+2. Repoint every chart's `kmsSecrets` `hostAPI` at cloud, and drop the
+   `kms.hanzo.svc` default from `charts/app/values.yaml`.
+3. Confirm each app's Secret still carries byte-identical values, from a RUNNING
+   pod, before anything is deleted.
+4. Scale the standalone to zero, then remove it.
+
+Order matters and step 3 is not optional: a Secret that syncs empty does not fail
+the pod, it starts one that cannot work.
+
+Each path move is **copy, repoint, verify, delete** — in that order, one app at a
+time. The old entry is removed only after the new path has been read by a running
+pod, because a secret that exists at neither path is an outage and a secret that
+exists at both is merely untidy.
 
 Two rules learned from the first attempt, which read cloud's embedded store by
 mistake and would have destroyed live credentials:
@@ -265,7 +285,7 @@ and the delete that follows then removes the only real copy. `admin-guard` gates
 SuperAdmin admission to every raw admin surface; that sequence would have left it
 booting with no `GUARD_HMAC_KEY`.
 
-**Absence must be proven in the right store, and by an unfiltered listing.** A
+**Absence must be proven against the deployment the chart reads, by an unfiltered listing.** A
 path-filtered list returning `total: 0` is not evidence: the same token that
 reported zero for `/orgs/hanzo` returned five secrets when listed unfiltered.
 Absence is only established by enumerating the store the chart actually reads.
