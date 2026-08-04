@@ -1,8 +1,18 @@
 name: ci
 
-# Native CI on git.hanzo.ai. Checks the index against the HIPs directory,
-# because both defects it catches were found by hand: five specs existed as
-# files while unreachable from the index, and two files claimed hip: 0127.
+# Native CI on git.hanzo.ai. Runs the SAME lint a contributor runs locally:
+#
+#     python3 scripts/lint-hips.py
+#
+# This job used to carry its own copy of the checks as an inline heredoc, so the
+# gate existed only on the forge and a failure could not be reproduced without
+# pushing. Two implementations of one rule is the defect this repository exists
+# to name. There is now one, in scripts/lint-hips.py, and this file calls it.
+#
+# Every check fires on a defect that was actually present in HIPs/: five specs
+# unreachable from the index, two files both claiming hip: 0127, a HIP with no
+# status shipping green, 101 H1 headings disagreeing with their own front
+# matter, and a second index that described 25 HIPs while 138 existed.
 
 on:
   push:
@@ -11,61 +21,19 @@ on:
   workflow_dispatch:
 
 jobs:
-  index:
+  lint:
     runs-on: hanzo-build-linux-amd64
     steps:
       - uses: actions/checkout@v4
 
-      - name: index matches the HIPs directory
-        run: |
-          python3 - <<'PY'
-          import os, re, sys
+      # The lint's own test suite runs FIRST. It breaks a scratch copy of the
+      # corpus 22 ways and requires the lint to report the matching code for
+      # each, plus asserts that every declared check has a test. A green lint
+      # whose checks have never been seen to fail is indistinguishable from a
+      # lint that returns success unconditionally -- which is exactly what the
+      # GitHub workflow this replaced did.
+      - name: the lint fails when it should
+        run: python3 scripts/test-lint-hips.py
 
-          src = open('README.md', encoding='utf-8').read()
-          linked = set(re.findall(r'\]\(\./HIPs/([^)]+)\)', src))
-          files = {f for f in os.listdir('HIPs') if f.endswith('.md')}
-
-          dead = sorted(linked - files)
-          missing = sorted(files - linked)
-
-          numbers = {}
-          for f in files:
-              m = re.match(r'hip-(\d{4})', f)
-              if m:
-                  numbers.setdefault(m.group(1), []).append(f)
-          collisions = {n: v for n, v in numbers.items() if len(v) > 1}
-
-          for f in dead:
-              print(f'index links a file that does not exist: {f}')
-          for f in missing:
-              print(f'HIP is unreachable from the index: {f}')
-          for n, v in sorted(collisions.items()):
-              print(f'two files claim hip {n}: {", ".join(sorted(v))}')
-
-          # Required frontmatter. Ported from the GitHub workflow this replaces,
-          # which reported every missing field and then exited 0, so a HIP with no
-          # status shipped green.
-          for f in sorted(files):
-              head = open(os.path.join('HIPs', f), encoding='utf-8').read(600)
-              for field in ('hip', 'title', 'status'):
-                  if not re.search(rf'^{field}:', head, re.M):
-                      print(f'{f} has no {field}:')
-                      dead.append(f)
-              if not re.search(r'^authors?:', head, re.M):
-                  print(f'{f} has no author:')
-                  dead.append(f)
-
-          # A HIP whose frontmatter number disagrees with its filename is the
-          # shape a renumber leaves behind when only one of the two is edited.
-          for f in sorted(files):
-              m = re.match(r'hip-(\d{4})', f)
-              if not m:
-                  continue
-              head = open(os.path.join('HIPs', f), encoding='utf-8').read(400)
-              d = re.search(r'^hip:\s*(\d+)', head, re.M)
-              if d and d.group(1).zfill(4) != m.group(1):
-                  print(f'{f} declares hip: {d.group(1)}')
-                  dead.append(f)
-
-          sys.exit(1 if (dead or missing or collisions) else 0)
-          PY
+      - name: every HIP is structurally sound, and the index matches
+        run: python3 scripts/lint-hips.py
