@@ -87,9 +87,19 @@ In the manifest, whichever the language uses:
 In the README, one line. Not a section, not a table, not a restatement of the
 rule — one line naming the expression and linking here.
 
-`hanzoai/ml` on branch `legal/dual-mit-apache` is the worked example: 30
-manifests dual, one deliberately not (see §6), `LICENSE` and `LICENSE-APACHE`
-byte-identical to canonical.
+Two failures are specific to this layout and both have already happened here.
+
+**`LICENSE` must be the dual declaration, not a copy of one of the two texts.**
+If `LICENSE` is byte-identical to `LICENSE-APACHE`, then a reader who opens the
+file the ecosystem tells them to open sees Apache-2.0 and nothing else — the MIT
+option is silently gone, whatever the manifest says. Check it by hash: `LICENSE`
+and `LICENSE-APACHE` having the *same* hash is the bug, not the confirmation.
+
+**`LICENSE-MIT` must carry a copyright holder line.** MIT's operative sentence
+is "the above copyright notice ... shall be included in all copies." A
+`LICENSE-MIT` that opens on "Permission is hereby granted" has no *above*
+notice, so the clause points at nothing and the license conveys no attribution
+at all. The word "copyright" appearing twice in the body is not a holder line.
 
 ### 3. License text is canonical and is never edited
 
@@ -144,6 +154,16 @@ license, published together, because the description was believed.
 GitHub's `fork` flag is **not** evidence. A repository imported by pushing a
 clone reports `fork: false` and has no `parent`. Absence of a parent proves
 nothing about authorship.
+
+**Establish ancestry across every ref, not the default branch.** Foreign history
+hides one branch away, and the default branch is the one place it reliably is
+not. In this estate: a repository badged BSD-3-Clause carried GPL-3.0 upstream
+code on two `backup/` and `rescue/` branches; another shows a five-commit
+grafted `main` that conceals the real 176-commit upstream lineage on `master`;
+a third's true origin sits on a `master` that is not an ancestor of `main` at
+all. A default-branch audit clears all three. `git log --all`, and list the
+roots — a repository with several unrelated root commits is several
+repositories, and they may not share a license.
 
 ### 5. NOTICE is an Apache-2.0 obligation, and only that
 
