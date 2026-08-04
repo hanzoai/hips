@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-404: DocDB CRD
+
+
+# HIP-0404: DocDB CRD
 
 ## Abstract
 

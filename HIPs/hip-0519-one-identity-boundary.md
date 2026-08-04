@@ -9,6 +9,8 @@ created: 2026-07-29
 requires: HIP-0026
 ---
 
+
+
 # HIP-0519: One Identity Boundary
 
 ## Abstract

@@ -9,6 +9,8 @@ created: 2026-07-28
 requires: HIP-0106, HIP-0114, HIP-0116, HIP-0120, HIP-0122
 ---
 
+
+
 # HIP-0134: One Process, One Socket, One Identity
 
 ## Abstract

@@ -9,7 +9,9 @@ created: 2024-12-20
 requires: LP-100
 ---
 
-# HIP-5: Post-Quantum Security for AI Infrastructure
+
+
+# HIP-0005: Post-Quantum Security for AI Infrastructure
 
 ## Abstract
 

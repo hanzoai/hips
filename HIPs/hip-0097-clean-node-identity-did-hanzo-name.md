@@ -9,7 +9,9 @@ created: 2026-05-31
 requires: HIP-0005 (Post-Quantum Security), HIP-0024 (Sovereign L1), HIP-0026 (IAM), HIP-0027 (KMS)
 ---
 
-# HIP-97: Node Identity and the `did:hanzo:` DID Method
+
+
+# HIP-0097: Node Identity and the did:hanzo: DID Method
 
 ## Abstract
 

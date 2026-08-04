@@ -11,7 +11,9 @@ created: 2025-12-17
 requires: [200, 250]
 ---
 
-# HIP-270: AI Supply Chain Responsibility
+
+
+# HIP-0270: AI Supply Chain Responsibility
 
 ## Abstract
 
@@ -40,7 +42,7 @@ This HIP establishes the framework for responsible sourcing across Hanzo AI's su
 
 ### Cloud Provider Standards
 
-#### Environmental Criteria
+#### Cloud Provider Environmental Criteria
 
 | Criterion | Requirement | Weight |
 |-----------|-------------|--------|
@@ -50,7 +52,7 @@ This HIP establishes the framework for responsible sourcing across Hanzo AI's su
 | **Water usage** | WUE reporting, reduction targets | Medium |
 | **E-waste** | Responsible disposal, circularity | Medium |
 
-#### Social Criteria
+#### Cloud Provider Social Criteria
 
 | Criterion | Requirement | Weight |
 |-----------|-------------|--------|
@@ -101,7 +103,7 @@ For colocation or owned infrastructure:
 
 ### GPU & Server Standards
 
-#### Environmental Criteria
+#### Hardware Environmental Criteria
 
 | Criterion | Requirement |
 |-----------|-------------|
@@ -110,7 +112,7 @@ For colocation or owned infrastructure:
 | **Conflict minerals** | Conflict-free sourcing certification |
 | **Packaging** | Minimal, recyclable packaging |
 
-#### Social Criteria
+#### Hardware Social Criteria
 
 | Criterion | Requirement |
 |-----------|-------------|

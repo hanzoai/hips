@@ -8,7 +8,9 @@ status: Active
 created: 2026-07-27
 ---
 
-# HIP-517: Branch Naming — `main` is the Trunk, Everywhere
+
+
+# HIP-0517: Branch Naming — main is the Trunk, Everywhere
 
 ## Preamble
 

@@ -9,7 +9,9 @@ created: 2026-07-26
 requires: HIP-0902
 ---
 
-# HIP-903: The Agentic Company
+
+
+# HIP-0903: The Agentic Company — Autonomous Firms on Hanzo
 
 ## Preamble
 

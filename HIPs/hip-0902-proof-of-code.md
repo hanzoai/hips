@@ -9,7 +9,8 @@ created: 2026-07-26
 requires: HIP-0005, HIP-0901
 ---
 
-# HIP-902: Proof of Code
+
+# HIP-0902: Proof of Code — Consensus over Git Refs
 
 ## Abstract
 
@@ -61,7 +62,9 @@ The deeper failure: four machines each held a full replica, each believed its
 own `main`, and there was no agreement rule. That is precisely the problem
 consensus exists to solve, and we already own an engine that solves it.
 
-## 1. What git already provides
+## Specification
+
+### 1. What git already provides
 
 | Property | Git | Status |
 |---|---|---|
@@ -76,7 +79,7 @@ consensus exists to solve, and we already own an engine that solves it.
 The two missing rows are the whole proposal. Everything above them we get for
 free, which is why this is an extension rather than a replacement.
 
-## 2. The unit of consensus is the ref, not the commit
+### 2. The unit of consensus is the ref, not the commit
 
 Commits do not need consensus. They are content-addressed: two machines holding
 `181fb61f` hold identical bytes or one of them is corrupt, and `git fsck`
@@ -124,7 +127,7 @@ current head cannot accidentally clobber it — its `old` will not match, and th
 proposal is stale rather than destructive. Incident two was a lost update; this
 field alone prevents it.
 
-## 3. The ladder
+### 3. The ladder
 
 Five tiers. Each is orders of magnitude cheaper than the one above and gates
 it — a commit that fails tier 1 never reaches a build machine, and one that
@@ -156,7 +159,7 @@ slower and less certain.
 **Tier 4 — human.** Policy changes and overrides, signed, recorded in the chain
 so the rules a commit was judged under are always recoverable.
 
-## 4. Weight
+### 4. Weight
 
 The chain-selection rule. A non-fast-forward proposal is accepted only when it
 **strictly increases** weight.
@@ -194,7 +197,7 @@ Two honest caveats:
 2. **Copied work is novel by this definition.** Vendoring someone else's tree
    scores. Novelty proves *new to this repo*, never *authored here*.
 
-## 5. Proof of Code
+### 5. Proof of Code
 
 > A commit is valid when it builds and its tests pass, hermetically, on
 > machines that did not produce it.
@@ -226,7 +229,7 @@ every validator can verify every proposal cheaply, so this **requires** a fixed
 validator set and BFT — it cannot be Nakamoto. And tier 1 must be strict, because
 its whole job is keeping worthless commits off the build machines.
 
-## 6. Judgment — can a model approve code?
+### 6. Judgment — can a model approve code?
 
 Directly, because it was asked directly:
 
@@ -279,7 +282,7 @@ a backdoor with green tests is still green. That gap is exactly where judgment
 earns its place, and it is a narrower and more defensible claim than "the model
 reviews the code".
 
-## 7. Autonomous editing and merging
+### 7. Autonomous editing and merging
 
 With the ladder in place, agents can hold the pen:
 
@@ -300,7 +303,7 @@ because one model was confident, it is merged because independent machines built
 it, independent judges failed to fault it, and a quorum signed. That is a
 stronger claim than any single reviewer — human or model — can make alone.
 
-## 8. Mapping to `luxfi/consensus`
+### 8. Mapping to `luxfi/consensus`
 
 The engine is already generic over the decided value:
 
@@ -332,7 +335,7 @@ cost — so identity carries it instead. This is the deliberate trade: we give u
 open membership and gain a difficulty function whose output is working software
 rather than heat.
 
-## 9. Per-namespace policy
+### 9. Per-namespace policy
 
 Policy is keyed by `namespace` — a single value, not a `{type, id}` pair. One
 org, one string, one lookup.
@@ -385,7 +388,7 @@ Validation belongs inside the function that builds the path, not beside it. A
 free-floating `validSegment` is a rule you can forget to call; folded into
 `pathFor` it is a rule you cannot express your way around.
 
-## 10. Deployment
+### 10. Deployment
 
 **Stage 0 — today, no consensus.** A `pre-receive` hook rejecting any
 non-fast-forward that reduces distinct-tree count. Roughly twenty lines, no new
@@ -404,7 +407,7 @@ tiers 0–2 to `enforce` per namespace.
 **Stage 4 — judgment.** Tier 3 in `advise`, then `enforce` for namespaces that
 want it. Reject-only from the first commit — never as a later hardening.
 
-## 11. Open problems
+### 11. Open problems
 
 1. **Hermeticity is the real work.** Our builds are not reproducible today. Most
    of the engineering in this proposal is closing that, and stage 2 exists to

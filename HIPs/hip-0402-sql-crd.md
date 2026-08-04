@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-402: SQL CRD
+
+
+# HIP-0402: SQL CRD
 
 ## Abstract
 

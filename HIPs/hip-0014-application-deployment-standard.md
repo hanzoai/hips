@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-0026, HIP-0027, HIP-0029
 ---
 
-# HIP-14: Application Deployment Standard
+
+
+# HIP-0014: Application Deployment Standard
 
 ## Abstract
 
@@ -64,7 +66,7 @@ Vercel and Netlify are excellent products for frontend deployments. They are not
 Both are open-source PaaS alternatives. Neither fits our requirements:
 
 - **CapRover**: Built on Docker Swarm, which is effectively unmaintained. The UI is functional but dated. The codebase is JavaScript with limited TypeScript adoption. No Kubernetes support. The project's last major release was years ago. Building on CapRover means building on a declining foundation.
-- **Coolify**: The closest competitor to Dokploy. Active development, modern UI, good feature set. However, Coolify uses a BSL (Business Source License) that restricts commercial self-hosting without a license. For an infrastructure company that deploys its PaaS as part of its product offering, licensing ambiguity is unacceptable. Dokploy is Apache 2.0.
+- **Coolify**: The nearest alternative to Dokploy. Active development, modern UI, good feature set. However, Coolify uses a BSL (Business Source License) that restricts commercial self-hosting without a license. For an infrastructure company that deploys its PaaS as part of its product offering, licensing ambiguity is unacceptable. Dokploy is Apache 2.0.
 
 ### Why Dokploy
 

@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-4
 ---
 
-# HIP-11: Chat Interface Standard
+
+
+# HIP-0011: Chat Interface Standard
 
 ## Abstract
 
@@ -115,7 +117,7 @@ interface ToolCall {
 }
 ```
 
-#### Session Management
+#### Session Model
 
 ```typescript
 interface ChatSession {
@@ -172,7 +174,7 @@ interface Folder {
 
 ### API Endpoints
 
-#### Session Management
+#### Session Endpoints
 
 ```yaml
 # Create new session

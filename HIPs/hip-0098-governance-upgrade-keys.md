@@ -3,11 +3,15 @@ hip: 0098
 title: Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold roots)
 type: Standards Track
 category: Cryptography
-status: Proposed
+status: Draft
 author: Hanzo AI
 created: 2026-05-11
 requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0078, HIP-0079, HIP-0084, HIP-0085, HIP-0086
 ---
+
+
+
+# HIP-0098: Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold roots)
 
 ## Abstract
 

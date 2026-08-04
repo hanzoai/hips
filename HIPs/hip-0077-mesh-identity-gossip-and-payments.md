@@ -6,7 +6,12 @@ category: Infrastructure
 status: Draft
 author: Hanzo AI
 requires: HIP-0001 (AI Coin), HIP-0005 (Post-Quantum Security), HIP-007 (ZAP), HIP-0018 (Payments), HIP-0069 (Service Discovery)
+created: 2026-05-10
 ---
+
+
+
+# HIP-0077: Mesh Identity, Gossip & Payments (PQ)
 
 ## Abstract
 

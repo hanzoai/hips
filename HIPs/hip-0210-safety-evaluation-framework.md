@@ -11,7 +11,9 @@ created: 2025-12-17
 requires: [200, 201]
 ---
 
-# HIP-210: Safety Evaluation Framework
+
+
+# HIP-0210: Safety Evaluation Framework
 
 ## Abstract
 

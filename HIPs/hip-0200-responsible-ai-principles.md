@@ -7,7 +7,9 @@ status: Draft
 created: 2025-12-16
 ---
 
-# HIP-200: Responsible AI Principles and Commitments
+
+
+# HIP-0200: Responsible AI Principles and Commitments
 
 ## Abstract
 

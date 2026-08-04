@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-418: Indexer CRD
+
+
+# HIP-0418: Indexer CRD
 
 ## Abstract
 

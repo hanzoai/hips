@@ -9,6 +9,8 @@ created: 2025-12-27
 requires: LP-0011
 ---
 
+
+
 # HIP-0024: Hanzo Sovereign L1 Chain Architecture
 
 ## Abstract

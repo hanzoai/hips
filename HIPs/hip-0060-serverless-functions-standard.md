@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0030, HIP-0050
 ---
 
-# HIP-60: Serverless Functions (FaaS) Standard
+
+
+# HIP-0060: Serverless Functions (FaaS) Standard
 
 ## Abstract
 

@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0014, HIP-0026, HIP-0027
 ---
 
-# HIP-49: DNS Service Standard
+
+
+# HIP-0049: DNS Service Standard
 
 ## Abstract
 

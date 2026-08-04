@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-410: LLM CRD
+
+
+# HIP-0410: LLM CRD
 
 ## Abstract
 

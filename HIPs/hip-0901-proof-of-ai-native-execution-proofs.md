@@ -11,7 +11,9 @@ mirrors: LP-302, ZIP-0419
 requires: HIP-0001, HIP-0005
 ---
 
-# HIP-901: Proof of AI (PoAI)
+
+
+# HIP-0901: Proof of AI (PoAI) — Native Execution Proofs, Canonical Contract & Operator-LLM Governance
 
 ## Abstract
 

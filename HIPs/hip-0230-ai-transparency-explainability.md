@@ -11,7 +11,9 @@ created: 2025-12-17
 requires: [200, 201]
 ---
 
-# HIP-230: AI Transparency & Explainability
+
+
+# HIP-0230: AI Transparency & Explainability
 
 ## Abstract
 

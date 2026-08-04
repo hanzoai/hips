@@ -11,6 +11,8 @@ updated: 2026-02-23
 requires: HIP-0001, HIP-0005, HIP-0008, HIP-0024
 ---
 
+
+
 # HIP-0101: Hanzo-Lux Bridge Protocol Integration
 
 ## Abstract

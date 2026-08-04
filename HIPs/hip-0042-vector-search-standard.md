@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0004
 ---
 
-# HIP-42: Vector Search Standard
+
+
+# HIP-0042: Vector Search Standard
 
 ## Abstract
 

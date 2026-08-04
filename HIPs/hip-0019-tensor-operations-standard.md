@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-0003
 ---
 
-# HIP-19: Tensor Operations Standard
+
+
+# HIP-0019: Tensor Operations Standard
 
 ## Abstract
 

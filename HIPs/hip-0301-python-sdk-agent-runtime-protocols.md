@@ -9,6 +9,8 @@ created: 2026-03-31
 requires: HIP-9, HIP-10
 ---
 
+
+
 # HIP-0301: Agent Runtime Protocols & Cross-Platform Parity
 
 ## Abstract

@@ -10,6 +10,8 @@ updated: 2026-07-08
 requires: HIP-0026, HIP-0105, HIP-0114, HIP-0120
 ---
 
+
+
 # HIP-0122: zip — The ZAP-Native Application Server Core
 
 ## Abstract

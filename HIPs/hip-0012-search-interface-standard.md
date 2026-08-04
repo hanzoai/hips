@@ -10,7 +10,9 @@ updated: 2026-02-23
 requires: HIP-4
 ---
 
-# HIP-12: Search Interface Standard
+
+
+# HIP-0012: Search Interface Standard
 
 ## Abstract
 

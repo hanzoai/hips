@@ -11,7 +11,9 @@ created: 2025-12-17
 requires: [200, 201]
 ---
 
-# HIP-220: Bias Detection & Mitigation
+
+
+# HIP-0220: Bias Detection & Mitigation
 
 ## Abstract
 

@@ -9,7 +9,9 @@ created: 2026-08-03
 requires: HIP-0027, HIP-0119
 ---
 
-# HIP-136: One Secret, One Path
+
+
+# HIP-0136: One Secret, One Path
 
 ## Abstract
 

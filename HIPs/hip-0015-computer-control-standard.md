@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-9, HIP-10
 ---
 
-# HIP-15: Computer Control Standard
+
+
+# HIP-0015: Computer Control Standard
 
 ## Abstract
 

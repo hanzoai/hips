@@ -9,7 +9,9 @@ created: 2026-05-18
 requires: HIP-0105, HIP-0106, HIP-0107, HIP-0302
 ---
 
-# HIP-108: On-Demand Subsystem Supervisor + Warm Pool
+
+
+# HIP-0108: On-Demand Subsystem Supervisor + Warm Pool
 
 ## Abstract
 

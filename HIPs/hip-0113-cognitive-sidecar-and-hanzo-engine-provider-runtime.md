@@ -9,6 +9,8 @@ created: 2026-06-21
 requires: 0020, 0024, 0043, 0114
 ---
 
+
+
 # HIP-0113: Cognitive Sidecar & Hanzo Engine Provider Runtime for Thinking Chains
 
 ## Abstract

@@ -2,12 +2,15 @@
 hip: 0095
 title: QoS Challenge System
 type: Standards Track
-category: Compute Protocol
+category: Core
 status: Draft
 author: Hanzo AI
 created: 2026-01-24
 requires: HIP-0020 (Blockchain Node Standard)
 ---
+
+
+# HIP-0095: QoS Challenge System
 
 ## Abstract
 
@@ -102,11 +105,13 @@ The QoS Challenge System integrates with:
 
 ---
 
-## QoS Challenge Protocol
+## Specification
 
-### Challenge Types
+### QoS Challenge Protocol
 
-#### 1. Compute Challenge (CC)
+#### Challenge Types
+
+##### 1. Compute Challenge (CC)
 
 Verifies actual compute capability (TFLOPS/GFLOPS)
 
@@ -174,7 +179,7 @@ def compute_problem_size(difficulty: int, metric: str) -> int:
     return base_sizes[metric] * (2 ** (difficulty - 1))
 ```
 
-#### 2. Latency Challenge (LC)
+##### 2. Latency Challenge (LC)
 
 Verifies network latency and response time
 
@@ -195,7 +200,7 @@ pub struct LatencyChallenge {
 
 **Verification Method**: Echo-response pattern with cryptographic binding. Provider must respond within deadline with signed nonce.
 
-#### 3. Bandwidth Challenge (BC)
+##### 3. Bandwidth Challenge (BC)
 
 Verifies data transfer capabilities
 
@@ -220,7 +225,7 @@ pub enum TransferDirection {
 }
 ```
 
-#### 4. Availability Challenge (AC)
+##### 4. Availability Challenge (AC)
 
 Verifies provider is online and ready to serve
 
@@ -239,7 +244,7 @@ pub struct AvailabilityChallenge {
 
 **Verification Method**: Heartbeat-style challenges issued at random intervals. Missing responses count against availability score.
 
-#### 5. Model Capability Challenge (MC)
+##### 5. Model Capability Challenge (MC)
 
 Verifies provider can run specific AI models
 
@@ -258,7 +263,7 @@ pub struct ModelChallenge {
 }
 ```
 
-### Challenge Issuance Protocol
+#### Challenge Issuance Protocol
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -296,7 +301,7 @@ pub struct ModelChallenge {
        │                   │                   │                   │
 ```
 
-### Challenge Frequency
+#### Challenge Frequency
 
 | Provider Tier        | Challenge Frequency | Challenge Mix                                  |
 | -------------------- | ------------------- | ---------------------------------------------- |
@@ -305,7 +310,7 @@ pub struct ModelChallenge {
 | Trusted (100+)       | Every 60 minutes    | 25% Compute, 35% Avail, 20% Latency, 20% Model |
 | Elite (1000+, TEE)   | Every 2 hours       | 20% Compute, 40% Avail, 20% Latency, 20% Model |
 
-### Proof Structure
+#### Proof Structure
 
 ```rust
 pub struct ChallengeProof {
@@ -361,11 +366,11 @@ pub enum ProofData {
 
 ---
 
-## Verification and Scoring System
+### Verification and Scoring System
 
-### Verification Methods
+#### Verification Methods
 
-#### 1. Hash Verification
+##### 1. Hash Verification
 
 For compute challenges, verifiers execute the same deterministic computation:
 
@@ -405,7 +410,7 @@ impl ComputeChallengeVerifier {
 }
 ```
 
-#### 2. Optimistic Verification with Fraud Proofs
+##### 2. Optimistic Verification with Fraud Proofs
 
 For efficiency, most verifications are optimistic:
 
@@ -446,7 +451,7 @@ pub struct FraudProof {
 }
 ```
 
-#### 3. TEE Attestation Verification
+##### 3. TEE Attestation Verification
 
 For TEE-enabled providers:
 
@@ -471,7 +476,7 @@ pub enum TeeType {
 }
 ```
 
-### QoS Score Calculation
+#### QoS Score Calculation
 
 The QoS score is a composite metric:
 
@@ -532,7 +537,7 @@ pub struct ScoreWeights {
 }
 ```
 
-### Consistency Measurement
+#### Consistency Measurement
 
 ```rust
 impl ConsistencyCalculator {
@@ -574,9 +579,9 @@ impl ConsistencyCalculator {
 
 ---
 
-## Penalty/Reward Mechanisms
+### Penalty/Reward Mechanisms
 
-### Economic Model
+#### Economic Model
 
 ```
                             Economic Flow Diagram
@@ -615,7 +620,7 @@ impl ConsistencyCalculator {
 +============================================================================+
 ```
 
-### Reward Structure
+#### Reward Structure
 
 ```rust
 pub struct RewardConfig {
@@ -693,7 +698,7 @@ impl RewardCalculator {
 }
 ```
 
-### Penalty Structure
+#### Penalty Structure
 
 ```rust
 pub struct PenaltyConfig {
@@ -810,7 +815,7 @@ pub enum BanReason {
 }
 ```
 
-### Reputation System Integration
+#### Reputation System Integration
 
 ```rust
 pub struct ReputationManager {
@@ -902,7 +907,7 @@ pub enum ProviderStatus {
 }
 ```
 
-### On-Chain Settlement
+#### On-Chain Settlement
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -1098,9 +1103,9 @@ contract QoSChallengeSettlement is ReentrancyGuard {
 
 ---
 
-## Security Analysis
+### Security Analysis
 
-### Threat Model
+#### Threat Model
 
 | Threat                      | Impact                                       | Mitigation                                                  |
 | --------------------------- | -------------------------------------------- | ----------------------------------------------------------- |
@@ -1112,14 +1117,14 @@ contract QoSChallengeSettlement is ReentrancyGuard {
 | **Eclipse Attack**          | Isolate provider from network                | Multiple bootstrap nodes, diverse verifier set              |
 | **TEE Compromise**          | Fake attestation quotes                      | Quote freshness checks, revocation lists, multi-vendor TEE  |
 
-### Security Properties
+#### Security Properties
 
 1. **Unpredictability**: Challenges are generated using VRF (Verifiable Random Function) to prevent prediction
 2. **Non-repudiation**: All proofs are cryptographically signed
 3. **Atomicity**: On-chain settlement is atomic (reward/slash happens together)
 4. **Consistency**: Distributed verifier consensus prevents single points of failure
 
-### Challenge Randomness
+#### Challenge Randomness
 
 ```rust
 use vrf::VRF;
@@ -1181,57 +1186,57 @@ impl ChallengeSelector {
 
 ---
 
-## Implementation Plan
+### Implementation Plan
 
-### Phase 1: Foundation (Weeks 1-4)
+#### Phase 1: Foundation (Weeks 1-4)
 
-#### Week 1-2: Core Data Structures
+##### Week 1-2: Core Data Structures
 
 - [ ] Define `Challenge`, `Proof`, `ChallengeResult` types in `hanzo-compute`
 - [ ] Implement `ChallengeGenerator` with VRF-based randomness
 - [ ] Add `QoSScore` and `ProviderState` to peer management
 - [ ] Unit tests for all data structures
 
-#### Week 3-4: Challenge Protocol
+##### Week 3-4: Challenge Protocol
 
 - [ ] Implement P2P challenge delivery via `hanzo-libp2p`
 - [ ] Build `ComputeChallengeVerifier` with reference computation
 - [ ] Implement `LatencyChallengeVerifier` with timing verification
 - [ ] Integration tests for challenge round-trip
 
-### Phase 2: Verification (Weeks 5-8)
+#### Phase 2: Verification (Weeks 5-8)
 
-#### Week 5-6: Verification Engine
+##### Week 5-6: Verification Engine
 
 - [ ] Build optimistic verification framework
 - [ ] Implement fraud proof generation and validation
 - [ ] Add TEE attestation verification (Intel SGX, AMD SEV)
 - [ ] Integration with `hanzo-pqc` for quantum-safe signatures
 
-#### Week 7-8: Scoring System
+##### Week 7-8: Scoring System
 
 - [ ] Implement `QoSScoreCalculator` with component weighting
 - [ ] Build `ConsistencyCalculator` with time-series analysis
 - [ ] Add score persistence to `hanzo-database`
 - [ ] API endpoints for score queries
 
-### Phase 3: Economics (Weeks 9-12)
+#### Phase 3: Economics (Weeks 9-12)
 
-#### Week 9-10: On-Chain Contracts
+##### Week 9-10: On-Chain Contracts
 
 - [ ] Deploy `QoSChallengeSettlement` contract to testnet
 - [ ] Implement reward distribution logic
 - [ ] Add slashing mechanics with circuit breakers
 - [ ] Security audit of smart contracts
 
-#### Week 11-12: Integration & Testing
+##### Week 11-12: Integration & Testing
 
 - [ ] End-to-end integration with `hanzo-mining`
 - [ ] Stress testing with simulated adversaries
 - [ ] Documentation and API reference
 - [ ] Mainnet deployment preparation
 
-### Milestones
+#### Milestones
 
 | Milestone | Deliverable                                | Date    |
 | --------- | ------------------------------------------ | ------- |
@@ -1242,7 +1247,7 @@ impl ChallengeSelector {
 | M5        | Security audit complete                    | Week 11 |
 | M6        | Mainnet launch                             | Week 12 |
 
-### Success Metrics
+#### Success Metrics
 
 | Metric                    | Target       | Measurement                                   |
 | ------------------------- | ------------ | --------------------------------------------- |
@@ -1254,9 +1259,9 @@ impl ChallengeSelector {
 
 ---
 
-## Appendix A: API Reference
+### Appendix A: API Reference
 
-### Challenge Service gRPC API
+#### Challenge Service gRPC API
 
 ```protobuf
 syntax = "proto3";
@@ -1321,7 +1326,7 @@ message QoSScore {
 }
 ```
 
-### REST API Endpoints
+#### REST API Endpoints
 
 ```yaml
 openapi: 3.0.0
@@ -1498,9 +1503,9 @@ components:
 
 ---
 
-## Appendix B: Reference Implementations
+### Appendix B: Reference Implementations
 
-### Compute Challenge Kernel (GPU)
+#### Compute Challenge Kernel (GPU)
 
 ```cuda
 // Reference CUDA kernel for compute challenges
@@ -1606,7 +1611,7 @@ ChallengeProof execute_compute_challenge(ComputeChallenge* challenge) {
 
 ---
 
-## Document History
+### Document History
 
 | Version | Date       | Author            | Changes                 |
 | ------- | ---------- | ----------------- | ----------------------- |

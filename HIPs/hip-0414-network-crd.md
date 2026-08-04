@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-414: Network CRD
+
+
+# HIP-0414: Network CRD
 
 ## Abstract
 

@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0047
 ---
 
-# HIP-64: Log Aggregation & Search Standard
+
+
+# HIP-0064: Log Aggregation & Search Standard
 
 ## Abstract
 
@@ -161,7 +163,7 @@ It collects, transforms, and routes logs, metrics, and traces.
 | End-to-end acks | Yes | Partial | Partial | Yes |
 | Disk buffering | Built-in | Plugin | Limited | Yes |
 
-Fluentbit is the closest competitor in footprint. We choose Vector because:
+Fluentbit is the nearest alternative on footprint. We choose Vector because:
 
 1. **Native ClickHouse sink.** Vector writes directly to ClickHouse via the
    native TCP protocol (port 9000), batching inserts automatically. Fluentbit

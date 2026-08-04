@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-0030
 ---
 
-# HIP-17: Analytics Event Standard
+
+
+# HIP-0017: Analytics Event Standard
 
 ## Abstract
 

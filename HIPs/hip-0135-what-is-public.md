@@ -8,6 +8,8 @@ status: Final
 created: 2026-07-29
 ---
 
+
+
 # HIP-0135: What Is Public
 
 ## Abstract

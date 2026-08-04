@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-403: KV CRD
+
+
+# HIP-0403: KV CRD
 
 ## Abstract
 

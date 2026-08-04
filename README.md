@@ -13,7 +13,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 ## Quick Start
 
 - New to HIPs? Begin with [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md), the Hanzo AI Architecture overview
-- Create a new HIP: Use the provided template to scaffold a proposal draft
+- Create a new HIP: copy [`docs/templates/hip-template.md`](./docs/templates/hip-template.md)
+  to `HIPs/hip-<NNNN>-<slug>.md`, then run `python3 scripts/lint-hips.py`
 - View all HIPs: See the complete index below
 
 ## HIP Index
@@ -52,7 +53,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | CI/CD Build System Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0039](./HIPs/hip-0039-zen-model-architecture.md) | Zen Model Architecture | Standards Track | Core | Draft |
 | [HIP-0040](./HIPs/hip-0040-multi-language-sdk-standard.md) | Multi-Language SDK Standard | Standards Track | Interface | Draft |
-| [HIP-0041](./HIPs/hip-0041-cli-standard.md) | CLI Standard | Standards Track | Interface | Draft |
+| [HIP-0041](./HIPs/hip-0041-cli-standard.md) | The Hanzo CLI — a Projection of the Served API | Standards Track | Interface | Draft |
 | [HIP-0042](./HIPs/hip-0042-vector-search-standard.md) | Vector Search Standard | Standards Track | Infrastructure | Active |
 | [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | Hanzo Engine — LLM Inference Engine Standard | Standards Track | Core | Active |
 | [HIP-0045](./HIPs/hip-0045-documentation-framework-standard.md) | Documentation Framework Standard | Standards Track | Interface | Draft |
@@ -72,19 +73,19 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | Z-Chain — Post-Quantum Identity & Attestation Rollup | Standards Track | Infrastructure | Draft |
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | Q-Chain — Quasar Finality Block Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | Pulsar-M — Threshold ML-DSA DKG & Signing | Standards Track | Cryptography | Draft |
-| [HIP-0085](./HIPs/hip-0085-wallet-pq-account-type.md) | Wallet PQ Account Type (ML-DSA-65 native, 48-byte Ac... | Standards Track | Cryptography | Implemented |
-| [HIP-0086](./HIPs/hip-0086-tx-auth-envelope.md) | TxAuthEnvelope (typed PQ transaction signing) | Standards Track | Cryptography | Implemented |
-| [HIP-0087](./HIPs/hip-0087-pq-permit.md) | PQ Permit (replaces EIP-2612) | Standards Track | Cryptography | Implemented |
-| [HIP-0088](./HIPs/hip-0088-session-kem.md) | Session KEM (ML-KEM-768/1024 for P2P) | Standards Track | Cryptography | Implemented |
-| [HIP-0089](./HIPs/hip-0089-drbg-randomness-beacon.md) | DRBG / Randomness Beacon (SP 800-90A/B) | Standards Track | Cryptography | Proposed |
-| [HIP-0095](./HIPs/hip-0095-qos-challenge-system.md) | QoS Challenge System | Standards Track | Compute Protocol | Draft |
-| [HIP-0096](./HIPs/hip-0096-ai-compute-contribution-rewards.md) | AI Compute Contribution Rewards | Standards Track | Economic Protocol | Draft |
+| [HIP-0085](./HIPs/hip-0085-wallet-pq-account-type.md) | Wallet PQ Account Type (ML-DSA-65 native, 48-byte Ac... | Standards Track | Cryptography | Final |
+| [HIP-0086](./HIPs/hip-0086-tx-auth-envelope.md) | TxAuthEnvelope (typed PQ transaction signing) | Standards Track | Cryptography | Final |
+| [HIP-0087](./HIPs/hip-0087-pq-permit.md) | PQ Permit (replaces EIP-2612) | Standards Track | Cryptography | Final |
+| [HIP-0088](./HIPs/hip-0088-session-kem.md) | Session KEM (ML-KEM-768/1024 for P2P) | Standards Track | Cryptography | Final |
+| [HIP-0089](./HIPs/hip-0089-drbg-randomness-beacon.md) | DRBG / Randomness Beacon (SP 800-90A/B) | Standards Track | Cryptography | Draft |
+| [HIP-0095](./HIPs/hip-0095-qos-challenge-system.md) | QoS Challenge System | Standards Track | Core | Draft |
+| [HIP-0096](./HIPs/hip-0096-ai-compute-contribution-rewards.md) | AI Compute Contribution Rewards | Standards Track | Core | Draft |
 | [HIP-0097](./HIPs/hip-0097-clean-node-identity-did-hanzo-name.md) | Node Identity and the did:hanzo: DID Method | Standards Track | Core | Draft |
-| [HIP-0098](./HIPs/hip-0098-governance-upgrade-keys.md) | Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold ... | Standards Track | Cryptography | Proposed |
+| [HIP-0098](./HIPs/hip-0098-governance-upgrade-keys.md) | Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold ... | Standards Track | Cryptography | Draft |
 | [HIP-0101](./HIPs/hip-0101-hanzo-lux-bridge-protocol-integration.md) | Hanzo-Lux Bridge Protocol Integration | Standards Track | Bridge | Draft |
 | [HIP-0102](./HIPs/hip-0102-omnichain-bridge.md) | Omnichain Bridge Integration | Standards Track | Bridge | Final |
-| [HIP-0103](./HIPs/hip-0103-bridge-pq-only-profile.md) | Bridge PQ-Only Profile | Standards Track | Infrastructure | Proposed |
-| [HIP-0104](./HIPs/hip-0104-contract-auth-via-zchain-proof.md) | Contract Auth via Z-Chain Proof | Standards Track | Infrastructure | Proposed |
+| [HIP-0103](./HIPs/hip-0103-bridge-pq-only-profile.md) | Bridge PQ-Only Profile | Standards Track | Infrastructure | Draft |
+| [HIP-0104](./HIPs/hip-0104-contract-auth-via-zchain-proof.md) | Contract Auth via Z-Chain Proof | Standards Track | Infrastructure | Draft |
 | [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | In-Process Extension Runtime Standard | Standards Track | Infrastructure | Final |
 | [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | The Hanzo Plugin Contract | Standards Track | Infrastructure | Active |
 | [HIP-0107](./HIPs/hip-0107-streaming-replication-over-vfs.md) | Streaming Replication over VFS | Standards Track | Infrastructure | Review |
@@ -127,7 +128,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0301](./HIPs/hip-0301-python-sdk-agent-runtime-protocols.md) | Agent Runtime Protocols & Cross-Platform Parity | Standards Track | Core | Draft |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | Hanzo Replicate: Encrypted SQLite Durability for Bas... | Standards Track | Infrastructure | Final |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Hanzo adopts LP-0010: Brand Sovereignty and Federati... | Meta | Governance | Final |
-| [HIP-0305](./HIPs/hip-0305-esign-shared-db-tenancy.md) | esign: shared-DB tenancy via team-where, not file-pe... | Standards Track | Infrastructure | Accepted |
+| [HIP-0305](./HIPs/hip-0305-esign-shared-db-tenancy.md) | esign: shared-DB tenancy via team-where, not file-pe... | Standards Track | Infrastructure | Final |
 | [HIP-0306](./HIPs/hip-0306-aml-transaction-monitoring.md) | AML Transaction Monitoring, Screening and Case Manag... | Standards Track | Infrastructure | Draft |
 | [HIP-0400](./HIPs/hip-0400-service-crd.md) | Service CRD | Standards Track | Operator | Final |
 | [HIP-0401](./HIPs/hip-0401-datastore-crd.md) | Datastore CRD | Standards Track | Operator | Final |
@@ -153,7 +154,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0517](./HIPs/hip-0517-branch-naming.md) | Branch Naming — main is the Trunk, Everywhere | Process | Meta | Active |
 | [HIP-0518](./HIPs/hip-0518-aml-the-obligation-plane.md) | AML — The Obligation Plane | Standards Track | Interface | Draft |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | One Identity Boundary | Standards Track | Infrastructure | Active |
-| [HIP-0520](./HIPs/hip-0520-serving-topology.md) | Serving Topology — Three Tiers, Horizontally Scalable, Pinned Per Entity | Standards Track | Infrastructure | Active |
+| [HIP-0520](./HIPs/hip-0520-serving-topology.md) | Serving Topology — Three Tiers, Horizontally Scalabl... | Standards Track | Infrastructure | Active |
 | [HIP-0521](./HIPs/hip-0521-org-hierarchy.md) | Org Hierarchy | Standards Track | Security | Draft |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Final |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
@@ -162,7 +163,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 ## HIP Process
 
 1. **Have an idea** - Discuss with the community
-2. **Draft your HIP** - Use the template provided
+2. **Draft your HIP** - Copy `docs/templates/hip-template.md`
 3. **Submit a Pull Request** - To the hanzoai/hips repository
 4. **Get reviewed** - HIP editors review for completeness
 5. **Build consensus** - Community discussion and feedback
@@ -171,14 +172,37 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 ## Types of HIPs
 
-- **Standards Track**: Technical changes affecting Hanzo AI
-  - Core: AI models, consensus, infrastructure
-  - Interface: APIs, protocols, standards
-  - Infrastructure: Databases, storage, networking
-  - Bridge: Cross-chain integrations
-  - Security: Cryptography and access control
-- **Meta**: Process proposals, governance, responsible AI
-- **Informational**: Guidelines and best practices
+`scripts/lint-hips.py` holds the machine copy of these three vocabularies and
+fails the build on any value outside them. This section and that file must agree.
+
+- **Standards Track**: describes one thing we build and maintain. Exactly one
+  public repository, and exactly one HIP for it. Requires a category.
+- **Process**: how we work — numbering, branch names, what is public. Not 1:1
+  with a repository, and not expected to be.
+- **Meta**: governance, principles, and commitments.
+- **Informational**: guidance that normatively requires nothing.
+
+### Categories
+
+Standards Track HIPs carry exactly one:
+
+`Core` · `Interface` · `Infrastructure` · `Security` · `Cryptography` ·
+`Operator` · `Bridge` · `Governance` · `Meta` · `Application` · `Platform`
+
+### Status
+
+| Status | Meaning |
+|:-------|:--------|
+| `Draft` | Written, not yet reviewed |
+| `Review` | Under review by HIP editors |
+| `Last Call` | Final 14-day review window |
+| `Final` | Accepted as standard; changing it needs a new HIP |
+| `Active` | Accepted and continuously updated (living standards) |
+| `Superseded` | Replaced; MUST name its successor in `superseded-by` |
+| `Withdrawn` | Abandoned by its author |
+
+There is one spelling per state. `Proposed`, `Implemented` and `Accepted` were
+each a second name for one of the above and have been folded into it.
 
 ## Resources
 

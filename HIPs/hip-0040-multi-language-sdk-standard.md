@@ -10,7 +10,9 @@ updated: 2026-02-23
 requires: HIP-0004
 ---
 
-# HIP-40: Multi-Language SDK Standard
+
+
+# HIP-0040: Multi-Language SDK Standard
 
 ## Abstract
 

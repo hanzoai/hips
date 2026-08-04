@@ -9,7 +9,8 @@ created: 2026-07-29
 requires: HIP-0201, HIP-0230, HIP-0302
 ---
 
-# HIP-306: AML Transaction Monitoring, Screening and Case Management
+
+# HIP-0306: AML Transaction Monitoring, Screening and Case Management
 
 ## Abstract
 
@@ -54,7 +55,9 @@ not the software. The software's duty is to make the institution's compliance
 possible and evidenceable. Where this HIP says the system MUST do something, it
 means the system must not be the reason the institution fails.
 
-## 1. Scope and the obligations model
+## Specification
+
+### 1. Scope and the obligations model
 
 **AML-SCOPE-1.** The system MUST treat monitoring, screening, risk rating, case
 management and recordkeeping as one control surface, not five features. US
@@ -82,7 +85,7 @@ while the familiar tiered thresholds live in each banking agency's own rule — 
 (Federal Reserve) and 12 CFR 748.1(d) (NCUA) [5]. A bank is subject to both.
 Citing only the FinCEN rule understates the duty.
 
-## 2. Transaction monitoring and typology coverage
+### 2. Transaction monitoring and typology coverage
 
 **AML-TM-1.** Monitoring MUST be risk-based and MUST be driven by a documented risk
 assessment, per FATF Recommendation 1 and, in the UK, MLR 2017 reg 18 [6][7].
@@ -163,7 +166,7 @@ denotes Directive (EU) 2024/1640. CELEX identifiers MUST be used instead —
 their published red flags is required to complete this section and is deliberately
 not asserted here. See §12.
 
-## 3. Rolling-window aggregation and thresholds
+### 3. Rolling-window aggregation and thresholds
 
 **AML-AGG-1.** Where a detection depends on activity over a window, the aggregation
 MUST be computed over the complete set of qualifying records in that window. If the
@@ -194,7 +197,7 @@ to appear enabled in the UI and the API. The system MUST NOT ship a rule whose
 dependencies are stubbed; a rule MUST be either functional or explicitly disabled,
 and the API that lists rules MUST distinguish the two.
 
-## 4. Sanctions and PEP screening
+### 4. Sanctions and PEP screening
 
 **AML-SCR-1.** Targeted financial sanctions MUST be applied without delay. That
 phrase is the operative standard in FATF Recommendations 6 and 7, and it is a
@@ -390,7 +393,7 @@ force at decision time. The system MUST retain list versions, not only current
 state, because an alert raised today may be examined in three years against the list
 as it then stood.
 
-## 5. Customer risk rating
+### 5. Customer risk rating
 
 **AML-CRR-1.** Each subject MUST carry a risk rating derived from documented
 factors, and the derivation MUST be reproducible. Customer due diligence obligations
@@ -414,7 +417,7 @@ in at least one of them.
 **AML-CRR-4.** The rating MUST feed monitoring, not merely reporting. A risk rating
 that does not change which rules apply or which thresholds are used is decorative.
 
-## 6. Alerting
+### 6. Alerting
 
 **AML-ALT-1.** Every alert MUST be durably persisted at the moment it is raised,
 before any response is returned to the caller. Alerts held only in process memory
@@ -448,7 +451,7 @@ version produced any given alert. Independent testing of the AML program is requ
 at 31 CFR 1020.210(a)(2)(ii) and independent audit at MLR 2017 reg 21(1)(c), and
 neither is possible if the rule that fired cannot be recovered [8][18].
 
-## 7. Case lifecycle, SAR/STR and audit trail
+### 7. Case lifecycle, SAR/STR and audit trail
 
 **AML-CASE-1.** Suspicious activity MUST be reportable within the statutory
 deadline, and the system MUST make the clock explicit. In the US the SAR must be
@@ -499,7 +502,7 @@ case model, not in a runbook.
 MUST be recorded in an append-only audit trail bearing actor, timestamp and prior
 value. Audit entries MUST NOT be editable or deletable through any interface.
 
-## 8. Recordkeeping and retention
+### 8. Recordkeeping and retention
 
 **AML-REC-1.** Records required by the BSA MUST be retained for five years. The rule
 is unambiguous: 31 CFR 1010.430(d) — "All records that are required to be retained
@@ -539,7 +542,7 @@ a confidentiality breach under AML-CASE-6. Every endpoint that returns alert, ca
 subject or report data MUST derive tenancy from the authenticated principal and MUST
 NOT accept it from a client-supplied header or parameter.
 
-## 9. Model governance and validation
+### 9. Model governance and validation
 
 **AML-MOD-1.** Any statistical or machine-learning component used in detection or
 scoring MUST be governed as a model under HIP-0201 and the supervisory model risk
@@ -581,7 +584,7 @@ line and below-the-line threshold testing depends on it.
 approval gate, and the promoted artefact MUST be immutable and identified in every
 decision it produces.
 
-## 10. Explainability
+### 10. Explainability
 
 **AML-EXP-1.** For any alert, the system MUST be able to state, in terms a
 non-engineer can act on: which detection fired, on what inputs, against what
@@ -610,7 +613,7 @@ reader. Where the language is general-purpose and compiled, the system MUST also
 render the rule's intent in a constrained, human-readable form, and MUST sandbox
 execution.
 
-## 11. Performance and operability
+### 11. Performance and operability
 
 **AML-OPS-1.** Real-time interdiction paths MUST publish a latency budget and MUST
 be measured against it at p50 and p99 under representative concurrency, not at mean.
@@ -645,7 +648,7 @@ that touches AML data, and the enforcement MUST be verified by negative tests th
 would fail if the check were removed. Documentation asserting that endpoints are
 authenticated MUST NOT be the only evidence that they are.
 
-## 12. Conformance
+### 12. Conformance
 
 An implementation claims conformance to this HIP by publishing, per requirement, a
 test that fails when the requirement is violated. The following are mandatory
@@ -719,7 +722,7 @@ rather than guessed at here:
   threshold testing were not reached, and AML-MOD-6 is therefore stated in general
   terms rather than against the examiners' own wording.
 
-## 13. Relationship to the capability catalogue
+### 13. Relationship to the capability catalogue
 
 This HIP is the specification. The engine's capability catalogue is the inventory of
 what is implemented. They MUST agree on three things, and the agreement MUST be
@@ -741,7 +744,7 @@ Where the catalogue and this HIP disagree, the HIP is authoritative as to what i
 required and the catalogue is authoritative as to what exists. Neither may be edited
 to conceal the difference.
 
-## 14. Questions requiring a compliance SME
+### 14. Questions requiring a compliance SME
 
 The following are not engineering decisions, and this HIP does not decide them. Each
 requires a qualified compliance officer or counsel for the institution in question,

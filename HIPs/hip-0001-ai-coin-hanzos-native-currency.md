@@ -9,7 +9,9 @@ created: 2024-12-20
 updated: 2026-07-08
 ---
 
-# HIP-1: $AI Token - Hanzo's Native Currency
+
+
+# HIP-0001: AI Token - Hanzo's Native Currency
 
 ## Abstract
 

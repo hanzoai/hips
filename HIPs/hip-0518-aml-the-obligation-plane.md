@@ -9,7 +9,9 @@ created: 2026-07-29
 requires: HIP-0106, HIP-0111, HIP-0302
 ---
 
-# HIP-518: AML — The Obligation Plane
+
+
+# HIP-0518: AML — The Obligation Plane
 
 ## Abstract
 

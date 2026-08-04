@@ -6,7 +6,12 @@ category: Cryptography
 status: Draft
 author: Hanzo AI
 requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain), HIP-0079 (Q-Chain)
+created: 2026-05-10
 ---
+
+
+
+# HIP-0084: Pulsar-M — Threshold ML-DSA DKG & Signing
 
 ## Abstract
 

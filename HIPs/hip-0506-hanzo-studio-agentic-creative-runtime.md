@@ -9,7 +9,9 @@ created: 2026-07-15
 requires: HIP-0106, HIP-0504
 ---
 
-# HIP-506: Hanzo Studio — Agentic Multi-Modal Creative Runtime
+
+
+# HIP-0506: Hanzo Studio — Agentic Multi-Modal Creative Runtime
 
 ## Abstract
 

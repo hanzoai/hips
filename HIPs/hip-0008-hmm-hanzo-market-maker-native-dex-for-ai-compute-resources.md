@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-0, HIP-1
 ---
 
-# HIP-8: HMM (Hanzo Market Maker) - Native DEX for AI Compute Resources
+
+
+# HIP-0008: HMM (Hanzo Market Maker) - Native DEX for AI Compute Resources
 
 ## Abstract
 

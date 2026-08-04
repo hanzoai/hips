@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0027, HIP-0028, HIP-0029, HIP-0047
 ---
 
-# HIP-65: Backup & Disaster Recovery Standard
+
+
+# HIP-0065: Backup & Disaster Recovery Standard
 
 ## Abstract
 

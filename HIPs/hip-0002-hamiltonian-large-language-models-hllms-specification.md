@@ -10,7 +10,9 @@ updated: 2025-01-09
 requires: HIP-1
 ---
 
-# HIP-2: Hamiltonian Large Language Models (HLLMs) Specification
+
+
+# HIP-0002: Hamiltonian Large Language Models (HLLMs) Specification
 
 ## Abstract
 

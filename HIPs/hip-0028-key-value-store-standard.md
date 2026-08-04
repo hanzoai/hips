@@ -8,7 +8,9 @@ status: Active
 created: 2025-01-15
 ---
 
-# HIP-28: Key-Value Store Standard
+
+
+# HIP-0028: Key-Value Store Standard
 
 ## Abstract
 

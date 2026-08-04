@@ -9,7 +9,9 @@ created: 2026-07-07
 requires: HIP-0026, HIP-0068, HIP-0111
 ---
 
-# HIP-118: SuperAdmin & Tenant Isolation Model
+
+
+# HIP-0118: SuperAdmin & Tenant Isolation Model
 
 ## Abstract
 

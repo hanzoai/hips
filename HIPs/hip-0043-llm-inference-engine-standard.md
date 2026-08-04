@@ -10,7 +10,9 @@ updated: 2026-02-24
 requires: HIP-0004, HIP-0019, HIP-0039
 ---
 
-# HIP-43: Hanzo Engine — LLM Inference Engine Standard
+
+
+# HIP-0043: Hanzo Engine — LLM Inference Engine Standard
 
 ## Abstract
 
