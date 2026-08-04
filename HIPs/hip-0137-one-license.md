@@ -211,6 +211,15 @@ Tell them apart by the copyright holder in the LICENSE. "Copyright (c) 2015,
 Pierre Curto" is an upstream we forked. "Copyright (c) 2026, Hanzo AI, Inc." on
 a BSD-3-Clause file is ours, and is drift.
 
+There is a third case, and it resolves to the second. A `hanzoai` repository may
+hold a copy of code that originated in `luxfi` or `zoo` — same estate, different
+entity, and those orgs are BSD by standard. Its LICENSE names Lux or Zoo as the
+holder, not Hanzo. **That is an upstream like any other and §4 governs: leave the
+license alone.** Being able to reach the copyright holder over lunch does not
+make the code ours to relicense; the holder is a different legal entity and the
+relicense is that entity's decision to make, deliberately, not a sweep's to
+assume.
+
 ## Rationale
 
 **Why dual rather than picking one.** Choosing for the consumer buys us nothing
