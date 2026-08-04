@@ -215,6 +215,16 @@ LICENSE files govern, and yanking breaks every consumer in order to fix a
 label. `hanzoai/ml` has 191 published crates.io versions carrying the previous
 expression and none were yanked.
 
+The corollary is that **a relicense is not finished when the repository merges.**
+Some registries read the license from the repository at a tag, and those follow
+along; others bake it into the published artifact, and those keep serving the
+old expression until a release is cut, however correct the default branch looks.
+Go modules are the first kind. npm is the second — the `license` field ships
+inside the tarball. So the last step is a release, and until it happens the
+registry and the repository disagree in public. That disagreement is invisible
+precisely because the repository looks right, which is how it survives for
+months.
+
 ### 8. BSD-3-Clause is out of scope for `hanzoai`
 
 `BSD-3-Clause` and `BSD-3-Eco` are not used for original Hanzo work. They remain
