@@ -10,6 +10,8 @@ updated: 2026-07-08
 requires: HIP-0036, HIP-0106, HIP-0116, HIP-0400
 ---
 
+
+
 # HIP-0117: Cloud-in-a-Box — One Binary, Three Modes
 
 ## Abstract

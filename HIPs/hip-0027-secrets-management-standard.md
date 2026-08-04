@@ -8,7 +8,9 @@ status: Final
 created: 2025-01-15
 ---
 
-# HIP-27: Secrets Management Standard
+
+
+# HIP-0027: Secrets Management Standard
 
 ## Abstract
 

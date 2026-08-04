@@ -9,7 +9,9 @@ created: 2024-12-20
 requires: HIP-1, HIP-6
 ---
 
-# HIP-7: Active Inference Integration for Hamiltonian LLMs
+
+
+# HIP-0007: Active Inference Integration for Hamiltonian LLMs
 
 ## Abstract
 

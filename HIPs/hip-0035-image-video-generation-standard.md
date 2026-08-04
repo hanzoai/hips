@@ -9,7 +9,9 @@ created: 2025-01-15
 requires: HIP-0004, HIP-0019
 ---
 
-# HIP-35: Image & Video Generation Standard
+
+
+# HIP-0035: Image & Video Generation Standard
 
 ## Abstract
 

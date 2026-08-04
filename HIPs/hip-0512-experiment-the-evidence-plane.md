@@ -9,7 +9,9 @@ created: 2026-07-27
 requires: HIP-0111, HIP-0119, HIP-0129
 ---
 
-# HIP-512: Experiment — The Evidence Plane
+
+
+# HIP-0512: Experiment — The Evidence Plane
 
 ## Abstract
 

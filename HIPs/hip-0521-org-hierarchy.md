@@ -9,6 +9,8 @@ created: 2026-07-30
 requires: HIP-0026, HIP-0118, HIP-0519
 ---
 
+
+
 # HIP-0521: Org Hierarchy
 
 ## Abstract

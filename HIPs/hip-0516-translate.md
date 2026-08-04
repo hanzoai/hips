@@ -8,7 +8,9 @@ status: Final
 created: 2026-07-26
 ---
 
-# HIP-516: Translate
+
+
+# HIP-0516: Translate — One Endpoint, Two Tiers, Permissive Weights
 
 ## Abstract
 

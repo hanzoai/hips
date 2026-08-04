@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-1, HIP-2
 ---
 
-# HIP-3: Jin Multimodal AI Architecture
+
+
+# HIP-0003: Jin Multimodal AI Architecture
 
 ## Abstract
 

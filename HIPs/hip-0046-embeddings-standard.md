@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0004, HIP-0042
 ---
 
-# HIP-46: Embeddings Standard
+
+
+# HIP-0046: Embeddings Standard
 
 ## Abstract
 
@@ -109,7 +111,7 @@ All requests go through the LLM Gateway (HIP-0004) at port 4000. The Gateway han
 }
 ```
 
-#### Fields
+#### Request Fields
 
 | Field              | Type                    | Required | Default   | Description                                              |
 |--------------------|-------------------------|----------|-----------|----------------------------------------------------------|
@@ -146,7 +148,7 @@ All requests go through the LLM Gateway (HIP-0004) at port 4000. The Gateway han
 }
 ```
 
-#### Fields
+#### Response Fields
 
 | Field                 | Type     | Description                                          |
 |-----------------------|----------|------------------------------------------------------|

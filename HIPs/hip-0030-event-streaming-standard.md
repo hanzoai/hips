@@ -9,7 +9,9 @@ created: 2025-01-15
 requires: HIP-0028
 ---
 
-# HIP-30: Event Streaming Standard
+
+
+# HIP-0030: Event Streaming Standard
 
 ## Abstract
 

@@ -9,7 +9,9 @@ created: 2026-07-28
 requires: HIP-0120
 ---
 
-# HIP-133: Entity Groups — Placement, Durability, Splitting and Promotion
+
+
+# HIP-0133: Entity Groups — Placement, Durability, Splitting and Promotion
 
 ## Abstract
 

@@ -11,7 +11,9 @@ created: 2025-12-17
 requires: [200, 250]
 ---
 
-# HIP-251: AI Compute Carbon Footprint
+
+
+# HIP-0251: AI Compute Carbon Footprint
 
 ## Abstract
 
@@ -42,7 +44,7 @@ This HIP establishes the methodology for measuring, calculating, and reporting t
 
 ## Training Emissions
 
-### Calculation Methodology
+### Training Calculation Methodology
 
 #### Energy Consumption
 
@@ -110,7 +112,7 @@ For each training run:
 
 ## Inference Emissions
 
-### Calculation Methodology
+### Inference Calculation Methodology
 
 #### Per-Request Emissions
 

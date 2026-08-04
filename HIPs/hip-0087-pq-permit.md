@@ -3,11 +3,15 @@ hip: 0087
 title: PQ Permit (replaces EIP-2612)
 type: Standards Track
 category: Cryptography
-status: Implemented
+status: Final
 author: Hanzo AI
 created: 2026-05-11
 requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0085 (AccountID), HIP-0086 (TxAuthEnvelope)
 ---
+
+
+
+# HIP-0087: PQ Permit (replaces EIP-2612)
 
 ## Abstract
 

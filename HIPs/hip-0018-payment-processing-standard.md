@@ -10,7 +10,9 @@ updated: 2026-02-23
 requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30
 ---
 
-# HIP-18: Payment Processing Standard
+
+
+# HIP-0018: Payment Processing Standard
 
 ## Abstract
 

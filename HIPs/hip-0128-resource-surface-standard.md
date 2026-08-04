@@ -9,9 +9,10 @@ created: 2026-07-27
 requires: HIP-0106, HIP-0127
 ---
 
-# HIP-128: Resource Surface Standard
 
-## Preamble
+# HIP-0128: Resource Surface Standard — Generated REST over ZAP
+
+## Abstract
 
 Every Hanzo service exposes the same shape, because there is one shape. A caller
 who has learned one service has learned all of them, an SDK generator sees one

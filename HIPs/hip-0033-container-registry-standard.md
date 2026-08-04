@@ -8,7 +8,9 @@ status: Final
 created: 2025-01-15
 ---
 
-# HIP-33: Container Registry Standard
+
+
+# HIP-0033: Container Registry Standard
 
 ## Abstract
 

@@ -9,6 +9,10 @@ created: 2026-05-08
 requires: HIP-007 (ZAP), HIP-0010 (MCP Integration), HIP-0068 (Ingress)
 ---
 
+
+
+# HIP-0069: Service Discovery & Auto-Bridge
+
 ## Abstract
 
 Every Hanzo-domain service on the local network advertises itself via

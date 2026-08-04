@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-1, HIP-2, HIP-4
 ---
 
-# HIP-9: Agent SDK - Multi-Agent Orchestration Framework
+
+
+# HIP-0009: Agent SDK - Multi-Agent Orchestration Framework
 
 ## Abstract
 

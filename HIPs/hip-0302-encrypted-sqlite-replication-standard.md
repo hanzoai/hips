@@ -9,7 +9,8 @@ created: 2026-04-09
 requires: HIP-0027, HIP-0065
 ---
 
-# HIP-302: Hanzo Replicate --- Encrypted SQLite + ZapDB Durability for Base Services
+
+# HIP-0302: Hanzo Replicate: Encrypted SQLite Durability for Base Services
 
 **Full specification**: See `~/work/hanzo/papers/hip-0302-replicate.tex` (LaTeX) and the compiled PDF `hip-0302-replicate.pdf`.
 
@@ -28,7 +29,9 @@ Specifies how all Hanzo Base-powered services achieve durable state persistence 
 1. **SQLite** (WAL-based) — used by Base services (IAM, KMS, ATS, BD, TA, Tasks)
 2. **ZapDB** (incremental backup) — used by high-throughput KV workloads (Gateway session cache, PubSub durable queues, Insights event buffer)
 
-## Components
+## Specification
+
+### Components
 
 | Component | Image | Purpose |
 |-----------|-------|---------|
@@ -37,20 +40,20 @@ Specifies how all Hanzo Base-powered services achieve durable state persistence 
 | `hanzoai/age` | `ghcr.io/hanzoai/age` | X25519 + ML-KEM-768 hybrid key generation |
 | `hanzoai/s3` | `ghcr.io/hanzoai/s3` | S3-compatible object storage (HIP-0032) |
 
-## Recovery Objectives
+### Recovery Objectives
 
 | Engine | RPO | RTO | WAL/Delta Retention | Snapshot Retention |
 |--------|-----|-----|---------------------|-------------------|
 | SQLite | 1 second | 30 seconds | 72 hours | 30 days |
 | ZapDB | 500 milliseconds | 15 seconds | 24 hours | 7 days |
 
-## Affected Services
+### Affected Services
 
 **SQLite replication**: IAM, KMS, ATS, BD, TA, Tasks, and all future Base services.
 
 **ZapDB replication**: Gateway (session cache), PubSub (durable queue state), Insights (event buffer), and any service using `hanzoai/kv` in embedded mode.
 
-## Key Design Decisions
+### Key Design Decisions
 
 1. **Three encryption layers**: sqlcipher (disk), age (S3), TLS (transport). Independent. Compromise of one does not compromise others.
 2. **emptyDir replaces PVC**: Pods restore from S3 on startup. No PVC scheduling constraints.
@@ -62,7 +65,7 @@ Specifies how all Hanzo Base-powered services achieve durable state persistence 
 8. **ML-DSA-65 JWT**: IAM issues JWT tokens signed with ML-DSA-65 (FIPS 204). JWKS validation uses PQ-safe signatures.
 9. **PQ TLS**: X25519MLKEM768 as first curve in TLS 1.3 supported groups.
 
-## NIST Standards Adopted
+### NIST Standards Adopted
 
 | Standard | Algorithm | Deployed Use Cases |
 |----------|-----------|-------------------|
@@ -70,7 +73,7 @@ Specifies how all Hanzo Base-powered services achieve durable state persistence 
 | FIPS 204 (ML-DSA-65) | Module-Lattice DSA | JWT signing, validator identity, on-chain precompile, SafeMLDSASigner |
 | FIPS 205 (SLH-DSA) | Stateless Hash DSA | On-chain precompile (stateless fallback) |
 
-## Complete PQ Scorecard
+### Complete PQ Scorecard
 
 All 13 cryptographic layers are deployed on devnet, testnet, and mainnet.
 
@@ -92,7 +95,7 @@ All 13 cryptographic layers are deployed on devnet, testnet, and mainnet.
 
 **EOA mitigation**: EOA transactions use secp256k1 ECDSA for wallet compatibility. PQ finality is achieved because Quasar consensus validators sign blocks with BLS + Corona + ML-DSA. A quantum adversary who forges an EOA signature still cannot finalize a block without compromising all three consensus assumptions.
 
-## Quasar Consensus
+### Quasar Consensus
 
 Quasar is a triple-hybrid consensus protocol using three independent hardness assumptions:
 
@@ -104,7 +107,7 @@ Quasar is a triple-hybrid consensus protocol using three independent hardness as
 
 Block finality requires valid signatures from all three schemes. An adversary must break discrete log AND Module-LWE AND Module-SIS simultaneously.
 
-## Smart Account PQ Signing
+### Smart Account PQ Signing
 
 Smart Accounts (ERC-4337 compliant) bypass the secp256k1 constraint via signature verification precompiles:
 
@@ -112,7 +115,7 @@ Smart Accounts (ERC-4337 compliant) bypass the secp256k1 constraint via signatur
 - **SafeCoronaSigner**: Validates Corona lattice signatures via precompile at `0x0150`/`0x0151`.
 - **QuantumSafe**: Base contract for Smart Accounts. Routes verification to the appropriate PQ precompile.
 
-## On-Chain Precompiles
+### On-Chain Precompiles
 
 All activated at genesis on all networks.
 
@@ -128,11 +131,11 @@ All activated at genesis on all networks.
 | 0x0151 | Corona Verify | 12,000 | -- |
 | 0x0160 | PQCrypto Unified | varies | varies |
 
-## Cloud HSM for Master Keys
+### Cloud HSM for Master Keys
 
 Master encryption keys are stored in Cloud HSM (GCP Cloud KMS, FIPS 140-2 Level 3 certified Cavium HSMs). The master key never leaves the HSM boundary. Wrap, unwrap, and sign operations execute inside the HSM. Three keyrings per ecosystem (devnet, testnet, mainnet), 12 keys total. Mainnet keys use HSM protection level.
 
-## Threshold Signing
+### Threshold Signing
 
 Four threshold protocols deployed:
 
@@ -143,11 +146,11 @@ Four threshold protocols deployed:
 | BLS | BN254 | Consensus aggregation |
 | Corona | Module-LWE (lattice) | PQ-safe threshold signing |
 
-## Harvest-Now-Decrypt-Later: Closed
+### Harvest-Now-Decrypt-Later: Closed
 
 The full PQ stack -- ML-KEM-768 hybrid encryption (S3 backups), X25519MLKEM768 TLS (transit), ML-DSA-65 JWT signing (auth), PQ KEM for MPC transport and key shares, Cloud HSM for master keys, and Quasar triple-hybrid consensus -- closes the HNDL attack vector. An adversary who captures data today cannot decrypt it with a future quantum computer.
 
-## Regulatory Compliance
+### Regulatory Compliance
 
 | Regulation | Requirement | How Satisfied |
 |------------|-------------|---------------|
@@ -156,7 +159,7 @@ The full PQ stack -- ML-KEM-768 hybrid encryption (S3 backups), X25519MLKEM768 T
 | FIPS 140-2 Level 3 | Hardware key isolation | Cloud HSM (GCP, Cavium) for master key material |
 | GDPR Article 32 | Appropriate technical measures | AES-256 disk + field encryption, PQ backup encryption, HSM key isolation |
 
-## ZapDB Streaming Replication
+### ZapDB Streaming Replication
 
 ZapDB is a high-throughput KV store that does not use WAL. Instead, it produces incremental backup frames in ZAP binary format:
 
@@ -181,7 +184,7 @@ s3://hanzo-replicate-{env}/{service}/{instance_id}/zapdb/
 └── latest
 ```
 
-## Cross-Ecosystem Compatibility
+### Cross-Ecosystem Compatibility
 
 This standard is adopted by LP-102 (Lux) and ZIP-0803 (Zoo) with ecosystem-specific HKDF prefixes:
 

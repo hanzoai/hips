@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-9
 ---
 
-# HIP-13: Workflow Execution Standard
+
+
+# HIP-0013: Workflow Execution Standard
 
 ## Abstract
 
@@ -41,7 +43,7 @@ Hanzo Flow solves all five by providing a visual DAG builder backed by LangChain
 
 **Langflow vs. LangChain directly.** LangChain is a library, not an IDE. It provides chain primitives but no visual composition, no live preview, no collaborative editing. Langflow wraps LangChain in a React Flow canvas where each node is a LangChain component. Users drag nodes, draw edges, configure parameters, and test in real time. The visual canvas is the IDE; the exported code is the deployment artifact.
 
-**Langflow vs. Flowise.** Flowise is the closest competitor. Both are visual LangChain builders. However, Flowise has a smaller component library, weaker TypeScript export support, and no extension mechanism for custom nodes. Langflow's component system is Python-native, making it trivial to wrap any LangChain class as a node.
+**Langflow vs. Flowise.** Flowise is the other visual LangChain builder. However, Flowise has a smaller component library, weaker TypeScript export support, and no extension mechanism for custom nodes. Langflow's component system is Python-native, making it trivial to wrap any LangChain class as a node.
 
 **Langflow vs. Dify.** Dify bundles its own model hosting, document processing, and vector store. This is convenient for standalone use but conflicts with Hanzo's architecture where the LLM Gateway (HIP-1) handles model routing, KMS (HIP-27) manages secrets, and the platform (HIP-26) handles auth. Dify's opinionated stack would require gutting most of its backend. Langflow's lightweight architecture makes it a better fork target.
 

@@ -9,6 +9,8 @@ created: 2026-07-07
 requires: HIP-0106, HIP-0114
 ---
 
+
+
 # HIP-0120: ZAP-Native Transport & gRPC Elimination
 
 ## Abstract

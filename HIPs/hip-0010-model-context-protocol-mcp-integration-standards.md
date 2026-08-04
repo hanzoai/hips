@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-2, HIP-9
 ---
 
-# HIP-10: Model Context Protocol (MCP) Integration Standards
+
+
+# HIP-0010: Model Context Protocol (MCP) Integration Standards
 
 ## Abstract
 

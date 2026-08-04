@@ -9,7 +9,9 @@ created: 2025-01-15
 requires: HIP-0027, HIP-0029
 ---
 
-# HIP-26: Identity & Access Management Standard
+
+
+# HIP-0026: Identity & Access Management Standard
 
 ## Abstract
 

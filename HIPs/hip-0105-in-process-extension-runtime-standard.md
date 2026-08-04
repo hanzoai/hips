@@ -9,7 +9,9 @@ created: 2026-05-19
 requires: HIP-0026
 ---
 
-# HIP-105: In-Process Extension Runtime Standard
+
+
+# HIP-0105: In-Process Extension Runtime Standard
 
 ## Abstract
 

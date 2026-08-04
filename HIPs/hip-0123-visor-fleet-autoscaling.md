@@ -10,6 +10,8 @@ updated: 2026-07-08
 requires: HIP-0106, HIP-0116, HIP-0117, HIP-0121, HIP-0400
 ---
 
+
+
 # HIP-0123: Visor — Fleet & Fabric Autoscaling Across Any Provider
 
 ## Abstract

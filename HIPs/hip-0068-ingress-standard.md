@@ -9,7 +9,9 @@ created: 2026-02-24
 requires: HIP-0026
 ---
 
-# HIP-68: Ingress Standard
+
+
+# HIP-0068: Ingress Standard
 
 ## Abstract
 

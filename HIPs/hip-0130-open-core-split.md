@@ -9,7 +9,8 @@ created: 2026-07-27
 requires: HIP-0106, HIP-0127
 ---
 
-# HIP-0130: Open-Core Split
+
+# HIP-0130: Open-Core Split — the Tenancy Line, the Composition Root, and Lazy Subsystems
 
 ## Abstract
 
@@ -72,7 +73,9 @@ the rate card, the plan matrix. Those are the business.
 Open core resolves it, but only if the line is drawn on a property that can be
 **tested**, not negotiated per subsystem. This HIP defines that property.
 
-## 1. The Line
+## Specification
+
+### 1. The Line
 
 > **Org-scoping is a data model. Multi-tenancy is a business.**
 
@@ -88,7 +91,7 @@ The line is not *"does the code have an org column"*. It is *"does this
 subsystem exist so that **Hanzo** can run a service business for **other
 people**"*.
 
-### 1.1 The Test
+#### 1.1 The Test
 
 Three questions. **Any YES means PRIVATE.**
 
@@ -107,7 +110,7 @@ takes an org from a path parameter or a query string rather than from the
 validated principal is, by construction, cross-tenant. That is also the exact
 shape of a tenant-isolation bug, so the guard pays for itself twice.
 
-### 1.2 Why not "feature"
+#### 1.2 Why not "feature"
 
 A feature line ("advanced features are paid") requires a judgement call per
 feature forever, and every call is relitigated by whoever wants their subsystem
@@ -116,7 +119,7 @@ on the other side. A tenancy line is a property of the code. It answers itself.
 It also matches what customers actually pay for. Nobody pays for a chat
 endpoint. They pay to not operate the thing.
 
-### 1.3 The line validates independently
+#### 1.3 The line validates independently
 
 The tenancy line was chosen on principle. It then turned out to coincide with a
 property nobody designed for.
@@ -137,7 +140,7 @@ cluster, no kubeconfig, and no external services, and serves correctly —
 durable queue. The guarded routes answering 401/403 rather than 200 is the point:
 the stack is not degraded, it is enforcing.
 
-### 1.4 Two axes, deliberately separated
+#### 1.4 Two axes, deliberately separated
 
 The classification answers one question. First-run experience is a different
 question, and conflating them produces a bad default.
@@ -152,7 +155,7 @@ A developer already has GitHub; an embedded git forge and a build pipeline on
 their laptop is *our* infrastructure, not their product. Legal to ship, wrong to
 boot.
 
-### 1.5 Structural single-tenancy — the business model
+#### 1.5 Structural single-tenancy — the business model
 
 The OSS build must be single-tenant **by construction**, not by configuration.
 
@@ -174,7 +177,7 @@ identical, but "a platform SuperAdmin acting in another org — an admin
 org-switch (`owner == adminOrg`, `X-Org-Id` = the switched-into org) — has
 `Owner == "admin"` while `Org` is the switched org." **That org-switch is
 multi-tenancy.** It arrives with `clients/admin`, which moves to
-`hanzo-inc/admin` and is absent from the OSS build. Removing the subsystem
+a private repository and is absent from the OSS build. Removing the subsystem
 removes the capability; nothing is left to guard.
 
 This buys three things at once:
@@ -198,9 +201,9 @@ Honesty here is strategy, not modesty. "Single-tenant, single-writer, no HA"
 disclosed on the first page earns trust. Discovered at scale, it ends the
 relationship.
 
-## 2. Classification
+### 2. Classification
 
-### 2.0 The decision rule — asymmetric on purpose
+#### 2.0 The decision rule — asymmetric on purpose
 
 The tenancy test (§1.1) says what is *safe* to publish. It does not say what is
 *wise* to publish. Those are different questions and the second one governs.
@@ -218,7 +221,7 @@ to private. The asymmetry is deliberate and it is not about secrecy:
 > implementation costs us more than a customer not seeing it costs us. We can
 > always move something from private to `ee/` later. We can never un-publish.
 
-### 2.1 What this rule does to the classification
+#### 2.1 What this rule does to the classification
 
 Applied honestly, it cuts the OSS tier well below my first pass, and the cut
 falls in a coherent place.
@@ -248,7 +251,7 @@ election, conditional store, handoff, rolling upgrade), provisioning, metering,
 quota, entitlements, and the operator-facing fleet surfaces. Enough for a
 customer to read and satisfy themselves it is real.
 
-### 2.2 Ambiguous — held back, listed for the CTO to pull forward
+#### 2.2 Ambiguous — held back, listed for the CTO to pull forward
 
 Per the rule these went private. Each is genuinely arguable and cheap to move
 the other way. **Pull any of them forward if there is a sales reason.**
@@ -269,7 +272,7 @@ The k8s finding (§1.3) still stands and still validates the tenancy line; it
 simply no longer produces a "cluster-gated OSS" tier, because everything that
 would have populated it is now held back.
 
-### 2.3 The k8s eleven, resolved on evidence
+#### 2.3 The k8s eleven, resolved on evidence
 
 Read in full. The tenancy line held everywhere, and two of the eleven turned out
 not to be subsystems at all.
@@ -297,7 +300,7 @@ silently 404s" already true rather than aspirational.
 | `validators` | **All orgs' CRs share one fixed namespace** (`lux-validators`), disambiguated by name, not isolated by namespace. | private |
 | `venue`, `admin` | Per-org billing meter; `admin/infra` scans every DOKS cluster under one account token, spanning many customer orgs. | private |
 
-### 2.4 The rule sharpens: money is wiring, tenancy is structure
+#### 2.4 The rule sharpens: money is wiring, tenancy is structure
 
 `platform` forced the distinction that should have been explicit from §1.1.
 
@@ -335,7 +338,7 @@ This is the same seam pattern as the Enso router and as §3.2's "OSS records the
 fact, private prices it". One rule, applied consistently, now with a reason it
 is the right rule and not merely a convenient one.
 
-### 2.5 What moves — `platform` and `ml` to OSS
+#### 2.5 What moves — `platform` and `ml` to OSS
 
 **`platform` → OSS (cluster-gated).** Its tenancy is the cleanest of the eleven:
 org only ever from the validated principal, `tenant-<org>` namespaces, no
@@ -365,7 +368,7 @@ tenant cluster story is already served by a kubeconfig in `.hanzo/cloud.json`
 (§6.3); adding `venue` would add a cloud-credential custody surface for no local
 DX gain. It is not a money-only case, so it does not get the money-only remedy.
 
-### 2.5.1 Third-category audit — read, not assumed
+#### 2.5.1 Third-category audit — read, not assumed
 
 The three candidates were checked against their source. Two were not what they
 looked like.
@@ -402,7 +405,7 @@ unconditionally), `paas` (LISTs every namespace in the cluster), `validators`
 (all orgs' CRs in one shared fixed namespace), `admin` (cross-tenant by
 definition). None of these is a money case and none moves.
 
-### 2.6 The metering seam — mostly already built
+#### 2.6 The metering seam — mostly already built
 
 The surgery is far smaller than expected, because the decomplection is already
 done in the code.
@@ -563,7 +566,7 @@ load-bearing (§4).
 | 84 | affiliates | Money. |
 | 91 | books | Money. Revenue ledger of record. |
 | 92 | treasury | Money. |
-| 93 | admin | Cross-tenant authority. → **`hanzo-inc/admin`**, its own repo. |
+| 93 | admin | Cross-tenant authority. → **a private repository of its own**. |
 | 94 | admission | Cross-tenant authority. Per-service launch gating across orgs. |
 | 98 | marketplace | Money. Priced listings. |
 | 99 | referrals | Money. |
@@ -601,7 +604,7 @@ it.** `usage` records tokens; `metering` rates them. `ads` launches a campaign;
 and it is the right seam because recording and pricing are genuinely different
 concerns that were braided together for convenience.
 
-### 2.1 Ambiguous — decided, with the reasoning exposed
+#### 2.7 Ambiguous — decided, with the reasoning exposed
 
 Eight subsystems did not answer the test cleanly. Recording the reasoning so the
 call can be revisited on evidence rather than re-argued from scratch.
@@ -633,7 +636,7 @@ call can be revisited on evidence rather than re-argued from scratch.
   memos or patent drafts. If it does, those are content to remove, not a reason
   to close the subsystem.
 
-## 3. Exclusions — the secret sauce, and why each
+### 3. Exclusions — the secret sauce, and why each
 
 The tenancy line decides subsystems. These four decide *content*, and they
 override it: excluded even where the surrounding subsystem is OSS.
@@ -681,7 +684,7 @@ This is a deliberate **product boundary, not an omission**, and it should be
 documented as one: the local stack is complete for building an application; the
 routing intelligence is a hosted service, because it could not be anything else.
 
-### 3.0 Excluding Enso and Zen is a dependency drop, not an extraction
+#### 3.0 Excluding Enso and Zen is a dependency drop, not an extraction
 
 Verified: **no scoring or selection algorithm is in this repo.** The router
 lives entirely in `github.com/hanzoai/ai`. The git history proves it — the
@@ -700,7 +703,7 @@ so the OSS build has a working model plane to point at an endpoint.
 
 The real seam work is §3.2, which is where the numbers actually are.
 
-### 3.1 The root package leaks — must be fixed before publication
+#### 3.1 The root package leaks — must be fixed before publication
 
 Three files in the **root package**, which is necessarily OSS, carry price
 constants.
@@ -738,7 +741,7 @@ and `defaultBYOFloorMicros` line 315) and **`resource_billing.go`**
 (`DefaultResourceFeeCents` line 51, the least sensitive of the three, being an
 explicit policy default rather than a market price).
 
-### 3.2 The real seam work: native rate logic scattered across `clients/*`
+#### 3.2 The real seam work: native rate logic scattered across `clients/*`
 
 The wrapped modules are clean. `clients/pricing` says so in its own header —
 "pricing source + markup logic live in hanzoai/pricing. This wrapper is glue. No
@@ -771,7 +774,7 @@ The house style to follow already exists and is documented at `deps.go:97` —
 `types.CommerceClient` ships three today: in-process, RPC, and a fail-closed
 disabled stub. That is the target shape for every rate seam.
 
-## 4. The Composition Root — order is the hard part
+### 4. The Composition Root — order is the hard part
 
 `apps.Wire()` returns `[]cloud.MountSpec` and **slice position is mount order**
 (`build.go:980`, `MountAll` at `build.go:1025` iterates as-given and does not
@@ -811,7 +814,7 @@ declared **once**, in the public repo, and neither build can reorder the other.
 `frozen` collapses into `Order`; the freeze test asserts against the thing it
 was duplicating.
 
-## 5. Couplings that break on the move
+### 5. Couplings that break on the move
 
 Repo identity is load-bearing at runtime in places that do not follow a GitHub
 transfer.
@@ -874,7 +877,7 @@ transfer.
 Ordering: fix (1) and (2) **before** the move. They are the ones that fail
 silently.
 
-## 6. `hanzo cloud up`
+### 6. `hanzo cloud up`
 
 There is already exactly one way to boot the stack locally, it works, and it is
 `e2e/run.sh` — build, boot on isolated ports with a fresh data dir, wait for
@@ -897,10 +900,10 @@ rediscovered:
 
 `up` adds one thing: the customer console, embedded via `go:embed`, using the
 existing `make e2e-ui` path — **not** the admin console, which leaves for
-`hanzo-inc/admin`. The e2e suite already asserts the binary serves the real
+a private repository. The e2e suite already asserts the binary serves the real
 console bundle and that it renders, so the claim is tested, not asserted.
 
-### 6.0 Local DX is a product goal with numbers
+#### 6.0 Local DX is a product goal with numbers
 
 The OSS local stack must be **faster, lighter and better than pointing at our
 cloud** for the one thing it does: one developer, one app. Not a hobbled demo
@@ -924,7 +927,7 @@ link time as the metric to beat.
 A developer must never hit a wall that exists only to sell them something. If
 they do, we have built a trial, not a product.
 
-### 6.1 The default set — what a developer's app needs on line one
+#### 6.1 The default set — what a developer's app needs on line one
 
 Chosen by asking what an application needs to exist, not what we happen to have
 built:
@@ -943,7 +946,7 @@ Everything else lazy-mounts on first use. In particular `git`, `deploy`, and
 and an embedded forge plus a build pipeline on their laptop is our
 infrastructure, not their product.
 
-### 6.2 Four ways in, one route table — already true
+#### 6.2 Four ways in, one route table — already true
 
 Nothing to build here; it needs stating and enforcing.
 
@@ -957,7 +960,7 @@ Nothing to build here; it needs stating and enforcing.
 
 One binary, one route table, four ways in, no cluster.
 
-### 6.3 Cluster access is opt-in
+#### 6.3 Cluster access is opt-in
 
 The default is **no cluster**, and that must need no configuration at all.
 
@@ -974,14 +977,14 @@ is one whose mount predicate includes "a kubeconfig resolves". Same seam, one
 more condition. When it does not resolve, the route reports honestly that it
 needs a cluster — it never crashes and never silently 404s.
 
-## 7. Lazy subsystems
+### 7. Lazy subsystems
 
 Boot must be fast and minimal, mounting work on demand.
 
 **Two mechanisms, and they are not the same thing.** Conflating them produces a
 design that cannot work.
 
-### 7.1 Lazy plugins (child processes) — small and safe
+#### 7.1 Lazy plugins (child processes) — small and safe
 
 `zip.Load` (`~/work/zap/zip/load.go`) already composes an out-of-process plugin
 as a `Service`, identical in type to a linked-in service. It is eager only
@@ -1023,7 +1026,7 @@ and supervises. Decisions:
 
 `zip` v1.10.3 → **v1.10.4**. Patch.
 
-### 7.2 Lazy subsystems — WITHDRAWN. There is no 35-second boot.
+#### 7.2 Lazy subsystems — WITHDRAWN. There is no 35-second boot.
 
 This section proposed deferring `spec.Mount`, gated on measuring where the 35
 seconds went. The measurement came back and the premise was false. Withdrawing
@@ -1083,7 +1086,7 @@ outright — not deferred, gone.
 So the open-core split *is* the boot-time optimisation. It was justified on
 tenancy and it pays here too.
 
-### 7.2.1 Two defects found while measuring
+#### 7.2.1 Two defects found while measuring
 
 Neither is latency; both are worth fixing.
 
@@ -1099,7 +1102,7 @@ Neither is latency; both are worth fixing.
    encryption key for tenant "system"`. It fails fast, but the revenue plane is
    degraded behind a boot that reports healthy.
 
-### 7.3 Enable-gates die; lazy mounting replaces them
+#### 7.3 Enable-gates die; lazy mounting replaces them
 
 An enable-gate is a pre-lazy-loading workaround. Once a subsystem mounts on
 first request, "is it enabled" stops being a question — an unused subsystem
@@ -1142,7 +1145,7 @@ role rather than a boolean, but it does not die here.
 The same test retires `stagedSubsystems` (`config.go:597`), which asks the same
 "should this run" question in a third way.
 
-### 7.4 One config surface: `.hanzo/cloud.json`
+#### 7.4 One config surface: `.hanzo/cloud.json`
 
 Two scopes, both already established conventions — 50 repos under `~/work/hanzo`
 carry a project-local `.hanzo/` holding `workflows/`, and `~/.hanzo/` already
@@ -1185,7 +1188,7 @@ deployment-time override at the end of the resolution chain. Empty means "all,
 lazily", which is already its behaviour. One concept, one schema, one documented
 precedence order — not three mechanisms.
 
-## 8. Conformance — the guard
+### 8. Conformance — the guard
 
 A line nobody checks is a line that moves. The OSS repo carries a test that
 fails if excluded material appears.
@@ -1227,7 +1230,7 @@ injects each violation class into a synthetic AST, asserts the specific
 diagnostic, and restores green. Proving it fires is part of the deliverable, not
 a follow-up.
 
-## 9. Security finding — the exclusion is already breached
+### 9. Security finding — the exclusion is already breached
 
 Stated here because it changes what this HIP is for.
 
@@ -1257,7 +1260,7 @@ Designing an open-core boundary to protect this while it is served publicly is
 theatre. **Resolving the existing exposure is a prerequisite for the split, not
 a follow-on.**
 
-### 9.1 This does not decompose into two problems
+#### 9.1 This does not decompose into two problems
 
 It has been suggested that repo visibility and "does routing intelligence live
 there" are separate concerns that happen to share a repo. They are not. The
@@ -1266,7 +1269,7 @@ problem, verified by fetching the files without a token. It resolves only when
 the code moves out. Until then, `hanzoai/ai`'s visibility is not a separable
 question, it is the mechanism of the exposure.
 
-### 9.2 The tier-3 reclassification makes this more urgent, not less
+#### 9.2 The tier-3 reclassification makes this more urgent, not less
 
 Enso is now classified tier 3: proprietary, invisible, **possibly
 patent-bearing** (§10.4 of the exclusions rationale, and the CTO's own framing).
@@ -1283,7 +1286,7 @@ If there is any intention to file on the routing work, the exposure date is a
 fact someone needs to establish, and `git log` on those eleven files establishes
 it precisely. **This should go to counsel before it goes into a sprint.**
 
-## 10. Every OSS component is three things
+### 10. Every OSS component is three things
 
 This reframes what the OSS tier *is*, and it is the difference between "here are
 the packages that make up our monolith" and a set of products.
@@ -1294,14 +1297,14 @@ the packages that make up our monolith" and a set of products.
    Useful to someone who wants only that one thing.
 2. **A plugin** — compiles to a `zip.Plugin` the cloud binary mounts for local
    development.
-3. **An enterprise component** — consumed by `hanzo-inc/cloud` in SaaS mode.
+3. **An enterprise component** — consumed by the hosted service in SaaS mode.
 
 What makes one codebase serve all three is **ZAP-native mounting**: a fork
 exposes a `zip` Service, and linked-in, `ee/`-composed, and
 downloaded-plugin are then the *same type* (§7.1). No adapter, no second entry
 point, no build matrix.
 
-### 10.1 The conformance shape
+#### 10.1 The conformance shape
 
 Derived from `hanzoai/tasks`, which is the exemplar — live at `tasks.hanzo.ai`,
 and the durable engine cloud already runs the marketing drip on.
@@ -1316,7 +1319,7 @@ and the durable engine cloud already runs the marketing drip on.
 | Its own domain, when user-facing | `tasks.hanzo.ai`. |
 | A JS client package, where a browser or Node consumer needs one | Not every fork needs one. |
 
-### 10.2 Audit — measured, and better than expected
+#### 10.2 Audit — measured, and better than expected
 
 Current visibility of the developer-facing stack:
 
@@ -1355,7 +1358,7 @@ Two corrections to claims I was asked to carry:
   would be exactly the wrong call. **This needs a direct answer from whoever
   owns it**, and it is the one open question blocking the `platform` OSS move.
 
-### 10.3 Resolving the two directives that look contradictory
+#### 10.3 Resolving the two directives that look contradictory
 
 "Hold back as much as we can" (§2.0) and "everything a developer touches must be
 open" are not in conflict once scoped:
@@ -1375,7 +1378,7 @@ stack and go **OSS**. `git` and `deploy` are already public repos, so holding
 back their in-cloud subsystems would have been incoherent. The hold-back list
 now contains only Hanzo's own business applications and the commercial plane.
 
-### 10.4 Two consequences
+#### 10.4 Two consequences
 
 **The plugin work gets cheaper, not larger.** Because each fork already builds
 its own release binary, `zip.Plugin{URL, Sum}` has an artifact to point at
@@ -1383,7 +1386,7 @@ today. §7.1's `LoadLazy` becomes the last small piece of an existing pipeline
 rather than the start of a new one.
 
 **The OSS tier is not a hollowed-out core.** Each component is a real product
-with its own users, and `hanzo-inc/cloud` composing them in SaaS mode is *one
+with its own users, and the hosted service composing them in SaaS mode is *one
 more consumer*, not the only one. That is also the honest answer to "is this a
 real open source project or a lead magnet" — five of them already run
 standalone.
@@ -1393,7 +1396,7 @@ binary that degrades honestly without a kubeconfig is exactly the wanted shape �
 it runs locally, embedded or standalone, and gains cluster features only when a
 cluster is configured.
 
-### 10.5 `console` and `openapi` — recommendations, not flips
+#### 10.5 `console` and `openapi` — recommendations, not flips
 
 - **`openapi` → make it PUBLIC.** A private API contract is a strange artifact:
   it is the thing SDK generation and customer integration consume, and every
@@ -1408,13 +1411,13 @@ cluster is configured.
   what the gated modules reveal — with a smaller payoff than `openapi`. Sequence
   it after the split lands.
 
-## 11. Licensing
+### 11. Licensing
 
 > **Not legal advice.** The structure below is drafted by mirroring an existing
 > house license. It must be reviewed by counsel before publication. Nothing here
 > should be treated as legally sound as written.
 
-### 10.1 The house pattern already exists — mirror it
+#### 11.1 The house pattern already exists — mirror it
 
 `luxfi/aml` carries the **Lux Ecosystem License v1.2**, documented in its
 `LICENSING.md` as the patent-protected tier of a three-tier IP strategy: free
@@ -1428,7 +1431,7 @@ one substitution: Lux's carve-out is *network* ("Authorized Network"); ours is
 *competition* ("Competing Service"). That is the BSL / Elastic / Confluent
 shape — free to use, not free to compete.
 
-### 10.2 The three grants
+#### 11.2 The three grants
 
 | Use | Grant |
 |---|---|
@@ -1446,7 +1449,7 @@ starts.
 company running Hanzo for its own employees is not competing with us, and
 charging them converts a advocate into an evaluator who leaves.
 
-### 10.3 File layout
+#### 11.3 File layout
 
 ```
 LICENSE            Apache-2.0. MUST explicitly carve out ee/.
@@ -1462,7 +1465,7 @@ An ambiguous permissive license sitting above a proprietary subtree is read, in
 practice, as permissive over everything. State the exclusion in the root LICENSE
 itself, not only in a README.
 
-### 10.4 Runtime enforcement — what is actually enforceable
+#### 11.4 Runtime enforcement — what is actually enforceable
 
 Being straight about this, because the alternative is security theatre:
 
@@ -1483,7 +1486,7 @@ Being straight about this, because the alternative is security theatre:
 No phone-home. No time bomb. No usage telemetry as a gate. Those punish honest
 customers and are trivially defeated by dishonest ones.
 
-## 12. Sequencing
+### 12. Sequencing
 
 1. Fix the release gate (§5.1) — it fails silently and it fails now.
 2. Resolve the `hanzoai/ai` exposure (§9).
@@ -1492,7 +1495,7 @@ customers and are trivially defeated by dishonest ones.
    declaring order twice.
 4. Land the `model.go` seam (§3.1).
 5. Land the guard (§8) and prove it fires.
-6. Move `clients/admin/*` to `hanzo-inc/admin`.
+6. Move `clients/admin/*` to a private repository.
 7. Split the module.
 
 Steps 1–5 are valuable if the split never happens, which is the property a good

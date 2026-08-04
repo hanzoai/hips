@@ -9,7 +9,9 @@ created: 2024-12-20
 requires: HIP-1, LP-102
 ---
 
-# HIP-6: Per-User Fine-Tuning Architecture for Personalized AI
+
+
+# HIP-0006: Per-User Fine-Tuning Architecture for Personalized AI
 
 ## Abstract
 

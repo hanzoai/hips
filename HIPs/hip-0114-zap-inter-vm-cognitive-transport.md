@@ -9,6 +9,8 @@ created: 2026-06-21
 requires: 0113
 ---
 
+
+
 # HIP-0114: ZAP — Inter-VM Cognitive Transport for Thinking Chains
 
 ## Abstract

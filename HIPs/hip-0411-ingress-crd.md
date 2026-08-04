@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-411: Ingress CRD
+
+
+# HIP-0411: Ingress CRD
 
 ## Abstract
 

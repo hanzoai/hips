@@ -10,7 +10,9 @@ updated: 2026-02-23
 requires: 0000, 0001, 0008, 0019
 ---
 
-# HIP-20: Blockchain Node Standard
+
+
+# HIP-0020: Blockchain Node Standard
 
 ## Abstract
 

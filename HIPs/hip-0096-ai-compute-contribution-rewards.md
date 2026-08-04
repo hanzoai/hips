@@ -2,12 +2,15 @@
 hip: 0096
 title: AI Compute Contribution Rewards
 type: Standards Track
-category: Economic Protocol
+category: Core
 status: Draft
 author: Hanzo AI
 created: 2026-01-24
 requires: HIP-004 (HMM), HIP-006 (AI Mining Protocol), ZIP-002 (PoAI)
 ---
+
+
+# HIP-0096: AI Compute Contribution Rewards
 
 ## Abstract
 
@@ -53,9 +56,11 @@ This HIP connects these pieces into a unified reward economy.
 
 ---
 
-## 2. Design Principles
+## Specification
 
-### 2.1 First Principles
+### 2. Design Principles
+
+#### 2.1 First Principles
 
 1. **Useful Work**: Rewards must be tied to verifiable, useful AI compute (not busy work)
 2. **Quality Over Quantity**: High-quality providers earn more than raw capacity
@@ -63,7 +68,7 @@ This HIP connects these pieces into a unified reward economy.
 4. **Fair Distribution**: Proportional to actual contribution, not capital concentration
 5. **Sybil Resistant**: Hardware attestation prevents fake capacity claims
 
-### 2.2 Economic Invariants
+#### 2.2 Economic Invariants
 
 ```
 Total Rewards <= Total Value Created
@@ -73,9 +78,9 @@ Stake >= Minimum Bond (anti-Sybil)
 
 ---
 
-## 3. Compute Contribution Tracking
+### 3. Compute Contribution Tracking
 
-### 3.1 Contribution Units
+#### 3.1 Contribution Units
 
 All compute is normalized to **Hanzo Compute Units (HCU)**:
 
@@ -100,7 +105,7 @@ HCU = weighted_sum(
 | Storage  | 10TB NVMe @ 7GB/s  | 0.10       |
 | Network  | 100Gbps            | 0.05       |
 
-### 3.2 Contribution Metrics
+#### 3.2 Contribution Metrics
 
 Each provider's contribution is tracked across multiple dimensions:
 
@@ -132,7 +137,7 @@ pub struct ContributionMetrics {
 }
 ```
 
-### 3.3 Hardware Attestation (NVTrust Integration)
+#### 3.3 Hardware Attestation (NVTrust Integration)
 
 Building on HIP-006, all contributions require NVTrust attestation:
 
@@ -165,7 +170,7 @@ pub struct AttestationProof {
 | RTX PRO 6000  | NVTrust         | 85          | 0.85x             |
 | RTX 5090/4090 | Software only   | 60          | 0.60x             |
 
-### 3.4 On-Chain Contribution Records
+#### 3.4 On-Chain Contribution Records
 
 ```solidity
 contract ContributionRegistry {
@@ -203,9 +208,9 @@ contract ContributionRegistry {
 
 ---
 
-## 4. Reward Calculation Algorithm
+### 4. Reward Calculation Algorithm
 
-### 4.1 Epoch-Based Distribution
+#### 4.1 Epoch-Based Distribution
 
 Rewards are distributed in **epochs** (24 hours) to:
 
@@ -213,7 +218,7 @@ Rewards are distributed in **epochs** (24 hours) to:
 - Allow time for quality verification
 - Prevent gaming through rapid state changes
 
-### 4.2 Reward Pool Composition
+#### 4.2 Reward Pool Composition
 
 Each epoch's reward pool consists of:
 
@@ -235,7 +240,7 @@ Where:
 | 3    | 500,000 AI          | 5%                   |
 | 4+   | 250,000 AI          | 3%                   |
 
-### 4.3 Provider Reward Formula
+#### 4.3 Provider Reward Formula
 
 Each provider's reward is calculated as:
 
@@ -251,7 +256,7 @@ W_provider = HCU_utilized
            * Stake_multiplier
 ```
 
-#### 4.3.1 Quality Multiplier (0.5x - 2.0x)
+##### 4.3.1 Quality Multiplier (0.5x - 2.0x)
 
 ```
 Quality_multiplier = 0.5 + 1.5 * (QualityScore / 10000)
@@ -264,7 +269,7 @@ QualityScore = weighted_average(
 )
 ```
 
-#### 4.3.2 Trust Multiplier (0.6x - 1.0x)
+##### 4.3.2 Trust Multiplier (0.6x - 1.0x)
 
 ```
 Trust_multiplier = TrustScore / 100
@@ -272,7 +277,7 @@ Trust_multiplier = TrustScore / 100
 Where TrustScore from hardware attestation (see table above)
 ```
 
-#### 4.3.3 Uptime Multiplier (0.7x - 1.2x)
+##### 4.3.3 Uptime Multiplier (0.7x - 1.2x)
 
 ```
 Uptime_multiplier = 0.7 + 0.5 * (UptimeRatio / 10000)
@@ -285,7 +290,7 @@ UptimeRatio = uptime_seconds / total_registered_seconds
 - 7+ consecutive days at 99%+ uptime: +5% bonus
 - 30+ consecutive days at 99%+ uptime: +10% bonus
 
-#### 4.3.4 Stake Multiplier (1.0x - 1.5x)
+##### 4.3.4 Stake Multiplier (1.0x - 1.5x)
 
 ```
 Stake_multiplier = 1.0 + 0.5 * min(1.0, log(Stake) / log(MAX_STAKE))
@@ -293,7 +298,7 @@ Stake_multiplier = 1.0 + 0.5 * min(1.0, log(Stake) / log(MAX_STAKE))
 MAX_STAKE = 1,000,000 AI (diminishing returns after this)
 ```
 
-### 4.4 Worked Example
+#### 4.4 Worked Example
 
 **Provider Profile**:
 
@@ -317,7 +322,7 @@ If total network weight is 10,000 and R_epoch = 1,000,000 AI:
 R_provider = 1,000,000 * (285.5 / 10,000) = 28,550 AI
 ```
 
-### 4.5 Minimum Thresholds
+#### 4.5 Minimum Thresholds
 
 To receive rewards, providers must meet:
 
@@ -331,9 +336,9 @@ To receive rewards, providers must meet:
 
 ---
 
-## 5. Token Distribution Mechanism
+### 5. Token Distribution Mechanism
 
-### 5.1 Distribution Flow
+#### 5.1 Distribution Flow
 
 ```
                                   ┌─────────────────┐
@@ -367,7 +372,7 @@ To receive rewards, providers must meet:
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.2 Reward Allocation
+#### 5.2 Reward Allocation
 
 | Allocation       | Percentage | Purpose                                 |
 | ---------------- | ---------- | --------------------------------------- |
@@ -375,7 +380,7 @@ To receive rewards, providers must meet:
 | Treasury         | 20%        | Protocol development, grants, insurance |
 | Burn             | 10%        | Deflationary pressure                   |
 
-### 5.3 Vesting and Claiming
+#### 5.3 Vesting and Claiming
 
 **Vesting Schedule**:
 
@@ -403,7 +408,7 @@ contract RewardVesting {
 }
 ```
 
-### 5.4 Cross-Chain Distribution
+#### 5.4 Cross-Chain Distribution
 
 Providers can choose their reward destination:
 
@@ -420,9 +425,9 @@ function setRewardDestination(RewardDestination dest) external;
 
 ---
 
-## 6. Anti-Gaming Mechanisms
+### 6. Anti-Gaming Mechanisms
 
-### 6.1 Sybil Resistance
+#### 6.1 Sybil Resistance
 
 **Problem**: Creating multiple identities to claim more rewards.
 
@@ -444,7 +449,7 @@ function setRewardDestination(RewardDestination dest) external;
    - IP analysis for suspicious clustering
    - Latency verification from multiple vantage points
 
-### 6.2 Quality Gaming Prevention
+#### 6.2 Quality Gaming Prevention
 
 **Problem**: Providers gaming quality metrics.
 
@@ -465,7 +470,7 @@ function setRewardDestination(RewardDestination dest) external;
    - Disputes affect quality score
    - Arbitration for contested results
 
-### 6.3 Capacity Inflation Prevention
+#### 6.3 Capacity Inflation Prevention
 
 **Problem**: Claiming more capacity than available.
 
@@ -485,7 +490,7 @@ function setRewardDestination(RewardDestination dest) external;
    - Hardware must re-attest every 24 hours
    - Prevents "ghost" capacity claims
 
-### 6.4 Collusion Prevention
+#### 6.4 Collusion Prevention
 
 **Problem**: Providers creating fake jobs for each other.
 
@@ -507,9 +512,9 @@ function setRewardDestination(RewardDestination dest) external;
 
 ---
 
-## 7. Integration with Existing Systems
+### 7. Integration with Existing Systems
 
-### 7.1 HMM Integration (HIP-004)
+#### 7.1 HMM Integration (HIP-004)
 
 Compute rewards integrate with Hamiltonian Market Maker:
 
@@ -524,7 +529,7 @@ HMM provides:
   - Fee collection for reward pool
 ```
 
-### 7.2 PoAI Integration (ZIP-002)
+#### 7.2 PoAI Integration (ZIP-002)
 
 Quality verification from Zoo's Proof of AI:
 
@@ -538,7 +543,7 @@ PoAI Bonus:
   R_poai = rho * V_job    where rho <= 0.1 (10% bonus cap)
 ```
 
-### 7.3 Platform Integration (Compute Pools)
+#### 7.3 Platform Integration (Compute Pools)
 
 Integration with existing platform schema:
 
@@ -564,7 +569,7 @@ interface RewardIntegration {
 }
 ```
 
-### 7.4 Teleport Integration (HIP-006)
+#### 7.4 Teleport Integration (HIP-006)
 
 Rewards distributed via Teleport bridge:
 
@@ -590,9 +595,9 @@ impl RewardDistributor {
 
 ---
 
-## 8. Economic Analysis
+### 8. Economic Analysis
 
-### 8.1 Supply Dynamics
+#### 8.1 Supply Dynamics
 
 **Year 1 Projection** (assuming 100 providers):
 
@@ -614,7 +619,7 @@ impl RewardDistributor {
 | Net Daily Inflation       | 275,000 AI |
 | Effective Inflation Rate  | ~3%        |
 
-### 8.2 Provider Economics
+#### 8.2 Provider Economics
 
 **Break-Even Analysis** for H100 provider:
 
@@ -637,7 +642,7 @@ impl RewardDistributor {
 
 **Conclusion**: Profitable at >15% utilization at current prices.
 
-### 8.3 Game Theory Analysis
+#### 8.3 Game Theory Analysis
 
 **Dominant Strategy**: Provide high-quality compute honestly.
 
@@ -651,7 +656,7 @@ impl RewardDistributor {
 
 **Nash Equilibrium**: All providers maximize honest contribution.
 
-### 8.4 Sustainability Model
+#### 8.4 Sustainability Model
 
 **Long-term Equilibrium**:
 
@@ -672,9 +677,9 @@ Sustainable when:
 
 ---
 
-## 9. Implementation Roadmap
+### 9. Implementation Roadmap
 
-### Phase 1: Foundation (Q1 2026)
+#### Phase 1: Foundation (Q1 2026)
 
 **Deliverables**:
 
@@ -689,7 +694,7 @@ Sustainable when:
 - 100,000 AI distributed in first epoch
 - No critical bugs in 30-day audit
 
-### Phase 2: Automation (Q2 2026)
+#### Phase 2: Automation (Q2 2026)
 
 **Deliverables**:
 
@@ -704,7 +709,7 @@ Sustainable when:
 - 99.9% uptime for distribution
 - <1% reward calculation variance
 
-### Phase 3: Scaling (Q3 2026)
+#### Phase 3: Scaling (Q3 2026)
 
 **Deliverables**:
 
@@ -719,7 +724,7 @@ Sustainable when:
 - $10M+ monthly compute volume
 - <0.1% fraudulent claims
 
-### Phase 4: Decentralization (Q4 2026)
+#### Phase 4: Decentralization (Q4 2026)
 
 **Deliverables**:
 
@@ -736,9 +741,9 @@ Sustainable when:
 
 ---
 
-## 10. Security Considerations
+### 10. Security Considerations
 
-### 10.1 Smart Contract Risks
+#### 10.1 Smart Contract Risks
 
 | Risk             | Mitigation                                   |
 | ---------------- | -------------------------------------------- |
@@ -747,7 +752,7 @@ Sustainable when:
 | Access Control   | OpenZeppelin AccessControl                   |
 | Upgrade Risks    | Transparent proxy with timelock              |
 
-### 10.2 Economic Attacks
+#### 10.2 Economic Attacks
 
 | Attack              | Mitigation                           |
 | ------------------- | ------------------------------------ |
@@ -756,7 +761,7 @@ Sustainable when:
 | Front-running       | Commit-reveal for claims             |
 | MEV Extraction      | Batch distribution transactions      |
 
-### 10.3 Operational Risks
+#### 10.3 Operational Risks
 
 | Risk               | Mitigation                         |
 | ------------------ | ---------------------------------- |
@@ -765,7 +770,7 @@ Sustainable when:
 | Network Congestion | L2 distribution, batching          |
 | Bug Discovery      | Bug bounty program, insurance fund |
 
-### 10.4 Privacy Considerations
+#### 10.4 Privacy Considerations
 
 - Provider identities can be pseudonymous (wallet addresses)
 - Hardware IDs are hashed before storage

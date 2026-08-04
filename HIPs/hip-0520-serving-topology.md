@@ -9,7 +9,9 @@ created: 2026-07-29
 requires: HIP-0519
 ---
 
-# HIP-0520: Serving Topology
+
+
+# HIP-0520: Serving Topology — Three Tiers, Horizontally Scalable, Pinned Per Entity
 
 ## Abstract
 

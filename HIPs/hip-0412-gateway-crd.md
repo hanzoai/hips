@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-412: Gateway CRD
+
+
+# HIP-0412: Gateway CRD
 
 ## Abstract
 

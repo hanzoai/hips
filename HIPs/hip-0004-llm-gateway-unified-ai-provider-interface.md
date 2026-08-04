@@ -9,7 +9,9 @@ created: 2025-01-09
 requires: HIP-1
 ---
 
-# HIP-4: LLM Gateway - Unified AI Provider Interface
+
+
+# HIP-0004: LLM Gateway - Unified AI Provider Interface
 
 ## Abstract
 

@@ -10,7 +10,9 @@ updated: 2026-02-24
 requires: HIP-0019, HIP-0043
 ---
 
-# HIP-50: Hanzo Edge — Edge AI Runtime Standard
+
+
+# HIP-0050: Hanzo Edge — Edge AI Runtime Standard
 
 ## Abstract
 

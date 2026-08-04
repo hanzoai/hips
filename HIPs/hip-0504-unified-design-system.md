@@ -9,7 +9,9 @@ created: 2026-06-24
 requires: HIP-36
 ---
 
-# HIP-504: Unified Cross-Platform Design System
+
+
+# HIP-0504: Unified Cross-Platform Design System
 
 ## Abstract
 

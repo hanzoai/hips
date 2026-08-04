@@ -6,7 +6,12 @@ category: Infrastructure
 status: Draft
 author: Hanzo AI
 requires: HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain PQ Rollup), HIP-0084 (Pulsar-M DKG)
+created: 2026-05-10
 ---
+
+
+
+# HIP-0079: Q-Chain — Quasar Finality Block Standard
 
 ## Abstract
 

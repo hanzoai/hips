@@ -11,7 +11,9 @@ references: LP-0010
 tags: [brand, white-label, federation, governance, pointer]
 ---
 
-# HIP-0303: Hanzo adopts LP-0010 — Brand Sovereignty and Federation Discovery
+
+
+# HIP-0303: Hanzo adopts LP-0010: Brand Sovereignty and Federation Discovery
 
 ## Abstract
 

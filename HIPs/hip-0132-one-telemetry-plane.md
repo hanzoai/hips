@@ -9,7 +9,9 @@ created: 2026-07-27
 requires: HIP-0119, HIP-0512
 ---
 
-# HIP-132: One Telemetry Plane — One Door, One Schema, Many Lenses
+
+
+# HIP-0132: One Telemetry Plane — One Door, One Schema, Many Lenses
 
 ## Abstract
 

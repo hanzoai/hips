@@ -9,6 +9,8 @@ created: 2026-02-23
 requires: HIP-0010
 ---
 
+
+
 # HIP-0045: Documentation Framework Standard
 
 ## Abstract

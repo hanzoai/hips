@@ -4,14 +4,15 @@ title: "esign: shared-DB tenancy via team-where, not file-per-tenant"
 author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track
 category: Infrastructure
-status: Accepted
+status: Final
 created: 2026-06-21
 requires: HIP-0302
 ---
 
-# HIP-305: esign — Shared-DB Tenancy via `team-where`, not File-per-Tenant
 
-## Context
+# HIP-0305: esign: shared-DB tenancy via team-where, not file-per-tenant
+
+## Abstract
 
 The canonical database architecture (`hanzoai/.github` →
 `profile/ARCHITECTURE-DATABASES.md`) mandates one Base SQLite file per
@@ -40,7 +41,7 @@ esign (a Documenso fork) is being migrated Postgres → Base SQLite (PR
    resolver, so there is no request-time hook at which a file could be chosen
    the way a multi-tenant edge router would.
 
-## Decision
+## Specification
 
 esign uses **ONE Base SQLite file shared across orgs**. Tenant isolation is
 enforced in-query at the `buildTeamWhereQuery({ teamId, userId })` layer — the

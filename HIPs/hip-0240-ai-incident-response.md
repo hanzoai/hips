@@ -11,7 +11,9 @@ created: 2025-12-17
 requires: [200, 201]
 ---
 
-# HIP-240: AI Incident Response
+
+
+# HIP-0240: AI Incident Response
 
 ## Abstract
 

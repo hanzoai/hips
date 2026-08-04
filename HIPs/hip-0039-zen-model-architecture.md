@@ -9,7 +9,9 @@ created: 2025-01-15
 requires: HIP-0002, HIP-0004
 ---
 
-# HIP-39: Zen Model Architecture
+
+
+# HIP-0039: Zen Model Architecture
 
 ## Abstract
 

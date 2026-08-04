@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0026, HIP-0017
 ---
 
-# HIP-61: Notification & Messaging Service Standard
+
+
+# HIP-0061: Notification & Messaging Service Standard
 
 ## Abstract
 

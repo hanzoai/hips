@@ -9,7 +9,9 @@ created: 2026-02-23
 requires: HIP-0017, HIP-0029
 ---
 
-# HIP-47: Analytics Datastore Standard
+
+
+# HIP-0047: Analytics Datastore Standard
 
 ## Abstract
 

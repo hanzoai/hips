@@ -9,6 +9,10 @@ created: 2026-07-08
 requires: HIP-0040, HIP-0041, HIP-0106, HIP-0114, HIP-0120
 ---
 
+
+
+# HIP-0127: V8 · Open Edition — Architecture, Distribution & the Language Seam
+
 ## Abstract
 
 The spine of Hanzo **V8 · Open Edition**: how the whole cloud is composed, split

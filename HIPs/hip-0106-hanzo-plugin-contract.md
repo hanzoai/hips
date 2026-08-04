@@ -6,11 +6,13 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2026-05-19
-updated: 2026-07-29
+updated: 2026-08-04
 requires: HIP-0026, HIP-0027, HIP-0036, HIP-0105, HIP-0111, HIP-0119, HIP-0132, HIP-0134, HIP-0302, HIP-0400
 ---
 
-# HIP-106: The Hanzo Plugin Contract
+
+
+# HIP-0106: The Hanzo Plugin Contract
 
 ## Abstract
 
@@ -36,6 +38,17 @@ one that happened). The declaration is projected from the plugin's own live
 router, travels as an artifact verified by the same digest as the binary, and is
 gated by asking the composed ROUTER where each declared path actually goes —
 never by consulting a committed document.
+
+**Every app is a plugin, uniformly, and a plugin is an ordinary repository.**
+The correspondence between apps and plugins is one-to-one and gate-enforced
+(§9); a plugin runs standalone as readily as it composes (§10); an optional or
+paid capability is a separate artifact the host loads at run time, never a build
+tag in public source (§11); a host enumerates its composition from the plugins'
+own live declarations rather than a committed catalogue (§12); each app declares
+its customer-facing identity as named Go fields, because a field with no Go name
+is silently deleted by two closed-struct round-trips on the way to the published
+document (§13); and a third party can fork a plugin, extend it and contribute it
+back using only public repositories (§14).
 
 **Supersedes this HIP's own earlier process model.** The fused binary this
 document originally specified — one link that imported every subsystem as a Go
@@ -860,6 +873,212 @@ two ways a green tick lies:
   compared a document to the document it protected, agreed with itself, and
   passed through 58 misroutes.
 
+### §9 Every app is a plugin, and the bijection is enforced
+
+There is no second kind of app. **Every app is a plugin and every plugin is an
+app**, and the correspondence is one-to-one — not a convention, a gate.
+
+Measured on 2026-08-04 in the reference host: **120** rows in the registry,
+**120** plugin directories carrying a `main`, **120** committed OpenAPI subsets.
+The four remaining directories under `plugin/` are declared tools, not apps, and
+are named in the generator's exemption list.
+
+1. A repository that builds a plugin MUST appear exactly once in the host's
+   registry. A registry row MUST correspond to exactly one plugin.
+2. The host MUST enforce both directions mechanically and MUST hard-fail. The
+   reference implementation is `make generate`, which scaffolds a missing `main`
+   for a registered app and **exits non-zero** listing any plugin directory that
+   has a `main` and no row.
+3. CI MUST additionally fail when generation produces any change, checked with
+   `git status --porcelain` rather than a diff — porcelain catches a *new*
+   untracked scaffold, which a diff does not.
+
+**A gate that cannot fail does not count toward this.** The reference host also
+carries a Go test named for this bijection which is vacuous: it skips any plugin
+`main` that does not call `cloud.Serve`, and that function was renamed to
+`cloud.Listen`, so it matches 0 of 120 mains and its loop body never executes. It
+passes unconditionally. Such a test MUST be deleted or repaired; leaving it is
+worse than having no test, because its name asserts coverage that does not exist.
+The bijection is genuinely enforced — by the generator, in CI — and that is the
+gate to point at.
+
+### §10 Standalone is the same binary, not a mode
+
+A plugin MUST run alone. This is what makes "build your own cloud" a fact rather
+than a slogan: a third party takes one plugin, runs it, and has a working
+HIP-0119 service without adopting the host.
+
+1. Every plugin MUST have `package main` and MUST build to its own binary.
+2. Run standalone, that binary MUST serve the same routes it serves as a child.
+   There MUST NOT be a second code path — one server body, entered the same way,
+   as §2 requires.
+3. The host MUST be able to build and load any single plugin without building the
+   others.
+
+**The enabled set MUST NOT be stated twice.** A host derives which subsystem a
+child serves from the plugin it was built as. It MUST NOT additionally accept a
+flag or an environment variable restating that set.
+
+This corrects a mechanism widely believed to exist: there is no `--enable` flag,
+and it MUST NOT be reintroduced. It was removed after two production outages on
+2026-08-02, both caused by that list naming an app that did not exist and
+omitting one every other child needs. A build list — which plugins to compile —
+is a different thing from a mount list, and only the first is legitimate. The
+reference host's `RUN_PLUGINS` is a build list and the binary takes no argument
+from it.
+
+A deployment artifact still passing `--enable` is a live defect, not a harmless
+leftover: argument parsing is fatal on an unknown flag, so the process exits at
+startup. The reference host's Helm chart still passes one and MUST stop.
+
+### §11 Enable and disable are runtime, never a build tag
+
+**A capability that can be switched off MUST be a separate artifact the host
+loads, and MUST NOT be a build tag inside public source.**
+
+A build tag leaks the shape of the private thing into the public repository —
+every reader sees the seams of what they are not getting — and it makes the open
+build a second-class citizen of its own repository, because the default build is
+the crippled one. It also multiplies the build matrix by the number of tags,
+which is how a repository acquires configurations nobody compiles.
+
+Requirements:
+
+1. No `//go:build` tag MAY gate a paid, enterprise or optional capability.
+   Measured in the reference host: zero such tags and zero `ee/` directories.
+2. An optional capability MUST ship as its own plugin binary, loaded by the host
+   exactly as any other plugin is, and verified by the same digest.
+3. Enable and disable MUST be available at run time, per plugin, without a
+   rebuild and without a restart of the host.
+4. A disabled plugin's routes MUST remain registered and MUST answer **503**, not
+   404. A 404 says the route does not exist, which is false and sends the caller
+   looking for a spelling mistake; 503 says it exists and is not currently
+   serving.
+5. The control surface MUST be authenticated as an administrative operation and
+   MUST be audited.
+
+The reference host implements 3 through 5 at `/v1/admin/plugins` with
+`enable`, `disable` and `reload` per plugin.
+
+**Reconciliation with HIP-0130.** HIP-0130 (Draft) proposes a visible-source
+`ee/` tier inside the public repository as the paid boundary. That mechanism is a
+build-time gate in public source and contradicts this section. Where the two
+differ, this section governs, and HIP-0130's tier-2 mechanism SHOULD be
+re-expressed as a separately-loaded artifact. The tier *boundary* HIP-0130 draws
+is not in dispute — only the mechanism that implements it. HIP-0135 remains
+authoritative on which repository a thing belongs in.
+
+### §12 Discovery — one registry, one live answer
+
+A client such as an app builder MUST be able to enumerate the composition: which
+plugins exist, what each is called, what it serves, and whether it is running.
+
+1. **One registry.** The set of apps and their order MUST come from the same
+   in-code registry the OpenAPI pipeline projects from. There MUST NOT be a
+   second list. In the reference host that registry is read by the mount loops,
+   the build, the image, the generator and the admin surface alike.
+2. **Content comes from the router, never from the registry.** The registry
+   supplies the set and the order; what each plugin *serves* is projected from
+   its own live router, per §4.2.
+3. **The host MUST serve `GET /v1/apps`**, answering from the plugins' own live
+   declarations, fanned out in parallel to each child. Every zip app already
+   serves its declaration at `/.well-known/zip/plugin.json` (§3), and hosts
+   already own a parallel ask-every-child mechanism, so this endpoint requires no
+   new artifact and no new source of truth.
+4. **It MUST NOT be a committed catalogue.** A catalogue is a golden, and goldens
+   drift silently: a committed tool list in this estate held 12 entries while the
+   binary served 365.
+5. The response MUST carry, per app: name, whether it is running, its declared
+   routes and ops, its artifact digest, and the identity fields of §13.
+
+**State in the reference host:** the declaration exists and is auto-served by
+every plugin; the host does not yet consume it, emits no declaration artifacts,
+and has no `/v1/apps`. Three adjacent endpoints exist and each reads the wrong
+process — a child answering about itself where the fleet was wanted, or a child
+answering about a plugin table only the host holds. §12.3 is the one that is
+correct by construction.
+
+### §13 App identity — and the two places metadata dies
+
+Each app declares its customer-facing identity:
+
+| Field | Meaning | Values |
+|---|---|---|
+| `Product` | the product a customer buys | one name |
+| `Category` | how it is grouped in a catalogue | one name |
+| `Kind` | what it *is* | `api`, `deployable`, `client` |
+| `Visibility` | who may see it listed | `internal` (default), `public` |
+| `Meters` | what it bills on | zero or more meter names |
+
+Two rules, and the second is the one that bites.
+
+**§13.1 Identity is declared in code, not in a comment.** It MUST be fields on
+the registry's own Go types. A doc comment cannot carry it: Go drops comments at
+compile time and reflection never sees them, so a comment reaches a document only
+via a build-time AST pass — and the pass that exists (§4.1) lifts *handler* doc
+comments into an operation's description, examples and field help. It does not
+carry app identity, and extending it to do so would put identity in a second
+place. `Visibility` defaults to `internal`: a field that defaults to public
+publishes by omission, and the failure is unrecoverable.
+
+`Product` today is *derived* rather than declared — it is the first path segment
+after `/v1/` — and `Meters` has an existing precedent that MUST be reused rather
+than duplicated: the reference host already carries a required per-plugin price
+declaration whose zero value fails a test. Adding a second, parallel metering
+declaration would be exactly the defect this document exists to prevent.
+
+**§13.2 A field with no Go name is silently deleted in transit.** The published
+document is built by two closed-struct round-trips, and **neither reports what it
+drops**:
+
+1. A plugin's open specification (`map[string]any`) is marshalled and then
+   unmarshalled into a closed `Operation` struct. Unknown keys are ignored —
+   unknown-field rejection is not enabled — and the re-marshal walks only the
+   struct's own fields.
+2. Each plugin's committed subset is decoded into a closed `Document` struct,
+   reaching the same `Operation`. There is no catch-all map and no extensions
+   field at any level, and the weave then builds a *fresh* document from those
+   values, so anything dropped at decode can never reappear downstream.
+
+**`x-app` survives, and it is the only extension that does**, for exactly one
+reason: it is the only `x-` key with a named Go struct field
+(`App string \`json:"x-app,omitempty"\``). Measured: 2,341 occurrences of `x-app`
+in the woven document and **no other `x-` key at all**, in the woven document or
+in any of the 120 subsets.
+
+Therefore:
+
+- Every field in the table above MUST be added as a **named field on both
+  round-tripping structs** before it is populated anywhere.
+- A conformance gate MUST assert each field survives a full projection, by
+  reading it back out of the woven document rather than out of the source.
+- Adding metadata as an unnamed extension is not a partial implementation. It
+  produces a document that does not contain it, with no error at any stage, and
+  the loss is invisible until a consumer looks for a field that was never there.
+
+### §14 Fork a plugin, extend it, contribute back
+
+The point of the contract is that a plugin is an ordinary repository. Forking one
+therefore requires no permission and no coordination:
+
+1. **Fork.** A plugin repository builds standalone (§10) and imports nothing of
+   the host's (§1.1), so a fork builds without access to the host at all.
+2. **Extend.** Add typed ops. The four projections (§4) follow from the
+   registration, so a new op reaches the specification, the tool list, the CLI
+   and the call plane without touching any of them.
+3. **Run it.** Point a host at the fork's binary. The host loads a plugin by
+   name, path or release index and verifies its digest; a fork is loaded exactly
+   as the original is, and no host change is needed to try one.
+4. **Contribute back.** A change is acceptable upstream when it satisfies the
+   §Conformance checklist and every gate in §8. Those gates are the review: they
+   are mechanical, they run in the fork's own CI, and they are the same ones the
+   original runs.
+5. **What upstream MUST NOT require.** A contributor MUST NOT be asked to sign
+   over more than the repository's licence requires, to route the change through
+   a private repository, or to reproduce a private artifact in order to build.
+   A plugin that cannot be built and tested from public sources alone is not
+   conforming, whatever else is true of it (HIP-0135).
+
 ### Conformance checklist
 
 Build a conforming plugin repo in one pass:
@@ -884,6 +1103,14 @@ Build a conforming plugin repo in one pass:
 9. Every gate in §8, all reachable from `make test`, and §8.9 proving CI calls
    it.
 10. Tags minted by the pipeline after publish (§7.1). Patch bumps only.
+11. Exactly one registry row, and `make generate` clean — §9. The plugin builds
+    and serves ALONE, with no second code path and no flag restating which app
+    it is — §10.
+12. No build tag gates an optional capability; enable and disable work at run
+    time and a disabled route answers 503 — §11.
+13. App identity (`Product`, `Category`, `Kind`, `Visibility`, `Meters`) declared
+    as named Go fields, and each one read back out of the WOVEN document to prove
+    it survived both round-trips — §13.
 
 ### Migration
 

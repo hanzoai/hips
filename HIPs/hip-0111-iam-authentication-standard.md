@@ -9,7 +9,9 @@ created: 2026-06-16
 requires: HIP-0026, HIP-0068
 ---
 
-# HIP-111: Hanzo IAM Authentication Standard
+
+
+# HIP-0111: Hanzo IAM Authentication Standard
 
 ## Abstract
 
@@ -277,7 +279,7 @@ Creating, reading, updating, and deleting identities is **SCIM 2.0** — the IET
 - Tenant scope: a non-super caller's SCIM view is pinned to its own `owner`; a SuperAdmin may `filter` across tenants. Same authorization model as every other surface — bearer-authenticated, owner-scoped, fail-closed.
 - Clients provision through the SDK's SCIM client (or any conformant SCIM library); no client writes SCIM URLs by hand, same as §2/§3.
 
-### 7. Social & Web3 — one shared provider, never per-app
+### 9. Social & Web3 — one shared provider, never per-app
 
 Google, GitHub, and Web3 are configured **once per network** as org-level providers in IAM (`admin/provider-google`, `admin/provider-github`, …). Every app reuses them via a per-app `canSignIn` toggle — an application **never** registers its own social OAuth client (§4.6).
 

@@ -8,7 +8,9 @@ status: Final
 created: 2026-05-19
 ---
 
-# HIP-406: DNS CRD
+
+
+# HIP-0406: DNS CRD
 
 ## Abstract
 

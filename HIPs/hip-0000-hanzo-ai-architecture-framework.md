@@ -7,7 +7,9 @@ status: Final
 created: 2024-12-20
 ---
 
-# HIP-0: Hanzo AI Architecture & Framework
+
+
+# HIP-0000: Hanzo AI Architecture & Framework
 
 ## Abstract
 

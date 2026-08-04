@@ -6,7 +6,12 @@ category: Infrastructure
 status: Draft
 author: Hanzo AI
 requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity, Gossip & Payments), HIP-0079 (Q-Chain Finality Blocks), HIP-0084 (Pulsar-M DKG)
+created: 2026-05-10
 ---
+
+
+
+# HIP-0078: Z-Chain — Post-Quantum Identity & Attestation Rollup
 
 ## Abstract
 

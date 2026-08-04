@@ -11,7 +11,9 @@ created: 2025-12-17
 requires: [200, 250, 251]
 ---
 
-# HIP-260: Efficient Model Practices
+
+
+# HIP-0260: Efficient Model Practices
 
 ## Abstract
 

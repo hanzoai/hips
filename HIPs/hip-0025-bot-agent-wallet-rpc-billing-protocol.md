@@ -9,7 +9,9 @@ created: 2026-02-14
 requires: HIP-1, HIP-18, HIP-24, HIP-101
 ---
 
-# HIP-25: Bot Agent Wallet & RPC Billing Protocol
+
+
+# HIP-0025: Bot Agent Wallet & RPC Billing Protocol
 
 ## Abstract
 
