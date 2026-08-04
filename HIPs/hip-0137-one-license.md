@@ -231,6 +231,15 @@ Tell them apart by the copyright holder in the LICENSE. "Copyright (c) 2015,
 Pierre Curto" is an upstream we forked. "Copyright (c) 2026, Hanzo AI, Inc." on
 a BSD-3-Clause file is ours, and is drift.
 
+**Do not pin the check to the SPDX form.** A repository that never adopted SPDX
+carries its terms in free text — `// Copyright (c) 2026, Hanzo AI, Inc.
+BSD-3-Clause.` — and a scan for `SPDX-License-Identifier:\s*BSD-3-Clause`
+returns a clean, confident zero over all of it. That happened during this
+audit's own sweep: the SPDX pattern reported zero across eight repositories and
+twelve real BSD headers were sitting in the tree. The check is *"does any
+tracked file name a license"*, then classify what it finds. A confident zero is
+worse than a noisy positive, because nobody runs it twice.
+
 There is a third case, and it resolves to the second. A `hanzoai` repository may
 hold a copy of code that originated in `luxfi` or `zoo` — same estate, different
 entity, and those orgs are BSD by standard. Its LICENSE names Lux or Zoo as the
