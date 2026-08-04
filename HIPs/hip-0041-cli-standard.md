@@ -1,598 +1,429 @@
 ---
 hip: 0041
-title: CLI Standard
-author: Hanzo AI Team
+title: The Hanzo CLI — a Projection of the Served API
+author: Hanzo AI
 type: Standards Track
 category: Interface
 status: Draft
 created: 2026-02-23
-requires: HIP-0004, HIP-0040
+updated: 2026-08-04
+requires: HIP-0040, HIP-0111, HIP-0119, HIP-0128, HIP-0135
 ---
 
-# HIP-41: CLI Standard
+# HIP-0041: The Hanzo CLI — a Projection of the Served API
 
 ## Abstract
 
-The Hanzo CLI is the primary developer tool for interacting with the Hanzo AI platform from the terminal. It is a single Go binary (`hanzo`) that provides authenticated access to the LLM Gateway (HIP-4), model management, deployment, and platform operations. The CLI integrates with container runtimes for reproducible AI workloads, supports real-time token streaming, and composes with standard Unix tools via stdin/stdout pipes.
+`github.com/hanzoai/cli` is the terminal surface of Hanzo Cloud: one binary,
+`hanzo`, whose command tree is **generated from the API document the cloud
+serves** rather than written by hand. Every operation the cloud publishes is
+reachable as a command, and no command exists that the cloud does not publish.
 
-**Repository**: [github.com/hanzoai/cli](https://github.com/hanzoai/cli)
-**Package**: `@hanzoai/cli` (npm), `hanzoai-cli` (pip)
-**Binary**: `hanzo`
+That is the whole design, and everything else in this document follows from it.
+A hand-written CLI drifts from its API the moment either changes, and the drift
+is invisible until a user runs the command. A generated one cannot drift in one
+direction at all: **a projection cannot describe a route its source lacks.**
+Commands that do not exist upstream are impossible by construction, not by
+diligence.
+
+This HIP replaces its own earlier contents. The previous revision specified a
+hand-written Go binary with a fixed command list (`hanzo chat`, `hanzo complete`,
+`hanzo deploy`), a plugin system and an auto-updater. The CLI is written in Rust,
+its commands are generated, and none of that command list survives. A
+specification that describes something nobody built is worse than none, because
+it gets quoted.
+
+**Numbers here were measured on 2026-08-04**, each against the artifact named
+beside it. Re-measure before quoting one.
 
 ## Motivation
 
-### The Problem
+Hanzo Cloud publishes an API document describing **2,341 operations**. A person
+at a terminal needs to reach them, and there are only three ways to arrange that:
 
-The Hanzo platform exposes a comprehensive REST API through the LLM Gateway (HIP-4). Developers can interact with it using `curl`, HTTP client libraries, or the language-specific SDKs. However, raw API access creates friction in five areas:
+1. **Write commands by hand.** The surface is then whatever somebody remembered
+   to write. It is always a subset, always stale, and the gap is silent.
+2. **Make the user construct requests.** Correct, and it makes the CLI a worse
+   HTTP client than the one they already have.
+3. **Project the command tree from the document.** Complete by construction,
+   stale only as far as one pinned reference, and the gap is a number anyone can
+   print.
 
-1. **Authentication ceremony**: Every API call requires a bearer token. Obtaining one means running an OAuth flow, storing the token, refreshing it before expiry, and injecting it into every request header. Developers who just want to ask a model a question should not need to manage JWT lifecycles.
-
-2. **No streaming display**: The LLM Gateway streams tokens via Server-Sent Events (SSE). `curl` can receive the stream, but rendering it character-by-character in a terminal requires parsing SSE frames, handling partial UTF-8 sequences, and managing terminal state. This is plumbing that every developer rebuilds.
-
-3. **Model discovery friction**: The platform serves 100+ models across multiple providers. Discovering which models are available, their context lengths, pricing, and capabilities requires reading documentation or making multiple API calls. A CLI can present this as a searchable table.
-
-4. **Deployment gap**: Pushing code to Hanzo Platform (HIP-14) requires building a container image, pushing to a registry, and triggering a deployment via the platform API. Without a CLI, developers must script this themselves or use the web UI, which breaks CI/CD automation.
-
-5. **No composability**: The Unix philosophy depends on programs that read stdin and write stdout. `curl` outputs raw JSON with SSE framing. Piping a prompt file into an AI model and getting clean text back requires a purpose-built tool.
-
-### Why a CLI Solves This
-
-A CLI is the natural interface for developers who live in terminals. It handles authentication, streaming, model selection, and output formatting behind a simple command surface. It integrates with shell scripts, CI/CD pipelines, Makefiles, and other Unix tools. A web dashboard cannot be piped into `grep`. A CLI can.
-
-## Design Philosophy
-
-### Why Go for the CLI Binary
-
-The CLI must ship as a single binary with zero runtime dependencies. A developer should be able to `curl` the binary, make it executable, and run it. No Python interpreter, no Node.js runtime, no shared libraries.
-
-Go produces statically-linked binaries by default. Cross-compilation to Linux/macOS/Windows on amd64/arm64 is a single `GOOS=... GOARCH=... go build` invocation. The resulting binary starts in under 50ms, which is critical for CLI tools that may be called hundreds of times in a script. The binary size is ~15MB, small enough to vendor in CI images.
-
-The alternative is Rust, which produces comparable binaries but has a steeper learning curve and slower compile times. Since the Hanzo ecosystem already uses Go extensively (IAM, blockchain node, SDK), Go reduces the cognitive overhead for contributors.
-
-### Why Container Runtime Integration
-
-AI workloads have complex dependencies: CUDA drivers, Python packages with native extensions, model weights that are tens of gigabytes. Container images provide reproducible environments. The CLI integrates with Docker and Podman to run inference locally with GPU passthrough, build deployment images with correct CUDA/cuDNN versions, cache model weights in named volumes, and isolate conflicting dependency trees. `hanzo run --model zen-72b --gpu` translates to the correct `docker run` incantation with NVIDIA runtime, volume mounts, and port mappings.
-
-### Why OpenAI-Compatible Commands
-
-The OpenAI CLI established conventions that AI developers already know: `chat`, `complete`, `embed`. Mirroring these command names reduces the learning curve to near zero. A developer migrating from OpenAI to Hanzo changes `openai chat` to `hanzo chat` and everything else works the same. The LLM Gateway (HIP-4) already provides an OpenAI-compatible REST API. The CLI extends this compatibility to the command-line interface.
-
-### Why Not Just curl
-
-| Concern | curl | hanzo CLI |
-|---------|------|-----------|
-| Authentication | Manual header injection | Automatic token management |
-| Streaming | Raw SSE frames | Rendered text with cursor control |
-| Model selection | Must know model IDs | Tab-completable model names |
-| Output format | Raw JSON | text, json, yaml selectable |
-| Error handling | HTTP status codes | Human-readable error messages |
-| Configuration | None (flags on every call) | Persistent config file |
-| Pipe support | JSON in, JSON out | Text in, text out (or JSON) |
-
-### Why a Plugin System
-
-The core CLI covers the common cases. The Hanzo ecosystem includes specialized tools (MCP servers, agent frameworks, workflow engines) that benefit from CLI integration without bloating the core binary. Plugins are standalone binaries named `hanzo-<name>`. When a user runs `hanzo foo`, the CLI looks for `hanzo-foo` in `$PATH`. This is the same pattern used by `git`, `kubectl`, and `docker`. No plugin registry, no dynamic loading, no version conflicts.
+Only the third scales with an API that gains operations weekly. This HIP
+specifies it, and names — with counts — every place the current implementation
+does not yet meet it, so the document is a target rather than a flattering
+description.
 
 ## Specification
 
-### Command Structure
-
-```
-hanzo [command] [subcommand] [flags]
-```
-
-Global flags available on all commands:
-
-| Flag | Short | Env Var | Description |
-|------|-------|---------|-------------|
-| `--api-key` | `-k` | `HANZO_API_KEY` | API key for authentication |
-| `--base-url` | `-u` | `HANZO_BASE_URL` | LLM Gateway URL (default: `https://llm.hanzo.ai`) |
-| `--org` | `-o` | `HANZO_ORG` | Organization name |
-| `--output` | | `HANZO_OUTPUT` | Output format: `text`, `json`, `yaml` (default: `text`) |
-| `--verbose` | `-v` | | Enable verbose/debug output |
-| `--quiet` | `-q` | | Suppress non-essential output |
-| `--no-color` | | `NO_COLOR` | Disable colored output (respects [no-color.org](https://no-color.org)) |
-| `--config` | | `HANZO_CONFIG` | Config file path (default: `~/.hanzo/config.yaml`) |
-
-### Core Commands
-
-#### `hanzo auth` -- Authentication
-
-Manages OAuth authentication with Hanzo IAM (HIP-26).
-
-```
-hanzo auth login       # Opens browser for OAuth login via hanzo.id
-hanzo auth logout      # Revokes tokens and clears local credentials
-hanzo auth status      # Shows current authentication state
-hanzo auth token       # Prints the current access token to stdout
-hanzo auth refresh     # Forces a token refresh
-```
-
-**`hanzo auth login`** initiates an OAuth 2.0 Authorization Code Grant with PKCE:
-
-1. CLI starts a local HTTP server on a random port (e.g., `http://localhost:48291/callback`)
-2. CLI opens `https://hanzo.id/oauth/authorize` in the user's default browser with:
-   - `client_id=hanzo-cli-client-id`
-   - `redirect_uri=http://localhost:48291/callback`
-   - `response_type=code`
-   - `scope=openid profile email`
-   - `code_challenge=<S256 challenge>`
-   - `code_challenge_method=S256`
-3. User authenticates at hanzo.id
-4. IAM redirects to `http://localhost:48291/callback?code=<code>&state=<state>`
-5. CLI exchanges the authorization code for tokens
-6. Tokens are stored in `~/.hanzo/credentials.json` with mode `0600`
-7. Local HTTP server shuts down
-
-For headless environments (CI, SSH sessions), `hanzo auth login --headless` prints the authorization URL and waits for the user to paste the callback URL manually.
-
-**`hanzo auth token`** prints the current access token to stdout, refreshing it if expired:
-
-```bash
-curl -H "Authorization: Bearer $(hanzo auth token)" https://llm.hanzo.ai/v1/models
-```
-
-#### `hanzo chat` -- Interactive Chat
-
-Sends messages to a chat model via the LLM Gateway.
-
-```
-hanzo chat [message]                         # One-shot message
-hanzo chat --interactive                     # Interactive REPL
-hanzo chat --model zen-72b "Explain monads"  # Specific model
-hanzo chat --system "You are a Go expert"    # System prompt
-hanzo chat --file context.txt "Summarize"    # Attach file as context
-echo "Fix this bug" | hanzo chat             # Pipe from stdin
-cat code.py | hanzo chat --model zen-72b     # Pipe code for review
-```
-
-Flags:
-
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--model` | `-m` | Config default or `zen-72b` | Model identifier |
-| `--system` | `-s` | None | System prompt |
-| `--temperature` | `-t` | `0.7` | Sampling temperature (0.0-2.0) |
-| `--max-tokens` | | Model default | Maximum tokens to generate |
-| `--top-p` | | `1.0` | Nucleus sampling threshold |
-| `--stream` | | `true` | Stream tokens (disable with `--no-stream`) |
-| `--interactive` | `-i` | `false` | Start interactive chat REPL |
-| `--file` | `-f` | None | Attach file(s) as context (repeatable) |
-| `--json` | | `false` | Request JSON mode output |
-| `--stop` | | None | Stop sequence(s) (repeatable) |
-
-**Streaming behavior**: By default, tokens stream to the terminal as they are generated. The CLI handles SSE frame parsing, partial UTF-8 reassembly, and terminal cursor management. When stdout is not a TTY (piped to another command), streaming is disabled and the complete response is written at once.
-
-**Interactive mode** (`hanzo chat -i`) provides a REPL with multi-line input (terminated by blank line or Ctrl+D), conversation history within the session, `/clear` to reset history, `/model <name>` to switch models, `/system <prompt>` to update the system prompt, `/save <file>` and `/load <file>` for conversation persistence, and Up/Down arrow for input history.
-
-#### `hanzo complete` -- Text Completion
-
-Sends a prompt for text completion (non-chat models).
-
-```
-hanzo complete "The capital of France is"
-hanzo complete --model zen-7b < prompt.txt
-echo "Once upon a time" | hanzo complete --max-tokens 500
-```
-
-Flags mirror `hanzo chat` except `--system` and `--interactive` are not available. Uses the `/v1/completions` endpoint.
-
-#### `hanzo embed` -- Embeddings
-
-Generates embedding vectors for text input.
-
-```
-hanzo embed "Hello world"
-hanzo embed --model text-embedding-3-small < document.txt
-hanzo embed --input-file sentences.jsonl --output embeddings.jsonl
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--model` | `text-embedding-3-small` | Embedding model |
-| `--dimensions` | Model default | Output dimensions |
-| `--input-file` | stdin | JSONL file with one text per line |
-| `--output` | stdout | Output file for embeddings |
-| `--encoding-format` | `float` | `float` or `base64` |
-
-#### `hanzo models` -- Model Management
-
-```
-hanzo models list                    # List all available models
-hanzo models list --provider hanzo   # Filter by provider
-hanzo models list --capability chat  # Filter by capability
-hanzo models info zen-72b           # Detailed model information
-```
-
-**`hanzo models list`** output (text format):
-
-```
-MODEL                 PROVIDER    CONTEXT   COST/1K-IN   COST/1K-OUT
-zen-1b               hanzo       32768     $0.0001      $0.0002
-zen-7b               hanzo       32768     $0.0003      $0.0006
-zen-14b              hanzo       65536     $0.0005      $0.0010
-zen-32b              hanzo       65536     $0.0008      $0.0016
-zen-72b              hanzo       131072    $0.0012      $0.0024
-zen-480b             hanzo       131072    $0.0060      $0.0120
-gpt-4o               openai      128000    $0.0025      $0.0100
-claude-sonnet-4-20250514     anthropic   200000    $0.0030      $0.0150
-```
-
-**`hanzo models info <model>`** output:
-
-```
-Model:          zen-72b
-Provider:       hanzo
-Architecture:   Zen MoDE (Mixture of Diverse Experts)
-Parameters:     72B (12B active)
-Context:        131072 tokens
-Capabilities:   chat, completion, function_calling, vision
-Input Cost:     $0.0012 / 1K tokens
-Output Cost:    $0.0024 / 1K tokens
-Max Output:     16384 tokens
-```
-
-#### `hanzo deploy` -- Deployment
-
-Deploys applications to Hanzo Platform (HIP-14).
-
-```
-hanzo deploy                          # Deploy current directory
-hanzo deploy --dockerfile Dockerfile  # Specify Dockerfile
-hanzo deploy --env NODE_ENV=prod      # Set environment variables
-hanzo deploy --name my-app            # Set application name
-hanzo deploy --region us-east-1       # Target region
-hanzo deploy logs                     # Stream deployment logs
-hanzo deploy status                   # Show deployment status
-hanzo deploy rollback                 # Roll back to previous version
-hanzo deploy list                     # List all deployments
-```
-
-The deploy command detects project type from files (Dockerfile, package.json, go.mod, pyproject.toml), builds a container image, pushes it to the Hanzo Container Registry (HIP-33), triggers a deployment via the Platform API, and streams build/deployment logs until healthy or failed. If no Dockerfile is present, the CLI generates one using buildpack heuristics.
-
-#### `hanzo logs` -- Log Streaming
-
-```
-hanzo logs                     # Logs from current project
-hanzo logs --app my-app        # Logs from specific app
-hanzo logs --follow            # Stream logs continuously
-hanzo logs --since 1h          # Logs from last hour
-hanzo logs --tail 100          # Last 100 lines
-hanzo logs --filter "ERROR"    # Filter log lines
-```
-
-Logs are fetched from the Hanzo Observability stack (HIP-31) and streamed via WebSocket.
-
-#### `hanzo config` -- Configuration Management
-
-```
-hanzo config set model zen-72b       # Set default model
-hanzo config set base_url https://... # Set custom endpoint
-hanzo config get model               # Get a config value
-hanzo config list                    # Show all config
-hanzo config reset                   # Reset to defaults
-hanzo config edit                    # Open config in $EDITOR
-```
-
-### Configuration
-
-#### File: `~/.hanzo/config.yaml`
-
-```yaml
-api_key: ""                              # Prefer env var HANZO_API_KEY
-base_url: "https://llm.hanzo.ai"        # LLM Gateway endpoint
-organization: "hanzo"                    # Default organization
-model: "zen-72b"                         # Default model for chat/complete
-output: "text"                           # Default output format
-stream: true                             # Enable streaming by default
-temperature: 0.7                         # Default temperature
-max_tokens: 0                            # 0 = model default
-
-auth:
-  method: "oauth"                        # "oauth" or "api_key"
-  iam_url: "https://hanzo.id"            # IAM endpoint
-
-container:
-  runtime: "docker"                      # "docker" or "podman"
-  gpu: false                             # Enable GPU passthrough by default
-  cache_dir: "~/.hanzo/models"           # Model cache directory
-
-plugin_paths:
-  - "~/.hanzo/plugins"
-
-auto_update:
-  enabled: true
-  channel: "stable"                      # "stable", "beta", or "nightly"
-  check_interval: "24h"
-```
-
-#### Environment Variables
-
-Precedence order (highest to lowest): command-line flags, environment variables, config file, built-in defaults.
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `HANZO_API_KEY` | API key for bearer token auth | |
-| `HANZO_BASE_URL` | LLM Gateway base URL | `https://llm.hanzo.ai` |
-| `HANZO_ORG` | Organization name | `hanzo` |
-| `HANZO_MODEL` | Default model | `zen-72b` |
-| `HANZO_OUTPUT` | Output format | `text` |
-| `HANZO_CONFIG` | Config file path | `~/.hanzo/config.yaml` |
-| `HANZO_NO_UPDATE` | Disable auto-update checks | `false` |
-| `HANZO_IAM_URL` | IAM endpoint for OAuth | `https://hanzo.id` |
-| `NO_COLOR` | Disable colored output | |
-
-#### Credential Storage: `~/.hanzo/credentials.json`
-
-```json
-{
-  "access_token": "eyJhbGciOi...",
-  "refresh_token": "eyJhbGciOi...",
-  "token_type": "Bearer",
-  "expires_at": "2026-03-02T10:30:00Z",
-  "scope": "openid profile email"
-}
-```
-
-File permissions MUST be `0600`. The CLI refuses to read credentials files with group or world permissions.
-
-### Pipe and Redirection Support
-
-The CLI detects whether stdin/stdout are TTYs and adjusts behavior accordingly.
-
-**stdin is a pipe**: Read the entire pipe content as the user message (for `chat`/`complete`) or input text (for `embed`).
-
-```bash
-cat prompt.txt | hanzo chat --model zen-72b
-git diff HEAD~1 | hanzo chat --system "Review this diff for bugs"
-hanzo chat "List 10 random words" | sort | uniq
-```
-
-**stdout is a pipe**: Disable streaming, suppress progress indicators, write raw response text. JSON output mode writes valid JSON to stdout and diagnostics to stderr.
-
-```bash
-hanzo chat "Write a haiku" > haiku.txt
-hanzo chat --output json "List prime numbers" | jq '.choices[0].message.content'
-```
-
-**stderr**: All diagnostic messages, progress indicators, and errors go to stderr, ensuring stdout remains clean for piping.
-
-### Output Formats
-
-**`text`** (default): Human-readable output. For chat/complete, the raw response text. For models list, a formatted table. For embeddings, space-separated floats.
-
-**`json`**: Machine-readable JSON matching the OpenAI API response schema. Enables integration with `jq` and other JSON tools.
-
-**`yaml`**: Same structure as JSON but in YAML format for configuration pipelines and human-readable structured output.
-
-### Streaming Protocol
-
-The CLI implements the SSE streaming protocol as defined by the LLM Gateway (HIP-4):
-
-1. CLI sends a POST to `/v1/chat/completions` with `stream: true`
-2. Gateway returns `Content-Type: text/event-stream`
-3. CLI parses SSE frames:
-   ```
-   data: {"id":"chatcmpl-...","choices":[{"delta":{"content":"Hello"}}]}
-   data: {"id":"chatcmpl-...","choices":[{"delta":{"content":" world"}}]}
-   data: [DONE]
-   ```
-4. CLI writes each `delta.content` to stdout immediately
-5. On `[DONE]`, CLI prints a trailing newline and exits
-
-Error handling during streaming: network interruptions trigger exponential backoff retries (max 3); malformed SSE frames are skipped with a stderr warning; HTTP errors mid-stream print to stderr and exit non-zero.
-
-### Plugin System
-
-Plugins extend the CLI with custom subcommands. A plugin is any executable binary named `hanzo-<name>` found in `$PATH` or `~/.hanzo/plugins/`.
-
-**Discovery**: When the user runs `hanzo foo`, the CLI checks built-in commands first, then searches for `hanzo-foo` in `~/.hanzo/plugins/`, configured `plugin_paths`, and `$PATH`.
-
-**Execution**: The plugin binary is executed with the remaining arguments. Configuration is passed via environment variables (`HANZO_API_KEY`, `HANZO_BASE_URL`, `HANZO_ORG`, `HANZO_CONFIG`).
-
-**Plugin manifest** (optional): A `hanzo-<name>.yaml` file alongside the binary enables `hanzo help` integration and tab completion:
-
-```yaml
-name: mcp
-version: 1.2.0
-description: "Model Context Protocol tools"
-commands:
-  - name: list
-    description: "List available MCP servers"
-  - name: run
-    description: "Run an MCP server"
-```
-
-**Known plugins**:
-
-| Plugin | Binary | Description |
-|--------|--------|-------------|
-| MCP | `hanzo-mcp` | Model Context Protocol tools (HIP-10) |
-| Agent | `hanzo-agent` | Multi-agent orchestration (HIP-9) |
-| Flow | `hanzo-flow` | Workflow execution (HIP-13) |
-| Platform | `hanzo-platform` | Platform management (HIP-14) |
-
-### Shell Completions
-
-```bash
-hanzo completion bash > /etc/bash_completion.d/hanzo
-hanzo completion zsh > "${fpath[1]}/_hanzo"
-hanzo completion fish > ~/.config/fish/completions/hanzo.fish
-hanzo completion powershell > hanzo.ps1
-```
-
-Completions cover all commands, subcommands, flags, model names (cached from `hanzo models list`), plugin subcommands (from manifests), and config keys.
-
-### Auto-Update Mechanism
-
-The CLI checks for updates on a configurable interval (default: every 24 hours). The check is non-blocking and runs in the background after command execution.
-
-1. CLI fetches `https://api.hanzo.ai/v1/cli/version` for the latest version
-2. If newer, prints a notice to stderr: `A new version of hanzo is available: v1.5.0 (current: v1.4.2)`
-3. `hanzo update` downloads the appropriate binary, verifies its SHA256 checksum, and replaces the old binary atomically (write to temp file, then rename)
-
-Disable with `HANZO_NO_UPDATE=true` or `auto_update.enabled: false`. CI environments should always disable auto-update. Channels: **stable** (semver releases), **beta** (weekly), **nightly** (from main HEAD).
-
-### Exit Codes
+The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted
+as in RFC 2119.
+
+### §1 The generation chain
+
+The command tree MUST be derived from the API document the cloud serves, by this
+chain and no other:
+
+    cloud@<ref>/openapi.yaml
+      -> genspec     -> spec/cloud.json
+      -> genproduct  -> src/commands/product/generated.rs   (committed)
+
+Four properties are normative:
+
+1. **Generation happens at maintainer time, not at build or run time.** `genspec`
+   sits behind a cargo feature of that name; there is no `build.rs`. The shipped
+   binary parses no YAML and fetches no document. A CLI that reads a remote
+   document at startup fails when the network does, and produces a different
+   command tree for two users on one version.
+
+2. **The generated source is committed.** It is reviewable, and the diff of a
+   regeneration is the diff of the API surface. A capability appearing or
+   disappearing shows up as lines in a pull request.
+
+3. **The source is pinned by content, not by name.** `.spec-lock` records the
+   repository, the path, the ref and the SHA-256 of the document that generation
+   consumed. A ref alone is a moving target; the digest is what makes a
+   regeneration reproducible.
+
+4. **There is no default source, and guessing is refused.** `genspec` fails
+   rather than assume which deployment a captured document describes — a host
+   cannot say which deploy a capture came from, and a wrong guess produces a
+   command tree that is confidently wrong. **Refusing to guess is a feature and
+   MUST be preserved.**
+
+### §2 The invariant, and its honest limit
+
+**Phantom commands are impossible by construction.** Every command is projected
+from an operation in the source document, so a command naming a route the cloud
+does not serve cannot be generated. This direction of the invariant is
+structural and needs no gate to hold.
+
+The other direction is *not* structural. An operation the cloud serves may fail
+to reach the CLI — because the pin is behind, because the operation is
+unreachable in the projection, or because the document itself is inconsistent.
+That direction MUST be measured by a gate comparing the generated tree against
+the served document, reporting three counts:
+
+- **present** — served and reachable as a command;
+- **absent** — served and not reachable; a defect in this repository;
+- **unfalsifiable** — the comparison cannot decide. This count MUST be reported
+  rather than folded into either bucket. A gate that silently treats what it
+  cannot check as passing is not a gate.
+
+**Current result, and it is red.** The gate exits non-zero today: `2036 present,
+8 absent, 177 unfalsifiable; products reachable 174 of 181`, plus six routes
+under `/v1/ai/*` where the served document contradicts itself about its own
+paths. Two of the reported phantoms are deliberately injected fixtures that prove
+the gate detects them.
+
+This HIP does not claim the surface is drift-free. It claims the invariant makes
+one direction of drift impossible and requires the other direction to be counted.
+**A standard that asserts a property its own gate disproves is worthless exactly
+when it matters.** Closing the 8 and resolving the 177 is the work; the six
+self-contradictions are a cloud defect and MUST be fixed there, not absorbed by
+the projection.
+
+### §3 Command grammar
+
+    hanzo <product> [<node>...] <verb> [flags]
+
+The tree is **variable-depth**, not two-level, because the API's own resource
+nesting is. Measured depth distribution over the generated tree — intermediate
+nodes between product and verb:
+
+| Intermediate nodes | Commands |
+|---:|---:|
+| 0 | 655 |
+| 1 | 1,040 |
+| 2 | 355 |
+| 3 | 74 |
+| 4 | 5 |
+
+The deepest real command is `hanzo iam scim v2 Users owner get`. A specification
+fixing the grammar at `<product> <verb>` would describe 655 of 2,129 commands.
+
+Rules:
+
+1. `<product>` MUST be the first path segment after `/v1/`. The path is the
+   authority for the name; there is no second list of product names to maintain.
+2. Intermediate nodes MUST follow the resource nesting of the path, in order.
+3. `<verb>` MUST be derived from the operation, and the same operation MUST
+   produce the same command name on every regeneration.
+4. A command name MUST NOT be hand-assigned. An operation whose generated name is
+   wrong is fixed by fixing the operation upstream, which fixes it for the SDKs
+   and the documentation in the same change.
+
+Measured today: **2,127** commands at `HEAD` (2,129 in the working tree) against
+**2,341** operations in the served document. These count different artifacts —
+the generated tree and the live document — and MUST always be quoted as a pair
+with the artifact named, never merged into one figure.
+
+### §4 Typed arguments, and the 469
+
+An operation with a typed request body MUST project to typed flags: one flag per
+field, carrying the field's type, its documentation as help text, and required
+fields enforced before any request is sent.
+
+An operation **without** a typed request body has nothing to project, and falls
+back to a single opaque `--data` blob. That is not a CLI design decision; it is
+the CLI faithfully reflecting an operation that does not describe its own input.
+
+Measured: **469 of 926 write operations — 50.6% — take an untyped `--data`
+blob.** By product:
+
+| Product | Untyped writes |
+|:--------|---:|
+| ai | 72 |
+| iam | 43 |
+| store | 19 |
+| o11y | 16 |
+| admin | 15 |
+| platform | 13 |
+
+**The fix does not belong in this repository.** Each is an operation in the cloud
+that declares no request schema; adding the schema there types the CLI flag, the
+SDK method and the documentation together. Typing them in the CLI would create a
+second description of the request body — the drift this design exists to prevent.
+This HIP therefore states the target, **zero untyped writes**, and locates the
+work upstream.
+
+### §5 Help
+
+`--help` MUST work at every level of the tree, MUST exit 0, and MUST be generated
+from the same source as the command it documents.
+
+The root help MUST carry the sections a UNIX user expects, in this order: `NAME`,
+`SYNOPSIS`, `DESCRIPTION`, `GLOBAL FLAGS`, `GROUPS`, `COMMANDS`.
+
+**State: implemented.** `--help` returns 0 at every depth, and the root renders
+that layout across 177 groups and 11 commands.
+
+### §6 Man pages — REQUIRED, not implemented
+
+The CLI MUST install manual pages in section 1, generated from the same source as
+`--help`:
+
+- `man hanzo` — the root page: name, synopsis, description, global flags, groups.
+- `man hanzo-<product>` — one page per product, listing that product's commands.
+
+Section 1 is where a user command's manual page belongs by long-standing UNIX
+convention, and `man <tool>-<subcommand>` is the established shape for a
+multi-command tool. Pages MUST be generated, never written, for the same reason
+the commands are.
+
+**State: absent.** There is no roff output and no man-page generator in the
+dependency graph. `src/commands/man.rs` renders help text to a terminal; it does
+not produce a manual page, and its name is misleading.
+
+### §7 Shell completion — REQUIRED, not implemented
+
+The CLI MUST emit completion scripts for **bash**, **zsh** and **fish**:
+
+    hanzo completion bash
+    hanzo completion zsh
+    hanzo completion fish
+
+Completion MUST cover the full command tree and each command's flags, and MUST be
+generated from the command tree rather than maintained as a script.
+
+**State: absent.** No completion generator appears in the manifest or the
+lockfile. The subcommand name is reserved and unimplemented.
+
+### §8 Output — REQUIRED, not implemented
+
+Every command returning data MUST accept `--format` with exactly three values:
+
+| Value | Meaning |
+|:------|:--------|
+| `table` | Human-readable columns. The default when stdout is a terminal. |
+| `json` | The response body, unmodified. The default when stdout is not a terminal. |
+| `yaml` | The same value, as YAML. |
+
+Defaulting on whether stdout is a terminal is what lets one command be read by a
+person and piped to a program without a flag in either case.
+
+**State: absent.** Output is always pretty-printed JSON of the response
+envelope's `data` field, with no way to select a format; the whole binary
+declares only three command-line arguments. A `--raw` flag exists in name only,
+and its three references contradict each other: one hardcodes it false, one
+claims the flag exists, one states it does not. `--raw` MUST be deleted rather
+than repaired — `--format json` is the same capability with a defined meaning.
+
+### §9 Context: `--org` and `--project` — REQUIRED, not implemented
+
+Hanzo is multi-tenant and every request is scoped to an organization. The CLI
+MUST accept:
+
+- `--org <slug>` — the organization to act as, sent as the identity header the
+  gateway expects (HIP-0111).
+- `--project <slug>` — the project within it.
+
+Both MUST be settable persistently, resolving in the order **flag → environment →
+config file → the identity's default**.
+
+The CLI MUST NOT invent an org it was not given. Where no org resolves and the
+operation requires one, it MUST fail with a message naming the flag rather than
+guessing.
+
+**State: absent, and currently refused.** No org flag exists, the org header is
+never sent, and a test asserts that passing `--org` to `auth show` is an error.
+The refusal is not the bug — sending an unvalidated org would be. The gap is that
+the flag does not exist to be validated.
+
+### §10 Configuration and profiles
+
+Configuration MUST live in one file, `~/.config/hanzo/config.toml`, following the
+XDG base directory convention, and MUST hold no secret in plaintext.
+
+The file MUST support **named profiles** — one identity, org, project and
+endpoint per profile — selected by `--profile <name>` or `HANZO_PROFILE`. One
+person routinely holds more than one identity, and re-authenticating in order to
+switch is the failure this replaces.
+
+**State: partial.** The config file exists at the specified path. Named profiles
+do not; the closest mechanism is multi-identity selection via `hanzo auth use`,
+which switches the active identity but carries no org, project or endpoint with
+it.
+
+### §11 Exit codes
+
+The CLI MUST distinguish failures by exit status, so a script can branch without
+parsing output. `0` means success and non-zero means failure, per the UNIX
+convention; beyond that:
 
 | Code | Meaning |
-|------|---------|
+|---:|:--------|
 | 0 | Success |
-| 1 | General error |
-| 2 | Usage error (invalid flags, missing arguments) |
-| 3 | Authentication error (expired token, invalid key) |
-| 4 | Network error (connection refused, timeout) |
-| 5 | API error (rate limit, server error) |
-| 6 | Configuration error (missing config, invalid values) |
-| 10 | Model not found |
-| 11 | Insufficient credits |
-| 12 | Deployment failed |
+| 1 | Unspecified error |
+| 2 | Usage error — unknown command, missing or invalid flag |
+| 3 | Authentication required or expired |
+| 4 | Permission denied for the resolved identity and org |
+| 5 | The named resource does not exist |
+| 6 | The server failed (5xx) |
+| 7 | The server could not be reached |
 
-```bash
-hanzo chat "test" 2>/dev/null
-case $? in
-  0) echo "OK" ;;
-  3) hanzo auth login && hanzo chat "test" ;;
-  11) echo "Add credits at https://hanzo.ai/billing" ;;
-  *) echo "Error: exit code $?" ;;
-esac
-```
+A caller MUST be able to tell "not logged in" (3) from "not allowed" (4) from
+"not there" (5) without reading a message, because those three demand different
+responses from a script and all three are reported identically today.
 
-## Implementation
+**State: absent.** Only 0 and 1 are produced, and no exit-code enumeration exists.
 
-### Build and Distribution
+### §12 Authentication
 
-The CLI is built with Go's standard toolchain, producing a single statically-linked binary for each target platform.
+`hanzo auth login` MUST authenticate against Hanzo IAM (HIP-0111) and MUST NOT
+implement any authentication of its own. Credentials MUST be stored outside the
+config file, in the platform credential store where one exists, and with file
+permissions restricting them to the user otherwise.
 
-| OS | Architecture | Binary Name |
-|----|-------------|-------------|
-| Linux | amd64 | `hanzo-linux-amd64` |
-| Linux | arm64 | `hanzo-linux-arm64` |
-| macOS | amd64 | `hanzo-darwin-amd64` |
-| macOS | arm64 | `hanzo-darwin-arm64` |
-| Windows | amd64 | `hanzo-windows-amd64.exe` |
+The subcommands MUST be: `login`, `logout`, `show`, `list`, `use`, `token`.
 
-```bash
-# Release build with version embedding
-go build -ldflags "-s -w \
-  -X main.version=${VERSION} \
-  -X main.commit=${GIT_SHA} \
-  -X main.date=${BUILD_DATE}" \
-  -o hanzo .
-```
+**State: implemented.** All six exist, with `--brand` and `--provider` selection
+and `--token -` to read a token from stdin rather than a command line, where it
+would land in the shell history and the process table.
 
-#### Installation Methods
+### §13 One name, one binary
 
-| Method | Command |
-|--------|---------|
-| Direct download | `curl -fsSL https://cli.hanzo.ai/install.sh \| sh` |
-| Homebrew | `brew tap hanzoai/tap && brew install hanzo` |
-| npm | `npm install -g @hanzoai/cli` |
-| pip | `pip install hanzoai-cli` |
-| Go | `go install github.com/hanzoai/cli@latest` |
+**`hanzo` MUST name exactly one program.** It does not today, and this is a
+correctness problem rather than a tidiness one:
 
-The install script detects OS and architecture, downloads the correct binary, verifies the SHA256 checksum, and places it in `/usr/local/bin/hanzo` (or `~/.local/bin/hanzo` if `/usr/local/bin` is not writable). The npm and pip packages wrap the Go binary, downloading the correct platform binary at install time.
+- Two live crates both declare `name = "hanzo-cli"` with `[[bin]] name = "hanzo"`
+  — this repository at 1.9.x, and the inference engine's CLI at 1.3.x — on
+  unrelated version lines.
+- Four Python distributions claim the `hanzo` entry point, and in at least one
+  environment the winner is not the intended one.
+- On a machine measured for this HIP, the `hanzo` first on `PATH` was 19 patch
+  versions behind the source tree.
 
-### Internal Architecture
+Requirements:
 
-```
-cmd/hanzo/
-    main.go              # Entry point, command registration
-    auth.go              # OAuth PKCE flow, token management
-    chat.go              # Chat with streaming and REPL
-    complete.go          # Text completion
-    embed.go             # Embedding generation
-    models.go            # Model listing and info
-    deploy.go            # Deployment to Hanzo Platform
-    logs.go              # Log streaming via WebSocket
-    config.go            # Config get/set/list/edit
-    update.go            # Self-update with checksum verification
-    completion.go        # Shell completion generation
-    plugin.go            # Plugin discovery and execution
-internal/
-    api/                 # HTTP client, SSE parser, retry logic
-    auth/                # OAuth flow, credential storage, token refresh
-    config/              # Config file parsing, env overlay, defaults
-    container/           # Docker/Podman runtime, GPU detection
-    output/              # Text, JSON, YAML, table formatters
-    plugin/              # Plugin discovery, manifest parsing, execution
-```
+1. The crate published for this CLI MUST be `hanzo-cli`, and the binary it
+   installs MUST be `hanzo`.
+2. No other crate MAY install a binary named `hanzo`. The inference engine's CLI
+   MUST be renamed.
+3. Any document saying "the `hanzo-cli` crate" MUST disambiguate until rule 2
+   holds.
 
-Dependencies: `cobra` (CLI framework), `viper` (config), `lipgloss` (terminal styling), and the Go standard library for HTTP, JSON, YAML, and OS interaction. No external HTTP client libraries.
+**State: `hanzo-cli` is not published on crates.io.** Any documented
+`cargo install hanzo-cli` instruction therefore fails, and MUST be removed or
+corrected wherever it appears until publication.
 
-### CI/CD Integration
+### §14 Conformance
 
-```yaml
-# GitHub Actions example
-- name: Install Hanzo CLI
-  run: curl -fsSL https://cli.hanzo.ai/install.sh | sh
+An implementation conforms when all of the following hold. Each is a command that
+either succeeds or does not.
 
-- name: Deploy
-  env:
-    HANZO_API_KEY: ${{ secrets.HANZO_API_KEY }}
-    HANZO_NO_UPDATE: "true"
-  run: hanzo deploy --name ${{ github.repository }} --env GIT_SHA=${{ github.sha }}
-```
+1. `hanzo --help` exits 0 and prints `NAME`, `SYNOPSIS`, `DESCRIPTION`,
+   `GLOBAL FLAGS`, `GROUPS`, `COMMANDS`.
+2. `--help` exits 0 at every depth of the tree.
+3. The drift gate reports **0 absent** and **0 unfalsifiable**.
+4. Untyped `--data` operations number **0**.
+5. `man hanzo` and `man hanzo-<product>` resolve for every product.
+6. `hanzo completion {bash,zsh,fish}` each emit a script the shell loads without
+   error.
+7. `--format {table,json,yaml}` is accepted by every data-returning command, and
+   the default flips on whether stdout is a terminal.
+8. `--org` and `--project` resolve flag → environment → config → identity default.
+9. Named profiles select identity, org, project and endpoint together.
+10. The exit codes of §11 are produced and documented.
+11. `hanzo` on `PATH` resolves to exactly one program.
 
-In CI, use `HANZO_API_KEY` instead of OAuth. API keys are created at `https://console.hanzo.ai/settings/api-keys` and scoped to specific organizations and permissions. Use `--output json` for machine-parseable output in scripts.
+**Measured on 2026-08-04: 1, 2 and 12 pass. 3 through 11 do not.**
 
-### Telemetry
+## Rationale
 
-The CLI collects anonymous usage telemetry: command name, OS/arch, CLI version, command duration, and error codes. It does NOT collect prompts, responses, user content, API keys, tokens, file contents, or IP addresses. Opt-out via `hanzo config set telemetry false` or `HANZO_TELEMETRY=false`.
+**Why generation rather than hand-written commands.** With 2,341 operations, a
+hand-written CLI is a subset chosen by whoever had time, and the choice is
+invisible to the user, who cannot tell "not supported" from "not written yet". A
+projection has no such state.
+
+**Why maintainer-time generation.** Generating at build time makes the build
+depend on a network fetch and lets two builds of one commit differ. Generating at
+run time moves that failure into the user's terminal. Generating at maintainer
+time, committed and pinned by digest, puts the change in a diff where it can be
+reviewed.
+
+**Why the untyped-body fix is upstream.** Typing 469 request bodies inside the
+CLI would create a second, competing description of each body. The first time one
+changed upstream the CLI would be confidently wrong — precisely the failure the
+generation chain removes. One description, in the document, projected everywhere.
+
+**Why so much of this document describes things that do not exist.** Because they
+do not, and a specification that quietly described only what was already built
+would be a summary rather than a standard. The gaps carry counts so that progress
+against them is countable.
 
 ## Security Considerations
 
-### Credential Protection
-
-- **File permissions**: Credentials stored in `~/.hanzo/credentials.json` with mode `0600`. The CLI refuses to read credential files with group or world read permissions.
-- **No credentials in logs**: The CLI never prints tokens, API keys, or secrets to stdout or stderr. Verbose mode redacts bearer tokens (showing only the first 8 characters).
-- **Memory clearing**: After token refresh, the old token is zeroed in memory before garbage collection.
-- **Keychain integration** (planned): macOS Keychain, Linux libsecret/kwallet, Windows Credential Manager. File-based storage remains as fallback.
-
-### Token Lifecycle
-
-- Access tokens expire after 168 hours (7 days, per IAM configuration)
-- The CLI refreshes tokens automatically when they are within 5 minutes of expiry
-- Refresh tokens expire after 720 hours (30 days)
-- `hanzo auth logout` revokes both tokens server-side and deletes the local credential file
-- Expired refresh tokens trigger a re-authentication prompt
-
-### API Key Security
-
-API keys are long-lived secrets. The CLI recommends OAuth for interactive use and API keys only for CI/CD. Keys should be passed via `HANZO_API_KEY` environment variable, not `--api-key` flag (flags appear in process listings and shell history). The CLI prints a warning if `--api-key` is used directly.
-
-### Binary Verification
-
-Release binaries are signed and checksummed. SHA256 checksums are published at `https://cli.hanzo.ai/checksums.txt`. Binaries are signed with the Hanzo release GPG key. Both the install script and `hanzo update` verify checksums before installing or replacing the binary.
-
-### Network Security
-
-All API communication uses HTTPS. The CLI refuses HTTP endpoints unless `--insecure` is explicitly passed (for local development). TLS verification uses the system CA store; custom CAs can be added via `HANZO_CA_CERT`. The CLI sets `User-Agent: hanzo-cli/<version> (<os>; <arch>)`.
-
-### Plugin Security
-
-Plugins are arbitrary executables. The CLI does not sandbox them. Users are responsible for vetting plugins. The CLI only searches `$PATH` and configured `plugin_paths`, does not download or install plugins automatically, does not execute with elevated privileges, and passes credentials via environment variables (not CLI arguments).
+- **Tokens.** Credentials MUST NOT be written to the config file in plaintext and
+  MUST NOT be passed as command-line arguments — the process table and the shell
+  history are both readable. `--token -` exists so a token can arrive on stdin.
+- **Org scoping.** `--org` selects the tenant a request claims; it is not a grant.
+  Authorization is the gateway's and IAM's decision (HIP-0111), and the CLI MUST
+  NOT treat a locally configured org as evidence of anything.
+- **The pin is a supply-chain control.** `.spec-lock` carries a digest, so a
+  regeneration against a substituted document fails rather than silently
+  producing a command tree that points somewhere else.
+- **A stale binary is a security property, not only an annoyance.** With `hanzo`
+  ambiguous across crates and package managers, a user may be running a build far
+  behind the one that fixed a defect. §13 is the mitigation.
 
 ## Backwards Compatibility
 
-The CLI follows semantic versioning and will remain at v1.x.x. Breaking changes to command syntax, output format, or config schema require a major version bump. When the config schema changes, the CLI automatically migrates `~/.hanzo/config.yaml` on first run, backing up to `~/.hanzo/config.yaml.bak`. If the LLM Gateway introduces breaking API changes, the CLI provides a compatibility layer for at least one minor version with deprecation warnings.
+The previous revision of this HIP specified a Go binary with hand-written
+commands, a plugin system and an auto-updater. None of it was built, so there is
+nothing to stay compatible with. Command names generated from the API document
+are stable as long as the operation is stable; an operation renamed upstream
+renames its command, and that coupling is intended.
 
 ## References
 
-1. [HIP-4: LLM Gateway - Unified AI Provider Interface](./hip-0004-llm-gateway-unified-ai-provider-interface.md) -- The API the CLI consumes
-2. [HIP-9: Agent SDK - Multi-Agent Orchestration](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md) -- Agent plugin integration
-3. [HIP-10: Model Context Protocol Integration](./hip-0010-model-context-protocol-mcp-integration-standards.md) -- MCP plugin integration
-4. [HIP-14: Application Deployment Standard](./hip-0014-application-deployment-standard.md) -- `hanzo deploy` target platform
-5. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) -- OAuth authentication via hanzo.id
-6. HIP-31: Observability & Metrics Standard -- `hanzo logs` data source
-7. [HIP-33: Container Registry Standard](./hip-0033-container-registry-standard.md) -- Image push target for deployments
-8. [HIP-40: SDK Standard](./hip-0040-multi-language-sdk-standard.md) -- SDK conventions the CLI follows
-9. [OpenAI CLI](https://github.com/openai/openai-python) -- Command naming conventions
-10. [Cobra](https://github.com/spf13/cobra) -- CLI framework
-11. [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) -- PKCE specification for OAuth
-12. [no-color.org](https://no-color.org) -- Convention for disabling terminal colors
-13. [Hanzo CLI Repository](https://github.com/hanzoai/cli)
+- HIP-0040 — Multi-Language SDK Standard
+- HIP-0111 — IAM Authentication Standard
+- HIP-0119 — Hanzo Service Conventions
+- HIP-0128 — Resource Surface Standard
+- HIP-0135 — What Is Public
+- RFC 2119 — Key words for use in RFCs to Indicate Requirement Levels
 
 ## Copyright
 
-Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+Released under CC0 1.0 Universal Public Domain Dedication.
