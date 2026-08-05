@@ -9,22 +9,26 @@ name: deploy
 # no replicas.
 #
 #   pnpm build -> docs/out
-#     -> POST /v1/projects/hips/deploy {"source":"git"}   (202 + upload grant)
-#     -> POST each file under the grant                   (bytes skip the API)
-#     -> POST .../deployments/<id>/complete {status, keys}
+#     -> sitedeploy
 #
-# The bytes never pass through the API, which is the whole point: this export is
-# ~170 MB raw / ~25 MB gzipped and BodyLimit is 16 MiB, so an artifact POST is
-# refused by fasthttp before any handler runs. cloud names the bucket and prefix
-# in the 202 so CI writes exactly where the site is served from.
+# The publish mechanics are NOT here. They are bin/sitedeploy in hanzoai/ci,
+# reached through its action, and every static surface in the fleet calls that one
+# script — ensure-project, enqueue, presigned per-file upload, complete. A
+# contract transcribed per repo is a contract that drifts, and this file used to
+# carry its own copy of every call. It also SELF-PROVISIONS: the project is
+# created idempotently before the enqueue, so committing this file is enough to
+# stand the site up.
 #
-# THIS REPO HOLDS NO S3 CREDENTIAL. It used to need the hanzo-sites bucket keys,
-# which was write access to every org's site — one shared bucket, separated only
-# by key prefix. The 202 now carries a presigned POST policy confined to this
-# site's prefix and expiring in 30 minutes, so the only secret here is the deploy
-# token that identifies us. Deletion moved with it: CI reports its manifest as
-# `keys` on completion and cloud prunes the prefix, because a write-only grant
-# cannot delete.
+# THE BYTES NEVER PASS THROUGH THE API, and here that is not marginal: the
+# export is ~170 MB raw / ~25 MB gzipped against a 16 MiB BodyLimit, so an
+# artifact POST is refused by fasthttp BEFORE any handler runs and fails as an
+# opaque 400 "Error when parsing request" that reads like a malformed payload
+# rather than a size cap. Measured, not assumed: that is exactly what a 25 MB
+# POST returned here, while a 468-byte one went live in the same second.
+#
+# DELETION IS THE SERVER'S: sitedeploy reports its manifest as `keys` on
+# completion and cloud prunes the prefix, because a write-only grant cannot
+# delete.
 #
 # The one secret this needs: HANZO_DEPLOY_TOKEN, set on the FORGE. This file
 # lives under .hanzo/workflows/, which only git.hanzo.ai reads, so the secret
@@ -80,151 +84,14 @@ jobs:
           test -d out || { echo "::error::pnpm build produced no docs/out"; exit 1; }
           echo "exported $(find out -type f | wc -l) files"
 
-      # THE GIT-SOURCE FLOW, not an artifact POST. cloud's deploy handler is explicit
-      # about which is which: the artifact path is for "small artifacts, bounded by
-      # the app/gateway BodyLimit", and the git path is the "link repo -> build (CI,
-      # never local) -> deploy" route "for large sites".
-      #
-      # This site is the large case and not marginally so. The export is ~170 MB raw
-      # and ~25 MB gzipped against a 16 MiB BodyLimit, so an artifact POST is refused
-      # by fasthttp BEFORE any handler runs — and it fails as an opaque
-      # 400 "Error when parsing request" that reads like a malformed payload rather
-      # than a size cap. Measured, not assumed: that is exactly what a 25 MB POST
-      # returned here, while a 468-byte one went live in the same second.
-      #
-      # So: enqueue -> sync to the SAME S3 prefix cloud names -> tell cloud it is live.
-      # Three steps because the bytes never pass through the API at all.
-      - name: enqueue the deployment
-        id: enqueue
+      # ONE credential. The 202 carries a prefix-scoped, 30-minute presigned POST
+      # grant, so nothing here holds a bucket key. Do NOT add SITES_S3_* — that is
+      # the standing shared-bucket credential the grant replaced, and it could
+      # overwrite every other org's site.
+      - name: Publish to the Sites plane
+        uses: hanzoai/ci/.github/actions/sitedeploy@v1
+        with:
+          slug: hips
+          dir: docs/out
         env:
-          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${DEPLOY_TOKEN:-}" ]; then
-            echo "::error::HANZO_DEPLOY_TOKEN is unset. Set it on the forge (git.hanzo.ai), which is what reads .hanzo/workflows — not on GitHub."
-            exit 1
-          fi
-          CODE=$(curl -sS -o /tmp/enq.json -w '%{http_code}' \
-            -X POST "https://api.hanzo.ai/v1/projects/hips/deploy" \
-            -H "Authorization: Bearer ${DEPLOY_TOKEN}" \
-            -H 'Content-Type: application/json' \
-            -d "{\"source\":\"git\",\"commit\":\"${GITHUB_SHA}\",\"branch\":\"main\"}")
-          # 202 Accepted is the success code here — the deployment is queued, not live.
-          if [ "$CODE" != "202" ]; then
-            echo "::error::enqueue returned HTTP $CODE"; head -c 600 /tmp/enq.json; exit 1
-          fi
-          # bucket and prefix come FROM cloud. Never hardcode them: prefix is
-          # sitePrefix(org, slug) server-side, so a local guess drifts the moment the
-          # org or slug changes and the sync would land bytes nobody serves.
-          echo "id=$(jq -r .id /tmp/enq.json)"         >> "$GITHUB_OUTPUT"
-          echo "bucket=$(jq -r .bucket /tmp/enq.json)" >> "$GITHUB_OUTPUT"
-          echo "prefix=$(jq -r .prefix /tmp/enq.json)" >> "$GITHUB_OUTPUT"
-          # The write grant rides the 202 and is what replaces the bucket keys. It
-          # is a credential: keep it on one line, out of the log, and masked so a
-          # later `set -x` or an error dump cannot spill the signature.
-          GRANT=$(jq -c '.upload // empty' /tmp/enq.json)
-          echo "::add-mask::$(jq -r '.fields.policy // empty' <<<"${GRANT:-{\}}")"
-          echo "::add-mask::$(jq -r '.fields["x-amz-signature"] // empty' <<<"${GRANT:-{\}}")"
-          echo "grant=${GRANT}" >> "$GITHUB_OUTPUT"
-          # Everything logged here is non-secret: ids, the prefix, and when the
-          # grant dies.
-          jq -c '{id,version,status,bucket,prefix,grantExpires:(.upload.expiresAt // null)}' /tmp/enq.json
-
-      # UPLOAD WITH THE GRANT, NOT A BUCKET CREDENTIAL.
-      #
-      # There are no SITES_S3_* secrets any more and there should never be again.
-      # Those were the hanzo-sites bucket's own long-lived keys, and that bucket
-      # holds EVERY org's site separated only by key prefix — so a copy in this
-      # repo was write access to everyone's site, forever, in as many places as
-      # there were repos.
-      #
-      # Instead the 202 above carries `upload`: a presigned POST policy confined to
-      # THIS site's prefix, expiring in 30 minutes, size-bounded per object. S3
-      # enforces the prefix itself, so even a bug here cannot write outside it.
-      # The policy fields are signed as a set — they go on every request verbatim,
-      # and `key` is the only thing that varies.
-      - name: upload the export under the grant
-        id: sync
-        env:
-          GRANT: ${{ steps.enqueue.outputs.grant }}
-          PREFIX: ${{ steps.enqueue.outputs.prefix }}
-        run: |
-          set -euo pipefail
-          if [ -z "${GRANT:-}" ] || [ "$GRANT" = "null" ]; then
-            echo "::error::the deploy response carried no upload grant — cloud could not presign (S3_ADMIN_*/S3_PUBLIC_ENDPOINT unset server-side?)"
-            exit 1
-          fi
-          # CNAME is a GitHub Pages artifact. It means nothing to S3 and would ship a
-          # stale hostname claim into the bucket, so it does not travel.
-          rm -f docs/out/CNAME
-
-          URL=$(jq -r '.url' <<<"$GRANT")
-
-          # The signed fields go on EVERY request unchanged, so write them once as a
-          # curl config and -K it. A config file (rather than a bash array) is what
-          # lets the parallel workers below share them without re-deriving anything:
-          # curl reads it per invocation, and it never lands on a command line where
-          # `ps` could read the signature.
-          umask 077
-          jq -r '.fields | to_entries[] | "form = \"\(.key)=\(.value)\""' <<<"$GRANT" > /tmp/grant.conf
-
-          cd docs/out
-          find . -type f -printf '%P\n' | sort > /tmp/manifest.txt
-          COUNT=$(wc -l < /tmp/manifest.txt | tr -d ' ')
-          test "$COUNT" -gt 0 || { echo "::error::export produced no files"; exit 1; }
-
-          # One POST per object, 16 in flight. Sequential curls over a few thousand
-          # files is the difference between a minute and half an hour.
-          export URL PREFIX
-          xargs -a /tmp/manifest.txt -P 16 -I{} sh -c '
-            code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$URL" \
-              -K /tmp/grant.conf -F "key=$PREFIX/$1" -F "file=@$1")
-            case "$code" in 2*) exit 0 ;; esac
-            echo "::error::upload $1 -> HTTP $code" >&2
-            exit 1
-          ' _ {}
-          cd - >/dev/null
-
-          echo "files=${COUNT}" >> "$GITHUB_OUTPUT"
-          echo "bytes=$(du -sk docs/out | awk '{print $1*1024}')" >> "$GITHUB_OUTPUT"
-          echo "uploaded ${COUNT} objects under ${PREFIX}/"
-
-      - name: flip it live
-        env:
-          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
-          DEP: ${{ steps.enqueue.outputs.id }}
-          FILES: ${{ steps.sync.outputs.files }}
-          BYTES: ${{ steps.sync.outputs.bytes }}
-        run: |
-          set -euo pipefail
-          # The manifest is what replaces `aws s3 sync --delete`. The grant permits
-          # writes only, so CI cannot remove a file; cloud reconciles the prefix
-          # against this list and deletes whatever is no longer in it. Without it a
-          # deleted spec would keep serving forever.
-          jq -R -s -c 'split("\n") | map(select(length > 0))' /tmp/manifest.txt > /tmp/keys.json
-          jq -n --arg c "${GITHUB_SHA}" --argjson f "${FILES}" --argjson b "${BYTES}" \
-                --slurpfile k /tmp/keys.json \
-                '{status:"live", commit:$c, files:$f, bytes:$b, keys:$k[0]}' > /tmp/complete.json
-          CODE=$(curl -sS -o /tmp/done.json -w '%{http_code}' \
-            -X POST "https://api.hanzo.ai/v1/projects/hips/deployments/${DEP}/complete" \
-            -H "Authorization: Bearer ${DEPLOY_TOKEN}" \
-            -H 'Content-Type: application/json' \
-            --data-binary @/tmp/complete.json)
-          if [ "$CODE" != "200" ]; then
-            echo "::error::complete returned HTTP $CODE"; head -c 600 /tmp/done.json; exit 1
-          fi
-          jq -c '{status,liveUrl,version,files,bytes}' /tmp/done.json
-
-      # A build that dies after the enqueue would leave the deployment "queued" and
-      # the project stuck "building" forever. Report the failure so cloud records an
-      # honest terminal state instead of a lie by omission.
-      - name: report a failed build
-        if: failure() && steps.enqueue.outputs.id != ''
-        env:
-          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
-          DEP: ${{ steps.enqueue.outputs.id }}
-        run: |
-          curl -sS -X POST "https://api.hanzo.ai/v1/projects/hips/deployments/${DEP}/complete" \
-            -H "Authorization: Bearer ${DEPLOY_TOKEN}" -H 'Content-Type: application/json' \
-            -d '{"status":"error","message":"CI build or sync failed"}' >/dev/null || true
-          echo "marked deployment ${DEP} as error"
+          HANZO_DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
