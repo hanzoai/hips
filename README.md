@@ -208,7 +208,7 @@ each a second name for one of the above and have been folded into it.
 ## Resources
 
 - Documentation: [docs.hanzo.ai](https://docs.hanzo.ai)
-- Discord: [discord.gg/hanzoai](https://discord.gg/hanzoai)
+- Discord: [discord.gg/CJCyAsm9Vr](https://discord.gg/CJCyAsm9Vr)
 - GitHub: [github.com/hanzoai](https://github.com/hanzoai)
 - Twitter: [@hanzoai](https://twitter.com/hanzoai)
 
