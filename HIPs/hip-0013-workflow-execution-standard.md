@@ -57,7 +57,7 @@ A fork rather than a plugin is necessary because our requirements touch Langflow
 - **MCP tool nodes.** Hanzo's 260+ MCP tools must appear as first-class nodes in the canvas. This requires a custom node loader that reads MCP tool schemas and generates Flow components dynamically.
 - **IAM authentication.** Flow must authenticate users via Hanzo IAM (HIP-26) using OAuth2/OIDC, with organization-scoped access to flows and templates.
 - **Credit billing hooks.** Every flow execution must meter LLM token usage and debit the user's Hanzo credit balance (HIP-18). This requires intercepting execution at the DAG engine level.
-- **Zen model selectors.** Users must be able to select from Hanzo's Zen model family with model cards showing parameter counts, context windows, and pricing -- not raw provider model IDs.
+- **Zen model selectors.** Users must be able to select from the Zen model family with model cards showing parameter counts, context windows, and pricing -- not raw provider model IDs.
 
 ### Why Separate From Auto (HIP-34)
 
@@ -99,7 +99,7 @@ Nodes that call language models through the Hanzo LLM Gateway.
 LLM:
   - ChatModel          # Conversational LLM (chat completions)
   - CompletionModel    # Text completion LLM
-  - ZenModelSelector   # Hanzo Zen model family picker (Hanzo-specific)
+  - ZenModelSelector   # Zen model family picker (Hanzo-specific)
   - ModelRouter        # Route to different models based on input characteristics
 ```
 
@@ -283,7 +283,7 @@ class MCPToolNode(Component):
 
 #### Zen Model Selector
 
-Provides a rich model picker showing Hanzo's Zen model family with metadata.
+Provides a rich model picker showing the Zen model family with metadata.
 
 ```python
 class ZenModelSelector(Component):
@@ -945,6 +945,7 @@ The execution engine resolves secrets by calling KMS with the user's IAM token. 
 8. [LangChain](https://python.langchain.com/)
 9. [React Flow](https://reactflow.dev/)
 10. [Hanzo Flow Repository](https://github.com/hanzoai/flow)
+11. [Zen model family, Zoo Labs Foundation](https://zoo.industries)
 
 ## Copyright
 
