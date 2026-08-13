@@ -4,7 +4,7 @@ title: Ingress CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -70,7 +70,6 @@ spec:
 
 ### Related services
 
-- HIP-448 (hanzo-ingress service)
 - HIP-0068 (Ingress standard)
 
 ## Status

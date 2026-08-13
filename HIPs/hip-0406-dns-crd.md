@@ -4,7 +4,7 @@ title: DNS CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -76,7 +76,6 @@ spec:
 
 ### Related services
 
-- HIP-440 (dns service)
 - HIP-0049 (DNS Service Standard) — overarching design doc.
 
 ## Status

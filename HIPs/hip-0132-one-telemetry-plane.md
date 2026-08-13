@@ -4,7 +4,7 @@ title: One Telemetry Plane — One Door, One Schema, Many Lenses
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-07-27
 requires: HIP-0119, HIP-0512
 ---

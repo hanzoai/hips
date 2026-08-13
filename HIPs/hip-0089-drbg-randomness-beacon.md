@@ -3,7 +3,7 @@ hip: 0089
 title: DRBG / Randomness Beacon (SP 800-90A/B)
 type: Standards Track
 category: Cryptography
-status: Proposed
+status: Draft
 author: Hanzo AI
 created: 2026-05-11
 requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0078, HIP-0079, HIP-0084

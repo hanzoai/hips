@@ -4,7 +4,7 @@ title: "Hanzo adopts LP-0010: Brand Sovereignty and Federation Discovery"
 author: Zach Kelling (zach@hanzo.ai)
 type: Meta
 category: Governance
-status: Final
+status: Active
 created: 2026-05-29
 requires: HIP-0014, HIP-0018
 references: LP-0010

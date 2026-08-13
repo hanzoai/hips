@@ -4,7 +4,7 @@ title: ZAP — Inter-VM Cognitive Transport for Thinking Chains
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Review
+status: Draft
 created: 2026-06-21
 requires: 0113
 ---

@@ -4,7 +4,7 @@ title: Network CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 

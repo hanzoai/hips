@@ -4,7 +4,7 @@ title: Translate — One Endpoint, Two Tiers, Permissive Weights
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Final
+status: Active
 created: 2026-07-26
 ---
 
@@ -106,5 +106,4 @@ else we serve.
 
 ## References
 
-- HIP-0510 — learned per-request model routing
 - HIP-0111 — IAM authentication

@@ -4,7 +4,7 @@ title: Log Aggregation & Search Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-02-23
 requires: HIP-0047
 ---

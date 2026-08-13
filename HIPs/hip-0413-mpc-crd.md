@@ -4,7 +4,7 @@ title: MPC CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -69,7 +69,6 @@ spec:
 
 ### Related services
 
-- HIP-497 (hanzo-mpc service)
 - HIP-0084 (Pulsar M-DKG)
 
 ## Status

@@ -4,7 +4,7 @@ title: AI Token - Hanzo's Native Currency
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Review
+status: Draft
 created: 2024-12-20
 updated: 2026-07-08
 ---

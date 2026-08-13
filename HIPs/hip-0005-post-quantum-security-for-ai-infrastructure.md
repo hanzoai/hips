@@ -4,7 +4,7 @@ title: Post-Quantum Security for AI Infrastructure
 author: Hanzo AI Team
 type: Standards Track
 category: Security
-status: Final
+status: Draft
 created: 2024-12-20
 requires: LP-100
 ---

@@ -4,7 +4,7 @@ title: Bring-Your-Own Provider & AI — Unified Dashboard and Usage
 author: Hanzo AI Team
 type: Standards Track
 category: Platform
-status: Final
+status: Active
 created: 2026-07-07
 updated: 2026-07-08
 requires: HIP-0004, HIP-0018, HIP-0121, HIP-0123
@@ -26,7 +26,7 @@ is an existing HIP, referenced not duplicated:
    unified AI provider interface, the gateway (HIP-0004).
 3. **One console** — per-model and per-product metered usage, credit
    drawdown, and balance-floor gating in `console.hanzo.ai`
-   (HIP-0018 / HIP-0422 billing; HIP-0038 for the SuperAdmin
+   (HIP-0018 billing; HIP-0038 for the SuperAdmin
    cross-tenant board).
 
 Composed, this is the resell-ready OSS AI cloud: the customer supplies
@@ -89,7 +89,7 @@ HIP-0118). Verified live this cycle:
   one drawdown.
 - **Billing is gated, not advisory**: the balance floor returns
   **HTTP 402** at the platform edge (HIP-0106 realized state;
-  HIP-0018 / HIP-0422 semantics). Usage views and enforcement read
+  HIP-0018 semantics). Usage views and enforcement read
   the same ledger.
 
 The conformance rule is the DRY rule: **one metering path**
@@ -153,7 +153,6 @@ the three legs stay composed, not braided.
   sealed credentials, billing tiers, one metering path)
 - HIP-0123 — Visor — Fleet & Fabric Autoscaling Across Any Provider
   (elasticity on the customer's provider)
-- HIP-0422 — billing (service catalog entry)
 - `hanzoai/cloud` #159 — per-product usage axis
   (`?product=` / `?groupBy=product`)
 

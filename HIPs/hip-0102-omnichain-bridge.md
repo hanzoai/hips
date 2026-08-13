@@ -5,7 +5,7 @@ description: Cross-chain AI inference payments and model deployment via Lux Tele
 author: Hanzo AI
 type: Standards Track
 category: Bridge
-status: Final
+status: Draft
 created: 2023-09-01
 requires: HIP-0001, HIP-0008, HIP-0024, HIP-0101
 references: LPS-016, LPS-017, LPS-018, LPS-019

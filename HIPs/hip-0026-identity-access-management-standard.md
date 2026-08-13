@@ -13,7 +13,7 @@ requires: HIP-0027, HIP-0029
 
 ## Abstract
 
-Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a Go/Beego-based identity platform, chosen for its lightweight single-binary deployment model and native compatibility with the Go-heavy Hanzo and Lux infrastructure stack.
+Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a clean-room native rewrite on the Hanzo stack -- `zip` over `hanzoai/orm` -- and carries no Beego and no xorm. (This paragraph asserted a Go/Beego platform until 2026-08-13; the Casdoor-derived Beego/xorm tree is the retired v1 line at `hanzoai/iam-v1`. `iam/go.mod` requires no beego module and no Go file imports one -- the only occurrences in the tree are comments describing what v1 did.)
 
 Hanzo IAM implements OAuth 2.0, OpenID Connect (OIDC), SAML 2.0, and CAS protocols. It provides multi-tenant authentication with per-organization white-label identity domains — any organization registered in IAM can get its own branded login page and identity domain. The default deployment ships with hanzo.id, lux.id, zoo.id, pars.id, and id.ad.nexus, but the system supports arbitrary additional tenants via configuration.
 
@@ -119,7 +119,7 @@ The `Transaction` model in IAM records both credits (Recharge from Commerce) and
                               │
                     ┌─────────┴─────────┐
                     │    Hanzo IAM       │
-                    │   (Go/Beego)       │
+                    │   (zip + orm)      │
                     │     :8000          │
                     └────┬─────────┬────┘
                          │         │

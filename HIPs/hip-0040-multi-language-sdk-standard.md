@@ -14,7 +14,7 @@ requires: HIP-0004
 
 ## Abstract
 
-Hanzo publishes official client libraries for Python, TypeScript/JavaScript, Go, and Rust. All four SDKs are auto-generated from a single OpenAPI specification using [Stainless](https://www.stainless.com/), ensuring byte-level API parity across languages. The SDKs provide typed, ergonomic access to the Hanzo AI platform -- chat completions, embeddings, images, audio, files, models, fine-tuning, and administrative endpoints -- through the LLM Gateway defined in HIP-4.
+Hanzo publishes official client libraries for Python, TypeScript/JavaScript, Go, and Rust. All four SDKs are auto-generated from a single OpenAPI specification with openapi-generator on our own CI, ensuring byte-level API parity across languages. The SDKs provide typed, ergonomic access to the Hanzo AI platform -- chat completions, embeddings, images, audio, files, models, fine-tuning, and administrative endpoints -- through the LLM Gateway defined in HIP-4.
 
 The API surface is OpenAI-compatible by design. Existing OpenAI SDK users can switch to Hanzo by changing `base_url` and `api_key`. This drop-in compatibility is the single most important adoption lever for an AI platform.
 
@@ -46,7 +46,7 @@ The Hanzo AI platform exposes a REST API with dozens of endpoints, streaming res
 
 ### Why Auto-Generated SDKs Solve This
 
-A single OpenAPI specification defines every endpoint, parameter, response type, and error code. Stainless reads this specification and generates idiomatic client code for each target language. When the API changes, the spec is updated, Stainless regenerates all four SDKs, automated tests run, and new versions are published. No human writes HTTP client code.
+A single OpenAPI specification defines every endpoint, parameter, response type, and error code. openapi-generator reads this specification and generates idiomatic client code for each target language. When the API changes, the spec is updated, openapi-generator regenerates all four SDKs, automated tests run, and new versions are published. No human writes HTTP client code.
 
 This eliminates all five problems:
 
@@ -60,15 +60,15 @@ This eliminates all five problems:
 
 This section explains the *why* behind each major design decision.
 
-### Why Stainless Over Hand-Written SDKs
+### Why Generated Over Hand-Written SDKs
 
 The traditional approach to multi-language SDKs is to assign a team to each language. This fails at scale. When the API adds a parameter, four teams must coordinate. When a bug is found in retry logic, four teams must fix it. When a new language is needed, a new team must be hired.
 
-Stainless inverts this. One engineer maintains the OpenAPI spec. Stainless generates idiomatic code for each language -- not template-stamped boilerplate, but code that follows each language's conventions (Python uses `snake_case`, Go uses `PascalCase`, TypeScript uses `camelCase`). The generated code includes typed request/response models, streaming helpers, pagination iterators, file upload utilities, and comprehensive test suites.
+Generation inverts this. One engineer maintains the OpenAPI spec, and the generator emits idiomatic code for each language -- not template-stamped boilerplate, but code that follows each language's conventions (Python uses `snake_case`, Go uses `PascalCase`, TypeScript uses `camelCase`). The generated code includes typed request/response models, streaming helpers, pagination iterators, file upload utilities, and comprehensive test suites.
 
-The tradeoff is reduced flexibility. If the Go SDK needs a Go-specific feature that does not map to the OpenAPI spec, it requires a Stainless extension or a hand-written wrapper. In practice, this is rare -- the OpenAPI spec is expressive enough for 99% of use cases.
+The tradeoff is reduced flexibility. If the Go SDK needs a Go-specific feature that does not map to the OpenAPI spec, it requires a generator template or a hand-written wrapper. In practice, this is rare -- the OpenAPI spec is expressive enough for 99% of use cases.
 
-| Factor | Hand-Written | Stainless-Generated |
+| Factor | Hand-Written | Generated |
 |--------|-------------|-------------------|
 | Languages supported | N engineers for N languages | 1 spec for N languages |
 | API parity | Drift over time | Guaranteed by construction |
@@ -112,7 +112,7 @@ The language selection covers 95%+ of AI developer workflows:
 | **Go** | Infrastructure, CLIs, cloud services, Kubernetes operators | ~30% of platform engineers |
 | **Rust** | Performance-critical systems, blockchain, edge inference | ~10% of systems developers |
 
-Ruby, Java, .NET, and other languages are supported through the OpenAI-compatible API. Any OpenAI SDK in any language works with Hanzo by changing the base URL. Official Hanzo SDKs for these languages are community-maintained and not auto-generated, as the engineering cost of maintaining Stainless configurations for low-demand languages exceeds the benefit.
+Ruby, Java, .NET, and other languages are supported through the OpenAI-compatible API. Any OpenAI SDK in any language works with Hanzo by changing the base URL. Official Hanzo SDKs for these languages are community-maintained and not auto-generated, as the engineering cost of maintaining openapi-generator configurations for low-demand languages exceeds the benefit.
 
 ### Why Typed Clients Over Raw HTTP
 
@@ -149,7 +149,7 @@ The IDE flags `mesages` as an unknown parameter. The type checker rejects `chois
 
 ### OpenAPI Specification
 
-The canonical API definition lives in the Stainless configuration repository. The OpenAPI spec is the single source of truth for:
+The canonical API definition lives in `hanzoai/openapi`. The OpenAPI spec is the single source of truth for:
 
 - Every endpoint URL and HTTP method
 - Request parameters (path, query, header, body) with types and constraints
@@ -161,21 +161,21 @@ The canonical API definition lives in the Stainless configuration repository. Th
 
 **Spec versioning**: The OpenAPI spec is versioned with semantic versioning. Breaking changes (removed fields, changed types) increment the major version. Additive changes (new endpoints, new optional fields) increment the minor version. The current API version is communicated via the `X-API-Version` header.
 
-**Spec location**: The spec is maintained in the Stainless platform and exported to each SDK repository as `api.md` -- a human-readable API reference generated from the spec.
+**Spec location**: The spec is maintained in the openapi-generator platform and exported to each SDK repository as `api.md` -- a human-readable API reference generated from the spec.
 
 ### Generation Pipeline
 
 ```
-OpenAPI Spec (Stainless) → Code Generator → [python-sdk, js-sdk, go-sdk, rust-sdk]
+OpenAPI Spec (openapi-generator) → Code Generator → [python-sdk, js-sdk, go-sdk, rust-sdk]
                                                     ↓
                                             [PyPI, npm, Go proxy, crates.io]
 ```
 
 The pipeline runs on every spec change:
 
-1. **Spec update**: An engineer modifies the OpenAPI spec in Stainless.
-2. **Code generation**: Stainless generates idiomatic client code for all four languages.
-3. **Pull requests**: Stainless opens PRs against each SDK repository with the generated changes.
+1. **Spec update**: An engineer modifies the OpenAPI spec in openapi-generator.
+2. **Code generation**: openapi-generator generates idiomatic client code for all four languages.
+3. **Pull requests**: openapi-generator opens PRs against each SDK repository with the generated changes.
 4. **Automated tests**: CI runs the generated test suite plus any hand-written integration tests.
 5. **Review and merge**: An SDK maintainer reviews the diff and merges.
 6. **Publish**: CI publishes the new version to the appropriate package registry (PyPI, npm, Go proxy module, crates.io). Changelogs are auto-generated from the spec diff.
@@ -644,7 +644,7 @@ All SDKs follow the same resource structure: each API namespace (chat, embedding
 
 ### Testing
 
-Each SDK ships with three categories of tests: **unit tests** (mock HTTP, no network), **integration tests** (real API calls against sandbox), and **Prism tests** (Stainless mock server validating against the OpenAPI spec). Run via `uv run pytest` (Python), `yarn test` (TypeScript), `go test ./...` (Go), or `cargo test` (Rust).
+Each SDK ships with three categories of tests: **unit tests** (mock HTTP, no network), **integration tests** (real API calls against sandbox), and **Prism tests** (openapi-generator mock server validating against the OpenAPI spec). Run via `uv run pytest` (Python), `yarn test` (TypeScript), `go test ./...` (Go), or `cargo test` (Rust).
 
 ## Security Considerations
 
@@ -681,7 +681,7 @@ Through the LLM Gateway (HIP-4), the SDKs provide access to 100+ AI providers in
 
 ## References
 
-1. [Stainless](https://www.stainless.com/) - API SDK generation platform
+1. [openapi-generator](https://www.openapi-generator.com/) - API SDK generation platform
 2. [OpenAPI Specification](https://spec.openapis.org/oas/v3.1.0) - API description format
 3. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Unified AI provider interface (backend for all SDK requests)
 4. [HIP-26: Identity & Access Management](./hip-0026-identity-access-management-standard.md) - OAuth token validation for SDK authentication
