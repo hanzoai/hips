@@ -4,10 +4,9 @@ title: Translate — One Endpoint, Two Tiers, Permissive Weights
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Final
+status: Active
 created: 2026-07-26
 ---
-
 
 
 # HIP-0516: Translate — One Endpoint, Two Tiers, Permissive Weights
@@ -17,14 +16,6 @@ created: 2026-07-26
 `POST /v1/translate` is the one translation surface: a quality tier served by our
 own models and a bulk tier served by MADLAD-400. Both sit behind one endpoint, so
 callers choose cost and latency, never a vendor.
-
-## Motivation
-
-Translation was a third-party pipeline. Crowdin held our locale files, the workflow
-that drove it had never run (`if: false`), and its config pointed at an external
-project id. Removing it leaves a gap we should fill with a product rather than
-another vendor: we already run a model plane, so translation is a capability we
-can sell, not a bill we pay.
 
 ## Weights and the license constraint
 
@@ -99,14 +90,6 @@ Standard IAM: org-scoped by bearer, metered per org, no cross-tenant read of a
 translation memory. Submitted text is customer content — it is not training data
 and not retained beyond the memory the customer's own org owns.
 
-## Rationale
-
-The alternative was a dedicated translation stack (its own serving, scaling and
-on-call). That is a second way to do inference, which the architecture forbids. One
-model plane, two tiers, one endpoint keeps the surface orthogonal to everything
-else we serve.
-
 ## References
 
-- HIP-0510 — learned per-request model routing
 - HIP-0111 — IAM authentication

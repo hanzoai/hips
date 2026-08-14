@@ -4,7 +4,7 @@ title: Visor — Fleet & Fabric Autoscaling Across Any Provider
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Review
+status: Draft
 created: 2026-07-07
 updated: 2026-07-08
 requires: HIP-0106, HIP-0116, HIP-0117, HIP-0121, HIP-0400
@@ -60,7 +60,7 @@ demand one control plane for it:
    the classic two-ways defect.
 
 Visor is where this already lives: it is the machine/cluster
-provisioner and supervisor (HIP-0053, HIP-0490), it holds the
+provisioner and supervisor (HIP-0053), it holds the
 per-owner sealed provider connectors (HIP-0121), and it ships the
 autoscaler. This HIP names that role and fixes its contract.
 
@@ -218,7 +218,6 @@ itself and bills honestly.
   sealed providers, and billing tiers this HIP executes against)
 - HIP-0400 — Service CRD (workload reconciliation above this node
   plane)
-- HIP-0490 — visor (service catalog entry)
 - `hanzoai/visor` — `autoscaler/{watcher,sizing}.go`,
   `service/{digitalocean,doks,aws,azure,gcp,aliyun,hetzner,lightsail,kvm,pve,vmware}.go`,
   `billing/reporter.go`, `chain/chainmaker.go`, `authz/`

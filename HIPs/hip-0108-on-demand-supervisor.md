@@ -10,7 +10,6 @@ requires: HIP-0105, HIP-0106, HIP-0107, HIP-0302
 ---
 
 
-
 # HIP-0108: On-Demand Subsystem Supervisor + Warm Pool
 
 ## Abstract
@@ -267,30 +266,6 @@ pattern delivers a **5–10× memory reduction** at the cost of
 2–10 s on a full cold spawn.
 
 ## Implementation phases
-
-### Phase 1 — Supervisor MVP (~1 week)
-
-- `cloud.Supervisor` interface in `~/work/hanzo/cloud/` alongside
-  the existing `Deps` (HIP-0106 §`deps.go`).
-- Spawn/reap with unix socket IPC.
-- LRU warm pool keyed by `(orgID, service)`. No CRIU yet.
-- Per-tenant consistent-hash affinity.
-- O11y `/v1/supervisor/stats` endpoint emitting `SupervisorStats`.
-
-### Phase 2 — cgroups + namespaces (~1 week)
-
-- libcontainer wrapper per-worker for `memory.max`, `cpu.max`,
-  `pids.max`.
-- Memory accounting per `(orgID, service)` surfaced through o11y.
-- Per-tenant kill switch (`POST /v1/supervisor/evict?org=...&service=...`).
-
-### Phase 3 — CRIU snapshots (~2 weeks)
-
-- Snapshot on idle eviction (Linux only).
-- Restore on next request.
-- WAL replay coordination with HIP-0107 `replicate`.
-- Snapshot LRU + disk quota under `{data-dir}/snapshots/`.
-- Optional off-host snapshot storage via `vfs`.
 
 ### Phase 4 — per-service adapters (~1 week each)
 

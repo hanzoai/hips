@@ -10,7 +10,6 @@ requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0078, HIP-0079, HIP-00
 ---
 
 
-
 # HIP-0098: Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold roots)
 
 ## Abstract
@@ -25,16 +24,6 @@ break-glass-grade) under a `k-of-n` multi-signature scheme with `k ≥
 ⌈2n/3⌉ + 1`. The two-tier separation (lattice-based for warm
 governance, hash-based for cold trust roots) provides defense-in-depth:
 loss of one cryptanalytic assumption does not lose the upgrade path.
-
-## Motivation
-
-Paths 10 and 11 of the LUX_STRICT_E2E_PQ coverage matrix are hard
-gaps. LP-085 / LP-086 (Lux DAO + Governor) are entirely classical
-(secp256k1, BLS). ZIP-0017 (Zoo DAO Governance) likewise. LP-071
-specifies SLH-DSA as a "break-glass" primitive but no spec locks it as
-the cold-root upgrade-key scheme. Without HIP-0098, mainnet activation
-of the strict-PQ profile is impossible — the upgrade path itself
-remains a classical island that can be compromised by Shor.
 
 ## Specification
 
@@ -103,17 +92,6 @@ Acceptance:
 Cold rotation is itself a cold-root-authorised action; rotation
 cadence at least every 4 years (matches SLH-DSA-256s long-lived key
 profile).
-
-## Rationale
-
-ML-DSA-87 for warm governance: same algorithm family as identity,
-single verifier in code, threshold-aggregable via Pulsar-M-87. SLH-DSA
-for cold roots: hash-based security relies only on SHA-3 collision
-resistance — orthogonal to lattice assumptions in ML-DSA. Loss of
-M-LWE security under future cryptanalysis still leaves SLH-DSA intact
-to authorise emergency upgrades. The two-tier separation matches NIST
-SP 800-57 Part 1 Rev. 5 §5.6.1 cryptoperiod guidance for long-lived
-keys.
 
 ## Backwards compatibility
 

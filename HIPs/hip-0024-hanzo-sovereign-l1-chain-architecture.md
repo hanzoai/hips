@@ -10,22 +10,11 @@ requires: LP-0011
 ---
 
 
-
 # HIP-0024: Hanzo Sovereign L1 Chain Architecture
 
 ## Abstract
 
 Hanzo operates as a sovereign L1 chain on the Lux Network, meaning it maintains its own independent validator set rather than relying on primary network validation. This architecture provides Hanzo with full sovereignty over consensus parameters, validator economics, and network governance - essential for AI compute workloads requiring specialized infrastructure.
-
-## Motivation
-
-Hanzo AI chose the L1 (sovereign) model for several strategic reasons:
-
-1. **AI compute requirements**: Validators need GPU infrastructure for AI attestation
-2. **Full sovereignty**: Control over consensus, upgrades, and economics
-3. **Custom validator requirements**: TEE/SGX attestation for AI model integrity
-4. **Independent economics**: AI-COIN staking separate from LUX
-5. **Specialized consensus**: Tuned for AI inference workloads
 
 ## Specification
 
@@ -204,45 +193,7 @@ slashing:
   invalidAttestation: 10%
 ```
 
-## Rationale
-
-### Why L1 over L2?
-
-| Factor | L2 (Primary Network) | L1 (Hanzo's Choice) |
-|--------|---------------------|---------------------|
-| Validator control | Limited | Full |
-| Custom requirements | Not possible | GPU/TEE required |
-| Consensus tuning | Inherited | Customizable |
-| Economics | LUX-based | AI-COIN based |
-| AI integration | Limited | Native |
-
-### Comparison with Zoo
-
-Hanzo and Zoo represent the two chain models:
-
-| Chain | Type | Validators | Use Case |
-|-------|------|------------|----------|
-| **Zoo** | L2 | Primary network | Conservation, community AI |
-| **Hanzo** | L1 | Own set (GPU/TEE) | AI compute, sovereignty |
-
-This allows the ecosystem to demonstrate and optimize both approaches.
-
-## Security Considerations
-
-### Validator Security
-
-Hanzo validators must maintain:
-- TEE attestation (SGX/TDX)
-- NVTrust GPU verification
-- ML-DSA key management
-- Secure enclave operations
-
-### Network Security
-
-With 5+ validators and proper stake distribution:
-- Byzantine fault tolerance: 80%+
-- Economic security from AI staking
-- Slashing for malicious behavior
+ behavior
 
 ### AI-Specific Security
 

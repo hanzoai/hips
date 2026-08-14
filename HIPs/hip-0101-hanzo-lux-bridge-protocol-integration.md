@@ -12,7 +12,6 @@ requires: HIP-0001, HIP-0005, HIP-0008, HIP-0024
 ---
 
 
-
 # HIP-0101: Hanzo-Lux Bridge Protocol Integration
 
 ## Abstract
@@ -31,95 +30,11 @@ set coordination using ML-DSA-65 threshold signatures), and a **settlement layer
 layers provide sub-10-second bridge finality, post-quantum security from day one,
 and native integration with Lux's multi-consensus architecture.
 
-## Motivation
-
-Hanzo and Lux are architecturally complementary. Hanzo's L1 is optimized for AI
-compute: GPU-equipped validators, TEE attestation, and Nova-mode consensus tuned for
-inference workloads (HIP-0024). Lux is optimized for economic settlement: Quasar
-consensus for sub-second finality, a multi-VM architecture supporting EVM (DeFi),
-and deep liquidity through its native exchange infrastructure.
-
-Without a bridge, these two chains operate as isolated economies. Users who stake
-$AI on Lux for economic security cannot direct that stake toward Hanzo compute
-allocation. Compute providers who earn $AI on Hanzo cannot access Lux DeFi to
-hedge, lend, or provide liquidity. The bridge resolves this by creating a
-trustworthy, auditable channel between both chains.
-
-Specific problems the bridge addresses:
-
-1. **Fragmented liquidity.** $AI exists on both chains but cannot move between
-   them without a trusted intermediary. The bridge replaces ad-hoc OTC transfers
-   with a protocol-level mechanism.
-2. **Compute marketplace settlement.** The HMM (HIP-0008) generates compute
-   invoices on Hanzo. Settlement of these invoices against Lux-side staking
-   positions requires cross-chain message passing.
-3. **Staking-to-compute flow.** Users stake $AI on Lux for yield and economic
-   security. The bridge verifies stake positions and communicates them to Hanzo
-   for proportional compute allocation.
-4. **DeFi access.** Compute providers earning $AI on Hanzo need access to Lux
-   DEXes, lending protocols, and stablecoin liquidity without leaving the
-   ecosystem.
-5. **Model certificate portability.** NFT model certificates issued on Hanzo
-   (representing trained model ownership, licensing rights, and provenance) must
-   be transferable to Lux for trading on secondary markets and collateralization
-   in DeFi protocols.
-
 ## Design Philosophy
 
 This section explains the reasoning behind each major design decision. A bridge
 is critical infrastructure. Every choice must be justified from first principles,
 not by convention or convenience.
-
-### Why Lux as Settlement Layer
-
-Hanzo and Lux are sister companies (both Techstars '17). This is not just a
-business relationship --- it shapes the technical architecture. The two teams
-co-designed the L1/settlement split from the beginning, ensuring that the bridge
-is a first-class protocol component rather than an afterthought bolted onto
-incompatible systems.
-
-Lux Network provides three properties that Hanzo requires but does not replicate:
-
-- **Quasar consensus for fast finality.** Lux achieves probabilistic finality in
-  under one second via the Quasar consensus family (Nebula DAG mode, Nova linear
-  mode, Photon committee selection, Wave threshold voting — see LP-020).
-  Financial settlement requires rapid, irreversible confirmation. Hanzo's Nova
-  instance is tuned for AI workloads (larger blocks, GPU attestation overhead),
-  producing finality in 1-2 seconds. Lux's lighter-weight Nova achieves ~1
-  second. Together, a cross-chain round-trip settles in under 10 seconds.
-
-- **Multi-VM architecture for different workloads.** Lux supports the EVM
-  (C-Chain) for DeFi smart contracts, the XVM (X-Chain) for UTXO-based asset
-  creation and exchange, and the PVM (P-Chain) for validator management
-  and staking. Each VM is purpose-built. Hanzo does not need to replicate DeFi
-  infrastructure when Lux already provides it.
-
-- **Post-quantum cryptography readiness.** Both Hanzo (HIP-0005) and Lux
-  (LP-100) have adopted NIST PQC standards. The bridge inherits this property,
-  ensuring that cross-chain messages are protected against quantum adversaries
-  from day one. Shared PQC standards mean the bridge does not need to perform
-  cryptographic translation between chains.
-
-### Why a Bridge Over Native Integration
-
-Hanzo's L1 (HIP-0024, chain ID 36963) is AI-optimized: validators require GPU
-hardware, TEE attestation, and run Nova-mode consensus tuned for inference
-workloads. Lux's primary network is settlement-optimized: lightweight validators,
-high throughput, deep liquidity.
-
-Merging these into a single chain would force compromise. Either AI validators
-would need to process financial transactions they are over-provisioned for, or
-settlement validators would need GPU hardware they cannot justify economically. A
-bridge preserves the specialization of each chain while enabling communication.
-
-The bridge is a narrow interface: it transfers assets and relays messages. It does
-not impose consensus requirements on either chain. Each chain continues to evolve
-independently --- upgrading consensus parameters, VM logic, and validator
-economics without coordinating with the other.
-
-Separation of concerns is the core principle. Hanzo optimizes for AI compute
-coordination. Lux optimizes for consensus and finality. The bridge connects them
-cleanly at a well-defined protocol boundary.
 
 ### Why Not Use Existing Bridges (Wormhole, LayerZero)
 
@@ -152,32 +67,6 @@ do not match the Hanzo-Lux security model:
   allows the bridge to validate invoice structure, enforce settlement rules, and
   trigger Lux-side payment flows without external adapter contracts.
 
-### Why Multi-Consensus Approach
-
-Different operations need different consensus guarantees. The Lux Quasar consensus
-family provides this flexibility through composable primitives:
-
-- **Photon** provides repeated sub-sampled committee selection (k-of-N,
-  Fisher-Yates with luminance reputation). The bridge uses Photon semantics
-  during validator set rotation: candidates are proposed, validators vote in
-  sub-sampled rounds, and the set converges on a new composition without a
-  single coordinator.
-
-- **Nova** provides linear-chain consensus mode. Both Hanzo and Lux use Nova for
-  block production on linear chains. The bridge monitors finalized blocks on both
-  Nova instances to determine when lock/burn events are irreversible.
-
-- **Nebula** provides DAG-based consensus mode for concurrent transaction
-  processing. When the bridge transfers $AI to Lux, it lands first on the C-Chain
-  (EVM, Nova). Users can then move assets to the X-Chain (XVM) for fast UTXO-based
-  transfers, or to the P-Chain for staking. The C-Chain and X-Chain both run in
-  Nova mode under Quasar 3.0; Nebula mode is reserved for DAG chains
-  (M-Chain, F-Chain, A-Chain optional).
-
-This multi-consensus approach means the bridge does not impose a single consensus
-model. It adapts to whichever Lux chain the user targets, using the appropriate
-finality guarantees for each.
-
 ### Why Post-Quantum From Day One
 
 Quantum computing threatens all current bridge cryptography. ECDSA, the signature
@@ -201,26 +90,6 @@ Starting post-quantum avoids the complexity of a future migration. Hybrid scheme
 (ECDSA + PQC) are transitional by design and add implementation surface area. Since
 the bridge is new infrastructure with no backward-compatibility requirement, there
 is no reason to support legacy cryptography.
-
-### Why Lock-and-Mint Over Atomic Swaps
-
-Atomic swaps require both chains to support the same hash function and compatible
-timelock mechanisms. They also require online participation from both parties
-during the swap window. If either party goes offline, the swap fails and funds are
-locked until the timelock expires.
-
-Lock-and-mint is operationally simpler:
-
-1. A user locks $AI in the bridge contract on Hanzo.
-2. The validator set observes the lock event and reaches consensus.
-3. The bridge contract on Lux mints an equivalent amount of wrapped $AI (wAI).
-4. To redeem, the user burns wAI on Lux, validators confirm, and the bridge
-   unlocks $AI on Hanzo.
-
-This model requires only one active participant (the user). The validator set
-operates as an always-on service. There is no timelock race condition, no
-requirement for simultaneous online presence, and no hash function compatibility
-constraint.
 
 ## Specification
 
@@ -1027,42 +896,6 @@ Before mainnet deployment, the bridge contracts must undergo:
 
 ## Implementation Plan
 
-### Phase 1: Contracts and Relayer (Q2 2026)
-
-- Deploy Lock Vault on Hanzo testnet (chain ID 36963).
-- Deploy Mint Vault on Lux Fuji C-Chain.
-- Implement relayer with 3-node Raft cluster.
-- ML-DSA-65 signature verification via precompile.
-- Merkle proof verification library.
-- Unit and integration test suite.
-- Bridge API (v1/bridge/*) implementation.
-
-### Phase 2: Validator Set and Audits (Q3 2026)
-
-- Validator selection and rotation logic.
-- Rate limiting and anomaly detection.
-- Challenge period and dispute resolution.
-- Formal verification of core invariants.
-- Two independent security audits.
-- 90-day testnet operation period begins.
-
-### Phase 3: Mainnet and HMM Integration (Q4 2026)
-
-- Mainnet deployment with initial 11-validator set.
-- HMM invoice settlement integration (HIP-0008).
-- Staking verification relay (Lux P-Chain positions readable on Hanzo).
-- AI Verification VM deployment on Lux.
-- Monitoring dashboard and operator alerting.
-
-### Phase 4: Stablecoin Support and Scaling (Q1 2027)
-
-- USDC and USDT bridge support.
-- Model NFT (ERC-721) bridge support.
-- Compute credit (ERC-1155) bridge support.
-- Governance-adjustable rate limits.
-- Performance optimization for higher throughput.
-- Cross-chain governance voting.
-
 ## Dependencies
 
 | Dependency | HIP/LP | Status | Required For |
@@ -1076,27 +909,6 @@ Before mainnet deployment, the bridge contracts must undergo:
 
 ## Rationale
 
-### Why 7-of-11 Threshold
-
-The 7-of-11 threshold provides:
-- **Liveness**: Up to 4 validators can be offline without halting the bridge.
-- **Safety**: An attacker must compromise 7 validators (64%) to forge a message.
-  With validators split across two chains (6 Hanzo + 5 Lux), an attacker must
-  compromise validators on both networks simultaneously.
-- **Practicality**: 11 is small enough for fast signature collection (< 5s) but
-  large enough to distribute trust meaningfully.
-
-### Why Split Validator Composition (6 Hanzo + 5 Lux)
-
-Neither chain should have unilateral signing authority. With 6 Hanzo and 5 Lux
-validators at a threshold of 7:
-- Hanzo validators alone (6) cannot meet threshold.
-- Lux validators alone (5) cannot meet threshold.
-- Any valid signing set must include validators from both chains.
-
-This ensures that a compromise of one chain's validator set is insufficient to
-attack the bridge.
-
 ### Why 0.1% Fee
 
 The fee must be:
@@ -1109,21 +921,6 @@ The fee must be:
 
 The 10% allocation to the insurance fund creates a growing reserve to cover
 potential bridge incidents without relying on external insurance.
-
-### Why Merkle Proofs in Addition to Multi-Sig
-
-Multi-sig alone requires trusting that 7 validators are honest. Merkle proofs
-add a cryptographic guarantee: even if all 11 validators collude, they cannot
-forge a valid Merkle proof for an event that did not occur on the source chain.
-The proof is verified against the source chain's state root, which is produced
-by the source chain's own consensus (hundreds or thousands of validators, not
-just the 11 bridge validators).
-
-This layered security model means the bridge's trust assumptions reduce to the
-security of the weaker of: (a) 7-of-11 bridge validators, or (b) source chain
-consensus. In practice, source chain consensus is far stronger, making the
-multi-sig a performance optimization (fast verification) rather than the sole
-security mechanism.
 
 ## References
 

@@ -10,7 +10,6 @@ requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0078, HIP-0079, HIP-00
 ---
 
 
-
 # HIP-0103: Bridge PQ-Only Profile
 
 ## Abstract
@@ -25,17 +24,6 @@ block transcript (HIP-0079); high-value transfers above a configurable
 cap require Pulsar-M-87 (HIP-0084 high-value mode) and a HIP-0098
 governance authorisation. Classical bridge programs (LP-017 FROST /
 CGGMP21) are refused.
-
-## Motivation
-
-Path 9 of the LUX_STRICT_E2E_PQ coverage matrix is partial. LP-017's
-18 native bridge programs use FROST (Ed25519) and CGGMP21 (secp256k1).
-HIP-0101 names ML-DSA-65 for the Hanzo↔Lux bridge but has no profile
-equality gate; HIP-0102 specifies the bridge protocol but does not
-mandate refusal of non-strict-PQ inbound state. Without HIP-0103, a
-strict-PQ chain can receive bridged value whose counterparty is
-classical, undermining the entire end-to-end posture. The bridge is
-the trust-equivalence point; the profile-equality check is the lock.
 
 ## Specification
 
@@ -87,18 +75,6 @@ Acceptance rule (strict-PQ bridge):
 
 High-value cap default: 100,000 LUX (or chain-configured equivalent).
 Transfers above cap REQUIRE the governance-auth path.
-
-## Rationale
-
-Profile-byte-equality (HIP-0077/0078/0079/0084 §"Mirrored profile" in
-LP/ZIP forms) is checked field-by-field, not just by ProfileID byte —
-this prevents a malicious bridge participant from claiming
-`ProfileID = 0x01` while the chain actually runs with
-`ForbidPairings = false`. The verifier reuses the unmodified FIPS 204
-ML-DSA-65 verifier; no bridge-specific cryptography. High-value flag
-+ governance auth provides defence-in-depth on the only attack vector
-that has historically lost the most value across bridges: a bulk
-unauthorised transfer.
 
 ## Backwards compatibility
 

@@ -9,7 +9,6 @@ created: 2026-07-27
 ---
 
 
-
 # HIP-0517: Branch Naming — main is the Trunk, Everywhere
 
 ## Preamble
@@ -102,25 +101,3 @@ tool can tell which one a reader should trust — `git` will happily serve eithe
 That is the cost of creating `main` alongside `master` instead of renaming, and
 it is unrecoverable without a human deciding which history is canonical.
 
-## Migration
-
-1. Rename `master` → `main` with the API call above (108 repositories).
-2. Where a `main` already exists beside `master` with unrelated history, a human
-   picks the canonical history first. There is no safe automatic answer.
-3. Repoint anything that pinned the old name: GitOps `targetRevision`,
-   `.gitmodules` branch keys, CI `on.push.branches`, and mirror configurations.
-4. Consolidate `develop` → `dev` (8 repositories).
-5. For the 5 repositories defaulting to a transient branch, identify the real
-   trunk and set it; the transient branch is then deleted, not kept.
-
-Renaming installs a redirect for clones and API reads. That redirect is not
-permanent insurance: it is **released the moment any new branch claims the old
-name**, exactly as a transferred repository's redirect dies when a new repository
-claims its old path. Repoint the pins; do not rely on the redirect.
-
-## Rationale
-
-One name, resolved the same way by every tool, is worth more than any argument
-for a different name. `main` wins because 1,066 of 1,190 repositories already use
-it — the cost of this HIP is 108 renames, and the cost of the alternative is
-1,066.

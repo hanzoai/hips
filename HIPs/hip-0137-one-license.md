@@ -280,26 +280,6 @@ a bad edit fails against good-faith ones. A hash does not.
 imposes. Stripping it saves nothing, and it is the one breach that costs the
 grant.
 
-## Backwards Compatibility
-
-Nothing here is retroactive against a grant already made. A license we have
-published is not withdrawn by this document.
-
-Repositories move into conformance one at a time, and each move is a decision:
-
-- an original repository declaring `BSD-3-Clause` that we applied ourselves
-  moves to `MIT OR Apache-2.0`;
-- an original repository on bare `Apache-2.0` or bare `MIT` is conformant enough
-  to leave alone, and gains the second license when it is next touched;
-- a fork is left exactly as it is, and gains a `NOTICE` if it lacks one;
-- a public repository with no license gets one, per HIP-0135 §3;
-- a license file whose hash does not match canonical is replaced with canonical,
-  which is a correction and not a license change.
-
-Where ancestry cannot be established, the repository is recorded as unverified
-and **nothing is changed**. An honest "we could not establish this" is worth
-more than a confident guess that relicenses someone else's work.
-
 ## References
 
 - HIP-0135 — What Is Public (§3 is updated by this document)

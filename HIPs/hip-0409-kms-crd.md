@@ -4,7 +4,7 @@ title: KMS CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -66,7 +66,6 @@ Deployment, Service. KMS itself exposes a CRD (`KMSSecret`) that any other Servi
 
 ### Related services
 
-- HIP-459 (kms service)
 - HIP-0027 (KMS standard)
 - All services depend on KMS for secret resolution.
 

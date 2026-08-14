@@ -9,7 +9,6 @@ created: 2025-01-15
 ---
 
 
-
 # HIP-0028: Key-Value Store Standard
 
 ## Abstract
@@ -60,53 +59,6 @@ This section explains every major design decision and why the alternatives were 
 Infrastructure choices compound -- a wrong call here propagates to every service that
 touches KV. Each heading below addresses one decision.
 
-### Why Valkey over Redis
-
-In March 2024, Redis Ltd. changed the Redis license from BSD-3-Clause to a dual license:
-Redis Source Available License v2 (RSALv2) and Server Side Public License v1 (SSPLv1).
-Under both licenses, a company that provides Redis as part of a managed service (which
-Hanzo does, via cloud.hanzo.ai and the Hanzo PaaS) must either negotiate a commercial
-license with Redis Ltd. or open-source its entire management stack under SSPL terms.
-
-Within weeks of the license change, the Linux Foundation announced Valkey, a community
-fork of Redis 7.2.4 under the original BSD-3-Clause license. The founding contributors
-include engineers from AWS (who maintained ElastiCache), Google Cloud (Memorystore),
-Oracle, Ericsson, and Snap. Valkey is not a clean-room rewrite; it is a direct fork with
-full commit history, which means every Redis command, data structure, and protocol
-behavior is preserved identically.
-
-Valkey 8.0 shipped in September 2024 with multi-threaded I/O and RDMA support. Valkey
-8.1 (our current production version) added over-memory hash-table optimization and
-improved cluster slot migration. Performance benchmarks show Valkey 8.1 matching or
-exceeding Redis 7.4 on all standard workloads, with up to 2x throughput improvement on
-multi-core machines due to the new I/O threading model.
-
-The decision is straightforward: identical functionality, better performance, no
-licensing risk, stronger community governance.
-
-### Why Not Dragonfly or KeyDB
-
-**Dragonfly** is an impressive in-memory store that claims 25x throughput over Redis
-on a single node. However, Dragonfly uses the Business Source License (BSL 1.1), which
-has the same restrictions as RSALv2 for managed-service providers. Using Dragonfly would
-trade one licensing problem for another. Additionally, Dragonfly's internal architecture
-(shared-nothing per-core sharding) means it does not support all Redis commands
-identically -- notably, Lua scripting semantics differ in edge cases around
-cross-slot operations.
-
-**KeyDB** was a promising multi-threaded Redis fork from Snap Inc. However, after Snap
-acquired KeyDB in 2022, active development slowed significantly. The last major release
-(v6.3.4) is over a year old. The project has 200+ open issues with no maintainer
-responses. For production infrastructure, depending on an effectively-abandoned project
-is unacceptable.
-
-**DragonflyDB** and **Kvrocks** (Apache-2.0, RocksDB-backed) were also evaluated.
-Kvrocks is interesting for disk-backed workloads but adds latency (~1ms vs ~0.1ms)
-that matters for our hot-path token validation. Dragonfly's BSL disqualifies it.
-
-Valkey wins on all axes: open license, active governance, wire compatibility, and
-production-proven at hyperscaler scale.
-
 ### Why Single Instance over Cluster Mode
 
 Hanzo KV currently runs as a single-instance StatefulSet with 2Gi of PVC storage and
@@ -134,29 +86,6 @@ partial availability when a master is down and its replica has not yet been prom
 StatefulSet to 32GB before even considering cluster mode. When we reach that point
 (which would imply ~80x current load), we will revisit with a separate HIP.
 
-### Why StatefulSet over Deployment
-
-A Deployment with `replicas: 1` and a PVC looks similar to a StatefulSet, but the
-semantics differ in ways that matter for a database:
-
-- **Stable network identity**: StatefulSet guarantees the pod is always named
-  `redis-master-0`. Other services can rely on this for debugging and log correlation.
-- **Ordered, graceful shutdown**: StatefulSet sends SIGTERM and waits for the pod to
-  flush AOF before killing it. A Deployment may kill the old pod before the new one is
-  ready, causing brief unavailability.
-- **PVC lifecycle**: StatefulSet PVCs survive pod deletion and rescheduling. With a
-  Deployment, accidental `kubectl delete deployment` also deletes the ReplicaSet, and
-  depending on PVC reclaim policy, you may lose data.
-- **Rolling update safety**: StatefulSet guarantees at-most-one semantics -- the old pod
-  is fully terminated before the new one starts. This prevents two instances fighting
-  over the same PVC.
-
-The StatefulSet name is `redis-master` (not `kv` or `hanzo-kv`) for backward
-compatibility. Every service in the cluster connects to `redis-master.hanzo.svc:6379`.
-Renaming the StatefulSet would require coordinated updates to IAM, Cloud, Console,
-Gateway, Bot, Analytics, Zen, and every other service that references the hostname.
-The cost of renaming exceeds the benefit.
-
 ### Why We Removed the Metrics Sidecar
 
 The Bitnami Redis chart ships with a `redis-exporter` sidecar that scrapes `INFO` output
@@ -177,44 +106,6 @@ we removed the sidecar entirely. The reasoning:
 
 **Principle**: a database pod should contain exactly one process -- the database. Every
 sidecar is a potential crash-loop vector that takes the database down with it.
-
-### Why AOF-Only Persistence (No RDB Snapshots)
-
-The `kv.conf` ConfigMap sets `appendonly yes` and `save ""` (disables RDB snapshots).
-
-**AOF** (Append Only File) logs every write operation. On restart, Valkey replays the
-log to reconstruct state. The file grows over time but is compacted automatically via
-`BGREWRITEAOF`.
-
-**RDB** snapshots are point-in-time binary dumps. They are smaller and faster to load
-but create a gap: data written between the last snapshot and a crash is lost.
-
-For our workload (sessions, caches, rate-limit counters), AOF is the right choice:
-
-- Most data is ephemeral (TTL < 1 hour), so total AOF size stays small.
-- The 1-second fsync window is acceptable -- losing the last second of rate-limit
-  counters or cache entries on a pod restart is not a data integrity issue.
-- RDB snapshots cause periodic latency spikes due to `fork()` -- the kernel must
-  copy-on-write the entire memory space. On a 2GB instance this takes ~50ms, but it
-  scales linearly and becomes problematic at larger sizes.
-
-### Why Dangerous Commands Are Disabled
-
-The ConfigMap includes:
-
-```
-rename-command FLUSHDB ""
-rename-command FLUSHALL ""
-```
-
-These commands delete all data instantly with no confirmation and no undo. In a shared
-KV instance used by 10+ services, a single `FLUSHALL` (whether from a misconfigured
-service, a debugging session, or an attacker with the password) would simultaneously
-break sessions for every user across every Hanzo service.
-
-Disabling these commands at the configuration level means they cannot be executed even
-with valid authentication. If we genuinely need to flush data (e.g., during a migration),
-we can temporarily re-enable them by editing the ConfigMap and restarting the pod.
 
 ## Specification
 
@@ -614,35 +505,6 @@ spec:
 ```
 
 This runs as a separate pod, not a sidecar. If the exporter crashes, KV is unaffected.
-
-## Backward Compatibility
-
-This standard is designed for zero-disruption adoption:
-
-- **Service name**: `redis-master` (unchanged from Bitnami)
-- **Secret name**: `redis` with key `redis-password` (unchanged from Bitnami)
-- **Port**: 6379 (unchanged)
-- **Protocol**: RESP3, backward-compatible with RESP2 clients
-- **Labels**: `app.kubernetes.io/name: redis` (unchanged, for existing selectors)
-- **PVC name**: `redis-data` (unchanged, preserves existing data)
-
-Services do not need any code changes. The connection URL, password, and port are
-identical. The only observable difference is that `INFO server` reports `valkey_version`
-instead of `redis_version`, which may affect monitoring scripts that parse this field.
-
-## Future Work
-
-1. **Valkey Cluster mode**: When dataset exceeds 32GB or ops/sec exceeds 500K, evaluate
-   Valkey Cluster with 3 masters and 3 replicas. This will require a new HIP.
-2. **Read replicas**: For read-heavy workloads (LLM cache, analytics), add one or more
-   read replicas behind a separate Service (`redis-reader.hanzo.svc`).
-3. **TLS**: Enable when cross-cluster replication or external access is required.
-4. **Prometheus exporter**: Deploy as standalone pod when continuous dashboarding is
-   needed.
-5. **KMS secret rotation**: Automate password rotation via KMS Operator with zero-downtime
-   client re-authentication.
-6. **Sentinel**: For automatic failover without full cluster mode, evaluate Valkey
-   Sentinel with a primary and two replicas.
 
 ## Reference Implementation
 

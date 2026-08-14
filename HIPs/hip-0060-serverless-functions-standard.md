@@ -4,11 +4,10 @@ title: Serverless Functions (FaaS) Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-02-23
 requires: HIP-0030, HIP-0050
 ---
-
 
 
 # HIP-0060: Serverless Functions (FaaS) Standard
@@ -887,61 +886,7 @@ observability:
   metrics_namespace: hanzo_fn
 ```
 
-### Implementation Roadmap
-
-#### Phase 1: Core Platform (Q1 2026)
-- Knative Serving integration with Hanzo control plane
-- Python and TypeScript runtimes with CPU execution
-- HTTP triggers with IAM authentication
-- CLI for deploy/invoke/logs
-- Prometheus metrics export
-
-#### Phase 2: Event Triggers (Q1 2026)
-- MQ trigger (NATS JetStream consumer)
-- Stream trigger (Kafka consumer)
-- Cron trigger with PostgreSQL-backed scheduler
-- Async invocation with task status tracking
-
-#### Phase 3: GPU Functions (Q2 2026)
-- Pre-warmed GPU pool with CUDA-initialized containers
-- Model cache with LRU eviction on NVMe SSD
-- Python + CUDA and Rust + Candle GPU runtimes
-- Container snapshots (CRIU) for Python GPU functions
-
-#### Phase 4: Edge Integration (Q2 2026)
-- Sync TypeScript functions to Edge (HIP-0050) as V8 isolates
-- Unified deployment: single function.yaml deploys to both origin and edge
-- Latency-based routing: edge for CPU functions, origin for GPU functions
-
-#### Phase 5: Advanced Features (Q3 2026)
-- Go runtime with ONNX bindings
-- Traffic splitting and canary deployments
-- Function composition (output of one function triggers another)
-- Cost attribution per function per org (integrated with billing)
-
-## Security Considerations
-
-### Function Isolation
-
-Each function instance runs in its own Kubernetes pod with:
-- **Network namespace isolation**: Functions cannot communicate with each other directly. All inter-function communication goes through MQ or Stream.
-- **Filesystem isolation**: Read-only root filesystem. Writable `/tmp` with size limits (512MB default).
-- **Resource limits**: CPU, memory, and GPU limits enforced by Kubernetes. Functions that exceed limits are OOM-killed.
-- **Service account**: Each function runs with a dedicated Kubernetes service account with minimal RBAC permissions.
-
-### Secret Management
-
-Function secrets are sourced from KMS (HIP-0027) and injected as environment variables. Secrets are never stored in function.yaml, the control plane database, or container images.
-
-```yaml
-secrets:
-  - name: hanzo-api-key        # KMS secret name
-    env: HANZO_API_KEY          # Environment variable name in function
-  - name: db-connection-string
-    env: DATABASE_URL
-```
-
-The control plane fetches secrets from KMS at deployment time and creates Kubernetes Secrets that are mounted into function pods. Secret rotation triggers a rolling update of function pods.
+ods.
 
 ### Authentication and Authorization
 

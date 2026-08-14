@@ -10,7 +10,6 @@ requires: HIP-0030
 ---
 
 
-
 # HIP-0017: Analytics Event Standard
 
 ## Abstract
@@ -20,101 +19,29 @@ This proposal defines the analytics event standard for the Hanzo ecosystem. All 
 **Repository**: [github.com/hanzoai/insights](https://github.com/hanzoai/insights)
 **Production**: `insights.hanzo.ai` on `hanzo-k8s` cluster (`24.199.76.156`)
 **Capture**: Rust binary at `/e`, `/batch`, `/capture` endpoints
-**Storage**: ClickHouse (analytics), Kafka (buffering, HIP-0030), PostgreSQL (metadata), Redis (cache)
-
-## Motivation
-
-Every product team needs answers to the same questions: What are users doing? Where do they drop off? Which features drive retention? What should we build next?
-
-The Hanzo platform spans multiple services -- Chat, Cloud, Commerce, LLM Gateway, Platform -- each generating user interactions that must be tracked, correlated, and analyzed. Without a unified analytics layer:
-
-1. **Each service builds its own tracking**: Inconsistent event schemas, duplicated instrumentation, no cross-service funnels.
-2. **Third-party analytics create vendor lock-in**: Amplitude charges $0.001-0.01 per event at scale. At 10M events/day, that is $10K-100K/month. Mixpanel has similar pricing. GA4 is free but Google owns the data.
-3. **Data residency becomes uncontrollable**: SaaS analytics send user data to third-party servers. For enterprise customers with data residency requirements, this is a dealbreaker.
-4. **Session replay requires a separate vendor**: FullStory, LogRocket, and Hotjar each charge $300-1000/month and only cover replay -- not analytics, feature flags, or experiments.
-
-We need ONE platform that provides product analytics, session replay, feature flags, A/B testing, and funnel analysis -- self-hosted, with a single event schema that all Hanzo services share.
+**Storage**: Hanzo Datastore (analytics), Kafka (buffering, HIP-0030), PostgreSQL (metadata), Redis (cache)
 
 ## Design Philosophy
 
 This section explains the architectural decisions behind Hanzo Insights. Understanding the *why* is essential for correct integration and for evaluating future alternatives.
 
-### Why PostHog Over Amplitude / Mixpanel / GA4
+### Why Hanzo Datastore Over TimescaleDB
 
-The core question is: **who owns the data, and what does it cost at scale?**
-
-**PostHog** is open-source (MIT license for core, paid features available). It is self-hosted, meaning all event data stays on our infrastructure. It provides product analytics, session replay, feature flags, A/B testing, surveys, and data pipelines in a single platform. The open-source model means we can inspect, modify, and extend every component.
-
-**Amplitude** is a SaaS product analytics platform. It charges per Monthly Tracked User (MTU). Pricing starts at $0 for up to 10M events/month (Starter), then jumps to $49K+/year (Growth) based on MTU count. At our scale -- multiple products, millions of events per day -- Amplitude costs six figures annually. More critically, all event data lives on Amplitude's infrastructure. We cannot run custom ClickHouse queries against it. We cannot join analytics data with our billing or IAM data without exporting it.
-
-**Mixpanel** has a similar pricing model. $0 for up to 20M events/month, then per-event pricing that scales aggressively. The data export API has rate limits that make bulk analysis painful. Like Amplitude, it is a black box -- we send events in but cannot run arbitrary queries against the underlying storage.
-
-**GA4 (Google Analytics 4)** is free for standard use. The cost is that Google owns the data. GA4 data feeds Google's ad ecosystem. GA4's event model is rigid (predefined events with limited custom properties). Session replay is not included. Feature flags are not included. BigQuery export is available but adds latency and cost. For a company building an AI platform, handing user behavior data to Google is a strategic mistake.
-
-**PostHog gives us**:
-- Product analytics (events, funnels, retention, paths)
-- Session replay (DOM snapshots, network waterfall, console logs)
-- Feature flags (server-side and client-side evaluation)
-- A/B testing (statistical significance calculation, Bayesian and frequentist)
-- Surveys (in-app feedback collection)
-- Data pipelines (export to S3, BigQuery, Redshift)
-
-All in one platform, self-hosted, with a ClickHouse backend we can query directly.
-
-**Decision**: Fork PostHog. Self-host. Own the data. Eliminate per-event costs at scale.
-
-### Why Fork PostHog (Rather Than Use It Directly)
-
-A vanilla PostHog deployment would work, but we fork for four reasons:
-
-1. **Token prefix rebranding**: PostHog uses `phc_` (project API key), `phx_` (personal API key), `phs_` (session recording), and `pha_` (feature flag). We rebrand these to `ha_` (Hanzo Analytics project key), `hax_` (personal API key), `has_` (session recording), and `haa_` (feature flag). This is a cosmetic but important change -- customers see Hanzo branding throughout, not PostHog.
-
-2. **IAM integration**: PostHog has its own user management. We replace it with Hanzo IAM (hanzo.id) for SSO. Users log into Insights with their Hanzo account. Organizations in Insights map 1:1 to organizations in IAM. This eliminates a separate identity silo.
-
-3. **Event schema standardization**: PostHog's event schema is flexible but unstructured. We enforce the Hanzo event envelope (see Specification) so that all events across the ecosystem -- from Chat to Commerce to LLM Gateway -- share a common structure. This enables cross-service funnels and retention analysis.
-
-4. **Custom dashboards**: Pre-built dashboards for Hanzo-specific metrics (LLM token usage, API latency percentiles, credit consumption, agent task completion rates) that a vanilla PostHog would not include.
-
-### Why Rust Capture Service
-
-PostHog's default ingestion path is: HTTP request hits a Django (Python) web server, which validates the event, writes it to Kafka, and returns HTTP 200. Django handles both the API and the ingestion hot path.
-
-**The problem**: Django is not fast. A single Django process handles ~500-1000 events/second. Python's GIL limits true concurrency. Gunicorn with 4 workers gets you to ~2000-4000 events/second per pod. At 10M+ events/day (115 events/second average, but with 10-50x peak spikes), you need multiple Django pods just for ingestion -- pods that also serve the PostHog UI, API, and feature flag evaluation.
-
-**The Rust capture service** (`capture` binary) is a standalone HTTP server that handles only event ingestion. It:
-- Accepts POST requests on `/e` (single event), `/batch` (bulk), and `/capture` (legacy endpoint)
-- Validates the project API key (`ha_` prefix)
-- Deserializes the event payload (JSON or msgpack)
-- Writes directly to Kafka (HIP-0030, topic `events_plugin_ingestion`)
-- Returns HTTP 200
-
-It does NOT:
-- Serve the PostHog UI
-- Evaluate feature flags (that is Django's job)
-- Query ClickHouse
-- Manage users or projects
-
-By isolating the ingestion hot path to Rust, we achieve **100K+ events/second** on a single pod with < 50MB memory. The Django deployment handles everything else at a comfortable pace, uncontested for CPU and memory.
-
-**Trade-off**: Two binaries to deploy instead of one. We accept this because the operational cost of a second Deployment is trivial compared to the performance gain.
-
-### Why ClickHouse Over TimescaleDB
-
-The original HIP-17 draft specified TimescaleDB. We replaced it with ClickHouse. Here is why.
+The original HIP-17 draft specified TimescaleDB. We replaced it with Hanzo Datastore. Here is why.
 
 **TimescaleDB** is PostgreSQL with time-series extensions. It stores data row-by-row (row-oriented). It is excellent for transactional workloads where you read and write individual rows. For analytics queries that scan millions of rows and aggregate them (e.g., "count pageviews per day for the last 90 days, grouped by browser"), TimescaleDB performs roughly the same as PostgreSQL -- because the query must read every column of every matching row, even if it only needs two columns.
 
-**ClickHouse** is a columnar database purpose-built for analytics. It stores data column-by-column. When a query needs only `timestamp` and `event` from a table with 50 columns, ClickHouse reads only those 2 columns from disk. This alone gives a 10-25x speedup for typical analytics queries. Add vectorized execution (SIMD operations on column batches), aggressive compression (LZ4 on columns of similar data), and sparse indexing, and ClickHouse delivers 10-100x faster query performance than PostgreSQL/TimescaleDB for analytical workloads.
+**Hanzo Datastore** is a columnar database purpose-built for analytics. It stores data column-by-column. When a query needs only `timestamp` and `event` from a table with 50 columns, Hanzo Datastore reads only those 2 columns from disk. This alone gives a 10-25x speedup for typical analytics queries. Add vectorized execution (SIMD operations on column batches), aggressive compression (LZ4 on columns of similar data), and sparse indexing, and Hanzo Datastore delivers 10-100x faster query performance than PostgreSQL/TimescaleDB for analytical workloads.
 
-**Concrete numbers**: A query like "count distinct users per day for the last 30 days" over 100M events takes ~200ms in ClickHouse and ~15-30 seconds in PostgreSQL. Funnel analysis over 50M events: ~500ms in ClickHouse, timeout in PostgreSQL.
+**Concrete numbers**: A query like "count distinct users per day for the last 30 days" over 100M events takes ~200ms in Hanzo Datastore and ~15-30 seconds in PostgreSQL. Funnel analysis over 50M events: ~500ms in Hanzo Datastore, timeout in PostgreSQL.
 
-**Trade-off**: ClickHouse is not good for transactional workloads (single-row updates, foreign keys, ACID transactions). We use PostgreSQL for metadata (projects, users, feature flag definitions, dashboard configurations) and ClickHouse exclusively for event analytics. This is exactly PostHog's architecture.
+**Trade-off**: Hanzo Datastore is not good for transactional workloads (single-row updates, foreign keys, ACID transactions). We use PostgreSQL for metadata (projects, users, feature flag definitions, dashboard configurations) and Hanzo Datastore exclusively for event analytics. This is exactly PostHog's architecture.
 
 ### How Insights Connects to the Data Pipeline
 
 ```
                               ┌─────────────────────────┐
-                              │      ClickHouse          │
+                              │      Hanzo Datastore          │
                               │   (Analytics Storage)    │
                               │                          │
                               │  events table            │
@@ -144,15 +71,15 @@ The original HIP-17 draft specified TimescaleDB. We replaced it with ClickHouse.
 **Data flow**:
 1. SDKs send events via HTTP POST to the Rust capture service
 2. Capture validates the project API key and writes to Kafka
-3. The ClickHouse Kafka engine consumes events and materializes them into the `events` table
+3. The Hanzo Datastore Kafka engine consumes events and materializes them into the `events` table
 4. Django plugin-server runs asynchronous transformations (person identification, property enrichment, plugin execution)
-5. PostHog UI queries ClickHouse via the query API for dashboards, funnels, and retention
+5. PostHog UI queries Hanzo Datastore via the query API for dashboards, funnels, and retention
 
 ## Specification
 
 ### Event Schema
 
-All analytics events MUST conform to the following schema. This is the canonical event format that SDKs produce and ClickHouse stores.
+All analytics events MUST conform to the following schema. This is the canonical event format that SDKs produce and Hanzo Datastore stores.
 
 ```typescript
 interface AnalyticsEvent {
@@ -273,7 +200,7 @@ Content-Type: application/json
 }
 ```
 
-Response (always immediate, does not wait for ClickHouse):
+Response (always immediate, does not wait for Hanzo Datastore):
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -330,7 +257,7 @@ All capture endpoints MUST:
 - Return HTTP 503 when Kafka is unavailable (SDKs retry with exponential backoff)
 
 All capture endpoints MUST NOT:
-- Query ClickHouse
+- Query Hanzo Datastore
 - Query PostgreSQL (except for API key validation, which is cached in Redis)
 - Block on any downstream processing
 
@@ -347,18 +274,18 @@ The full ingestion pipeline from client to queryable data:
 6. Kafka acknowledges (acks=all, idempotent)
 7. Capture returns HTTP 200 to client
    --- synchronous path ends here ---
-8. ClickHouse Kafka engine consumes from events_plugin_ingestion
-9. Events materialized into ClickHouse sharded_events table
+8. Hanzo Datastore Kafka engine consumes from events_plugin_ingestion
+9. Events materialized into Hanzo Datastore sharded_events table
 10. Plugin-server reads from Kafka for async transforms:
     - Person identification (distinct_id → person_id mapping)
     - Property enrichment (GeoIP, user-agent parsing)
     - Plugin execution (data transformations, webhooks)
-11. Events queryable in ClickHouse within ~5 seconds of capture
+11. Events queryable in Hanzo Datastore within ~5 seconds of capture
 ```
 
 ### Query Engine
 
-Analytics queries are executed against ClickHouse via the PostHog query API. The API accepts HogQL (PostHog's SQL dialect, a subset of ClickHouse SQL with guardrails).
+Analytics queries are executed against Hanzo Datastore via the PostHog query API. The API accepts HogQL (PostHog's SQL dialect, a subset of Hanzo Datastore SQL with guardrails).
 
 #### Trends Query
 
@@ -423,7 +350,7 @@ Analytics queries are executed against ClickHouse via the PostHog query API. The
 
 #### Raw HogQL
 
-For advanced queries, HogQL provides direct ClickHouse access with safety guardrails:
+For advanced queries, HogQL provides direct Hanzo Datastore access with safety guardrails:
 
 ```sql
 SELECT
@@ -440,7 +367,7 @@ ORDER BY day DESC
 
 ### Session Replay
 
-Session replay captures DOM snapshots, mouse movements, clicks, scrolls, network requests, and console logs. Replay data is stored as `$snapshot` events in ClickHouse.
+Session replay captures DOM snapshots, mouse movements, clicks, scrolls, network requests, and console logs. Replay data is stored as `$snapshot` events in Hanzo Datastore.
 
 #### Recording Configuration
 
@@ -462,11 +389,11 @@ hanzo.init('ha_abc123', {
 
 ```
 Browser → rrweb (DOM snapshot library) → $snapshot events → /e endpoint
-→ Kafka → ClickHouse session_replay_events table
+→ Kafka → Hanzo Datastore session_replay_events table
 → PostHog UI replay player (reconstructs DOM from snapshots)
 ```
 
-Session replay data is significantly larger than analytics events (~100KB-1MB per minute of recording). Compression (gzip on HTTP, LZ4 in Kafka, ZSTD in ClickHouse) reduces storage by ~10x.
+Session replay data is significantly larger than analytics events (~100KB-1MB per minute of recording). Compression (gzip on HTTP, LZ4 in Kafka, ZSTD in Hanzo Datastore) reduces storage by ~10x.
 
 ### Feature Flags
 
@@ -751,9 +678,9 @@ This routing is the single most important operational detail. Getting it wrong m
 - Sending capture traffic to Django (performance regression)
 - Sending UI/API traffic to Rust capture (404 errors)
 
-### ClickHouse Schema
+### Hanzo Datastore Schema
 
-The core events table in ClickHouse:
+The core events table in Hanzo Datastore:
 
 ```sql
 CREATE TABLE IF NOT EXISTS sharded_events
@@ -820,21 +747,21 @@ alerts:
     for: 10m
     severity: warning
     annotations:
-      summary: "ClickHouse p95 query latency exceeds 10s"
+      summary: "Hanzo Datastore p95 query latency exceeds 10s"
 
   - name: KafkaConsumerLagInsights
     expr: kafka_consumer_group_lag{group="analytics-ingest"} > 100000
     for: 5m
     severity: warning
     annotations:
-      summary: "Insights ClickHouse consumer lag exceeds 100K events"
+      summary: "Insights Hanzo Datastore consumer lag exceeds 100K events"
 
   - name: EventIngestionDelay
     expr: (max(insights_events_last_seen_at) - max(insights_events_last_ingested_at)) > 30
     for: 5m
     severity: critical
     annotations:
-      summary: "Events taking >30s from capture to ClickHouse"
+      summary: "Events taking >30s from capture to Hanzo Datastore"
 ```
 
 ## Security
@@ -854,7 +781,7 @@ alerts:
 
 Event properties MUST NOT contain raw PII unless explicitly opted in per property. The following anonymization rules apply:
 
-1. **IP addresses**: Captured server-side by the Rust capture service. Stored for GeoIP resolution, then replaced with `$geoip_city_name`, `$geoip_country_code`, etc. Raw IP is NOT stored in ClickHouse by default.
+1. **IP addresses**: Captured server-side by the Rust capture service. Stored for GeoIP resolution, then replaced with `$geoip_city_name`, `$geoip_country_code`, etc. Raw IP is NOT stored in Hanzo Datastore by default.
 2. **Email addresses**: MUST be sent only via `$set` on `$identify` events (person properties), never in regular event properties.
 3. **Session replay**: `maskAllInputs: true` is the default. Input values are replaced with `***` in replay. CSS class `ha-no-capture` excludes any DOM element from recording.
 4. **URLs**: Query parameters may contain tokens or PII. SDKs SHOULD strip sensitive query parameters (configurable via `sanitize_properties`).
@@ -863,13 +790,13 @@ Event properties MUST NOT contain raw PII unless explicitly opted in per propert
 
 | Data Type | Default Retention | Configurable | Storage |
 |-----------|------------------|--------------|---------|
-| Analytics events | 365 days | Yes, per team | ClickHouse |
-| Session replay | 30 days | Yes, per team | ClickHouse |
-| Person profiles | Indefinite | Deletable | ClickHouse + PostgreSQL |
+| Analytics events | 365 days | Yes, per team | Hanzo Datastore |
+| Session replay | 30 days | Yes, per team | Hanzo Datastore |
+| Person profiles | Indefinite | Deletable | Hanzo Datastore + PostgreSQL |
 | Feature flag definitions | Indefinite | N/A | PostgreSQL |
 | Kafka events | 7 days | Per topic (HIP-0030) | Kafka |
 
-Retention enforcement is via ClickHouse TTL:
+Retention enforcement is via Hanzo Datastore TTL:
 
 ```sql
 ALTER TABLE sharded_events
@@ -945,7 +872,7 @@ spec:
     - port: 6379
 ```
 
-The capture service can only talk to Kafka (write events) and Redis (validate keys). It has no access to ClickHouse, PostgreSQL, or the internet.
+The capture service can only talk to Kafka (write events) and Redis (validate keys). It has no access to Hanzo Datastore, PostgreSQL, or the internet.
 
 ## Operational Runbook
 
@@ -967,7 +894,7 @@ kubectl exec -n hanzo insights-kafka-0 -- \
   kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
   --group analytics-ingest --describe
 
-# Query ClickHouse directly
+# Query Hanzo Datastore directly
 kubectl exec -n hanzo insights-clickhouse-0 -- \
   clickhouse-client --query "
     SELECT event, count()
@@ -984,11 +911,11 @@ kubectl exec -n hanzo insights-clickhouse-0 -- \
 If events are captured but not appearing in the UI:
 
 1. **Check capture returned 200**: SDK network tab or server logs
-2. **Check Kafka**: Consumer lag for `analytics-ingest` group -- if lag is growing, ClickHouse consumer is stuck
-3. **Check ClickHouse**: Query `events` table directly -- if events are there, the issue is in the PostHog query layer
+2. **Check Kafka**: Consumer lag for `analytics-ingest` group -- if lag is growing, Hanzo Datastore consumer is stuck
+3. **Check Hanzo Datastore**: Query `events` table directly -- if events are there, the issue is in the PostHog query layer
 4. **Check team_id**: Verify the API key maps to the correct team in PostgreSQL
 
-### ClickHouse Maintenance
+### Hanzo Datastore Maintenance
 
 ```bash
 # Check table sizes

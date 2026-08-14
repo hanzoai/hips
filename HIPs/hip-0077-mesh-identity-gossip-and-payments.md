@@ -10,7 +10,6 @@ created: 2026-05-10
 ---
 
 
-
 # HIP-0077: Mesh Identity, Gossip & Payments (PQ)
 
 ## Abstract
@@ -188,47 +187,6 @@ MUST migrate to the canonical `uint8` form by the
 The migration MUST NOT change the value bound into the transcript hash
 of any cert produced before the freeze; the wire layout changes, the
 signed bytes do not.
-
-#### Why exactly five modes
-
-The orthogonal building blocks:
-
-| block                                          | classical? | PQ? | cost                          |
-|------------------------------------------------|------------|-----|-------------------------------|
-| BLS aggregate                                  | ✓          |     | 48 B, pre-quantum only        |
-| Threshold lattice (Corona OR Pulsar variant) |            | ✓   | O(1) post-DKG                 |
-| ML-DSA-65 per validator                        |            | ✓   | linear in N                   |
-| Groth16 rollup of ML-DSA → Z-Chain             |            | ✓   | ~192 B + verifier cost        |
-
-Five practical modes cover the design space:
-
-```
-BLS only                                            = bls
-BLS + Corona   (BLAKE3, trusted dealer)           = corona   (federations)
-BLS + Pulsar     (SHA-3, Pedersen DKG)              = pulsar     (public-chain floor)
-BLS + Pulsar + Z-Chain Groth16(ML-DSA)              = quasar     (default)
-BLS + per-validator ML-DSA (no threshold)           = mldsa      (audit fallback)
-```
-
-The other on-paper combinations are redundant or strictly weaker:
-
-- `BLS + per-validator ML-DSA + Groth16 rollup` — Groth16 already
-  rolls the same ML-DSA sigs; emitting both wastes bandwidth for
-  no extra cryptanalytic surface.
-- `BLS + Groth16 rollup only` (no threshold) — strictly weaker
-  than Quasar at the same cert size, since Quasar gets the
-  threshold layer for free.
-- `BLS + per-validator ML-DSA + Pulsar/Corona` — strictly
-  dominated by Quasar at much larger cert size; `mldsa` already
-  covers the no-Z-Chain transitional case.
-
-Hence five modes. Constants are hard-renamed from the previous
-`BLSPlusX` form per the forwards-only versioning policy. Aliases
-that name actual components (`rollup`, `groth16`, `zk`, `bls-z`,
-`z-chain`, `pulsar-z`, `bls-mldsa`, `bls-rt`, `academic`,
-`sha3-rt`, …) parse to the right canonical mode; **counting words
-(`triple`, `triple-quantum`, `double`, …) are rejected** because
-they tell a caller nothing about what's signed.
 
 #### Configuration
 

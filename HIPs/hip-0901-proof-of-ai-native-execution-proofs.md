@@ -4,13 +4,12 @@ title: Proof of AI (PoAI) — Native Execution Proofs, Canonical Contract & Oper
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Final
+status: Active
 created: 2026-06-23
 updated: 2026-06-24
 mirrors: LP-302, ZIP-0419
 requires: HIP-0001, HIP-0005
 ---
-
 
 
 # HIP-0901: Proof of AI (PoAI) — Native Execution Proofs, Canonical Contract & Operator-LLM Governance
@@ -47,36 +46,6 @@ The Freivalds core and the determinism prerequisites it depends on are **built
 and tested** (`hanzo-engine/src/poi.rs`, 14 `#[test]`), with byte-parity mirrors
 in the Go verifier (`luxfi/crypto/poi`, 22 `Test*`) and the Solidity
 (`ComputeWitnessLib.sol`).
-
-## Motivation
-
-Hanzo is a decentralized AI cloud: inference, training, and embedding run on
-independently operated nodes, and users pay per unit of AI work. That economic
-model has a hole that a centralized provider does not have — **a node operator
-who returns a plausible-looking answer without running the model robs the user,
-and nothing in a normal request/response exchange exposes it.**
-
-The standard answer — sign the output — does not close the hole. **A signature
-proves authorship, not computation.** It says "this node produced these bytes";
-it says nothing about whether those bytes came from a 671B mixture-of-experts
-model the user paid for or from a 0.6B model, a cache, or a guess. The work is
-what was purchased, and the work is exactly what a signature leaves unproven.
-
-The threat has a sharpest edge worth naming. **The cheapest cheat is a one-bit
-modal guess.** For a classification or routing decision, an operator who emits
-the most likely label without running the network is usually right and always
-cheaper. Any honest proof system must catch even this minimal deviation — a
-single fabricated output entry — or it protects nothing.
-
-The same gap recurs in **consensus and governance**. PoAI rewards useful AI work
-(it is the basis of Proof of AI consensus, ZIP-0419) and it lets verified AI
-*govern* — so "the AI decided" must mean a *verifiable* quorum of operator
-models, never an oracle anyone can spoof. PoAI's design goal follows directly:
-make the proof bind to the *computation*, catch the smallest possible cheat,
-never reject an honest operator, and survive a future quantum adversary. Because
-an LLM forward pass is overwhelmingly matrix multiplication, and because the
-dishonest case is *fabricating* a product matrix rather than mis-computing it, a
-probabilistic matrix-product check is exactly the right tool.
 
 ## Specification
 
@@ -420,35 +389,6 @@ and own their AI**. A user chooses where work runs:
 Either way the *same* PoAI proof governs payment and slashing, so a user can pick
 a trust level anywhere from "decentralized with cryptographic recourse" to "as
 trusted as a centralized cloud" without changing the protocol.
-
-## Rationale
-
-- **Why Freivalds rather than re-execution?** Re-execution gives no verification
-  asymmetry — it costs as much as the work. Freivalds is one polynomial order
-  cheaper and catches a *fabricated* output (which is the actual attack) with
-  probability `≥ 1 − 1/p`.
-- **Why the exact int8 accumulator?** It is the only regime where the check is
-  simultaneously **sound** (no tolerance to hide under) and **false-reject-free**
-  (bit-exact across all backends). Floating point is pushed to deterministic-fp /
-  TEE / zkML rather than degrading the integer check.
-- **Why information-theoretic soundness?** Because it makes PoAI **post-quantum by
-  construction** — the bound holds against an unbounded adversary, so settlement
-  survives a future quantum computer with no scheme migration.
-- **Why a signature is not enough.** A signature authenticates the *author* of
-  bytes; PoAI authenticates the *computation* that produced them. The
-  decentralized-cloud threat is precisely an authenticated-but-uncomputed answer.
-- **Why one primitive for four proofs.** Embedding, inference, forward training,
-  and backward training are all GEMM-dominated, and backprop is itself matmul.
-  One verifier keeps the trusted surface small and means PoE/PoI/PoT/PoC share the
-  same soundness argument. Data-sharing is *not* forced into the same check — it
-  is an orthogonal confidentiality concern.
-- **Why one canonical contract.** A single implementation in `luxfi/standard`
-  consumed via `@luxfi/standard/ai` means no drift between Hanzo, Zoo,
-  Lux, and Pars — one verifier, one registry, one coin, one governor.
-- **Why decomplect governance from execution.** `AIGovernor`/`AIParams`
-  *decide*; `AIExecute` *acts*; `AIApproval` is a thin adapter binding a settled
-  verdict to an operation hash; `AIPolicy` is an orthogonal guard. Each concern in
-  one place.
 
 ## Security Considerations
 

@@ -4,11 +4,10 @@ title: One Process, One Socket, One Identity
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Final
+status: Active
 created: 2026-07-28
 requires: HIP-0106, HIP-0114, HIP-0116, HIP-0120, HIP-0122
 ---
-
 
 
 # HIP-0134: One Process, One Socket, One Identity
@@ -111,45 +110,6 @@ surface's own callback exactly; no wildcards.
 Changing a surface's application is create-new → cut the surface over →
 verify login → retire old. An in-place rename invalidates every live token
 whose `aud` names the client.
-
-## Rationale
-
-**Why a socket rather than a token.** Authenticating a local call with a
-credential means minting, distributing, rotating, and revoking it — four
-operations that can each fail open — to establish a fact the kernel already
-knows and cannot be lied to about. `credz` authenticates its peers with
-`SO_PEERCRED` for this reason; this HIP applies the same argument to every
-plugin.
-
-**Why identity has exactly one owner.** Every mechanism that guards a second
-identity path — a sanitizing middleware, a mesh-mTLS plan for an internal
-wire, a ForwardAuth gate per surface — is a correct answer to a question that
-only exists because identity was put on a header and the hop was put on a
-network. Remove those two choices and the mechanisms above them are not
-simplified; they are unnecessary.
-
-**JSON is an edge concern**, translated exactly once, and terminating client
-TLS is a distinct job. Both are satisfied by the gateway plugin owning the
-edge. Neither requires a separate process minting headers.
-
-## Backwards Compatibility
-
-The following are non-conforming in a deployment and are removed rather than
-reconfigured:
-
-| Thing | Why it goes |
-|---|---|
-| ZAP TCP listener on a service | The socket is the plane; a TCP port is an unauthenticated second door |
-| `cloud-api` Service or hostname | The binary is `cloud`; a second name is a second trust posture |
-| Identity-sanitizing middleware | A second identity implementation; IAM owns the principal |
-| ForwardAuth gate as a surface's authorization | Authorization belongs to the plugin that owns the data |
-| A surface borrowing another surface's IAM client | One app per surface, named for the surface |
-
-Order matters, because a removal that outpaces its replacement opens a hole:
-give each surface its own IAM app and in-plugin org scoping first; then
-retire the gate; then remove the second listener and the second name; and
-remove the sanitizing middleware once no path reaches a plugin except through
-IAM. A step whose successor is not yet in place is not started.
 
 ## Security Considerations
 

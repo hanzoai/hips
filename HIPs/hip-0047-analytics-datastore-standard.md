@@ -10,13 +10,12 @@ requires: HIP-0017, HIP-0029
 ---
 
 
-
 # HIP-0047: Analytics Datastore Standard
 
 ## Abstract
 
 This proposal defines the analytics datastore standard for the Hanzo ecosystem.
-Hanzo Datastore, our Apache-2.0 ClickHouse fork, provides columnar analytics
+Hanzo Datastore, our Apache-2.0 Hanzo Datastore fork, provides columnar analytics
 storage, deployed as a replicated cluster on each DOKS Kubernetes cluster.
 Every Hanzo service that requires high-throughput event ingestion, OLAP
 queries, or time-series aggregation MUST use the cluster-local Datastore
@@ -25,7 +24,7 @@ instance following this specification.
 **Repository**: [github.com/hanzoai/datastore](https://github.com/hanzoai/datastore)
 **Image**: `ghcr.io/hanzoai/datastore:latest`
 **Ports**: 8123 (HTTP), 9000 (native TCP), 9440 (native TLS)
-**Engine**: ClickHouse 24.x+
+**Engine**: Hanzo Datastore 24.x+
 
 ## Motivation
 
@@ -44,20 +43,20 @@ Without a dedicated analytics datastore:
 
 1. **PostgreSQL becomes the bottleneck.** Running `SELECT COUNT(*) FROM events
    WHERE timestamp > '2026-01-01' GROUP BY user_id` on a 500M-row PostgreSQL
-   table takes 45-120 seconds. The same query on ClickHouse completes in
+   table takes 45-120 seconds. The same query on Hanzo Datastore completes in
    200-800 milliseconds. PostgreSQL scans every column of every row;
-   ClickHouse reads only the columns referenced in the query.
+   Hanzo Datastore reads only the columns referenced in the query.
 
 2. **Storage costs explode.** A single analytics event averages 1-2 KB in
-   PostgreSQL (row storage, TOAST overhead, indexes). ClickHouse compresses
+   PostgreSQL (row storage, TOAST overhead, indexes). Hanzo Datastore compresses
    the same event to 50-100 bytes using columnar compression. At 10M
-   events/day, PostgreSQL consumes ~15 GB/day; ClickHouse consumes ~700 MB/day.
+   events/day, PostgreSQL consumes ~15 GB/day; Hanzo Datastore consumes ~700 MB/day.
    Over a year, that is 5.4 TB vs 250 GB.
 
 3. **SaaS analytics are prohibitively expensive.** BigQuery charges $5/TB
    scanned. Snowflake charges per-second compute plus storage. At our query
    volume (thousands of dashboard loads per day, each scanning 10-100 GB),
-   managed analytics would cost $5,000-20,000/month. Self-hosted ClickHouse
+   managed analytics would cost $5,000-20,000/month. Self-hosted Hanzo Datastore
    runs on existing Kubernetes infrastructure for near-zero marginal cost.
 
 4. **No unified query layer.** Without a standard, Insights uses one database,
@@ -74,7 +73,7 @@ interface.
 This section explains the reasoning behind each major architectural decision.
 Understanding the *why* is as important as understanding the *what*.
 
-### Why ClickHouse Over PostgreSQL for Analytics
+### Why Hanzo Datastore Over PostgreSQL for Analytics
 
 PostgreSQL is the Hanzo standard for transactional data (HIP-0029). It excels
 at OLTP: small reads and writes, row-level locking, ACID transactions, foreign
@@ -83,7 +82,7 @@ OAuth tokens in PostgreSQL. Cloud stores projects, API keys, and configuration.
 
 Analytics data has the opposite access pattern:
 
-| Property | OLTP (PostgreSQL) | OLAP (ClickHouse) |
+| Property | OLTP (PostgreSQL) | OLAP (Hanzo Datastore) |
 |----------|-------------------|-------------------|
 | Write pattern | Single-row inserts/updates | Batch inserts (1000+ rows) |
 | Read pattern | Point lookups by primary key | Full-column scans with aggregation |
@@ -92,71 +91,21 @@ Analytics data has the opposite access pattern:
 | Compression | Row-level, 1-2x | Column-level, 10-100x |
 | Typical query | `SELECT * FROM users WHERE id = 42` | `SELECT COUNT(*) FROM events WHERE ts > '2026-01-01' GROUP BY browser` |
 
-ClickHouse stores data column-by-column on disk. When a query references 3 out
+Hanzo Datastore stores data column-by-column on disk. When a query references 3 out
 of 50 columns, only those 3 columns are read from disk. PostgreSQL stores data
 row-by-row, so it must read all 50 columns even if only 3 are needed.
 
 For a table with 1 billion rows and 50 columns, a query touching 3 columns:
 - **PostgreSQL**: Reads ~1 TB from disk (all columns, all rows)
-- **ClickHouse**: Reads ~6 GB from disk (3 columns, compressed)
+- **Hanzo Datastore**: Reads ~6 GB from disk (3 columns, compressed)
 
 This is not a marginal difference. It is 100-200x less I/O, which translates
 directly into 100-200x faster queries.
 
-**Decision**: Use ClickHouse for all analytics workloads. Keep PostgreSQL for
+**Decision**: Use Hanzo Datastore for all analytics workloads. Keep PostgreSQL for
 transactional data per HIP-0029.
 
-### Why ClickHouse Over Snowflake / BigQuery
-
-Both Snowflake and BigQuery are excellent managed columnar databases. We reject
-them for three reasons:
-
-1. **Data sovereignty.** Hanzo stores user behavior data, LLM prompts (in
-   aggregated form), and billing records. Enterprise customers require that
-   this data stays on infrastructure we control. Snowflake and BigQuery are
-   third-party managed services where data resides on vendor infrastructure.
-
-2. **Per-query pricing is unpredictable.** BigQuery charges $5/TB scanned.
-   A single poorly written query on a 10 TB table costs $50. A dashboard
-   with 20 panels, each scanning 5 GB, costs $0.50 per page load. At 1000
-   dashboard loads/day, that is $500/day or $15,000/month -- just for
-   dashboards. ClickHouse has zero per-query cost.
-
-3. **Latency.** Snowflake and BigQuery add network round-trip latency
-   (50-200ms) before query execution begins. ClickHouse is co-located with
-   the services that query it, so the network hop is sub-millisecond. For
-   interactive dashboards where users expect instant results, this matters.
-
-**Decision**: Self-host ClickHouse. Eliminate per-query costs and data
-residency concerns.
-
-### Why ClickHouse Over Apache Druid
-
-Druid is a real-time analytics database designed for sub-second OLAP queries.
-It is a valid alternative. We chose ClickHouse over Druid for three reasons:
-
-1. **Simpler architecture.** Druid has six process types (Coordinator,
-   Overlord, Broker, Router, Historical, MiddleManager) plus external
-   dependencies on ZooKeeper, a metadata store (PostgreSQL/MySQL), and deep
-   storage (S3/HDFS). ClickHouse is a single binary. A production cluster
-   needs ClickHouse nodes and (optionally since 24.x) ClickHouse Keeper
-   for coordination. No ZooKeeper, no external metadata store.
-
-2. **SQL-native.** Druid has its own query language (Druid SQL is a subset
-   of SQL with significant gaps). ClickHouse supports full ANSI SQL plus
-   extensions for arrays, maps, nested data, and window functions. Engineers
-   already know SQL. Druid SQL requires learning Druid-specific syntax and
-   limitations.
-
-3. **Better compression.** ClickHouse consistently achieves 10-20x
-   compression ratios on analytics data. Druid achieves 3-8x. On a dataset
-   of 1 billion events (1 TB uncompressed), ClickHouse stores it in ~60 GB;
-   Druid stores it in ~150 GB.
-
-**Decision**: Use ClickHouse. Simpler to operate, better compression, standard
-SQL.
-
-### Why ClickHouse Over TimescaleDB
+### Why Hanzo Datastore Over TimescaleDB
 
 TimescaleDB is PostgreSQL with time-series extensions. It is excellent for
 metrics (CPU usage, request latency, disk I/O) where each data point is a
@@ -169,9 +118,9 @@ at 100-1000x the rate of metrics. A busy dashboard page load generates
 10-20 analytics events; the same page generates 1-2 metric data points.
 
 TimescaleDB inherits PostgreSQL's row-oriented storage. For wide tables with
-billions of rows, it cannot match ClickHouse's columnar performance:
+billions of rows, it cannot match Hanzo Datastore's columnar performance:
 
-| Workload | TimescaleDB | ClickHouse |
+| Workload | TimescaleDB | Hanzo Datastore |
 |----------|-------------|------------|
 | Ingestion (events/sec, single node) | 50,000-100,000 | 1,000,000-5,000,000 |
 | Query: COUNT by day (1B rows) | 8-15 seconds | 0.1-0.3 seconds |
@@ -179,34 +128,11 @@ billions of rows, it cannot match ClickHouse's columnar performance:
 | Disk usage (1B events) | 200-400 GB | 50-100 GB |
 
 TimescaleDB is the right choice for infrastructure metrics (Prometheus
-long-term storage, IoT sensor data). ClickHouse is the right choice for
+long-term storage, IoT sensor data). Hanzo Datastore is the right choice for
 analytics events.
 
-**Decision**: Use ClickHouse for analytics events. Use Prometheus + Grafana
+**Decision**: Use Hanzo Datastore for analytics events. Use Prometheus + Grafana
 for infrastructure metrics per HIP-0031. TimescaleDB is not needed.
-
-### Why Separate from PostgreSQL (HIP-0029)
-
-The simplest architecture would be one database for everything. We reject
-this because analytics and transactional workloads compete destructively
-when co-located:
-
-1. **Lock contention.** A long-running analytics query (`SELECT ... GROUP BY
-   ... ORDER BY ... LIMIT 100` on 500M rows) holds read locks that block
-   transactional writes. PostgreSQL's MVCC mitigates this but does not
-   eliminate it -- vacuum, buffer pool pressure, and WAL volume all increase.
-
-2. **Resource competition.** Analytics queries consume CPU and memory for
-   sorting, hashing, and aggregation. This starves transactional queries
-   that need sub-millisecond response times for user-facing API calls.
-
-3. **Scaling dimensions differ.** Transactional databases scale vertically
-   (bigger instance) and with read replicas. Analytics databases scale
-   horizontally (shard by time, distribute across nodes). Combining them
-   forces a compromise that serves neither well.
-
-**Decision**: PostgreSQL for OLTP (HIP-0029). Datastore for OLAP (this HIP).
-Separate processes, separate storage, separate scaling.
 
 ## Specification
 
@@ -675,11 +601,11 @@ Expected compression ratios on production data:
 
 ### Replication
 
-Production deployments MUST use a 2-replica configuration. ClickHouse
+Production deployments MUST use a 2-replica configuration. Hanzo Datastore
 replication is asynchronous and log-based:
 
 1. When a write arrives at Replica A, it is written to the local MergeTree
-   and a log entry is created in ClickHouse Keeper.
+   and a log entry is created in Hanzo Datastore Keeper.
 2. Replica B polls the log and fetches the new data part from Replica A.
 3. Both replicas are eventually consistent. Replication lag is typically
    under 1 second.
@@ -713,9 +639,9 @@ replication is asynchronous and log-based:
 </clickhouse>
 ```
 
-#### ClickHouse Keeper Configuration
+#### Hanzo Datastore Keeper Configuration
 
-Since ClickHouse 24.x, the built-in ClickHouse Keeper replaces ZooKeeper.
+Since Hanzo Datastore 24.x, the built-in Hanzo Datastore Keeper replaces ZooKeeper.
 A 3-node Keeper ensemble provides coordination for replication:
 
 ```xml
@@ -809,7 +735,7 @@ Recovery point objective (RPO): < 24 hours (last daily backup).
 
 ### Monitoring
 
-ClickHouse exposes internal metrics through system tables. Hanzo Zap
+Hanzo Datastore exposes internal metrics through system tables. Hanzo Zap
 (HIP-0031) scrapes these and exports them as Prometheus metrics.
 
 #### Key System Tables
@@ -883,7 +809,7 @@ volumes:
 
 #### Kubernetes (Production)
 
-Production deployments use the ClickHouse Operator for lifecycle management.
+Production deployments use the Hanzo Datastore Operator for lifecycle management.
 
 ```yaml
 # k8s/clickhouse-installation.yaml
@@ -963,7 +889,7 @@ spec:
 
 #### Authentication
 
-ClickHouse MUST require authentication for all connections. Two user
+Hanzo Datastore MUST require authentication for all connections. Two user
 profiles are provisioned:
 
 | User | Purpose | Permissions |
@@ -971,7 +897,7 @@ profiles are provisioned:
 | `hanzo` | Application writes and reads | Full DDL + DML on `hanzo` database |
 | `readonly` | Dashboard queries, Grafana | SELECT only, 60s query timeout |
 
-Passwords are stored as SHA-256 hashes in the ClickHouse users configuration.
+Passwords are stored as SHA-256 hashes in the Hanzo Datastore users configuration.
 Credentials are managed through KMS (HIP-0033) and injected as Kubernetes
 secrets.
 
@@ -1006,7 +932,7 @@ Insights is the primary consumer of the analytics datastore. The integration
 flow is:
 
 ```
-SDK (browser/server) --> Capture Service (Rust) --> Kafka --> ClickHouse
+SDK (browser/server) --> Capture Service (Rust) --> Kafka --> Hanzo Datastore
                                                          --> PostgreSQL (metadata only)
 ```
 
@@ -1022,7 +948,7 @@ Insights queries Datastore for:
 
 Zap (HIP-0031) ships structured logs to Datastore for long-term storage.
 Prometheus handles short-term metrics (15-day retention). For queries
-spanning weeks or months, Grafana queries Datastore via the ClickHouse
+spanning weeks or months, Grafana queries Datastore via the Hanzo Datastore
 data source plugin.
 
 ```
@@ -1053,90 +979,16 @@ ORDER BY total_cost DESC;
 This query runs against the `token_usage_daily` materialized view in
 production for sub-second response times.
 
-## Migration Path
-
-### From PostgreSQL Analytics Tables
-
-Services currently storing analytics data in PostgreSQL MUST migrate to
-ClickHouse:
-
-1. **Schema mapping**: Convert PostgreSQL table schema to ClickHouse DDL.
-   Replace `SERIAL` with `UInt64`, `JSONB` with `String`, `TIMESTAMPTZ`
-   with `DateTime64(3, 'UTC')`.
-
-2. **Data migration**: Use `clickhouse-client` with `INSERT INTO ... SELECT`
-   from PostgreSQL via the `postgresql()` table function:
-
-   ```sql
-   INSERT INTO events
-   SELECT * FROM postgresql(
-       'postgres:5432', 'hanzo_iam', 'analytics_events',
-       'hanzo', 'password'
-   );
-   ```
-
-3. **Dual-write period**: Write to both PostgreSQL and Datastore for 7 days.
-   Validate row counts and query results match.
-
-4. **Cutover**: Switch reads to Datastore. Stop writes to PostgreSQL.
-   Drop PostgreSQL analytics tables after 30-day grace period.
-
-### Version Upgrades
-
-ClickHouse follows a calendar-based release cycle (YY.M). Upgrades MUST
-follow this procedure:
-
-1. Read the changelog for breaking changes.
-2. Test the upgrade on a staging replica.
-3. Upgrade one replica at a time (rolling upgrade).
-4. Verify replication health after each replica upgrade.
-5. Run validation queries to confirm data integrity.
-
-## Rationale
-
-The analytics datastore is a critical piece of Hanzo infrastructure that
-sits between event ingestion (HIP-0017, HIP-0030) and user-facing dashboards
-(Insights, Grafana, billing). The choice of ClickHouse is driven by three
-non-negotiable requirements:
-
-1. **Sub-second queries on billions of rows.** Interactive dashboards require
-   that users see results immediately. No row-oriented database can deliver
-   this at our data volume.
-
-2. **10x-100x compression over PostgreSQL.** Storage costs scale linearly
-   with data volume. Columnar compression is the only way to keep analytics
-   data for 12+ months affordably.
-
-3. **Self-hosted with zero per-query costs.** Managed analytics services
-   charge by the query or by data scanned. At Hanzo's query volume, this
-   creates unpredictable and unacceptable costs.
-
-ClickHouse satisfies all three. It is battle-tested at companies processing
-trillions of events (Uber, Cloudflare, eBay, GitLab). It is open-source
-(Apache 2.0). It has a single-binary deployment model that fits our
-Kubernetes-native infrastructure.
-
-## Backwards Compatibility
-
-This HIP introduces a new infrastructure component. There are no backwards
-compatibility concerns for existing services because:
-
-1. PostgreSQL (HIP-0029) continues to serve transactional workloads unchanged.
-2. Services currently using PostgreSQL for analytics will undergo a phased
-   migration (see Migration Path).
-3. The ClickHouse query interface (SQL over HTTP) requires no new client
-   libraries -- any HTTP client can query Datastore.
-
 ## Reference Implementation
 
 The reference implementation is at
 [github.com/hanzoai/datastore](https://github.com/hanzoai/datastore) and
 includes:
 
-- `Dockerfile`: ClickHouse image with Hanzo-specific configuration
+- `Dockerfile`: Hanzo Datastore image with Hanzo-specific configuration
 - `schemas/`: DDL for all tables and materialized views
-- `config/`: ClickHouse server configuration templates
-- `k8s/`: Kubernetes manifests and ClickHouse Operator CRD
+- `config/`: Hanzo Datastore server configuration templates
+- `k8s/`: Kubernetes manifests and Hanzo Datastore Operator CRD
 - `backup/`: Backup scripts and CronJob manifests
 - `grafana/`: Dashboard JSON exports
 - `tests/`: Integration tests using `clickhouse-client`

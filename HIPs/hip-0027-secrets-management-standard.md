@@ -4,19 +4,27 @@ title: Secrets Management Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Active
 created: 2025-01-15
 ---
-
 
 
 # HIP-0027: Secrets Management Standard
 
 ## Abstract
 
+
+> **UNRESOLVED — do not build on this HIP's ownership claim.** Two files in
+> `hanzoai/kms` disagree about whether that repo exists: its `README.md` calls it
+> "a thin Go server ... all server logic lives in `luxfi/kms`", while
+> `DEPRECATED.md` in the same repo says `hanzoai/kms` is deprecated in favour of
+> `luxfi/kms` outright. This document described a fork of a third-party secrets
+> product, which neither file supports and which we do not run. The wire contract
+> below is still accurate; who owns the implementation is a decision somebody owes.
+
 This proposal defines the secrets management standard for the Hanzo ecosystem,
 centered on Hanzo KMS at **kms.hanzo.ai**. Hanzo KMS is a self-hosted fork of
-Infisical that provides centralized, auditable, Kubernetes-native secrets
+the luxfi/kms primitives that provides centralized, auditable, Kubernetes-native secrets
 management for all Hanzo services. It replaces scattered environment variables,
 CI/CD secrets, and manual `kubectl create secret` operations with a single
 source of truth.
@@ -55,7 +63,7 @@ manual secrets management became the single largest operational risk.
 
 ## Design Philosophy
 
-### Why Infisical Over HashiCorp Vault
+### Why our own KMS over HashiCorp Vault
 
 HashiCorp Vault is the industry default for secrets management, but it
 carries significant operational overhead:
@@ -74,21 +82,22 @@ carries significant operational overhead:
   operators. Developers adding a new API key must understand mount paths,
   engines, and policy bindings.
 
-Infisical was chosen because:
+The design was chosen because:
 
 - **Modern UI**: Developers can browse projects, environments, and secrets
   in a web interface that resembles a `.env` file editor. No learning curve.
 - **Environment-based organization**: Secrets are organized as project >
   environment > folder > key-value, which maps directly to our dev/staging/
   production workflow.
-- **Built-in secret rotation**: Infisical supports automatic rotation for
+- **Built-in secret rotation**: the server supports automatic rotation for
   database credentials and API keys without external tooling.
-- **Kubernetes operator**: The Infisical Secrets Operator provides the
-  `InfisicalSecret` CRD (which we rebrand as `KMSSecret` under the
+- **Kubernetes operator**: our own operator provides the
+  `KMSSecret` CRD (live in two groups today, `kmssecrets.secrets.lux.network`
+  and `kmssecrets.kms.hanzo.ai`; universe declares the former) under the
   `secrets.lux.network` API group) for native K8s integration.
 - **Open source with BSL**: Business Source License allows self-hosting
   and modification. We fork, rebrand, and deploy without vendor lock-in.
-- **Single binary**: Infisical runs as a single Node.js application with
+- **Single binary**: the server is a single Go binary with
   PostgreSQL and Redis backends --- the same infrastructure we already
   operate for other services.
 
@@ -113,34 +122,6 @@ that cloud. Hanzo's infrastructure has specific constraints:
 - **Data sovereignty**: Some customers and compliance frameworks require
   that encryption keys and credentials never leave infrastructure we
   control. Self-hosted KMS satisfies this requirement.
-
-### Why Universal Auth Over mTLS
-
-Machine-to-machine authentication for secret access could use mutual TLS
-(mTLS), where each service presents a client certificate. We chose Universal
-Auth (client ID + client secret -> bearer token) for pragmatic reasons:
-
-- **CI/CD simplicity**: GitHub Actions can `POST` to the login endpoint,
-  receive a bearer token, and fetch secrets --- three HTTP calls, zero
-  certificate management. With mTLS, every CI runner would need a client
-  certificate provisioned, rotated, and securely stored.
-- **No certificate infrastructure**: mTLS requires a Certificate Authority,
-  certificate issuance, revocation lists (CRL/OCSP), and rotation
-  automation. This is a substantial system to build and operate. Universal
-  Auth requires only storing a client ID and client secret.
-- **Short-lived tokens**: Universal Auth tokens expire (default: 7200
-  seconds). If a token leaks, the blast radius is limited. With mTLS,
-  a leaked client certificate is valid until revoked --- and revocation
-  is notoriously unreliable.
-- **Debuggability**: Bearer tokens appear in HTTP headers and are easy to
-  trace in logs (redacted). mTLS authentication happens at the TLS layer,
-  invisible to application-level logging and debugging.
-
-The trade-off: Universal Auth credentials (clientId/clientSecret) must be
-bootstrapped into each service somehow. In K8s, we store them as a
-`Secret` that is created once and referenced by `KMSSecret` resources.
-This is the one secret that is not managed by KMS itself --- a
-necessary bootstrap dependency.
 
 ### Why the KMSSecret CRD
 
@@ -660,12 +641,6 @@ system has one. We acknowledge it explicitly rather than hiding it.
 | GDPR Art. 32 | Security of processing | AES-256-GCM, audit trail |
 | PCI DSS 3.4 | Render PAN unreadable | Encryption at rest |
 
-## Migration Guide
-
-### From Environment Variables in Git
-
-Before (insecure):
-```yaml
 # compose.yml - DO NOT DO THIS
 environment:
   DATABASE_URL: "postgresql://user:password@host:5432/db"
@@ -790,7 +765,7 @@ If a secret is suspected compromised:
 
 ## References
 
-1. [Infisical Documentation](https://infisical.com/docs/documentation/getting-started/introduction)
+1. `luxfi/kms` -- the primitives all server logic lives in
 2. [HIP-5: Post-Quantum Security for AI Infrastructure](./hip-0005-post-quantum-security-for-ai-infrastructure.md)
 3. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 4. [NIST SP 800-57: Key Management](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final)

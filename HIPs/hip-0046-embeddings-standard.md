@@ -10,7 +10,6 @@ requires: HIP-0004, HIP-0042
 ---
 
 
-
 # HIP-0046: Embeddings Standard
 
 ## Abstract
@@ -21,177 +20,7 @@ This proposal defines the Embeddings Standard for the Hanzo ecosystem. It specif
 **Gateway Port**: 4000
 **Protocol**: OpenAI-compatible REST API
 
-## Motivation
-
-Embeddings are the foundational representation layer for semantic operations across the Hanzo ecosystem. Every system that performs retrieval, similarity matching, clustering, or semantic search depends on dense vector representations of text, images, or other modalities.
-
-Current challenges:
-
-1. **Provider Diversity**: OpenAI, Cohere, and local models each excel at different embedding tasks. No single provider dominates all use cases.
-2. **Dimension-Cost Tradeoff**: Applications need different vector sizes. A 256-dim vector suffices for coarse filtering; 3072-dim vectors are needed for fine-grained retrieval.
-3. **Scale**: RAG pipelines ingest millions of document chunks. Per-request embedding is too slow; batch processing is required.
-4. **Redundant Computation**: The same text fragments are embedded repeatedly across services. Caching eliminates this waste.
-5. **Fragmented Integration**: Without a standard, each service implements its own embedding client, chunking logic, and normalization. Bugs and inconsistencies multiply.
-
-This HIP provides a single specification that all Hanzo services MUST use for embedding generation.
-
-## Design Philosophy
-
-### Why Multi-Provider Embeddings
-
-Different embedding models have different strengths. OpenAI `text-embedding-3-large` produces the highest-quality vectors for English retrieval tasks. `text-embedding-3-small` runs 5x faster at 60% of the cost for acceptable quality. Cohere `embed-v3` leads on multilingual benchmarks across 100+ languages. Local models via Engine eliminate network latency and data egress concerns for sensitive workloads.
-
-The Gateway routes embedding requests to the optimal provider based on the model field in the request. Callers specify what they want; the Gateway handles where it runs. This decouples application logic from provider selection, enabling transparent migration when better models emerge.
-
-### Why OpenAI-Compatible API
-
-The OpenAI embeddings API is the de facto standard. Every major embedding library, vector database, and RAG framework supports it natively. By implementing the same interface, any existing OpenAI client works against the Hanzo Gateway without code changes. A developer using `openai.embeddings.create()` in Python simply changes the `base_url` to the Gateway and gains multi-provider routing, caching, and cost optimization for free.
-
-Inventing a proprietary API would require building and maintaining client libraries for every language, writing migration guides, and convincing developers to adopt a non-standard interface. The marginal benefit is zero; the cost is substantial.
-
-### Why Not Train Our Own Embedding Models
-
-Training competitive embedding models requires:
-
-- **Massive paired datasets**: Billions of (query, document) pairs with relevance labels
-- **Contrastive learning infrastructure**: Multi-GPU training with hard negative mining
-- **Evaluation benchmarks**: MTEB, BEIR, and domain-specific test suites
-- **Ongoing maintenance**: Models degrade as language shifts; retraining is continuous
-
-OpenAI and Cohere each invest hundreds of millions of dollars in training data curation and model development. Their embedding models are commodities priced at fractions of a cent per million tokens. The correct strategy is to leverage their models through the Gateway and focus engineering effort on the application layer: chunking, retrieval, re-ranking, and synthesis.
-
-If a domain-specific embedding model is needed (e.g., for code, scientific papers, or blockchain data), fine-tuning an open model via Engine is the path. This is covered in the Local Models section.
-
-### Why Dimension Reduction Support
-
-OpenAI `text-embedding-3-*` models support Matryoshka Representation Learning (MRL). The full embedding is 3072 dimensions, but it can be truncated to 256, 512, or 1024 dimensions with graceful quality degradation. This is not naive truncation; the model is trained so that the first N dimensions capture the most important semantic information.
-
-The practical impact:
-
-| Dimensions | Storage per Vector | Index Memory (1M vectors) | Quality (MTEB) |
-|------------|-------------------|--------------------------|-----------------|
-| 3072       | 12,288 bytes      | ~12 GB                   | 64.6            |
-| 1024       | 4,096 bytes       | ~4 GB                    | 62.1            |
-| 512        | 2,048 bytes       | ~2 GB                    | 60.8            |
-| 256        | 1,024 bytes       | ~1 GB                    | 58.4            |
-
-For a vector store with 100M documents, reducing from 3072 to 256 dimensions saves 1.1 TB of storage and proportionally reduces query latency. The Gateway exposes this via the `dimensions` parameter, making it trivial for callers to select their quality-cost tradeoff.
-
-### Why Batch Processing
-
-Embedding generation is embarrassingly parallel. Each input text is independent; there are no sequential dependencies. The batch API accepts up to 2048 inputs per request and processes them concurrently on the provider side. This reduces:
-
-- **Network overhead**: 1 HTTP request instead of 2048
-- **Authentication overhead**: 1 API key validation instead of 2048
-- **Connection overhead**: 1 TLS handshake instead of 2048
-
-In practice, batch embedding is 10-50x faster than sequential per-request embedding for document ingestion workloads. The Gateway further optimizes by splitting oversized batches into provider-optimal chunk sizes and reassembling results.
-
-## Specification
-
-### API Endpoint
-
-```
-POST /v1/embeddings
-Content-Type: application/json
-Authorization: Bearer sk-hanzo-...
-```
-
-All requests go through the LLM Gateway (HIP-0004) at port 4000. The Gateway handles provider routing, authentication, rate limiting, and response normalization.
-
-### Request Schema
-
-```json
-{
-  "model": "text-embedding-3-large",
-  "input": "The quick brown fox jumps over the lazy dog",
-  "encoding_format": "float",
-  "dimensions": 1024,
-  "user": "user-abc123"
-}
-```
-
-#### Request Fields
-
-| Field              | Type                    | Required | Default   | Description                                              |
-|--------------------|-------------------------|----------|-----------|----------------------------------------------------------|
-| `model`            | string                  | Yes      | -         | Model identifier (see Available Models)                  |
-| `input`            | string or string[]      | Yes      | -         | Text(s) to embed. Max 2048 items in array.               |
-| `encoding_format`  | string                  | No       | `"float"` | `"float"` or `"base64"`. Base64 reduces payload by ~25%. |
-| `dimensions`       | integer                 | No       | Model default | Output dimensions. Only supported by MRL-capable models. |
-| `user`             | string                  | No       | -         | End-user identifier for abuse tracking.                  |
-
-#### Input Constraints
-
-- **String input**: Single text, max token length per model (see Available Models table).
-- **Array input**: Array of strings, max 2048 items. Total tokens across all items must not exceed the model's batch token limit.
-- **Empty strings**: Rejected with 400 error. Embeddings of empty text are undefined.
-- **Encoding**: Input MUST be valid UTF-8. The Gateway rejects malformed sequences.
-
-### Response Schema
-
-```json
-{
-  "object": "list",
-  "data": [
-    {
-      "object": "embedding",
-      "embedding": [0.0023, -0.0092, 0.0156, ...],
-      "index": 0
-    }
-  ],
-  "model": "text-embedding-3-large",
-  "usage": {
-    "prompt_tokens": 8,
-    "total_tokens": 8
-  }
-}
-```
-
-#### Response Fields
-
-| Field                 | Type     | Description                                          |
-|-----------------------|----------|------------------------------------------------------|
-| `object`              | string   | Always `"list"`.                                     |
-| `data`                | array    | Array of embedding objects, one per input.            |
-| `data[].object`       | string   | Always `"embedding"`.                                |
-| `data[].embedding`    | float[]  | The embedding vector. Length equals `dimensions`.     |
-| `data[].index`        | integer  | Position in the input array (0-indexed).             |
-| `model`               | string   | The model that generated the embeddings.             |
-| `usage.prompt_tokens` | integer  | Total tokens consumed across all inputs.             |
-| `usage.total_tokens`  | integer  | Same as `prompt_tokens` (embeddings have no output). |
-
-#### Base64 Encoding
-
-When `encoding_format` is `"base64"`, the `embedding` field contains a base64-encoded string of little-endian float32 values instead of a JSON array:
-
-```json
-{
-  "object": "embedding",
-  "embedding": "AGDwPQAAkL0AAHA+...",
-  "index": 0
-}
-```
-
-Decoding in Python:
-
-```python
-import base64
-import numpy as np
-
-raw = base64.b64decode(data["embedding"])
-vector = np.frombuffer(raw, dtype=np.float32)
-```
-
-Base64 encoding reduces JSON payload size by approximately 25% and eliminates floating-point serialization overhead. Recommended for batch operations.
-
-### Available Models
-
-| Model                      | Provider | Dimensions | Max Tokens | Pricing (per 1M tokens) | Strengths                    |
-|----------------------------|----------|------------|------------|--------------------------|------------------------------|
-| `text-embedding-3-large`   | OpenAI   | 3072*      | 8191       | $0.13                    | Highest quality English      |
-| `text-embedding-3-small`   | OpenAI   | 1536*      | 8191       | $0.02                    | Fast, cost-effective         |
-| `text-embedding-ada-002`   | OpenAI   | 1536       | 8191       | $0.10                    | Legacy, wide compatibility   |
+e compatibility   |
 | `embed-english-v3.0`       | Cohere   | 1024       | 512        | $0.10                    | English retrieval            |
 | `embed-multilingual-v3.0`  | Cohere   | 1024       | 512        | $0.10                    | 100+ languages               |
 | `embed-english-light-v3.0` | Cohere   | 384        | 512        | $0.10                    | Lightweight English          |
@@ -668,10 +497,6 @@ curl -X POST https://llm.hanzo.ai/v1/embeddings \
 3. **API Key Scoping**: Embedding API keys can be scoped to specific models and rate limits. A key with `embedding:read` scope cannot access chat completions.
 4. **Input Logging**: Raw input text MUST NOT be logged at INFO level. Only token counts, model names, and latency are logged by default. Debug-level logging of inputs requires explicit opt-in.
 5. **Provider Key Isolation**: Provider API keys (OpenAI, Cohere) are stored in KMS (HIP-0027) and injected at runtime. They never appear in config files, logs, or error messages.
-
-## Backwards Compatibility
-
-This HIP introduces a new endpoint with no backwards compatibility concerns. The API is fully OpenAI-compatible. Future revisions MUST only add fields, never remove or rename them.
 
 ## Test Vectors
 

@@ -10,7 +10,6 @@ requires: HIP-0005 (Post-Quantum Security), HIP-0024 (Sovereign L1), HIP-0026 (I
 ---
 
 
-
 # HIP-0097: Node Identity and the did:hanzo: DID Method
 
 ## Abstract
@@ -72,15 +71,6 @@ four concrete problems, all of which touch code that is live today in
    (`@@a.b.c.hanzo`), mixes case then lowercases at construction, and silently
    auto-corrects (`correct_node_name` prepends `@@` and appends `.hanzo`). Loose,
    auto-correcting identity parsing is a security smell for something that is signed.
-
-### Why a clean break is worth it
-
-Because the name is signed and on-chain, we will *already* have to do a careful,
-versioned migration for any change at all (see Migration). Given that cost is
-unavoidable, we should land on the format we actually want long-term rather than a
-second interim hack. The ecosystem is already committed to `did:hanzo:`; node
-identity should converge onto it rather than maintain a parallel `@@` namespace
-forever.
 
 ## Specification
 
@@ -563,38 +553,6 @@ Legacy names containing dots or uppercase are flagged for operator-assisted rena
 (they are rare; the dominant case `@@alice.sep-hanzo` maps cleanly to
 `did:hanzo:alice?network=sepolia`). This mapping is the basis for dual-read (§5.3)
 and `same_identity` (§7).
-
-### Phase 1 — Accept DID, keep signing legacy (read-compatible)
-
-* Nodes upgrade to a build that **parses and resolves** both forms (`HanzoName`
-  accepts `did:hanzo:<name>` and `@@…`).
-* **Signing still uses the legacy string** (`IdentityProtocolVersion::Legacy`), so
-  the wire format and existing signatures are unchanged. Old and new builds
-  interoperate fully.
-* Registry: dual-read enabled; new registrations MAY be written under the DID key in
-  addition to the legacy key.
-* Duration: until a quorum (e.g. ≥90%) of active nodes report a Phase-1-capable
-  build via the handshake.
-
-### Phase 2 — Sign DID form between capable peers (negotiated)
-
-* Two `Did`-capable peers negotiate `IdentityProtocolVersion::Did` in the handshake
-  and **sign/verify the canonical `did:hanzo:` form**. A `Did` peer talking to a
-  `Legacy` peer transparently falls back to the legacy string for that session, so
-  no signature ever fails due to form mismatch.
-* `correct_node_name` auto-`@@`/`.hanzo` injection is **disabled by default**.
-* New nodes are *born* as `did:hanzo:<name>` and register under the DID key on the
-  `IHanzoDIDRegistry` (chain `36963`); legacy Base Sepolia entries remain dual-read.
-
-### Phase 3 — DID-only (cutover)
-
-* A flag-block height / date is announced. After it, nodes refuse
-  `IdentityProtocolVersion::Legacy`; only `did:hanzo:` is signed, registered, and
-  accepted.
-* The Base Sepolia identity contract is frozen; the canonical registry is
-  `IHanzoDIDRegistry` on chain `36963`. Legacy `@@` parsing is removed from
-  `HanzoName` (kept only in an offline migration tool).
-* `VALID_ENDINGS` and the `@@` regex are deleted.
 
 ### Migration tooling
 

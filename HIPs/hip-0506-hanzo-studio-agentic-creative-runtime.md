@@ -10,7 +10,6 @@ requires: HIP-0106, HIP-0504
 ---
 
 
-
 # HIP-0506: Hanzo Studio — Agentic Multi-Modal Creative Runtime
 
 ## Abstract
@@ -25,18 +24,6 @@ editor becomes an **Advanced** view over the same substrate. This is a
 **composition of already-shipped Hanzo cloud apps**, not a rewrite: `exec`/
 `functions` (sandbox), `tasks` (durable queue), `gpu` (dispatch), `connectorruntime`
 (Google Drive et al.). One and only one way.
-
-## Motivation
-
-Generative work today is fragmented across single-modality tools with no shared
-catalog, no curation memory, no reuse of base assets, and no path from "chat" to
-"editable pipeline." Hanzo already ships every substrate needed — a sandbox that
-runs Python/Node/container isolated on a dedicated pool, a durable task queue,
-GPU federation (BYO-GPU + cloud), a multi-tenant IAM/session/billing spine, and
-the Studio engine with video/audio/music/3D node packs vendored. What is missing
-is the **composition**: a chat-first surface, a preset/curation memory that makes
-output get closer to intent each pass, and the wiring from the copilot to the
-sandbox and queue. This HIP specifies that composition.
 
 ## Specification
 

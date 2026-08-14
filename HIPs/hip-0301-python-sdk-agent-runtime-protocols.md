@@ -10,7 +10,6 @@ requires: HIP-9, HIP-10
 ---
 
 
-
 # HIP-0301: Agent Runtime Protocols & Cross-Platform Parity
 
 ## Abstract
@@ -603,28 +602,6 @@ Unified conformance test suite verifying that Python, Rust, and JS implementatio
 **Test format:** Test vectors are stored as JSON files in `test-vectors/`. Each platform's test runner loads the same vectors and asserts identical output. The vectors are the source of truth; platform implementations conform to them.
 
 **CI:** A single CI job runs all three platform test suites against the shared vectors. A platform cannot merge if its output diverges from the vectors.
-
-## Rationale
-
-**Protocol abstractions** enable mock-based testing without network calls. The current SDK requires a live API connection to test agent loop logic.
-
-**Hierarchical config** follows the established pattern used by git and VS Code. Teams share project-level MCP server configurations while individual developers override locally.
-
-**Session compaction** prevents unbounded context growth in long-running agent sessions. Without compaction, agents that run for more than ~30 turns hit context limits and fail.
-
-**PKCE** is required by OAuth 2.1 (RFC 9126) and prevents authorization code interception attacks.
-
-**SSE frame buffering** fixes a class of bugs where network chunking splits an SSE event across two TCP segments.
-
-**Permission data model** enables both interactive and policy-driven permission management.
-
-**LSP integration** gives agents the same code intelligence humans get from IDEs, reducing hallucinated symbol names and missed type errors.
-
-**Hook runner** enables enterprise policy enforcement (e.g., blocking writes to production configs) without modifying the agent runtime itself.
-
-**Sandbox** prevents filesystem escapes. Container detection avoids double-sandboxing overhead.
-
-**Cross-platform parity** ensures users get identical behavior regardless of which platform they use. The shared test vectors are the specification.
 
 ## Reference Implementation
 

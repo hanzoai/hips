@@ -3,7 +3,7 @@ hip: 0088
 title: Session KEM (ML-KEM-768/1024 for P2P)
 type: Standards Track
 category: Cryptography
-status: Final
+status: Active
 author: Hanzo AI
 created: 2026-05-11
 requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0084 (Pulsar-M DKG)

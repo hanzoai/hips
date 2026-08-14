@@ -4,7 +4,7 @@ title: Hanzo Plugin & VM Model
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Superseded
+status: Retired
 created: 2026-07-07
 updated: 2026-07-29
 superseded-by: HIP-0106

@@ -4,7 +4,7 @@ title: LLM CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -66,7 +66,6 @@ Deployment, Service, optional HPA.
 
 ### Related services
 
-- HIP-443 (gateway service)
 - HIP-0004, HIP-0043, HIP-0044 (LLM gateway, inference, API gateway standards)
 
 ## Status

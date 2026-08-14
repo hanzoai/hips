@@ -10,7 +10,6 @@ requires: HIP-0036, HIP-0068, HIP-0119, HIP-0504
 ---
 
 
-
 # HIP-0115: Hanzo Frontend Delivery
 
 ## Abstract
@@ -90,17 +89,6 @@ this HIP by reference and MUST NOT restate or fork it.
 - A frontend that vendors the design system instead of depending on it.
 - A bespoke deploy pipeline; a second PaaS; nginx/caddy/per-site servers.
 - Static artifacts served from anywhere but `hanzoai/s3` via ingress+static.
-
-## Migration
-
-Existing scattered frontends are migrated into the apps org one site at a time:
-
-1. Pick the canonical repo for the site (the live, current one — e.g. `hanzoai/docs`
-   for `docs.hanzo.ai`); confirm the alternates carry no unique content.
-2. Move it to `<org>-apps/<name>` (transfer or re-home), clone to
-   `~/work/<org>/apps/<name>`.
-3. Register the PaaS app (`static`, host) → deploy → cut DNS.
-4. Archive the retired alternates. One project per site, achieved.
 
 ## Conformance checklist
 

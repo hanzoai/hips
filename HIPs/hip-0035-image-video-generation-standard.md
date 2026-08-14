@@ -10,7 +10,6 @@ requires: HIP-0004, HIP-0019
 ---
 
 
-
 # HIP-0035: Image & Video Generation Standard
 
 ## Abstract
@@ -29,35 +28,9 @@ This proposal defines the standard for visual AI generation workflows across the
 - `hanzoai/studio:latest`
 - `hanzoai/painter:latest`
 
-## Motivation
-
-Visual AI generation is converging on diffusion-based architectures (Stable Diffusion, Flux, DALL-E). However, the tooling landscape is fragmented:
-
-1. **No composability**: Most generation UIs expose a single pipeline -- prompt in, image out. There is no way to chain ControlNet, IP-Adapter, LoRA, upscaling, and inpainting into a reproducible workflow.
-2. **No reproducibility**: Generation parameters are scattered across UI sliders. Recreating a result requires screenshotting settings or manually recording every parameter.
-3. **Vendor lock-in**: Cloud APIs (Replicate, RunPod, Midjourney) charge per-inference and add cold-start latency. At production scale, this is unsustainable.
-4. **Skill gap**: Power users want node graphs and fine-grained control. Casual users want a text box and a "Generate" button. One UI cannot serve both.
-5. **No integration with Hanzo compute**: Generated images should flow into Hanzo's object storage (HIP-0032), billing (HIP-0004), and analytics pipelines without manual glue.
-
 ## Design Philosophy
 
 This section explains the architectural reasoning behind every major decision. These are not arbitrary choices -- each one follows from a specific constraint or tradeoff.
-
-### Why ComfyUI Over Automatic1111 or Fooocus
-
-The core question is: **what is the right abstraction for a diffusion pipeline?**
-
-**Automatic1111 (A1111)** treats the pipeline as a monolithic function: you configure a set of global parameters (model, sampler, steps, CFG scale, seed) and get an image. Extensions bolt on additional features (ControlNet, LoRA) through a plugin system, but the execution graph is implicit and hardcoded. You cannot, for example, route the output of one sampler into the ControlNet input of another sampler in the same generation. The pipeline topology is fixed.
-
-**Fooocus** goes further in the simplicity direction: it hides most parameters behind "presets" and focuses on prompt quality. This is excellent for casual users, but it is a dead end for anyone who needs custom pipelines. There is no extension point for novel architectures.
-
-**ComfyUI** takes the opposite approach: the diffusion pipeline is an explicit directed acyclic graph (DAG) of nodes. Each node performs one operation -- load a model, encode a prompt, sample latents, decode to pixels, apply ControlNet conditioning. The user wires nodes together visually. This has three critical consequences:
-
-1. **Composability**: Any pipeline topology is expressible. ControlNet + IP-Adapter + LoRA merging + two-pass sampling + upscaling is just a graph, not a special mode.
-2. **Reproducibility**: The entire graph, including every parameter on every node, is serialized as a single JSON document. Sharing a workflow means sharing a file. Version control works.
-3. **Extensibility**: Adding a new model architecture means adding a new node type. The execution engine does not change. This is why ComfyUI supported Flux, SD3, and SDXL-Turbo within days of release.
-
-The tradeoff is complexity: ComfyUI's UI is intimidating for beginners. This is why we split into Studio (full node graph) and Painter (simplified UI). Painter is a thin client that submits pre-built workflow templates to Studio's API.
 
 ### Why Self-Hosted Over Cloud APIs
 
@@ -73,34 +46,6 @@ Consider the economics of image generation at scale:
 At 10,000 generations/day, self-hosted saves $5,000-15,000/month. At 100,000/day, the savings are transformative. Self-hosting also eliminates cold starts (models stay loaded in VRAM), enables custom model merges and LoRAs, and keeps generated content on our infrastructure.
 
 The tradeoff is operational complexity: we must manage GPU hardware, model storage, and queue scheduling. This is acceptable because Hanzo already operates GPU infrastructure for LLM inference (HIP-0004).
-
-### Why Separate Studio and Painter
-
-These serve fundamentally different user populations:
-
-**Studio users** (artists, researchers, pipeline engineers):
-- Want full control over every node and parameter
-- Build custom workflows with novel architectures
-- Experiment with LoRA combinations, ControlNet conditioning, multi-pass generation
-- Need the node graph interface
-
-**Painter users** (content creators, marketers, developers):
-- Want to type a prompt and get an image
-- May adjust style, aspect ratio, and model -- but not sampler settings
-- Need a clean, fast interface with good defaults
-- Should not see nodes, latent spaces, or VAE configurations
-
-Same backend, different frontends. Painter submits workflows to Studio's `/api/prompt` endpoint using pre-built templates. This means every Painter generation is a valid Studio workflow and can be "opened in Studio" for fine-tuning.
-
-### Why Candle Integration (HIP-0019)
-
-Not every generation target has an NVIDIA GPU. For development, previewing, and lightweight generation on macOS (Apple Silicon) or CPU-only servers, we need a Python/PyTorch-free inference path.
-
-Candle (HIP-0019) provides Rust-native tensor operations with Metal and CPU backends. Studio can route inference to either:
-- **PyTorch backend**: Full-speed generation on NVIDIA GPUs (CUDA)
-- **Candle backend**: Portable generation on CPU/Metal without Python
-
-This dual-backend approach means Studio runs natively on a MacBook for development and on an A100 cluster for production, with the same workflow JSON.
 
 ## Specification
 

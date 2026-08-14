@@ -4,10 +4,9 @@ title: Container Registry Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Active
 created: 2025-01-15
 ---
-
 
 
 # HIP-0033: Container Registry Standard
@@ -25,17 +24,6 @@ distribution channel, and an in-cluster self-hosted registry for fast K8s pulls.
 Every container artifact produced by Hanzo MUST flow through this standard.
 The goal is simple: one build, three destinations, zero ambiguity about where
 images live or how they are authenticated.
-
-## Motivation
-
-We need ONE standard way to:
-
-- Build multi-architecture container images
-- Push images to multiple registries with clear priority semantics
-- Pull images into Kubernetes clusters at maximum speed
-- Authenticate registry access through Hanzo IAM
-- Sign and verify images for supply chain integrity
-- Store non-container OCI artifacts (Helm charts, ML models, WASM modules)
 
 ## Design Philosophy
 
@@ -66,31 +54,6 @@ continue running, and new pods can still be scheduled from cached layers.
 The self-hosted registry acts as both a primary pull source and a pull-through
 cache for upstream images. Kubernetes is configured to try the in-cluster
 registry first, falling back to GHCR only if the local copy is missing.
-
-### Why OCI Over Docker Registry v2 Only
-
-The Docker Registry HTTP API v2 was designed for one thing: container images.
-The OCI Distribution Specification v1.1 generalizes this to any content-addressable
-artifact. This matters because Hanzo stores more than container images:
-
-| Artifact Type | Docker v2 | OCI v1.1 |
-|---|---|---|
-| Container images | Yes | Yes |
-| Helm charts | No | Yes |
-| WASM modules | No | Yes |
-| ML model weights | No | Yes |
-| Signed metadata | No | Yes |
-| SBOMs | No | Yes |
-
-By standardizing on OCI, we get a single registry that stores container images
-alongside Helm charts for deployment, ML model artifacts for inference servers,
-and WASM modules for edge compute. One address scheme, one authentication
-system, one garbage collection policy.
-
-The OCI spec is also the direction the industry is moving. Docker itself now
-implements OCI distribution. Helm 3 stores charts as OCI artifacts. Sigstore
-signs OCI artifacts. Building on OCI means we are building on the convergent
-standard, not a legacy protocol.
 
 ### Why Multi-Registry Strategy
 
@@ -655,16 +618,6 @@ The in-cluster registry is a cache, not a source of truth. If it is lost:
 
 GHCR and Docker Hub are managed by GitHub and Docker respectively. Our disaster
 recovery concern is limited to the in-cluster tier.
-
-### Migration Path
-
-For teams currently using ad-hoc image management:
-
-1. **Week 1**: Adopt GHCR naming convention (`ghcr.io/hanzoai/{service}`)
-2. **Week 2**: Add Docker Hub as secondary push target
-3. **Week 3**: Deploy in-cluster registry, configure pull-through
-4. **Week 4**: Add Trivy scanning and cosign signing to CI
-5. **Week 5**: Enable webhook-driven deployments
 
 ## Reference Implementation
 

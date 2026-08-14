@@ -10,7 +10,6 @@ created: 2026-05-10
 ---
 
 
-
 # HIP-0079: Q-Chain — Quasar Finality Block Standard
 
 ## Abstract
@@ -28,18 +27,6 @@ The result: a finality lane whose per-block size is bounded and
 small (a few hundred bytes plus one ~3.3 KB Pulsar-M-65 signature),
 independent of validator-set size. Adding validators makes Z-Chain
 heavier, not Q-Chain.
-
-## Motivation
-
-The naive design that puts every validator's identity material into
-every finality block produces O(N) per-block bandwidth and pushes the
-mainnet bottleneck onto static state that doesn't change per round.
-Splitting Q-Chain (compact finality) from Z-Chain (bulky identity
-rollup) collapses per-block bandwidth to O(1) regardless of N.
-
-This HIP pins the wire format, transcript binding, and consumer
-contract for Q-Blocks. Z-Chain (HIP-0078) and Pulsar-M (HIP-0084)
-are the dependencies on either side.
 
 ## Specification
 

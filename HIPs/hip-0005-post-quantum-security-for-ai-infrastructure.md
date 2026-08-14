@@ -4,11 +4,10 @@ title: Post-Quantum Security for AI Infrastructure
 author: Hanzo AI Team
 type: Standards Track
 category: Security
-status: Final
+status: Draft
 created: 2024-12-20
 requires: LP-100
 ---
-
 
 
 # HIP-0005: Post-Quantum Security for AI Infrastructure
@@ -16,16 +15,6 @@ requires: LP-100
 ## Abstract
 
 This proposal mandates the integration of NIST Post-Quantum Cryptography standards across all Hanzo AI infrastructure, ensuring quantum-resistant security for AI models, data, and communications. Building on Lux Network's PQC implementation (LP-100), this extends quantum resistance to AI-specific operations.
-
-## Motivation
-
-AI infrastructure faces unique security challenges that will be amplified by quantum computing:
-
-1. **Model Theft**: Quantum computers could break encryption protecting proprietary models
-2. **Data Privacy**: Training data and user inputs need long-term protection
-3. **Inference Security**: Model outputs must remain confidential
-4. **Authentication**: API access and billing require quantum-resistant signatures
-5. **Long-term Value**: AI models and data have decades-long value requiring future-proof security
 
 ## Specification
 
@@ -123,52 +112,7 @@ response = client.complete(
 )
 ```
 
-## Rationale
-
-### Why NIST Standards?
-
-- **Industry Standard**: Wide adoption expected
-- **Proven Security**: Extensively analyzed
-- **Hardware Support**: Accelerators coming
-- **Compliance**: Meets regulatory requirements
-
-### Why Privacy Tiers?
-
-Different AI applications have varying security needs:
-- **Public APIs**: Basic quantum resistance sufficient
-- **Enterprise AI**: Require TEE processing
-- **Government AI**: Need maximum security
-
-## Security Considerations
-
-### Threat Model
-- **Quantum Adversary**: Assumes quantum computer access
-- **Side Channels**: Protected by TEE deployment
-- **Model Extraction**: Prevented by secure inference
-- **Data Leakage**: Encrypted at all stages
-
-### Compliance
-- **NIST Standards**: FIPS 203/204 compliant
-- **GDPR**: Quantum-resistant data protection
-- **HIPAA**: Healthcare data security
-- **SOC 2**: Security controls
-
-## Implementation
-
-### Phase 1: Core Integration (Complete)
-- Lux Network PQC implementation
-- Basic key management
-- API authentication
-
-### Phase 2: Model Security (Q1 2025)
-- Encrypted model storage
-- Secure inference pipeline
-- Client SDK updates
-
-### Phase 3: Full Deployment (Q2 2025)
-- All services PQC-enabled
-- Legacy migration complete
-- Performance optimization
+lementation
 
 ## References
 

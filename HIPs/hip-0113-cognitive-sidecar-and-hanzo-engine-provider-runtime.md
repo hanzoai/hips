@@ -10,7 +10,6 @@ requires: 0020, 0024, 0043, 0114
 ---
 
 
-
 # HIP-0113: Cognitive Sidecar & Hanzo Engine Provider Runtime for Thinking Chains
 
 ## Abstract
@@ -69,16 +68,6 @@ block production. The resolution is the **Cognitive Sidecar**: the agent is a pu
 can turn an artifact into a transaction, and only within an explicit autonomy
 policy and human-loop level. This is the decomplecting move — separating *what
 cognition produces* from *when the node may act on it*.
-
-### Why not just an oracle, or just an on-chain model
-
-A trusted oracle reintroduces a single point of trust and gives no provenance. A
-tiny fully-on-chain model (Tier 1, the Lux inference precompile at
-`0x0300…0003`) is real and useful for in-block classifiers and embeddings, but is
-capped at toy capability.
-The Thinking Chain pattern uses *the strongest mechanism each kind of cognition
-allows*: byte-identical execution where possible (Tier 1, not this HIP's subject),
-bonded-quorum settlement where not (Tier 2, the Hanzo Engine — this HIP).
 
 ## Specification
 

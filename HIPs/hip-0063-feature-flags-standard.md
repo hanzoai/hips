@@ -10,7 +10,6 @@ requires: HIP-0017
 ---
 
 
-
 # HIP-0063: Feature Flags & Experimentation Standard
 
 ## Abstract
@@ -40,18 +39,6 @@ This is table stakes for web applications. But AI systems introduce a category o
 
 No existing feature flag platform handles these use cases natively. LaunchDarkly, Split, Unleash, and Flagsmith all treat flags as configuration switches. They support A/B tests on UI elements ("button color", "pricing page layout"). None of them understand tokens, latency percentiles, model quality scores, or cost-per-inference.
 
-### Why Not Use the Feature Flags in HIP-0017 (Insights)?
-
-HIP-0017 specifies Hanzo Insights (PostHog fork), which includes basic feature flags and A/B testing. Those flags are excellent for product experiments -- UI variants, onboarding flows, pricing page tests. They evaluate via the `/decide` endpoint in Django, store definitions in PostgreSQL, and track exposure via `$feature_flag_called` events.
-
-Hanzo Flags (this HIP) is a dedicated service for two reasons:
-
-**Separation of concerns.** Analytics (event ingestion, Datastore queries, session replay) and flag evaluation (sub-millisecond lookups, high fanout) have fundamentally different performance profiles. The Insights `/decide` endpoint queries PostgreSQL on every evaluation. At 10K flag evaluations per second (typical for a gateway handling inference traffic), PostgreSQL becomes the bottleneck. Hanzo Flags stores flag state in Redis with local in-process caching -- evaluation takes < 1ms with zero database queries on the hot path.
-
-**AI-native experiment types.** PostHog experiments measure conversion rates: "Did the user click the button?" AI experiments measure continuous distributions: "What is the p95 latency delta between model A and model B?" "Is the quality score distribution of prompt variant B statistically higher than variant A?" PostHog's Bayesian engine supports binomial metrics (conversion, retention). Hanzo Flags supports continuous metrics (latency, cost, quality scores) with both Bayesian and frequentist analysis.
-
-The two systems complement each other. Insights handles product analytics and product experiments. Flags handles infrastructure flags and AI experiments. Both emit events to the same Kafka pipeline (HIP-0030) and share the same Datastore storage for metric analysis.
-
 ## Design Philosophy
 
 ### Why Custom Over LaunchDarkly
@@ -65,35 +52,6 @@ For AI inference routing, stale flags mean requests routed to the wrong model --
 **Unleash** is open-source (Apache 2.0) and self-hostable. It solves the data sovereignty problem. However, Unleash's evaluation engine is a Node.js/Java application backed by PostgreSQL. It does not support AI experiment types, continuous metric analysis, or integration with inference gateways. We would need to build those features on top of Unleash, effectively maintaining a fork with custom experiment logic, custom metric pipelines, and custom SDK extensions. At that point, we are building a custom system with Unleash's data model -- a worse starting point than building from first principles.
 
 **Decision**: Build Hanzo Flags as a Go service with Redis-backed evaluation, OpenFeature-compatible SDKs, and native support for AI experiment types. Total cost: infrastructure we already operate (Redis, Datastore, Kafka). Zero per-seat or per-MAU licensing.
-
-### Why OpenFeature
-
-[OpenFeature](https://openfeature.dev) is a CNCF (Cloud Native Computing Foundation) sandbox project that defines a vendor-neutral API for feature flag evaluation. It specifies:
-
-- A `Client` interface with `getBooleanValue`, `getStringValue`, `getNumberValue`, `getObjectValue` methods
-- An `EvaluationContext` that carries user/request metadata for targeting
-- A `Provider` interface that backends implement
-- `Hook` interfaces for logging, metrics, and validation
-
-OpenFeature is to feature flags what OpenTelemetry is to observability: a standard interface that decouples application code from the vendor.
-
-By implementing Hanzo Flags as an OpenFeature provider, every application that uses OpenFeature SDKs can switch to Hanzo Flags by changing one line of configuration -- the provider initialization. No application code changes. No SDK migration. This is critical for adoption: teams already using OpenFeature with LaunchDarkly or Flagsmith can migrate to Hanzo Flags transparently.
-
-```typescript
-// Before: LaunchDarkly
-import { OpenFeature } from '@openfeature/server-sdk';
-import { LaunchDarklyProvider } from '@launchdarkly/openfeature-node-server';
-OpenFeature.setProvider(new LaunchDarklyProvider('sdk-key'));
-
-// After: Hanzo Flags -- only this line changes
-import { OpenFeature } from '@openfeature/server-sdk';
-import { HanzoFlagsProvider } from '@hanzoai/flags-openfeature';
-OpenFeature.setProvider(new HanzoFlagsProvider('https://flags.hanzo.ai', 'hf_api_key'));
-
-// Application code is IDENTICAL in both cases
-const client = OpenFeature.getClient();
-const value = await client.getBooleanValue('new-feature', false, context);
-```
 
 ## Specification
 
@@ -900,17 +858,6 @@ alerts:
     severity: warning
     summary: "Experiment exposure event consumer lag > 50K"
 ```
-
-## Migration Path
-
-For teams currently using the PostHog/Insights feature flags (HIP-0017), migration is straightforward:
-
-1. **Export existing flags** from Insights via `GET /api/feature_flags`
-2. **Import into Hanzo Flags** via `POST /admin/v1/flags` (schema mapping is provided in the `flags-migrate` CLI tool)
-3. **Switch SDKs** from PostHog `featureFlags` to OpenFeature with `HanzoFlagsProvider`
-4. **Verify** by running both systems in parallel (dual-evaluation mode) and comparing results
-
-The `flags-migrate` tool handles the schema translation and verifies evaluation consistency between the two systems before cutover.
 
 ## References
 

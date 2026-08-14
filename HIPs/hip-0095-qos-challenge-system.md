@@ -52,14 +52,6 @@ The QoS Challenge System addresses these issues by continuously verifying provid
 4. **Economic Alignment**: Honest behavior more profitable than cheating
 5. **Low Overhead**: Minimal impact on actual compute workloads
 
-### Non-Goals
-
-- Real-time latency guarantees (handled by SLA monitoring)
-- Content verification (handled by result verifier)
-- Network topology optimization (handled by routing layer)
-
----
-
 ## Architecture Overview
 
 ```
@@ -1187,54 +1179,6 @@ impl ChallengeSelector {
 ---
 
 ### Implementation Plan
-
-#### Phase 1: Foundation (Weeks 1-4)
-
-##### Week 1-2: Core Data Structures
-
-- [ ] Define `Challenge`, `Proof`, `ChallengeResult` types in `hanzo-compute`
-- [ ] Implement `ChallengeGenerator` with VRF-based randomness
-- [ ] Add `QoSScore` and `ProviderState` to peer management
-- [ ] Unit tests for all data structures
-
-##### Week 3-4: Challenge Protocol
-
-- [ ] Implement P2P challenge delivery via `hanzo-libp2p`
-- [ ] Build `ComputeChallengeVerifier` with reference computation
-- [ ] Implement `LatencyChallengeVerifier` with timing verification
-- [ ] Integration tests for challenge round-trip
-
-#### Phase 2: Verification (Weeks 5-8)
-
-##### Week 5-6: Verification Engine
-
-- [ ] Build optimistic verification framework
-- [ ] Implement fraud proof generation and validation
-- [ ] Add TEE attestation verification (Intel SGX, AMD SEV)
-- [ ] Integration with `hanzo-pqc` for quantum-safe signatures
-
-##### Week 7-8: Scoring System
-
-- [ ] Implement `QoSScoreCalculator` with component weighting
-- [ ] Build `ConsistencyCalculator` with time-series analysis
-- [ ] Add score persistence to `hanzo-database`
-- [ ] API endpoints for score queries
-
-#### Phase 3: Economics (Weeks 9-12)
-
-##### Week 9-10: On-Chain Contracts
-
-- [ ] Deploy `QoSChallengeSettlement` contract to testnet
-- [ ] Implement reward distribution logic
-- [ ] Add slashing mechanics with circuit breakers
-- [ ] Security audit of smart contracts
-
-##### Week 11-12: Integration & Testing
-
-- [ ] End-to-end integration with `hanzo-mining`
-- [ ] Stress testing with simulated adversaries
-- [ ] Documentation and API reference
-- [ ] Mainnet deployment preparation
 
 #### Milestones
 

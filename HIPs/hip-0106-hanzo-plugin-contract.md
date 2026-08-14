@@ -11,7 +11,6 @@ requires: HIP-0026, HIP-0027, HIP-0036, HIP-0105, HIP-0111, HIP-0119, HIP-0132, 
 ---
 
 
-
 # HIP-0106: The Hanzo Plugin Contract
 
 ## Abstract
@@ -1112,39 +1111,6 @@ Build a conforming plugin repo in one pass:
     as named Go fields, and each one read back out of the WOVEN document to prove
     it survived both round-trips — §13.
 
-### Migration
-
-Ordered so that no step depends on a later one. Each step deletes the thing it
-replaces in the same change; there is no interval in which both exist.
-
-1. **`zip`**: add `Ask`, `Tenant`, `Delegate`, `Declaration`/`Route`/
-   `(*App).Declaration`, `Described`/`Describe`, the
-   `/.well-known/zip/plugin.json` route, and the duplicate-claim error in
-   `Load`. Rename `zip/runtime` → `zip/js`. Patch release.
-2. **`hanzoai/plane`**: extract `cloud/plane` to its own module, verbatim.
-   Cloud imports the module and deletes the directory.
-3. **`hanzoai/cloud`**: delete `Plane`, `ServePlane`, `Peer`, `Ask`, `For`,
-   `Who`, `As`, `bindRuntimeDir`, `SpecRequested`, `WriteSpec`,
-   `principal.OrgOf`/`WithOrg`/`OrgFrom` in favour of the zip survivors.
-4. **`hanzoai/cloud`**: emit `plugin/<app>/plugin.json` from the per-app
-   `openapi` target; land §8.3 and §8.6 against the declarations; delete
-   `manifest.App.Prefixes`, `manifest/order_test.go`,
-   `manifest/bare_version_test.go`'s exemption set, and the prefix walk in
-   `plugin/gen-app-cmds`. `manifest.Apps` keeps `{Name}` and the binary-resolution
-   ladder — it is the INSTALL list, not the router.
-5. **`hanzoai/cloud`**: reduce `SanitizeIdentity` to the strip-and-delegate the
-   host owes per HIP-0134 (it currently also mints); each
-   `plugin/<app>/main.go` becomes the §2 shape and stops importing `cloud`,
-   one app at a time, each landing under §8.1.
-6. **`zip` + `hanzoai/base`**: move `wasmvm`/`pyvm`/`starlark` into
-   `zip/{wasm,py,star}`; Base imports them and deletes
-   `base/plugins/{extruntime,gojavm,wasmvm,v8vm}`.
-7. **`hanzoai/ci`**: publish `<name>.plugin.json` beside each binary, with its
-   digest in `binaries.json`.
-
-Every step is independently measurable with `go list -deps | wc -l`. Step 5 is
-where the 576 → ~260 drop lands, per app.
-
 ## The API surface a composition serves
 
 These sections describe the API a composition presents to callers — the
@@ -1426,8 +1392,8 @@ vault or payments operator.
   sentence-transformers). Runs as a separate process behind the
   gateway subsystem. Per the FT audit (2026-05-19), classified RED
   — defer to GIL-Python until torch ships cp313t (>=2.6).
-- **`~/work/hanzo/datastore` (ClickHouse fork) is NOT folded.** OLAP
-  column store. Uses ClickHouse-native ReplicatedMergeTree + S3 disk.
+- **`~/work/hanzo/datastore` (Hanzo Datastore fork) is NOT folded.** OLAP
+  column store. Uses Hanzo Datastore-native ReplicatedMergeTree + S3 disk.
   Out of scope. Shares S3 bucket with HIP-0107 streaming via vfs
   prefix (`s3://bucket/datastore/...` vs `s3://bucket/replicate/...`).
 - **`~/work/hanzo/insights` (Hanzo Insights — AI observability + eval + prompt management) is NOT

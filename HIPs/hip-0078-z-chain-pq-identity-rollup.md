@@ -10,7 +10,6 @@ created: 2026-05-10
 ---
 
 
-
 # HIP-0078: Z-Chain — Post-Quantum Identity & Attestation Rollup
 
 ## Abstract
@@ -221,24 +220,6 @@ func VerifyZChainEpochProof(
 Constant-time guarantees: verifier MUST run in time independent of
 proof contents on accepted vs rejected proofs. Memory budget: ≤ 64 MB
 per verification on standard validator hardware.
-
-### Migration
-
-**Phase 1 (today).** Quasar mode emits per-validator ML-DSA-65 sigs
-in the Q witness slot. No rollup proof. Cert size linear in committee
-size; tolerable up to ~32 validators.
-
-**Phase 2 (Z-Chain v1 ships).** Strict-PQ STARK/FRI/SHA-3 prover
-goes live at `~/work/lux/plonky3-pq`. Q-Block envelope gains
-`proof_system_id` field. Existing Q-Chains begin emitting
-`proof_system_id = 0x00` until they upgrade. Forbidden markers
-(0x80, 0x81) become refusal triggers.
-
-**Phase 3 (mandatory).** Flag day announced 6 months ahead.
-Post-flag-day, Q-Block certs without a valid
-`proof_system_id = 0x10` proof are refused. Validator identity moves
-to Z-Chain. Pulsar-M DKG transcripts post to Z-Chain. Q-Chain
-becomes pure finality spine; Z-Chain holds all bulky state.
 
 ## Security considerations
 

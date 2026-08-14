@@ -4,11 +4,10 @@ title: Model Context Protocol (MCP) Integration Standards
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Final
+status: Active
 created: 2025-01-09
 requires: HIP-2, HIP-9
 ---
-
 
 
 # HIP-0010: Model Context Protocol (MCP) Integration Standards
@@ -50,17 +49,6 @@ This proposal defines the Model Context Protocol (MCP) integration standards for
 - **Zero-copy parsing**: Efficient JSON-RPC handling
 
 The tool surface itself is whatever `hanzo/mcp` ships; this HIP governs the protocol, not the catalogue.
-
-## Motivation
-
-Current AI tool integration challenges:
-1. **Fragmented Interfaces**: Each tool has different APIs
-2. **Context Loss**: Tools don't share context effectively
-3. **Limited Extensibility**: Hard to add new capabilities
-4. **Poor Standardization**: No common protocol
-5. **Security Gaps**: Insufficient sandboxing and permissions
-
-MCP provides a unified protocol for AI-tool interaction.
 
 ## Specification
 
@@ -604,51 +592,7 @@ vector-store = ["qdrant-client"]
 computer-control = ["enigo", "screenshots"]
 ```
 
-## Implementation Roadmap
-
-### Phase 1: Core Protocol (Q1 2025)
-- JSON-RPC implementation
-- Basic tool registry
-- Simple context management
-- Claude Desktop integration
-
-### Phase 2: Standard Tools (Q2 2025)
-- File system tools
-- Network tools
-- Database tools
-- AI tools
-
-### Phase 3: Advanced Features (Q3 2025)
-- Tool composition
-- Context optimization
-- Performance caching
-- Security hardening
-
-### Phase 4: Ecosystem (Q4 2025)
-- Tool marketplace
-- Community tools
-- Enterprise features
-- Edge deployment
-
-## Security Considerations
-
-### Tool Security
-- Sandboxed execution environment
-- Resource limits (CPU, memory, network)
-- Permission-based access control
-- Input validation and sanitization
-
-### Protocol Security
-- TLS for transport encryption
-- Message authentication
-- Rate limiting
-- Audit logging
-
-## References
-
-1. [Model Context Protocol Spec](https://modelcontextprotocol.io)
-2. [JSON-RPC 2.0](https://www.jsonrpc.org/specification)
-3. [Claude Desktop MCP](https://claude.ai/docs/mcp)
+ocs/mcp)
 4. [HIP-9: Agent SDK](./hip-9.md)
 5. [MCP Repository](https://github.com/hanzoai/mcp)
 

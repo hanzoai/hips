@@ -10,7 +10,6 @@ created: 2026-05-10
 ---
 
 
-
 # HIP-0084: Pulsar-M — Threshold ML-DSA DKG & Signing
 
 ## Abstract
@@ -26,21 +25,6 @@ specification at `~/work/lux/pulsar-m/spec/pulsar-m.tex`. The spec
 PDF is the NIST submission package; this HIP is the **deployment
 contract** between Q-Chain (the consumer) and Pulsar-M (the
 producer).
-
-## Motivation
-
-Q-Chain (HIP-0079) requires a single threshold signature per
-finality block — small enough to fit a compact Q-Block envelope, but
-secure under the same ML-DSA verifier ML-DSA-65 single-party uses.
-Per-validator FIPS 204 sigs would inflate Q-Block size linearly with
-committee size. A threshold variant collapses N signatures into one
-without changing the verifier.
-
-The HIP fixes the deployment-side parameters: committee size,
-threshold, epoch cadence, transcript binding, abort handling,
-identifiable-abort evidence shape. The cryptographic content
-(protocol description, security games, parameter sets) lives in the
-spec PDF and is the NIST MPTC submission.
 
 ## Specification
 

@@ -11,7 +11,6 @@ requires: HIP-4
 ---
 
 
-
 # HIP-0012: Search Interface Standard
 
 ## Abstract
@@ -21,21 +20,8 @@ This proposal defines the search interface standard for the Hanzo ecosystem. It 
 **Engine Repository**: [github.com/hanzoai/search](https://github.com/hanzoai/search)
 **Engine Port**: 7700
 **UI Port**: 3000
-**Engine Runtime**: Rust (Meilisearch fork, v1.36.0)
+**Engine Runtime**: Rust (Hanzo Search fork, v1.36.0)
 **UI Runtime**: Next.js + Supabase
-
-## Motivation
-
-The Hanzo ecosystem requires a unified search standard to:
-
-1. **Provide AI-native answers**: Users expect synthesized answers with citations, not ranked link lists
-2. **Unify retrieval**: Internal docs, web results, and knowledge bases searched through one interface
-3. **Enable generative UI**: Streaming markdown responses with inline source references
-4. **Complement Chat (HIP-11)**: Search is transactional (query-answer-done); chat is conversational (multi-turn, memory, persona)
-5. **Self-host the full stack**: No dependency on third-party search APIs for core functionality
-6. **Integrate with LLM Gateway**: Leverage HIP-4 for model selection, cost optimization, and provider failover during synthesis
-
-Without standardization, search experiences fragment across applications, retrieval pipelines diverge, and citation formats become inconsistent.
 
 ## Design Philosophy
 
@@ -46,51 +32,6 @@ Traditional search returns ten blue links. The user clicks through, reads, evalu
 Generative search inverts this. The system retrieves relevant documents, synthesizes a coherent answer, and presents it with citations the user can verify. The user gets an answer, not a reading list. Time-to-answer drops from minutes to seconds.
 
 This is the paradigm shift from Google-style search to AI-native search. The search engine becomes a retrieval backend; the LLM becomes the synthesis frontend. The UI streams the answer in real time, with numbered citations linking to source material.
-
-### Why Perplexity-Style Over Google-Style
-
-Perplexity proved that LLM-powered search with source citations is the dominant UX pattern for knowledge retrieval. The flow is: query, retrieve from multiple sources, synthesize with an LLM, cite every claim. Users trust the answer because they can click through to verify.
-
-Hanzo Search builds on this pattern but self-hosted and integrated with our LLM Gateway (HIP-4). This means:
-
-- **No vendor lock-in**: We control the retrieval and synthesis pipeline end-to-end
-- **Model flexibility**: Any model via HIP-4, not locked to one provider
-- **Private data**: Internal knowledge bases never leave the deployment boundary
-- **Cost control**: Route synthesis to the most cost-effective model for the query complexity
-- **Customization**: Search modes, source weighting, and UI all under our control
-
-### Why a Rust Search Engine (Meilisearch Fork)
-
-The core engine is a Rust workspace (v1.36.0) forked from Meilisearch. Rust gives us:
-
-- **Sub-50ms query latency**: No garbage collection pauses, zero-cost abstractions
-- **Memory safety**: No segfaults in production, critical for a long-running search service
-- **Single binary**: Deploy `hanzo-search` without runtime dependencies
-- **Hybrid search**: The `milli` crate combines BM25 full-text ranking with vector similarity in a single query path
-- **Battle-tested**: Meilisearch has millions of deployments; we inherit that stability
-
-The workspace contains 20+ crates: `milli` (core engine), `index-scheduler` (async indexing), `filter-parser` (query DSL), `meilisearch-auth` (API keys and tenants), `async-openai` (LLM integration for embeddings), and others.
-
-### Why Next.js + Supabase for the UI Layer
-
-Next.js gives us server-side rendering for fast initial page load and React Server Components for streaming AI responses. When the LLM generates tokens, they flow through a server component to the client without JavaScript hydration overhead.
-
-Supabase provides auth (integrates with IAM via OAuth), a PostgreSQL database (with pgvector for embedding storage), and real-time subscriptions (for collaborative search or live-updating results) in one open-source package. No vendor lock-in.
-
-### Why Separate from Chat (HIP-11)
-
-Chat and search solve different problems with different UX optimization targets:
-
-| Dimension | Chat (HIP-11) | Search (HIP-12) |
-|-----------|---------------|-----------------|
-| Interaction | Multi-turn conversation | Single query-answer |
-| Memory | Session history, persona | Stateless per query |
-| Optimization | Engagement, depth | Time-to-answer, accuracy |
-| Sources | Model knowledge | Retrieved documents with citations |
-| Output | Free-form response | Structured answer + sources |
-| Port | 3081 | 3000 |
-
-Combining them would compromise both. Chat needs long context windows and memory management. Search needs fast retrieval and citation tracking. They share the LLM Gateway (HIP-4) but nothing else.
 
 ## Specification
 
@@ -394,7 +335,7 @@ Response:
   success: boolean
 ```
 
-#### Engine Proxy (Direct Meilisearch API)
+#### Engine Proxy (Direct Hanzo Search API)
 
 ```yaml
 # Index documents (proxied to engine on port 7700)

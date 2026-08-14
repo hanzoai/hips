@@ -4,10 +4,9 @@ title: What Is Public
 author: Hanzo AI
 type: Process
 category: Governance
-status: Final
+status: Active
 created: 2026-07-29
 ---
-
 
 
 # HIP-0135: What Is Public
@@ -94,19 +93,6 @@ nothing and risks the fork.
 **Why unlicensed is called a defect.** It looks like generosity and functions
 as a trap: a reader who relies on it is exposed, and so are we. Choosing a
 license — any of the four states — is always better than leaving it open.
-
-## Backwards Compatibility
-
-Repositories are moved into conformance one at a time, and each move is a
-decision, not a sweep:
-
-- a private repository in `hanzoai` either becomes public under §2/§3/§4, or
-  moves to `hanzo-inc`;
-- a public repository with no license gets one under §2 or §3;
-- a fork missing its NOTICE gets one before anything else changes.
-
-Nothing here is retroactive against a published license. A grant already made
-is not withdrawn by this document.
 
 ## References
 

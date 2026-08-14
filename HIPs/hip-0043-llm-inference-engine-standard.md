@@ -11,7 +11,6 @@ requires: HIP-0004, HIP-0019, HIP-0039
 ---
 
 
-
 # HIP-0043: Hanzo Engine — LLM Inference Engine Standard
 
 ## Abstract
@@ -52,24 +51,6 @@ Production model serving has concrete problems that existing tools address incom
 
 ## Design Philosophy
 
-### Why a mistral.rs Fork
-
-mistral.rs is the most mature Rust inference engine for transformer models. It already implements the critical primitives -- PagedAttention, continuous batching, ISQ, speculative decoding -- in production-quality Rust. Forking it gives us:
-
-- **Proven correctness**: Thousands of hours of community testing across model architectures.
-- **Active upstream**: Regular updates for new model architectures and CUDA optimizations.
-- **Clean architecture**: Trait-based model loading, pluggable backends, and a well-defined pipeline.
-
-Our fork (`hanzoai/engine`) adds Zen-specific extensions:
-
-- MoDE-aware expert scheduling that co-locates active experts in GPU memory.
-- KV cache sharing for common system prompts across the Zen Gateway.
-- Direct integration with Hanzo Object Storage (HIP-0032) for model weight loading.
-- Prometheus metrics endpoint compatible with Hanzo's observability stack.
-- Multi-model serving with automatic GPU memory partitioning.
-
-We track upstream and cherry-pick improvements. Hanzo-specific code lives in a clearly separated module namespace (`hanzo::`) to minimize merge conflicts.
-
 ### Why Rust over Python
 
 This decision is not about language preference. It follows from three production constraints:
@@ -79,45 +60,6 @@ This decision is not about language preference. It follows from three production
 **Constraint 2: No GIL.** The inference pipeline has CPU-bound stages (tokenization, sampling, scheduling) and GPU-bound stages (attention, FFN). These must run concurrently. In Python, CPU-bound work across threads is serialized by the GIL. The standard workaround -- multiprocessing -- duplicates model weights in memory. Rust's `tokio` async runtime and `rayon` data parallelism run all stages concurrently on a single process with zero duplication.
 
 **Constraint 3: Single-binary deployment.** The engine ships as one static binary (`hanzo-engine`) that includes the HTTP server, tokenizer, model loader, CUDA/Metal kernels, and health check endpoints. No virtualenv, no pip, no dynamic library resolution. This simplifies container images (FROM scratch), reduces attack surface, and eliminates "works on my machine" deployment failures.
-
-### Why Not vLLM
-
-vLLM excels at multi-GPU tensor parallelism for large models (zen-72b and above on 4+ GPUs). For that use case, we support vLLM as an alternative backend via the Zen Gateway (HIP-0039). However:
-
-- For single-GPU deployments (zen-7b, zen-14b, zen-32b), the engine is 30-40% faster with 20% lower memory overhead.
-- vLLM's Python scheduling loop becomes a bottleneck above 500 concurrent requests.
-- vLLM requires PyTorch as a dependency (2GB+ runtime overhead).
-- vLLM's continuous batching implementation, while excellent, does not support ISQ or Rust-native GGUF loading.
-
-The engine and vLLM are complementary: use the engine for single-GPU and edge; use vLLM for multi-GPU datacenter.
-
-### Why Not llama.cpp
-
-llama.cpp provides excellent GGUF inference performance and broad hardware support. However:
-
-- It is written in C/C++ with manual memory management. Buffer overflows in the attention kernel or KV cache management cause silent data corruption or segfaults. Rust prevents these at compile time.
-- Its API is a C library interface, not an HTTP server. Building a production serving layer on top requires writing exactly the kind of code the engine already provides.
-- It lacks PagedAttention, continuous batching, and speculative decoding -- features essential for production throughput.
-- Its model architecture support is more limited; adding new architectures requires substantial C++ work.
-
-For users who prefer llama.cpp directly, Zen models are distributed in GGUF format and work with llama.cpp and Ollama without modification.
-
-### Why Support Multiple Quantization Formats
-
-Different deployment environments have different constraints:
-
-| Format | Use Case | Trade-off |
-|--------|----------|-----------|
-| SafeTensors (FP16/BF16) | Research, maximum quality | 2 bytes/param, highest accuracy |
-| GPTQ (INT8/INT4) | Datacenter inference | Pre-quantized, fast load, ~99% quality |
-| AWQ (INT4) | Memory-constrained datacenter | Activation-aware, better quality than naive INT4 |
-| HQQ (INT4/INT2) | Ultra-low memory datacenter | Half-quadratic quantization, no calibration data needed |
-| FP8 (E4M3/E5M2) | Hopper/Blackwell GPUs | Native FP8 tensor cores, near-FP16 quality at half memory |
-| AFQ (Adaptive Fixed-point) | Edge/mobile inference | Hardware-aligned fixed-point for Metal/ARM, used by Hanzo Edge (HIP-0050) |
-| GGUF (Q4_K_M to Q8_0) | Consumer hardware, CPU, edge | Flexible bit widths, CPU-optimized |
-| ISQ (In-Situ Quantization) | Dynamic precision selection | Quantize at load time, no pre-quantized weights needed |
-
-ISQ is unique to the engine: load FP16 weights, then quantize to any target precision at startup. This eliminates the need to maintain separate quantized weight files for each precision level. A single SafeTensors checkpoint can serve at FP16, INT8, INT4, or FP8 depending on available GPU memory and hardware capabilities.
 
 ## Specification
 
@@ -641,32 +583,6 @@ When serving multiple models, each model runs in an isolated memory region. A bu
 
 ## Implementation Roadmap
 
-### Phase 1: Core Engine (Q1 2026)
-- Fork and adapt mistral.rs for Zen model architectures
-- Implement PagedAttention with copy-on-write prefix sharing
-- OpenAI-compatible API (`/v1/chat/completions`, `/v1/completions`, `/v1/models`)
-- GGUF and SafeTensors model loading
-- SSE streaming with backpressure handling
-- Docker image and Kubernetes manifests
-- Prometheus metrics and health endpoints
-
-### Phase 2: Advanced Features (Q2 2026)
-- Speculative decoding with configurable draft models
-- ISQ (in-situ quantization) at load time
-- AWQ and GPTQ format support
-- Multi-model serving with GPU memory partitioning
-- MoDE-aware expert scheduling for Zen MoE models
-- Integration with Hanzo Object Storage for model loading
-- Automatic model offloading (GPU to CPU/NVMe)
-
-### Phase 3: Production Hardening (Q3 2026)
-- Continuous batching optimization under sustained load
-- Zero-downtime model swap (load new version while serving old)
-- Expert offloading for zen-235b and zen-480b on limited GPU counts
-- KV cache sharing integration with Zen Gateway
-- Distributed engine coordination for multi-node deployments
-- Candle backend integration (HIP-0019) for edge/WASM targets
-
 ### Phase 4: Optimization (Q4 2026)
 - Custom CUDA kernels for Zen-specific attention patterns
 - FlashAttention-3 integration for Hopper GPUs (H100/H200)
@@ -676,11 +592,6 @@ When serving multiple models, each model runs in an isolated memory region. A bu
 - Benchmark suite and regression testing infrastructure
 - Shared model format and quantization pipeline with Hanzo Edge (HIP-0050)
 
-## Backwards Compatibility
-
-The engine maintains full compatibility with the OpenAI API specification. Any client that works with the OpenAI API works with the engine by changing the base URL:
-
-```python
 # Before: OpenAI direct
 client = OpenAI(api_key="sk-openai-...")
 

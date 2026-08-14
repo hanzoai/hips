@@ -11,7 +11,6 @@ requires: 0000, 0001, 0008, 0019
 ---
 
 
-
 # HIP-0020: Blockchain Node Standard
 
 ## Abstract
@@ -70,69 +69,6 @@ Go (used by Lux Node and most Ethereum clients) has a concurrent garbage collect
 **Safe concurrency for parallel verification.** Compute verification involves running tensor operations across multiple CPU cores simultaneously. In C++, parallelizing matrix multiplication requires careful manual synchronization to avoid data races. In Go, goroutines with shared state require mutex discipline that the compiler does not enforce. Rust's ownership model makes data races a compile-time error. If you can express the parallelism, it is correct by construction.
 
 The tradeoff is development velocity. Rust's learning curve is steeper than Go's, and compile times are longer. We accept this because node software is infrastructure that changes infrequently once correct. The operational benefits -- zero GC pauses, no segfaults, no data races -- compound across every block produced by every validator for the lifetime of the network.
-
-### Why libp2p Over Custom Networking
-
-Peer-to-peer networking is the most complex and security-sensitive component of any blockchain node. It handles NAT traversal, peer discovery, connection multiplexing, protocol negotiation, encryption, and denial-of-service resistance. Building this from scratch would take years and produce a less battle-tested result.
-
-libp2p is the networking layer used by IPFS, Filecoin, Polkadot, and Ethereum's consensus layer (Prysm, Lighthouse, Teku). It has been running in production across thousands of nodes since 2018. The rust-libp2p implementation specifically is used by Polkadot (Substrate) and Filecoin (Forest), giving us confidence in its Rust correctness and performance.
-
-libp2p provides out of the box:
-
-- **NAT traversal**: Relay protocols, hole punching, and AutoNAT detection so nodes behind firewalls can participate without manual port forwarding
-- **Peer discovery**: mDNS for local network discovery, Kademlia DHT for global discovery, and bootstrap node lists for initial connection
-- **Connection multiplexing**: Yamux allows multiple protocol streams over a single TCP or QUIC connection, reducing connection overhead
-- **Transport encryption**: Noise protocol for authenticated encryption on every connection, preventing MITM attacks
-- **Protocol negotiation**: Multistream-select allows nodes to negotiate which protocols they support, enabling graceful upgrades
-- **Peer scoring**: Application-level scoring to deprioritize misbehaving peers without disconnecting them
-
-The alternative -- building custom networking on raw TCP or QUIC -- would require reimplementing all of these. Lux Node's custom networking layer, for example, has had multiple CVEs related to connection handling and peer management. By using libp2p, we inherit fixes from a community of hundreds of contributors across multiple production networks.
-
-### Why Not Fork Lux Node
-
-Lux Node is written in Go and implements the Quasar consensus family (Nova, Photon) for general-purpose L1 blockchain operation. It supports pluggable Virtual Machines (XVM, PVM, EVM) and is designed for multi-chain architectures. Forking it and adding AI compute features would seem like a shortcut, but it is not.
-
-**Different language, different guarantees.** Lux Node is Go. Our compute verification layer uses Candle, which is Rust. Calling Rust from Go via CGo introduces FFI overhead, complicates the build system, and loses Rust's safety guarantees at the boundary. A pure Rust node can call Candle natively with zero overhead.
-
-**Different consensus requirements.** Quasar consensus achieves finality through repeated sub-sampled committee voting (Photon + Wave), which provides excellent performance for general-purpose transaction ordering. But AI compute coordination needs a different property: task-assignment consensus, where the network must agree not just on transaction order but on which node should execute which compute job. This requires compute-aware leader election that Quasar was not designed for.
-
-**Different block intervals.** Lux Node targets 1-2 second block times, appropriate for financial transactions. Compute coordination needs 200ms blocks to keep scheduling latency low. Retrofitting faster block production into Quasar consensus would require fundamental changes to the protocol parameters and networking assumptions.
-
-**Different state model.** Lux Node's state is UTXO-based (X-Chain) or account-based (C-Chain). Hanzo Node's state includes GPU inventories, active compute sessions, model registries, and inference result caches. These are fundamentally different data structures that would not benefit from Lux Node's existing state management.
-
-The Lux relationship is at the settlement layer, not the node layer. Hanzo Node checkpoints its state to Lux L1 for economic finality, using the luxfi Rust SDK for bridge operations. This is a clean integration boundary -- Hanzo Node is a client of Lux, not a fork of it.
-
-### Why Gossipsub for Message Propagation
-
-Blockchain nodes need to propagate messages (blocks, transactions, compute assignments) to all peers efficiently. There are three common approaches: flooding, structured overlays, and gossip protocols.
-
-**Flooding** (used by Bitcoin) forwards every message to every connected peer. This is simple but creates O(n * degree) message copies per propagation, wasting bandwidth and enabling amplification attacks.
-
-**Structured overlays** (used by some DHT-based systems) route messages along specific paths. This is bandwidth-efficient but fragile -- if routing nodes fail, messages are delayed or lost.
-
-**Gossipsub** (libp2p's pubsub protocol, used by Ethereum 2.0) combines the reliability of flooding with the efficiency of structured overlays. It maintains a mesh of peers per topic and forwards messages within the mesh, with random grafting and pruning to maintain connectivity. Key properties:
-
-- **Spam resistance**: Peer scoring penalizes nodes that send invalid messages or flood excessively. Misbehaving peers are pruned from the mesh automatically.
-- **Message deduplication**: Each message has a unique ID. Nodes track seen IDs and drop duplicates, preventing amplification.
-- **Topic-based routing**: Different message types (blocks, transactions, compute assignments) flow through separate topics, preventing interference between high-frequency inventory updates and latency-critical block propagation.
-- **Adaptive mesh maintenance**: The mesh self-heals when peers join or leave, maintaining target connectivity without centralized coordination.
-
-Each gossipsub topic maintains an independent mesh with a target degree of 6 peers (D=6), a lower bound of 4 (D_lo=4), and an upper bound of 12 (D_hi=12). These parameters balance propagation speed against bandwidth consumption.
-
-### Why Proof of AI Consensus
-
-Traditional consensus mechanisms waste resources. Proof of Work directs computation toward finding hash preimages -- a problem with no value beyond securing the chain. Proof of Stake replaces computation with capital lockup, which is more efficient but does not produce useful work.
-
-Proof of AI (PoAI), specified in ZIP-002, directs validator computation toward useful AI inference. The core insight is that AI inference is already a computationally expensive operation that produces verifiable outputs. If validators must perform inference to produce blocks, the network simultaneously secures the chain and serves real AI workloads.
-
-The PoAI verification mechanism works as follows:
-
-1. A block producer includes a set of inference results (model input, model identifier, output) in the block
-2. Verifying validators re-execute a random subset of these inferences using Candle
-3. If the results match within a floating-point tolerance, the block is accepted
-4. If results diverge, the block is rejected and the producer is slashed
-
-The random subset verification makes full re-execution unnecessary. If a verifier checks 10% of inferences and they all match, the probability of undetected cheating on the remaining 90% is negligible (assuming the cheater cannot predict which subset will be checked). This allows lightweight validators to participate in consensus without owning the same GPU hardware as compute providers.
 
 ### Why Separate from Lux
 
@@ -1250,12 +1186,6 @@ cargo build --release
 - 9000 -- P2P networking (libp2p)
 - 8545 -- JSON-RPC API
 - 9090 -- Prometheus metrics
-
-## Backwards Compatibility
-
-This is a new node implementation. There is no backwards compatibility concern with previous Hanzo Node versions.
-
-Hanzo Node is not wire-compatible with Lux Node. They communicate only through the settlement bridge, not through direct P2P connections. Lux Node operators do not need to update their software to support Hanzo Node checkpoints -- the bridge contract on Lux C-Chain handles all interaction.
 
 ## References
 

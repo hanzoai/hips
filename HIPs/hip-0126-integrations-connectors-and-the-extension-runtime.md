@@ -4,12 +4,11 @@ title: Integrations, Connectors & the Extension Runtime — One Registry, One Wa
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Review
+status: Draft
 created: 2026-07-07
 updated: 2026-07-08
 requires: HIP-0004, HIP-0010, HIP-0105, HIP-0116
 ---
-
 
 
 # HIP-0126: Integrations, Connectors & the Extension Runtime — One Registry, One Way
@@ -38,47 +37,6 @@ existing standards (HIP-0004 providers, HIP-0010 MCP tools, HIP-0034 automation
 platform, HIP-0105 extension runtime, HIP-0116 plugin model) into one taxonomy
 rather than restating them, and it normatively **retires "pieces" in favour of
 "connectors."**
-
-## Motivation
-
-### The scatter
-
-An integration means "an external capability plugged into the platform." Today
-that capability arrives through three unrelated doors:
-
-1. **Connectors** — the automation-flow building block. `clients/automations`
-   ships a native-Go connector framework (`connector.go` / `connector_core.go`,
-   "ONE registry, N connectors; a connector self-registers from its `init()`"),
-   but the *catalogue* surface still spoke the ActivePieces dialect: a `/pieces`
-   route, a `PieceMetadata`/`PieceCount` schema, `pieces` JSON fields. Two names
-   for one thing in one package.
-
-2. **Providers** — AI model / compute providers, defined by HIP-0004 (unified
-   provider interface at the gateway) and HIP-0113 (provider runtime), with BYO
-   providers added by HIP-0124. Their config lives at the gateway.
-
-3. **Tools** — MCP / agent tools, defined by HIP-0010. Their config lives with
-   the MCP surface (`/v1/automations/mcp` and the agent stack).
-
-Three registries, three credential paths, three admin surfaces, three words for
-"the thing you connect." A customer who has "connected Slack, connected OpenAI,
-and connected an MCP tool server" has done the same *kind* of thing three times
-and seen three different UIs to do it.
-
-### Two axes, repeatedly conflated
-
-There are **two independent questions** about any plugged-in capability, and the
-codebase kept braiding them:
-
-- **WHAT is plugged in** (an external service / a model provider / a tool) — the
-  *Integration* axis.
-- **HOW custom logic runs** (in-process, sandboxed, per-tenant) — the *Extension
-  Runtime* axis (HIP-0105).
-
-A Connector is a *what*. The goja/wazero engine that executes a custom connector
-transform is a *how*. Naming them with one word ("plugin" for everything, or
-"piece" for both the catalogue entry and the JS runner) is the conflation this
-HIP removes. Decomplecting the two axes is the whole point.
 
 ## Taxonomy
 

@@ -4,12 +4,11 @@ title: Cloud-in-a-Box — One Binary, Three Modes
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Review
+status: Draft
 created: 2026-07-07
 updated: 2026-07-08
 requires: HIP-0036, HIP-0106, HIP-0116, HIP-0400
 ---
-
 
 
 # HIP-0117: Cloud-in-a-Box — One Binary, Three Modes
@@ -149,33 +148,11 @@ estate topology of HIP-0112. **Shipped:** the chart exists in-tree at
 - **One config surface.** Enabled subsystems, brand, domain, IAM
   issuer, and data dir mean the same thing in every mode.
 - **Same product in every mode.** Per-product metering and
-  balance-floor gating (HIP-0106 realized state; HIP-0018/HIP-0422)
+  balance-floor gating (HIP-0106 realized state; HIP-0018)
   apply identically — a single-node install bills like the SaaS.
 - **Graduation is data motion, not migration.** serve → cluster is:
   stand up the cluster, replicate the SQLite/ZapDB state (HIP-0107 /
   HIP-0302), repoint DNS. No schema rewrite, no "export".
-
-## Rationale
-
-**Why fetch-on-bootstrap instead of embedding k3s.** Separation of
-concerns at the artifact level: the application's release cadence must
-not be chained to the orchestrator's CVE cadence, and 95% of installs
-(SaaS, BYO-k8s, single-node) never need the payload. Fetching a
-pinned, checksum-verified release keeps bootstrap deterministic while
-keeping the app an app. The airgapped `cloud-fat` variant proves the
-rule by being the explicit, opt-in exception.
-
-**Why three modes and not one.** Because the deployment spectrum is
-real — laptop, edge box, reseller VM, production estate — but the
-software spectrum should not be. Collapsing to one mode would either
-force Kubernetes on a laptop or cap production at one process. Three
-entry points over one artifact is the smallest surface that covers the
-spectrum.
-
-**Relation to the PaaS (HIP-0472).** platform.hanzo.ai is a *product
-that runs on* the cloud — it deploys customer applications. This HIP
-deploys the cloud itself. The two do not overlap: HIP-0472 assumes a
-running estate; HIP-0117 is how that estate comes to exist.
 
 ## References
 
@@ -191,7 +168,6 @@ running estate; HIP-0117 is how that estate comes to exist.
 - HIP-0112 — Cloud Infrastructure Topology Standard (the estate shape
   Mode 2/3 converge to)
 - HIP-0107 / HIP-0302 — replication used for serve→cluster graduation
-- HIP-0472 — paas (platform.hanzo.ai; runs ON the cloud, distinct
   concern)
 - k3sup, Coder — prior art for fetch-on-bootstrap orchestrator
   installation
