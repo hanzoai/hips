@@ -1159,7 +1159,7 @@ shape that already exists. A config surface grows to fill whatever shape it is
 given; this one is given a narrow one.
 
 **Not folded into the existing `~/.hanzo/config.json`.** That file today holds
-one thing — a live `hk-` API key. It is a credential store, not a config file,
+one thing — a live `sk-` API key. It is a credential store, not a config file,
 and mixing subsystem policy into a secrets file is how secrets end up
 committed. (Separately: that key is sitting in plaintext on disk and belongs in
 KMS. Out of scope here, worth fixing.)

@@ -1131,8 +1131,8 @@ prefix is what every consumer switches on:
 | publishable | `pk-` | browser and client code; identifies an org, authorizes nothing that spends |
 | secret | `sk-` | server side only; carries the caller's full scope |
 
-`hk-` is the older name for a secret key. Verification still accepts
-one; nothing has minted one since `iam` v1.33.9.
+`hk-` was the older name for a secret key. Nothing has minted one
+since `iam` v1.33.9, and verification no longer accepts one.
 
 ```
 GET    /v1/keys    # the caller's keys: { type, prefix, createdAt }
