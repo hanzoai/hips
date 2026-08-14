@@ -153,26 +153,6 @@ estate topology of HIP-0112. **Shipped:** the chart exists in-tree at
   stand up the cluster, replicate the SQLite/ZapDB state (HIP-0107 /
   HIP-0302), repoint DNS. No schema rewrite, no "export".
 
-## Rationale
-
-**Why fetch-on-bootstrap instead of embedding k3s.** Separation of
-concerns at the artifact level: the application's release cadence must
-not be chained to the orchestrator's CVE cadence, and 95% of installs
-(SaaS, BYO-k8s, single-node) never need the payload. Fetching a
-pinned, checksum-verified release keeps bootstrap deterministic while
-keeping the app an app. The airgapped `cloud-fat` variant proves the
-rule by being the explicit, opt-in exception.
-
-**Why three modes and not one.** Because the deployment spectrum is
-real — laptop, edge box, reseller VM, production estate — but the
-software spectrum should not be. Collapsing to one mode would either
-force Kubernetes on a laptop or cap production at one process. Three
-entry points over one artifact is the smallest surface that covers the
-spectrum.
-
-that runs on* the cloud — it deploys customer applications. This HIP
-running estate; HIP-0117 is how that estate comes to exist.
-
 ## References
 
 - HIP-0106 — Cloud — Unified Hanzo Binary (the artifact all three

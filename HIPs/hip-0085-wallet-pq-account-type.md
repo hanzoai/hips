@@ -21,16 +21,6 @@ but the AccountID is the primary identifier; the 20-byte form is a
 compatibility projection. Wallet vendors target this HIP to ship a
 single canonical PQ account format across Hanzo, Lux, and Zoo.
 
-## Motivation
-
-LUX_STRICT_PQ requires every user-side signature to be ML-DSA-65. Today
-HD wallets target secp256k1 with 20-byte Keccak truncations. There is
-no canonical 48-byte AccountID that locks an ML-DSA-65 public key to
-an on-chain identity under the strict-PQ profile. Without this HIP,
-wallets either reuse EVM 20-byte addresses (collision-prone for the
-larger pubkey) or invent per-vendor formats. The PQ-side AccountID
-must be primary, not derived from the EVM projection.
-
 ## Specification
 
 The canonical reference is `luxfi/consensus/protocol/auth/account.go`
@@ -54,15 +44,6 @@ event log indexing; settlement is keyed by AccountID. The 48-byte
 length is chosen to match the `MinHashOutputBits = 384` profile pin
 and to make truncation collisions cryptographically negligible at the
 profile's NIST PQ Cat 3 floor.
-
-## Rationale
-
-SHA3-384 over the cust-string-prefixed public key matches the
-strict-PQ profile's hash floor (384 bits) and is FIPS 202 / SP 800-185
-compliant. The 20-byte EVM projection retains tooling compatibility
-without conflating identity scope. BIP-32 derivation reuses Lux's
-existing slip-44 9000 allocation; ML-DSA-65 keygen is seeded by
-`SHAKE-256(bip32_child_seed)` per `luxfi/crypto/mldsa`.
 
 ## Backwards compatibility
 

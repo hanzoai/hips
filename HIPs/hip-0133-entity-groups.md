@@ -24,20 +24,6 @@ This HIP defines group identity, placement, durability, caching, splitting, prom
 cross-group semantics. HIP-0120 §6 defines the local access plane (ZAP over UDS) this
 rides on.
 
-## Motivation
-
-An earlier formulation — *group = user, org = affinity* — is rejected here as too rigid.
-Fixing the group at the user makes every aggregate that is not a user a second-class
-citizen, and fixing it at the org makes a million-user enterprise one SQLite writer. The
-group must be sized by the workload, not by a level in the hierarchy.
-
-The number of humans is not the hard limit. The architecture scales when idle users
-require effectively zero resident resources, every common write touches one bounded group,
-global indexes are asynchronous and partitioned, placement metadata is tiny beside
-application data, recovery does not scan all groups, large organizations split without
-changing application semantics, and hot groups move or promote without changing logical
-identity.
-
 ## Specification
 
 ### §1 The physical model

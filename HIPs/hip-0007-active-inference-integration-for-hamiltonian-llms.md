@@ -15,18 +15,6 @@ requires: HIP-1, HIP-6
 
 This proposal integrates VERSES/Active Inference principles into the Hamiltonian LLM (HLLM) stack, adding an Active Inference Planner that minimizes Expected Free Energy (EFE) for tool routing, multi-step planning, and explainable decision-making. The system uses IEEE 2874 Spatial Web standards for interoperability and implements renormalizable world models for efficient regime adaptation.
 
-## Motivation
-
-Current LLM architectures lack principled planning and exploration mechanisms:
-
-1. **No Principled Exploration**: Random or heuristic tool selection
-2. **Poor Multi-Step Planning**: Greedy single-step decisions
-3. **Limited Explainability**: Black-box decision processes
-4. **Inefficient Adaptation**: Full retraining for new tasks
-5. **No Interoperability Standard**: Proprietary protocols limit federation
-
-Active Inference provides a mathematically grounded solution through Expected Free Energy minimization, balancing goal-seeking with curiosity-driven exploration.
-
 ## Specification
 
 ### 1. Active Inference Planner (AXIOM-style)

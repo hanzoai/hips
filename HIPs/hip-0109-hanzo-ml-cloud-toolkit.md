@@ -37,34 +37,6 @@ to do everything: `ml/` is primitives, `operator/` is control plane,
 `cloud/` is the HTTP mux, and the protocols at the edges are MCP for
 tools, A2A for federation, and ZAP between Hanzo subsystems.
 
-## Motivation
-
-Today every team that wants to ship a real ML workload on Hanzo has
-to either (a) bring in the entire open-source ML operator estate
-(seven projects, three CRD groups, two namespaces of pods, a
-PostgreSQL, a MinIO, a MySQL, a separate frontend), or (b)
-re-implement training/serving by hand. Neither is acceptable.
-
-The Hanzo platform already ships every primitive that estate
-re-invents:
-
-| Concern | Hanzo primitive | What replaces |
-|---|---|---|
-| Auth | `hanzoai/iam` | Open-source profile controller, Dex |
-| Artifact storage | `hanzoai/vfs` | MinIO, S3 directly |
-| Experiment metrics | `hanzoai/datastore` | MySQL + tracking-server |
-| Run config / registry metadata | `hanzoai/base` | MySQL, PostgreSQL |
-| Pipeline DAG runner | `hanzoai/tasks` (HIP-0108) | Argo, KFP backend |
-| Infrastructure obs | `hanzoai/o11y` | Prometheus + Grafana + Jaeger |
-| LLM/AI obs | `hanzoai/insights` | Langfuse, WhyLabs, custom |
-| Inference engine | `hanzoai/engine` | Inference servers (Triton-style) |
-| ML primitives | `hanzoai/ml` (Candle) | PyTorch as a service |
-| Control plane mux | `hanzoai/cloud` (HIP-0106) | API aggregator |
-
-What's missing is the **declarative API + reconciler** that ties them
-together. That's what HIP-0109 specifies and what
-`hanzoai/operator`'s new `ml-controller` module implements.
-
 ## Protocol boundaries (decomplect)
 
 Protocols sit at distinct layers. Each does one thing.

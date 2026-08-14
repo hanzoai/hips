@@ -33,21 +33,6 @@ Composed, this is the resell-ready OSS AI cloud: the customer supplies
 the two expensive inputs — compute and model access — and the platform
 supplies identity, scheduling, metering, and a single pane of glass.
 
-## Motivation
-
-Every leg exists and ships independently, which is exactly the risk:
-without a composition spec, product surfaces re-derive the story —
-one dashboard for AI spend, another for compute, a third for the BYO
-cluster — and the customer gets three ledgers that disagree. The
-product requirement is one sentence: **bring your provider, bring
-your AI, see one usage view, pay one invoice.** This HIP pins that
-sentence to the HIPs that implement it, and to nothing else.
-
-It also fixes the product narrative for resellers (HIP-0106
-white-label surfaces): what a `lux.cloud` or `osage.cloud` customer is
-promised is precisely this composition — under their brand, with their
-tenants' own providers and keys.
-
 ## Specification
 
 ### Leg 1 — Bring your own provider
@@ -110,31 +95,6 @@ nonconformant.
   cross-provider per-tenant scale execution (HIP-0123), and the
   unified cross-tenant fleet+revenue admin board (HIP-0121 roadmap,
   HIP-0038 surface).
-
-## Rationale
-
-**Why a composition HIP.** Rich Hickey's test: is this thing one thing?
-The customer promise is one thing — even though its implementation is
-three orthogonal planes. Capturing it as references keeps each plane
-independently evolvable while making the composition itself a
-reviewable, versioned artifact. The alternative is tribal knowledge —
-the most expensive storage tier.
-
-**Why thin is correct.** Every substantive rule here (org boundary,
-sealed credentials, exactly-once metering, scaling primitives, provider
-abstraction) already has exactly one home. Restating any of it would
-create the second copy this repo's orthogonality rule exists to
-prevent. This HIP's only normative additions are composition
-invariants: no second attach surface, no second AI interface, no
-second ledger.
-
-**Why it matters commercially.** BYO inverts the cost structure of
-running an AI cloud: the customer's cloud bill and model bill stay
-theirs (audited against their own provider statements, per HIP-0121's
-honesty contract), and the platform charges for what it uniquely does
-— identity, orchestration, elasticity, and the unified ledger. That is
-the wedge for resellers and enterprises alike, and it only works if
-the three legs stay composed, not braided.
 
 ## References
 

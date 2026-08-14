@@ -22,15 +22,6 @@ permit via the Z-Chain auth precompile (HIP-0104) or directly via the
 per-owner nonce pattern. The whole flow is profile-gated; a
 strict-PQ chain refuses any classical `permit`.
 
-## Motivation
-
-EIP-2612 is keyed to secp256k1 ECDSA — irrecoverable under Shor. The
-DeFi `permit` flow (gasless approvals, single-tx swaps, meta-tx)
-underpins thousands of contracts. Without a PQ replacement, ERC-20
-permits become a classical island inside a PQ chain. The replacement
-must be drop-in for contract authors (one verify call) while remaining
-profile-gated at the auth boundary.
-
 ## Specification
 
 Canonical reference: `luxfi/consensus/protocol/auth/permit.go`
@@ -79,15 +70,6 @@ Acceptance:
 7. `ML-DSA.Verify(owner_pubkey, transcript, signature) == true`.
 
 Failure of any check is a hard revert; no recovery.
-
-## Rationale
-
-Reusing TupleHash256 over a profile-bound transcript matches HIP-0086.
-Domain separation by cust string (`PERMIT-V1` vs `TX-AUTH-V1`)
-prevents cross-context signature reuse. The 20-byte
-`verifying_contract` retains EVM ABI familiarity for contract
-authors. Per-owner nonce mirrors EIP-2612, so the migration cost for
-existing token contracts is a verifier swap, not a flow redesign.
 
 ## Backwards compatibility
 

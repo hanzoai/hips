@@ -20,17 +20,6 @@ databases, three DDL paths and a version suffix on the table taking production w
 This HIP states the target, and the cut that reaches it: the old plane is destroyed,
 not migrated. No compatibility layer survives this document.
 
-## Motivation
-
-The rule that generates every decision here:
-
-> **A new door for a new data SHAPE. Never for a new VIEW.**
-
-Errors, analytics and BI are views of what happened. Giving each its own ingest is how a
-company ends up unable to ask whether a change helped, because the answer lives in three
-stores with three schemas and three tenant keys. Session replay is a genuinely different
-shape, so it earns a door. Error grouping is not, so it does not.
-
 ## Specification
 
 ### §1 Doors

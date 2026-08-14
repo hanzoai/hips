@@ -122,34 +122,6 @@ that cloud. Hanzo's infrastructure has specific constraints:
   that encryption keys and credentials never leave infrastructure we
   control. Self-hosted KMS satisfies this requirement.
 
-### Why Universal Auth Over mTLS
-
-Machine-to-machine authentication for secret access could use mutual TLS
-(mTLS), where each service presents a client certificate. We chose Universal
-Auth (client ID + client secret -> bearer token) for pragmatic reasons:
-
-- **CI/CD simplicity**: GitHub Actions can `POST` to the login endpoint,
-  receive a bearer token, and fetch secrets --- three HTTP calls, zero
-  certificate management. With mTLS, every CI runner would need a client
-  certificate provisioned, rotated, and securely stored.
-- **No certificate infrastructure**: mTLS requires a Certificate Authority,
-  certificate issuance, revocation lists (CRL/OCSP), and rotation
-  automation. This is a substantial system to build and operate. Universal
-  Auth requires only storing a client ID and client secret.
-- **Short-lived tokens**: Universal Auth tokens expire (default: 7200
-  seconds). If a token leaks, the blast radius is limited. With mTLS,
-  a leaked client certificate is valid until revoked --- and revocation
-  is notoriously unreliable.
-- **Debuggability**: Bearer tokens appear in HTTP headers and are easy to
-  trace in logs (redacted). mTLS authentication happens at the TLS layer,
-  invisible to application-level logging and debugging.
-
-The trade-off: Universal Auth credentials (clientId/clientSecret) must be
-bootstrapped into each service somehow. In K8s, we store them as a
-`Secret` that is created once and referenced by `KMSSecret` resources.
-This is the one secret that is not managed by KMS itself --- a
-necessary bootstrap dependency.
-
 ### Why the KMSSecret CRD
 
 Kubernetes-native secret sync via Custom Resource Definitions eliminates
@@ -668,12 +640,6 @@ system has one. We acknowledge it explicitly rather than hiding it.
 | GDPR Art. 32 | Security of processing | AES-256-GCM, audit trail |
 | PCI DSS 3.4 | Render PAN unreadable | Encryption at rest |
 
-## Migration Guide
-
-### From Environment Variables in Git
-
-Before (insecure):
-```yaml
 # compose.yml - DO NOT DO THIS
 environment:
   DATABASE_URL: "postgresql://user:password@host:5432/db"

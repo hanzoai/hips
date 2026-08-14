@@ -28,39 +28,6 @@ tokens** (compute deposits that earn yield while awaiting inference). MPC
 threshold signatures secure all cross-chain operations: FROST for Ed25519 chains
 and CGGMP21 for ECDSA chains.
 
-## Motivation
-
-HIP-0101 connects Hanzo (chain ID 36963) to Lux Network. This is sufficient for
-users who operate within the Hanzo-Lux ecosystem. It is not sufficient for users
-whose assets, identities, or applications live on other chains.
-
-AI inference is chain-agnostic. A user on Ethereum, Solana, or any L2 should be
-able to submit an inference request and pay for it without first bridging assets
-to Hanzo manually. The omnichain bridge eliminates this friction by routing
-payments through Lux Teleport, which maintains liquidity pools and relay
-infrastructure across 270 chains.
-
-Specific problems this proposal addresses:
-
-1. **Multi-chain payment fragmentation.** AI consumers exist on many chains.
-   Without omnichain support, each chain requires a separate integration. Lux
-   Teleport provides a single routing layer that normalizes payment across all
-   supported chains.
-
-2. **Idle compute deposits.** Users deposit funds for inference but may not
-   consume compute immediately. Yield-bearing bridge tokens allow deposits to
-   earn yield in Lux DeFi pools while remaining instantly redeemable for compute
-   credits.
-
-3. **Model distribution.** Trained models on Hanzo need deployment to execution
-   environments on chains where inference demand exists. The omnichain bridge
-   carries model certificate NFTs and deployment manifests to any destination
-   chain.
-
-4. **Settlement complexity.** Cross-chain inference involves payment on a source
-   chain, execution on Hanzo, and settlement on Lux. The omnichain bridge
-   coordinates this three-party flow using HIP-0101 as the settlement backbone.
-
 ## Specification
 
 ### Architecture
@@ -261,17 +228,6 @@ chains where inference demand exists. The bridge carries model certificate NFTs
 - MPC signing code: formal verification of threshold correctness.
 - Bridge contracts on each chain: independent audit before activation.
 - Yield vault interactions: audit of vault adapter contracts per DeFi protocol.
-
-## Backward Compatibility
-
-This proposal extends HIP-0101 without modifying it. The bilateral Hanzo-Lux
-bridge continues to operate independently. Omnichain routing is additive:
-external chains route through Lux Teleport, which connects to the existing
-HIP-0101 bridge infrastructure.
-
-Existing HIP-0101 bridge users see no change in behavior, latency, or security
-properties. The omnichain layer adds new source and destination chains without
-altering the core lock-and-mint mechanism.
 
 ## References
 

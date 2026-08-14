@@ -31,34 +31,6 @@ shutdown lifecycle — so that HIP-0106 (the host binary), HIP-0116 (the
 plugin/VM shapes), and every `hanzoai/<repo>` service compose on one
 substrate instead of each re-deciding a framework.
 
-## Motivation
-
-HIP-0106 declared zip "the ONE Go web framework" as a stack choice
-inside the unified-binary spec. HIP-0120 fixed the permitted wire
-protocols (ZAP, HTTP, WS — never gRPC). What neither HIP owns is the
-**server core itself**: the thing that terminates those transports,
-routes to handlers, carries identity, and gives services their mount
-surface. Without one HIP for that layer, three braids form:
-
-1. **Framework choice braided into every service.** Each repo would
-   re-answer "chi or gin or fiber?" — and did, historically. The
-   migration adapters in HIP-0106 exist precisely because there were
-   N answers. The end state must be one.
-2. **Transport braided into API shape.** A server that exposes
-   `ListenZAP()` and `ListenHTTP()` as separate methods forces every
-   caller to encode topology in code. Adding a transport then mutates
-   every service's main().
-3. **The host/plugin boundary braided into the framework.** HIP-0116's
-   plugin VMs and HIP-0106's embedded subsystems only stay
-   shape-agnostic if both mount against the *same* app surface.
-
-zip resolves all three: one framework, transport as a value, one mount
-contract. It ships today at `github.com/zap-proto/zip` **v1.2.1**
-(developed at `~/work/zap/zip`; formerly published as `hanzoai/zip` —
-the rename moved it to the ZAP protocol org because the server is
-ZAP-native first, Hanzo-branded second). `cloud` consumes v1.2.1 in
-production.
-
 ## Specification
 
 ### One verb, transport as a value

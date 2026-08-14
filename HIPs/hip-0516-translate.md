@@ -16,14 +16,6 @@ created: 2026-07-26
 own models and a bulk tier served by MADLAD-400. Both sit behind one endpoint, so
 callers choose cost and latency, never a vendor.
 
-## Motivation
-
-Translation was a third-party pipeline. Crowdin held our locale files, the workflow
-that drove it had never run (`if: false`), and its config pointed at an external
-project id. Removing it leaves a gap we should fill with a product rather than
-another vendor: we already run a model plane, so translation is a capability we
-can sell, not a bill we pay.
-
 ## Weights and the license constraint
 
 The license decides this before quality does. The three most cited open translation
@@ -96,13 +88,6 @@ regression in the service shows up in our own surfaces first.
 Standard IAM: org-scoped by bearer, metered per org, no cross-tenant read of a
 translation memory. Submitted text is customer content — it is not training data
 and not retained beyond the memory the customer's own org owns.
-
-## Rationale
-
-The alternative was a dedicated translation stack (its own serving, scaling and
-on-call). That is a second way to do inference, which the architecture forbids. One
-model plane, two tiers, one endpoint keeps the surface orthogonal to everything
-else we serve.
 
 ## References
 

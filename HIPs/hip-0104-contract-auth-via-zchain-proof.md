@@ -26,17 +26,6 @@ function-pointer interface in `luxfi/consensus/protocol/auth/precompile.go`.
 Contracts call these precompiles to gate sensitive functions on
 PQ identity without re-implementing the verifier.
 
-## Motivation
-
-Path 3 of the LUX_STRICT_E2E_PQ coverage matrix is partial. LP-169 /
-HIP-0078 specify Z-Chain proofs for identity-state transitions but
-leave the contract-call boundary unspecified. The verifier surface in
-`luxfi/consensus/protocol/zchain` exists but has no HIP locking the
-contract-call interface. Without HIP-0104, every contract author
-re-derives an auth pattern; HIP-0087 PQ Permit, HIP-0086 TxAuthEnvelope
-introspection, and HIP-0098 governance-auth checks would each need
-bespoke contract code. One precompile pair closes this.
-
 ## Specification
 
 Canonical references:
@@ -113,13 +102,6 @@ function verifyPQ(bytes calldata proof, bytes32 expectedAccount)
     return acct == expectedAccount;
 }
 ```
-
-## Rationale
-
-Four precompiles, one per primitive: ML-DSA-65 and ML-DSA-87 (lattice
-identity at Cat 3 and Cat 5), SLH-DSA (stateless hash-based backstop),
-and the Z-Chain proof path (heavy STARK verifier). Each reuses the
-same canonical Go verifier under the hood — one verifier in the tree.
 
 ## Backwards compatibility
 

@@ -24,18 +24,6 @@ via the existing TupleHash256 transcript (HIP-0079). LP-131's
 ECVRF-Ed25519 randomness is classical and explicitly NOT used under
 strict-PQ.
 
-## Motivation
-
-Path 13 of the LUX_STRICT_E2E_PQ coverage matrix is partial: quantum
-entropy is available but bound to no SP 800-90A DRBG construction, and
-LP-131 specifies ECVRF-Ed25519-SHA512 — entirely classical. Without a
-locked PQ randomness beacon, validator-committee selection, leader
-election, and on-chain randomness (used by lotteries, NFT drops,
-zk-coin shuffles, the Pulsar-M committee seed in HIP-0084) all run on
-either classical primitives or undefined-quality entropy. The strict-PQ
-profile requires the entire randomness chain to be FIPS 203/204/205
-compatible.
-
 ## Specification
 
 Canonical reference: `luxfi/consensus/protocol/auth/beacon.go`
@@ -165,16 +153,6 @@ Because instantiation and each reseed consume ≥ 384 conditioned bits,
 the raw draw per reseed is `(384 + 2*log2(1/epsilon)) / H_min` bits.
 The extraction ratio, not the raw sample rate, is what the epoch
 cadence must be budgeted against.
-
-## Rationale
-
-Hash-DRBG over SHA3-384 is the FIPS-aligned PQ-friendly construction
-in SP 800-90A: hash-only (no symmetric block cipher), no AES-CTR
-dependency, and matches the strict-PQ profile's 384-bit hash floor.
-QRNG entropy provides PQ-source seed material; Pulsar-M
-aggregation prevents any single validator from biasing the beacon.
-Epoch-cadence reseed bounds backtracking resistance. Per SP 800-90A
-§8.3, security strength 256 matches NIST PQ Cat 5.
 
 ## Backwards compatibility
 

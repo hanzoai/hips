@@ -38,15 +38,6 @@ defines the request path through the estate (the *topology*). This HIP defines t
 *service itself* — the contract a process MUST satisfy to be a citizen of the
 platform. Where they touch, this HIP is authoritative on the service's own surface.
 
-## Motivation
-
-An LLM (or a human) building against this stack should never have to read a
-service's source to learn where its health check is, which port serves metrics,
-whether the API is under `/api` or `/v1`, or how it gets a database password. Every
-one of those questions has exactly one answer, and it is the same answer for every
-service. Predictability is the product: it is what lets tooling, the operator,
-gateways, dashboards, and code generators treat every service identically.
-
 ## Specification
 
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are to be interpreted as
