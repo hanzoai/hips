@@ -100,7 +100,7 @@ Anything that would survive the cut only to be renamed later is not built.
 person:** `/usr/bin/datastore-client` silently runs in EMBEDDED LOCAL mode — `uptime()=0`,
 `currentUser()=''`, `SHOW DATABASES` returning only `default` and `system`. It reports an
 empty in-process engine while the real server sits behind it, and
-`/usr/bin/clickhouse-client` is a dangling symlink, so no canonical-name client works in
+`/usr/bin/hanzo-datastore-client` is a dangling symlink, so no canonical-name client works in
 that pod. The control that exposed it: `uptime()=0` on a 16-day-old pod. Correct
 invocation: `hanzo-datastore client --host 127.0.0.1 --port 9000 --user $DATASTORE_USER`.
 

@@ -613,18 +613,18 @@ replication is asynchronous and log-based:
 #### Cluster Configuration
 
 ```xml
-<!-- /etc/clickhouse-server/config.d/cluster.xml -->
-<clickhouse>
+<!-- /etc/hanzo-datastore-server/config.d/cluster.xml -->
+<datastore>
   <remote_servers>
     <hanzo_cluster>
       <shard>
         <internal_replication>true</internal_replication>
         <replica>
-          <host>clickhouse-0</host>
+          <host>datastore-0</host>
           <port>9000</port>
         </replica>
         <replica>
-          <host>clickhouse-1</host>
+          <host>datastore-1</host>
           <port>9000</port>
         </replica>
       </shard>
@@ -634,9 +634,9 @@ replication is asynchronous and log-based:
   <macros>
     <cluster>hanzo_cluster</cluster>
     <shard>01</shard>
-    <replica>clickhouse-{replica_number}</replica>
+    <replica>datastore-{replica_number}</replica>
   </macros>
-</clickhouse>
+</datastore>
 ```
 
 #### Hanzo Datastore Keeper Configuration
@@ -645,8 +645,8 @@ Since Hanzo Datastore 24.x, the built-in Hanzo Datastore Keeper replaces ZooKeep
 A 3-node Keeper ensemble provides coordination for replication:
 
 ```xml
-<!-- /etc/clickhouse-server/config.d/keeper.xml -->
-<clickhouse>
+<!-- /etc/hanzo-datastore-server/config.d/keeper.xml -->
+<datastore>
   <keeper_server>
     <tcp_port>9181</tcp_port>
     <server_id>1</server_id>
@@ -668,7 +668,7 @@ A 3-node Keeper ensemble provides coordination for replication:
       </server>
     </raft_configuration>
   </keeper_server>
-</clickhouse>
+</datastore>
 ```
 
 **Why 3 Keeper nodes, not 2**: Raft consensus requires a majority quorum.
@@ -727,7 +727,7 @@ clickhouse-backup download daily_2026_02_23
 clickhouse-backup restore daily_2026_02_23
 
 # Verify row counts
-clickhouse-client -q "SELECT count() FROM events"
+hanzo-datastore-client -q "SELECT count() FROM events"
 ```
 
 Recovery time objective (RTO): < 1 hour for full cluster restore.
@@ -780,31 +780,31 @@ The standard Grafana dashboard for Datastore includes panels for:
 ```yaml
 # compose.yml
 services:
-  clickhouse:
+  datastore:
     image: ghcr.io/hanzoai/datastore:latest
     ports:
       - "8123:8123"   # HTTP
       - "9000:9000"   # Native TCP
     volumes:
-      - clickhouse_data:/var/lib/clickhouse
-      - clickhouse_logs:/var/log/clickhouse-server
+      - datastore_data:/var/lib/hanzo-datastore
+      - datastore_logs:/var/log/hanzo-datastore-server
     environment:
-      CLICKHOUSE_DB: hanzo
-      CLICKHOUSE_USER: hanzo
-      CLICKHOUSE_PASSWORD: "${CLICKHOUSE_PASSWORD}"
+      DATASTORE_DB: hanzo
+      DATASTORE_USER: hanzo
+      DATASTORE_PASSWORD: "${DATASTORE_PASSWORD}"
     ulimits:
       nofile:
         soft: 262144
         hard: 262144
     healthcheck:
-      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      test: ["CMD", "hanzo-datastore-client", "--query", "SELECT 1"]
       interval: 10s
       timeout: 5s
       retries: 3
 
 volumes:
-  clickhouse_data:
-  clickhouse_logs:
+  datastore_data:
+  datastore_logs:
 ```
 
 #### Kubernetes (Production)
@@ -812,9 +812,9 @@ volumes:
 Production deployments use the Hanzo Datastore Operator for lifecycle management.
 
 ```yaml
-# k8s/clickhouse-installation.yaml
-apiVersion: clickhouse.altinity.com/v1
-kind: ClickHouseInstallation
+# k8s/datastore.yaml
+apiVersion: hanzo.ai/v1
+kind: Datastore
 metadata:
   name: hanzo-datastore
   namespace: hanzo
@@ -826,7 +826,7 @@ spec:
           shardsCount: 1
           replicasCount: 2
         templates:
-          podTemplate: clickhouse-pod
+          podTemplate: datastore-pod
           volumeClaimTemplate: data-volume
 
     settings:
@@ -844,20 +844,20 @@ spec:
       readonly/max_execution_time: 60
 
     users:
-      hanzo/password_sha256_hex: "${CLICKHOUSE_PASSWORD_SHA256}"
+      hanzo/password_sha256_hex: "${DATASTORE_PASSWORD_SHA256}"
       hanzo/networks/ip: "10.0.0.0/8"
       hanzo/profile: default
       hanzo/quota: default
-      readonly/password_sha256_hex: "${CLICKHOUSE_READONLY_PASSWORD_SHA256}"
+      readonly/password_sha256_hex: "${DATASTORE_READONLY_PASSWORD_SHA256}"
       readonly/networks/ip: "10.0.0.0/8"
       readonly/profile: readonly
 
   templates:
     podTemplates:
-      - name: clickhouse-pod
+      - name: datastore-pod
         spec:
           containers:
-            - name: clickhouse
+            - name: datastore
               image: ghcr.io/hanzoai/datastore:latest
               resources:
                 requests:
@@ -908,7 +908,7 @@ secrets.
 - Native TLS port (9440) is used for cross-cluster replication if needed.
 - No ports are exposed to the public internet.
 - Kubernetes NetworkPolicy restricts access to pods with the label
-  `clickhouse-client: "true"`.
+  `hanzo-datastore-client: "true"`.
 
 #### Data Classification
 
@@ -991,7 +991,7 @@ includes:
 - `k8s/`: Kubernetes manifests and Hanzo Datastore Operator CRD
 - `backup/`: Backup scripts and CronJob manifests
 - `grafana/`: Dashboard JSON exports
-- `tests/`: Integration tests using `clickhouse-client`
+- `tests/`: Integration tests using `hanzo-datastore-client`
 
 ## Copyright
 

@@ -621,7 +621,7 @@ Hanzo Insights runs on `hanzo-k8s` (`24.199.76.156`) with the following services
 | `insights-worker` | `ghcr.io/hanzoai/insights:latest` | 2 | 500m | 1Gi | Celery: async tasks |
 | `insights-plugins` | `ghcr.io/hanzoai/insights:latest` | 1 | 500m | 512Mi | Plugin server: transforms |
 | `insights-kafka` | `bitnami/kafka:3.7` | 1 | 500m | 2Gi | Event buffering (HIP-0030) |
-| `insights-clickhouse` | `clickhouse/clickhouse-server:24.1` | 1 | 1000m | 4Gi | Analytics storage |
+| `insights-datastore` | `ghcr.io/hanzoai/datastore:24.1` | 1 | 1000m | 4Gi | Analytics storage |
 | `insights-kv` | `redis:7-alpine` | 1 | 100m | 256Mi | Cache, session store |
 | `insights-postgres` | `postgres:16-alpine` | 1 | 250m | 512Mi | Metadata (or shared pg) |
 
@@ -895,8 +895,8 @@ kubectl exec -n hanzo insights-kafka-0 -- \
   --group analytics-ingest --describe
 
 # Query Hanzo Datastore directly
-kubectl exec -n hanzo insights-clickhouse-0 -- \
-  clickhouse-client --query "
+kubectl exec -n hanzo insights-datastore-0 -- \
+  hanzo-datastore-client --query "
     SELECT event, count()
     FROM events
     WHERE timestamp > now() - INTERVAL 1 HOUR
@@ -919,7 +919,7 @@ If events are captured but not appearing in the UI:
 
 ```bash
 # Check table sizes
-clickhouse-client --query "
+hanzo-datastore-client --query "
   SELECT table, formatReadableSize(sum(bytes_on_disk)) AS size
   FROM system.parts
   WHERE active

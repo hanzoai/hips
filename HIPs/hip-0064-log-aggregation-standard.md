@@ -580,15 +580,15 @@ condition = '''
 '''
 
 # Sink: Hanzo Datastore for operational logs
-[sinks.clickhouse_logs]
-type = "clickhouse"
+[sinks.datastore_logs]
+type = "datastore"
 inputs = ["sample"]
-endpoint = "http://clickhouse.hanzo.svc:8123"
+endpoint = "http://datastore.hanzo.svc:8123"
 database = "hanzo_logs"
 table = "logs"
 auth.strategy = "basic"
 auth.user = "hanzo"
-auth.password = "${CLICKHOUSE_PASSWORD}"
+auth.password = "${DATASTORE_PASSWORD}"
 batch.max_events = 10000
 batch.timeout_secs = 5
 buffer.type = "disk"
@@ -596,15 +596,15 @@ buffer.max_size = 1073741824  # 1 GB disk buffer
 encoding.timestamp_format = "rfc3339"
 
 # Sink: Hanzo Datastore for audit logs (separate routing)
-[sinks.clickhouse_audit]
-type = "clickhouse"
+[sinks.datastore_audit]
+type = "datastore"
 inputs = ["audit_filter"]
-endpoint = "http://clickhouse.hanzo.svc:8123"
+endpoint = "http://datastore.hanzo.svc:8123"
 database = "hanzo_logs"
 table = "audit"
 auth.strategy = "basic"
 auth.user = "hanzo"
-auth.password = "${CLICKHOUSE_PASSWORD}"
+auth.password = "${DATASTORE_PASSWORD}"
 batch.max_events = 1000
 batch.timeout_secs = 2
 buffer.type = "disk"
@@ -919,7 +919,7 @@ spec:
           name: hanzo
       podSelector:
         matchLabels:
-          app: clickhouse
+          app: datastore
     ports:
     - port: 8123
     - port: 9000
