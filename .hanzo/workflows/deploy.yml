@@ -9,9 +9,9 @@ name: deploy
 # no replicas.
 #
 #   pnpm build -> docs/out
-#     -> sitedeploy
+#     -> site
 #
-# The publish mechanics are NOT here. They are bin/sitedeploy in hanzoai/ci,
+# The publish mechanics are NOT here. They are bin/site in hanzoai/ci,
 # reached through its action, and every static surface in the fleet calls that one
 # script — ensure-project, enqueue, presigned per-file upload, complete. A
 # contract transcribed per repo is a contract that drifts, and this file used to
@@ -26,7 +26,7 @@ name: deploy
 # rather than a size cap. Measured, not assumed: that is exactly what a 25 MB
 # POST returned here, while a 468-byte one went live in the same second.
 #
-# DELETION IS THE SERVER'S: sitedeploy reports its manifest as `keys` on
+# DELETION IS THE SERVER'S: site reports its manifest as `keys` on
 # completion and cloud prunes the prefix, because a write-only grant cannot
 # delete.
 #
