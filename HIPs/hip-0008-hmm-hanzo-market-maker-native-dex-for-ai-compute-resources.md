@@ -10,24 +10,11 @@ requires: HIP-0, HIP-1
 ---
 
 
-
 # HIP-0008: HMM (Hanzo Market Maker) - Native DEX for AI Compute Resources
 
 ## Abstract
 
 This proposal specifies the HMM (Hanzo Market Maker), a native decentralized exchange built on Hanzo's sovereign L1 blockchain (launching as L2 on Lux) for trading AI compute resources. HMM enables a liquid marketplace for GPU time, model inference, training slots, and other AI resources with dynamic pricing, instant settlement, and cross-chain accessibility.
-
-## Motivation
-
-Current AI compute markets suffer from:
-
-1. **Fragmentation**: Compute resources scattered across providers
-2. **Inefficient Pricing**: Fixed pricing doesn't reflect real-time demand
-3. **Access Barriers**: High minimum commitments and contracts
-4. **No Liquidity**: Can't easily buy/sell compute on demand
-5. **Quality Uncertainty**: No transparent performance metrics
-
-HMM solves these by creating a unified, liquid marketplace for AI compute with transparent pricing and instant access.
 
 ## Specification
 
@@ -261,47 +248,7 @@ contract HMMBridge {
 }
 ```
 
-## Implementation Roadmap
-
-### Phase 1: Core DEX (Q1 2025)
-- Basic AMM for GPU compute
-- HANZO token integration
-- Simple quality metrics
-
-### Phase 2: Advanced Features (Q2 2025)
-- Order book implementation
-- Multiple resource types
-- Cross-chain bridge to Ethereum
-
-### Phase 3: Ecosystem Integration (Q3 2025)
-- Provider onboarding tools
-- Consumer SDKs
-- Advanced quality oracles
-
-### Phase 4: Full Decentralization (Q4 2025)
-- DAO governance
-- Decentralized oracle network
-- Permissionless pool creation
-
-## Economic Model
-
-### Fee Structure
-
-```yaml
-Trading Fees:
-  - Taker: 0.3% of trade value
-  - Maker: 0.1% of trade value
-  - LP Rewards: 0.2% to liquidity providers
-
-Quality Incentives:
-  - Performance Bonus: +50% fees for top 10% quality
-  - Penalty: -50% fees for bottom 10% quality
-  - Slashing: Remove from pools for consistent poor performance
-
-Volume Discounts:
-  - Tier 1 (>1000 HANZO/month): 10% discount
-  - Tier 2 (>10000 HANZO/month): 20% discount
-  - Tier 3 (>100000 HANZO/month): 30% discount
+ZO/month): 30% discount
 ```
 
 ### Token Utility

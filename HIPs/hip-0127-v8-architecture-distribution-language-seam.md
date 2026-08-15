@@ -10,7 +10,6 @@ requires: HIP-0040, HIP-0041, HIP-0106, HIP-0114, HIP-0120
 ---
 
 
-
 # HIP-0127: V8 · Open Edition — Architecture, Distribution & the Language Seam
 
 ## Abstract
@@ -110,19 +109,6 @@ anyone runs the whole cloud on their own machine, brings their own GPU or K8s,
 mines on any device (confidential via NVIDIA TEE/CC, market-priced), and public +
 OSS workloads run free on public nodes (GitHub-for-compute). The 67 capabilities
 are one binary; the network is the substrate.
-
-## Rationale
-
-- **Values, not places** (Hickey): a capability is named by its `/v1` route, not
-  by which repo/language/pod implements it.
-- **Decomplect**: the Go/Rust boundary is a *value boundary* (ZAP frames), not a
-  *place boundary* (FFI in one address space). One concern per binary.
-- **One and one way**: one contract (`hanzo.yaml`), one client core per stack
-  (`hanzo-client`), one distribution harness — every CLI/SDK derives, none is
-  hand-forked.
-- **Easy ≠ simple**: FFI is *easy* (one repo, one process) but *complects*
-  toolchains; the wire seam is *simpler* (independent, composable, language-free
-  at the boundary).
 
 ## Consequences
 

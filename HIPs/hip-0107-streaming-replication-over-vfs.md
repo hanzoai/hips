@@ -4,11 +4,10 @@ title: Streaming Replication over VFS
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Review
+status: Draft
 created: 2026-05-18
 requires: HIP-0026, HIP-0027, HIP-0302
 ---
-
 
 
 # HIP-0107: Streaming Replication over VFS
@@ -58,32 +57,6 @@ superseded by streaming for the replication path; election (now `ha`) and
 the hydrate/adopt primitives stay. See
 "HA-SQLite substrate" and "Relationship to HIP-0302 and hanzoai/replicate"
 below.
-
-## Motivation
-
-Today Hanzo has **two parallel "where bytes live" abstractions**
-inside the same codebase:
-
-- `~/work/hanzo/replicate` carries seven sink backends (`s3`, `gs`,
-  `abs`, `nats`, `oss`, `sftp`, `webdav`). Each is a separately-typed
-  client and credential surface.
-- `~/work/hanzo/vfs` carries a similar but **distinct** set of
-  object-store backends, plus a Go-native `vfs.Backend` interface that
-  every other Hanzo service has been migrating onto.
-
-Meanwhile:
-
-- `~/work/hanzo/zapdb-replicator` is a **separate sidecar image**
-  (`ghcr.io/hanzoai/zapdb-replicator`) that re-implements the
-  age-encryption + frame-pump loop for ZapDB instead of plugging into
-  `replicate` as a source.
-- Blockchain state replication is **ad-hoc per chain** — Lux primary
-  network ships its own snapshot pump, regulated EVM L1 ships its own,
-  Z-Chain ships its own. Each invented its own age-recipient scheme,
-  its own bucket layout, its own restore tool.
-
-Three "almost-the-same" pipelines, three on-call burdens, three
-audit surfaces. This HIP unifies them.
 
 ## Specification
 
@@ -345,7 +318,7 @@ follows the phases below.
 
 ## Non-goals
 
-- **`hanzoai/datastore` (ClickHouse fork).** Datastore already uses
+- **`hanzoai/datastore` (Hanzo Datastore fork).** Datastore already uses
   ReplicatedMergeTree + S3-disk for its own replication. HIP-0107 does
   not touch it. The two systems share an S3 bucket via `vfs` prefix
   separation: `s3://bucket/datastore/...` is Datastore-owned;

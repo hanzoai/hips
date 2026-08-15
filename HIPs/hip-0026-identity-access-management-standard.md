@@ -10,12 +10,11 @@ requires: HIP-0027, HIP-0029
 ---
 
 
-
 # HIP-0026: Identity & Access Management Standard
 
 ## Abstract
 
-Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a Go/Beego-based identity platform, chosen for its lightweight single-binary deployment model and native compatibility with the Go-heavy Hanzo and Lux infrastructure stack.
+Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a clean-room native rewrite on the Hanzo stack -- `zip` over `hanzoai/orm` -- and carries no Beego and no xorm. (This paragraph asserted a Go/Beego platform until 2026-08-13; the Casdoor-derived Beego/xorm tree is the retired v1 line at `hanzoai/iam-v1`. `iam/go.mod` requires no beego module and no Go file imports one -- the only occurrences in the tree are comments describing what v1 did.)
 
 Hanzo IAM implements OAuth 2.0, OpenID Connect (OIDC), SAML 2.0, and CAS protocols. It provides multi-tenant authentication with per-organization white-label identity domains — any organization registered in IAM can get its own branded login page and identity domain. The default deployment ships with hanzo.id, lux.id, zoo.id, pars.id, and id.ad.nexus, but the system supports arbitrary additional tenants via configuration.
 
@@ -25,29 +24,7 @@ The system also tracks per-user credit balances for AI usage billing, making IAM
 **Port**: 8000
 **Docker**: `ghcr.io/hanzoai/iam:latest`
 
-## Motivation
-
-### The Problem
-
-Every service in the Hanzo ecosystem needs authentication. Without a centralized IAM, each team independently builds login flows, token validation, user storage, and session management. This leads to:
-
-1. **Duplicated effort**: Cloud, Commerce, Console, Platform, and Chat all need OAuth. Five teams building five login pages is waste.
-2. **Inconsistent security posture**: Some teams do PKCE, some do not. Some rotate tokens, some use static API keys. The attack surface is the union of all weaknesses.
-3. **No cross-service SSO**: A user logged into cloud.hanzo.ai should not need to log in again at console.hanzo.ai. Without centralized identity, SSO requires ad-hoc token sharing.
-4. **Multi-org complexity**: Hanzo (AI infrastructure), Lux (blockchain), Zoo (research foundation), Pars (regional platform), and AdNexus (advertising) are separate organizations with separate branding, but share users and infrastructure. Each organization needs its own login page, theme, and policies, while a single user (e.g., `z@hanzo.ai`) must hold memberships across all of them.
-5. **Billing integration**: AI usage is metered per-user. The billing system needs a single source of truth for "who is this user and what is their balance?" If user identity lives in IAM and balance lives in a separate billing service, every LLM API call requires two round-trips.
-
-### Why Centralized IAM Solves This
-
-A single IAM instance at hanzo.id eliminates all five problems. Services delegate authentication entirely. The OAuth application model provides per-service isolation (each app has its own client ID, redirect URIs, and scopes). Multi-org support is built into the data model. And the user entity in IAM carries a `balance` field, so balance checks are a single query against the same database that validates the token.
-
-## Design Philosophy
-
-This section explains the *why* behind each major design decision. Good infrastructure decisions compound; bad ones metastasize. Understanding the rationale prevents future engineers from "fixing" things that are not broken.
-
-### Why Hanzo IAM Over Keycloak
-
-Keycloak is the most popular open-source IAM. It is also a 500MB+ Java application that requires a JVM, takes 30+ seconds to start, and consumes 512MB of heap at idle. In the Hanzo ecosystem, where the blockchain node, CLI tools, SDK, and wallet are all written in Go, introducing a Java dependency for IAM is a poor fit.
+Hanzo ecosystem, where the blockchain node, CLI tools, SDK, and wallet are all written in Go, introducing a Java dependency for IAM is a poor fit.
 
 Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and idles at ~50MB RSS. It ships a React frontend (easy to customize for branding) and supports the same protocol set as Keycloak (OAuth 2.0, OIDC, SAML, CAS, LDAP, RADIUS). The tradeoff is a smaller community and fewer enterprise features (no fine-grained RBAC policies, no UMA). For our use case -- OAuth SSO across a handful of first-party services -- the Hanzo IAM feature set is sufficient, and the operational simplicity is decisive.
 
@@ -60,45 +37,6 @@ Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and
 | Frontend | React (customizable) | Freemarker (limited) |
 | Protocol support | OAuth2, OIDC, SAML, CAS, LDAP | OAuth2, OIDC, SAML, UMA |
 | Stack alignment | Same as Lux node, CLI, SDK | Requires JVM |
-
-### Why Not Auth0 or Okta
-
-Managed identity services charge per monthly active user (MAU). Auth0's pricing starts at $0.003/MAU for the essentials tier. At 1M MAU (a realistic target for an AI platform with free-tier users), that is $3,000/month *just for login*. At 10M MAU, $30,000/month. Self-hosted IAM costs the price of a single VM (~$40/month on DigitalOcean).
-
-Beyond cost, managed services create vendor lock-in in the most sensitive part of your stack. Migrating user password hashes out of Auth0 is non-trivial. And for air-gapped or sovereign deployments (required for some enterprise and government customers), a SaaS identity provider is simply not an option.
-
-### Why Multi-Tenant via Domain
-
-Each organization gets its own white-label identity domain. The system supports an arbitrary number of tenants — any organization registered in IAM can be assigned a custom domain. The default deployment includes:
-
-| Organization | Domain | Primary Color | Description |
-|-------------|--------|---------------|-------------|
-| Hanzo | hanzo.id | #fd4444 (red) | AI infrastructure |
-| Lux | lux.id | #e4e4e7 (zinc) | Blockchain network |
-| Zoo | zoo.id | #10b981 (emerald) | Research foundation |
-| Pars | pars.id | #3b82f6 (blue) | Regional platform |
-| AdNexus | id.ad.nexus | #3b82f6 (blue) | Advertising platform |
-
-Adding a new tenant requires:
-1. Create the organization in IAM (via API or init_data.json)
-2. Create an OAuth application for the organization
-3. Add the domain to the reverse proxy (Traefik IngressRoute or DNS record)
-4. Either add the domain to the `hanzo/id` middleware tenant map, or deploy a forked instance with `IAM_ORIGIN`, `NEXT_PUBLIC_ORG`, and `NEXT_PUBLIC_CLIENT_ID` environment variables
-
-The reverse proxy (Traefik in production) routes all tenant domains to the same IAM container on port 8000. IAM resolves the organization from the request's `Host` header via the `origin` configuration and the application's `organization` field. Organizations are fully isolated — different themes, different OAuth applications, different password policies, different MFA requirements — while sharing one IAM process and one database.
-
-The `hanzo/id` login UI is designed to be forked for deep customization. Organizations can:
-- Fork `hanzoai/id` to `luxfi/id`, `zoofdn/id`, etc. for fully custom branding
-- Or use the same `hanzoai/id` image with per-tenant env vars for lightweight white-labeling
-- Or add entries to the middleware tenant map for multi-domain deployment from a single image
-
-The alternative (path-based multi-tenancy like `hanzo.id/lux/login`) is fragile. It leaks the organizational structure into URLs, makes CORS configuration harder, and prevents each org from having a clean, branded identity domain that users can trust.
-
-### Why Credit Balances Live in IAM
-
-IAM already owns the user entity. Every authenticated API call already hits IAM (to validate the JWT or session). Adding a `balance` field to the user record means that the LLM Gateway (HIP-4) can check "is this user authenticated?" and "does this user have credits?" in a single token validation, without a second round-trip to a billing microservice.
-
-The `Transaction` model in IAM records both credits (Recharge from Commerce) and debits (Purchase from Cloud/LLM Gateway). This is not a full accounting system -- it is a ledger of balance-affecting events scoped to the user. Complex billing logic (invoices, native-PSP integration, subscription tiers) lives in Commerce (HIP-18). IAM is the *balance cache*, not the billing engine.
 
 ## Specification
 
@@ -121,7 +59,7 @@ The `Transaction` model in IAM records both credits (Recharge from Commerce) and
                               │
                     ┌─────────┴─────────┐
                     │    Hanzo IAM       │
-                    │   (Go/Beego)       │
+                    │   (zip + orm)      │
                     │     :8000          │
                     └────┬─────────┬────┘
                          │         │

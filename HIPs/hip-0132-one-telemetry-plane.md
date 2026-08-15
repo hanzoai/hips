@@ -4,11 +4,10 @@ title: One Telemetry Plane — One Door, One Schema, Many Lenses
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-07-27
 requires: HIP-0119, HIP-0512
 ---
-
 
 
 # HIP-0132: One Telemetry Plane — One Door, One Schema, Many Lenses
@@ -21,17 +20,6 @@ databases, three DDL paths and a version suffix on the table taking production w
 
 This HIP states the target, and the cut that reaches it: the old plane is destroyed,
 not migrated. No compatibility layer survives this document.
-
-## Motivation
-
-The rule that generates every decision here:
-
-> **A new door for a new data SHAPE. Never for a new VIEW.**
-
-Errors, analytics and BI are views of what happened. Giving each its own ingest is how a
-company ends up unable to ask whether a change helped, because the answer lives in three
-stores with three schemas and three tenant keys. Session replay is a genuinely different
-shape, so it earns a door. Error grouping is not, so it does not.
 
 ## Specification
 
@@ -112,7 +100,7 @@ Anything that would survive the cut only to be renamed later is not built.
 person:** `/usr/bin/datastore-client` silently runs in EMBEDDED LOCAL mode — `uptime()=0`,
 `currentUser()=''`, `SHOW DATABASES` returning only `default` and `system`. It reports an
 empty in-process engine while the real server sits behind it, and
-`/usr/bin/clickhouse-client` is a dangling symlink, so no canonical-name client works in
+`/usr/bin/hanzo-datastore-client` is a dangling symlink, so no canonical-name client works in
 that pod. The control that exposed it: `uptime()=0` on a 16-day-old pod. Correct
 invocation: `hanzo-datastore client --host 127.0.0.1 --port 9000 --user $DATASTORE_USER`.
 

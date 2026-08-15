@@ -4,11 +4,10 @@ title: BYO Compute Fleet & Metered Billing
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Review
+status: Draft
 created: 2026-07-07
 requires: HIP-0026, HIP-0027, HIP-0106, HIP-0111
 ---
-
 
 
 # HIP-0121: BYO Compute Fleet & Metered Billing
@@ -39,42 +38,6 @@ The fleet is the `hanzoai/cloud` `clients/fleet` registry consumed by
 `clients/visor` (the `/v1/clusters` surface) and `clients/ml` (workload
 federation), per HIP-0106. **Visor** (HIP-0053) is the machine/cluster control
 plane. This HIP is the fleet + billing contract that sits on top of both.
-
-## Motivation
-
-Hanzo's compute is no longer one pool. It is a DO GPU pool, a customer's EKS
-cluster, a founder's GB10 workstation under a desk, an org's own AWS account, and
-a validator box that already secures the chain. Today each of those is a
-different code path, a different credential store, a different (or missing)
-billing rule. That does not scale, and it does not compose.
-
-The product requirement is one sentence: **anyone can bring compute, see it, use
-it, schedule work on it, and get billed fairly for it** — whether "it" is a
-managed cluster we provision, a kubeconfig they paste, a GPU box they plug in, or
-their own cloud account. And for enterprises: run the entire Hanzo cloud on their
-own metal, white-labeled, and pay a license.
-
-Three forces make this a Core standard rather than a feature:
-
-1. **One fleet, or N incompatible ones.** Managed clusters live in Visor. The
-   BYO-kubeconfig registration built this cycle could have become a parallel
-   `/v1/ml/clusters`. ML serving needs to place a workload on *whichever* cluster
-   the org chose. Without one registry, every consumer re-invents attach,
-   validate, seal, and list — and the two lists drift. There must be exactly one
-   fleet primitive per org, with exactly one surface.
-
-2. **Fair billing requires the source's *provenance*, not a flat rate.** A box on
-   AWS already pays AWS; charging it a full instance price double-charges the
-   customer. A bare-metal GPU costs the customer nothing per hour; a flat monthly
-   fee is honest. A validator already earns chain economics and secures the
-   network; taxing its spare cycles is hostile. The rate must be a *property of
-   how the compute connects* — 1% / $1 / free — resolved once, at connect.
-
-3. **Multi-tenant money safety is unforgiving.** The fleet is cross-tenant by
-   construction (every org's compute in one control plane). A kubeconfig leak
-   crosses a security boundary; a double-debit crosses a trust boundary. Both
-   must be structurally impossible, not merely unlikely — per-org KMS sealing for
-   the first, cluster-wide single-flight leases for the second.
 
 ## Specification
 

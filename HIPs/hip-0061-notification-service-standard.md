@@ -10,7 +10,6 @@ requires: HIP-0026, HIP-0017
 ---
 
 
-
 # HIP-0061: Notification & Messaging Service Standard
 
 ## Abstract
@@ -50,46 +49,7 @@ Without a centralized notification service, each of these teams integrates with 
 
 **5. No delivery observability.** Did the email arrive? Was it opened? Did the SMS bounce? Did the webhook return a 200? Without centralized tracking, debugging "I never got the notification" requires spelunking through five different provider dashboards.
 
-### Why Unified Notification Service
-
-A single notification service eliminates all five problems. Services call one API: `POST /v1/notify`. The Notify service handles provider selection, channel routing, fallback logic, template rendering, rate limiting, bounce handling, preference checking, and delivery tracking. Services never touch a delivery provider directly.
-
-This is the same architectural principle behind the LLM Gateway (HIP-0004): instead of every service integrating with OpenAI, Anthropic, and Together AI independently, they call the Gateway. Instead of every service integrating with SendGrid, Twilio, and FCM independently, they call Notify.
-
 ## Design Philosophy
-
-### Why Not Just Use SendGrid / Twilio Directly
-
-The instinctive answer to "we need to send emails" is to sign up for SendGrid and call their API. This works until it does not. Here is the full cost analysis:
-
-**Direct cost at scale.** SendGrid charges $0.00065 per email on the Pro plan (100K emails/month = $65). At 1M emails/month, that is $650. At 10M, $6,500. Twilio SMS is $0.0079 per message in the US. Push notifications via FCM/APNs are free but require infrastructure to manage device tokens. A unified service lets us use the cheapest provider for each channel and switch providers without changing any calling code.
-
-**Deliverability reputation management.** Email deliverability depends on sender reputation -- IP warmup, SPF/DKIM/DMARC configuration, bounce rate monitoring, complaint rate tracking, and list hygiene. When five teams send from five different configurations, one team's misconfiguration (e.g., not handling bounces) degrades everyone's deliverability. A single service maintains one sender reputation with proper hygiene.
-
-**Data sovereignty.** SendGrid and Twilio store message content on their infrastructure. For enterprise customers with data residency requirements, this is problematic. Notify renders templates locally and sends only the final content to the delivery provider. Template data and user contact information stay on our infrastructure.
-
-**AI personalization.** The most compelling reason for a self-hosted service: we can pass notification content through the LLM Gateway (HIP-0004) for AI-powered personalization before delivery. SendGrid's "dynamic templates" offer variable substitution. We offer full LLM rewriting -- adjusting tone, language, length, and content based on user profile and engagement history. This is impossible with a third-party service because it requires access to our user data and LLM infrastructure.
-
-### Why Handlebars + LLM Fallback for Templates
-
-Notification templates need two things: reliable variable substitution for transactional messages, and intelligent content generation for marketing messages.
-
-**Handlebars** is a logic-less templating language. `{{user.name}}` renders the user's name. `{{#if user.isPro}}` conditionally includes content. It is deterministic -- the same input always produces the same output. This is essential for transactional messages where regulatory compliance requires exact, reproducible content. An auth code email must say exactly what it says, every time.
-
-**LLM personalization** is the opposite: non-deterministic, creative, and context-aware. When sending a weekly usage digest, an LLM can summarize the user's activity in natural language, highlight anomalies, and suggest actions -- all personalized to the user's usage patterns. This is not possible with Handlebars alone.
-
-The architecture is: Handlebars renders first (deterministic variable substitution), then an optional LLM pass personalizes the result (non-deterministic enhancement). Transactional templates skip the LLM pass. Marketing templates opt into it.
-
-```
-Template (Handlebars)  ──render──>  Base Content  ──LLM (optional)──>  Personalized Content
-    {{user.name}}                   "Hi Zach"                          "Hi Zach, great week --
-    {{usage.tokens}}                "You used 1.2M                      you used 1.2M tokens,
-                                     tokens this week"                  up 40% from last week.
-                                                                        Your agents completed
-                                                                        47 tasks autonomously."
-```
-
-**Why not LLM-only?** Cost and latency. An LLM call costs ~$0.001-0.01 and takes 500ms-2s. For a password reset email sent 100K times/day, Handlebars renders in microseconds at zero marginal cost. LLM personalization is reserved for high-value, low-volume messages where the personalization justifies the cost.
 
 ### Why Multi-Channel Fallback Chains
 

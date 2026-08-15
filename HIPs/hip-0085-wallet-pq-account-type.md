@@ -3,12 +3,11 @@ hip: 0085
 title: Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID)
 type: Standards Track
 category: Cryptography
-status: Final
+status: Active
 author: Hanzo AI
 created: 2026-05-11
 requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain), HIP-0079 (Q-Chain), HIP-0084 (Pulsar-M DKG)
 ---
-
 
 
 # HIP-0085: Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID)
@@ -24,16 +23,6 @@ is also defined as a `Keccak-256` truncation of the same public key,
 but the AccountID is the primary identifier; the 20-byte form is a
 compatibility projection. Wallet vendors target this HIP to ship a
 single canonical PQ account format across Hanzo, Lux, and Zoo.
-
-## Motivation
-
-LUX_STRICT_PQ requires every user-side signature to be ML-DSA-65. Today
-HD wallets target secp256k1 with 20-byte Keccak truncations. There is
-no canonical 48-byte AccountID that locks an ML-DSA-65 public key to
-an on-chain identity under the strict-PQ profile. Without this HIP,
-wallets either reuse EVM 20-byte addresses (collision-prone for the
-larger pubkey) or invent per-vendor formats. The PQ-side AccountID
-must be primary, not derived from the EVM projection.
 
 ## Specification
 
@@ -58,15 +47,6 @@ event log indexing; settlement is keyed by AccountID. The 48-byte
 length is chosen to match the `MinHashOutputBits = 384` profile pin
 and to make truncation collisions cryptographically negligible at the
 profile's NIST PQ Cat 3 floor.
-
-## Rationale
-
-SHA3-384 over the cust-string-prefixed public key matches the
-strict-PQ profile's hash floor (384 bits) and is FIPS 202 / SP 800-185
-compliant. The 20-byte EVM projection retains tooling compatibility
-without conflating identity scope. BIP-32 derivation reuses Lux's
-existing slip-44 9000 allocation; ML-DSA-65 keygen is seeded by
-`SHAKE-256(bip32_child_seed)` per `luxfi/crypto/mldsa`.
 
 ## Backwards compatibility
 

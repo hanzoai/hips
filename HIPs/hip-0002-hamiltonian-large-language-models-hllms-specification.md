@@ -11,24 +11,11 @@ requires: HIP-1
 ---
 
 
-
 # HIP-0002: Hamiltonian Large Language Models (HLLMs) Specification
 
 ## Abstract
 
 This proposal defines the architecture, capabilities, and standards for Hamiltonian Large Language Models (HLLMs). HLLMs are multimodal AI models with per-user fine-tuning, where every user owns their personalized model fork. These models support text, vision, audio, and 3D modalities with unified representations and cross-modal understanding.
-
-## Motivation
-
-Current AI models are typically specialized for single modalities or use separate encoders for different modalities. Additionally, they use domain-specific fine-tuning which fundamentally fails users:
-
-1. **Information Loss**: Separate models lose cross-modal relationships
-2. **Inefficiency**: Multiple models increase computational overhead
-3. **No Personalization**: Domain-specific models (medical, legal, etc.) still generic for individuals
-4. **No User Ownership**: Users can't own their personalized AI
-5. **Privacy Violations**: User data pooled for domain training
-
-HLLMs address these limitations by providing unified multimodal understanding with per-user fine-tuning where every interaction creates a personalized model fork, integrated with Active Inference principles for principled decision-making.
 
 ## Specification
 
@@ -180,67 +167,7 @@ class HLLMArchitecture:
 - **Constitutional AI**: Rule-based constraints
 - **Multimodal Alignment**: Cross-modal consistency checks
 
-## Rationale
-
-### Why Unified Architecture?
-
-A unified architecture enables:
-- **Shared Representations**: Learn common patterns across modalities
-- **Efficient Scaling**: Single model scales better than multiple
-- **Emergent Capabilities**: Cross-modal understanding emerges naturally
-
-### Why These Modalities?
-
-Text, vision, audio, and 3D cover the primary human senses and most digital content:
-- **Text**: Foundation of human knowledge
-- **Vision**: Rich visual understanding
-- **Audio**: Speech and environmental sounds
-- **3D**: Spatial reasoning and robotics
-
-### Why Multiple Model Sizes?
-
-Different applications have different requirements:
-- **Edge**: HLLM-7B for mobile and embedded
-- **Cloud**: HLLM-32B for standard applications
-- **Enterprise**: HLLM-175B for complex tasks
-- **Research**: HLLM-1T for pushing boundaries
-
-## Backwards Compatibility
-
-HLLMs maintain compatibility with existing standards:
-- **OpenAI API**: Compatible request/response format
-- **Hugging Face**: Transformers library support
-- **ONNX**: Export for cross-platform deployment
-- **MCP**: Model Context Protocol integration
-
-## Test Cases
-
-### Unit Tests
-- Modality encoder/decoder functionality
-- Cross-attention mechanisms
-- Input/output formatting
-
-### Integration Tests
-- End-to-end multimodal generation
-- API compatibility tests
-- Performance benchmarks
-
-### Evaluation Benchmarks
-- **MMLU**: Multitask language understanding
-- **VQA2.0**: Visual question answering
-- **COCO**: Image captioning
-- **LibriSpeech**: Speech recognition
-- **ScanNet**: 3D scene understanding
-
-
-## Research Foundation
-
-### Published Papers
-- **Multimodal Transformers**: [arxiv.org/abs/2024.hanzo.mmt](https://arxiv.org) (forthcoming)
-- **Per-User Fine-Tuning at Scale**: [arxiv.org/abs/2024.hanzo.puft](https://arxiv.org) (forthcoming)
-- **Hamiltonian Dynamics in Neural Networks**: [arxiv.org/abs/2024.hanzo.hdnn](https://arxiv.org) (forthcoming)
-
-### Open Source Repositories
+e Repositories
 - **Jin Multimodal Models**: [github.com/hanzoai/jin](https://github.com/hanzoai/jin)
 - **LLM Gateway**: [github.com/hanzoai/llm](https://github.com/hanzoai/llm)
 - **Agent Framework**: [github.com/hanzoai/agent](https://github.com/hanzoai/agent)
@@ -253,50 +180,7 @@ HLLMs maintain compatibility with existing standards:
 - **HLLM-32B Base**: [huggingface.co/hanzoai/hllm-32b](https://huggingface.co/hanzoai/hllm-32b)
 - **Evaluation Suite**: [github.com/hanzoai/hllm-eval](https://github.com/hanzoai/hllm-eval)
 
-## Implementation Roadmap
-
-### Phase 1: Research Foundation (Q1 2025)
-- HLLM-7B architecture validation
-- Per-user LoRA adapter framework
-- Multimodal alignment techniques
-- Active Inference integration
-
-### Phase 2: Scaling Studies (Q2 2025)
-- HLLM-32B training and evaluation
-- Distributed training infrastructure
-- Cross-modal transfer learning
-- IEEE 2874 compliance
-
-### Phase 3: Production Systems (Q3 2025)
-- HLLM-175B architecture
-- Inference optimization
-- Model compression techniques
-- Real-world deployment
-
-### Phase 4: Advanced Research (Q4 2025)
-- HLLM-1T exploration
-- Emergent capabilities analysis
-- Collective intelligence studies
-- Next-generation architectures
-
-## Security Considerations
-
-### Model Security
-- **Adversarial Robustness**: Defense against attacks
-- **Privacy**: No training data memorization
-- **Access Control**: API key authentication
-- **Rate Limiting**: Prevent abuse
-
-### Infrastructure Security
-- **Post-Quantum Cryptography**: Quantum-resistant security
-- **TEE Deployment**: Secure enclaves for sensitive data
-- **Encrypted Inference**: End-to-end encryption
-
-## References
-
-1. [Flamingo: a Visual Language Model](https://arxiv.org/abs/2204.14198)
-2. [CLIP: Learning Transferable Visual Models](https://arxiv.org/abs/2103.00020)
-3. [Gemini: A Family of Multimodal Models](https://arxiv.org/abs/2312.11805)
+2312.11805)
 4. [HIP-0: Hanzo AI Architecture](./hip-0.md)
 5. [HIP-5: Post-Quantum Security](./hip-5.md)
 

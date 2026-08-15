@@ -4,11 +4,10 @@ title: AI Token - Hanzo's Native Currency
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Review
+status: Draft
 created: 2024-12-20
 updated: 2026-07-08
 ---
-
 
 
 # HIP-0001: AI Token - Hanzo's Native Currency
@@ -18,18 +17,6 @@ updated: 2026-07-08
 This proposal defines the $AI token, Hanzo's native cryptocurrency that powers the AI compute economy. The $AI token incentivizes compute providers, rewards model training, enables AI service payments, and governs the Hanzo network through a Proof of Compute consensus mechanism.
 
 **Trading**: [$AI on Lux Exchange](https://lux.exchange/trade/AI)
-
-## Motivation
-
-Current AI infrastructure lacks proper economic incentives:
-
-1. **No Compute Markets**: GPU resources are locked in centralized providers
-2. **No Training Rewards**: Users who improve models get nothing
-3. **No Ownership**: Users can't own their AI contributions
-4. **Centralized Pricing**: Oligopolistic control over AI costs
-5. **No Quality Metrics**: All compute treated equally regardless of performance
-
-The $AI token creates a decentralized economy for AI compute and training.
 
 ## Specification
 
@@ -283,52 +270,7 @@ Staking Tiers:
 3. **Dynamic Fees**: Adjust based on network usage
 4. **Burn Rate**: Increases with usage
 
-## Implementation Roadmap
-
-### Phase 1: Token Launch (Q1 2025)
-- Deploy AI token contract
-- Initial distribution
-- Basic staking mechanism
-- HMM DEX integration
-
-### Phase 2: Mining Activation (Q2 2025)
-- Launch Proof of Compute mining
-- Training reward system
-- Quality metrics oracle
-- Governance framework
-
-### Phase 3: Ecosystem Growth (Q3 2025)
-- Cross-chain bridges
-- CEX listings
-- Advanced staking tiers
-- Treasury management
-
-### Phase 4: Maturity (Q4 2025)
-- Full DAO control
-- Sustainable economics
-- Global compute marketplace
-- Institutional adoption
-
-## Security Considerations
-
-### Smart Contract Security
-- Multi-sig treasury
-- Time locks on critical functions
-- Audit by top firms
-- Bug bounty program
-
-### Economic Security
-- Anti-whale mechanisms
-- Gradual emission release
-- Governance safeguards
-- Circuit breakers
-
-## References
-
-1. [HIP-0: Hanzo Architecture](./hip-0.md)
-2. [HIP-8: HMM DEX Specification](./hip-8.md)
-3. [Ethereum ERC-20 Standard](https://eips.ethereum.org/EIPS/eip-20)
-4. [Proof of Work vs Proof of Stake](https://ethereum.org/en/developers/docs/consensus-mechanisms/)
+isms/)
 
 ## Copyright
 

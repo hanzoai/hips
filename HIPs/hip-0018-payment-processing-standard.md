@@ -11,7 +11,6 @@ requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30
 ---
 
 
-
 # HIP-0018: Payment Processing Standard
 
 ## Abstract
@@ -26,47 +25,7 @@ The system is designed around a single invariant: **IAM is the source of truth f
 **Port**: 4242
 **Docker**: `ghcr.io/hanzoai/commerce:latest`
 
-## Motivation
-
-### The Problem
-
-AI usage billing is fundamentally different from SaaS billing. A typical SaaS charges a flat monthly fee for feature access. AI platforms charge per token, per image, per minute of audio, per GPU-second of fine-tuning. The unit costs span four orders of magnitude -- a GPT-3.5 completion might cost $0.0002 while a GPT-4 Vision request with a large image costs $0.30. Presenting these raw costs to users is confusing and creates billing anxiety.
-
-Meanwhile, the Hanzo ecosystem has multiple services that incur costs:
-
-1. **LLM Gateway** (HIP-4): Chat completions, embeddings, image generation across 100+ providers
-2. **Cloud**: Hosted model inference, fine-tuning jobs, compute clusters
-3. **MCP Tools**: Computer use, browser automation, search -- each with different cost profiles
-4. **Agent SDK**: Multi-agent orchestration where a single user request may trigger dozens of LLM calls
-
-Without a unified billing system, each service would need its own payment integration, balance tracking, and invoice generation. Users would face multiple bills, multiple balances, and no single view of their spend.
-
-### Why This Matters
-
-1. **User trust**: Users must understand what they are paying for. Opaque per-token billing erodes trust. Credits provide a simple, predictable unit.
-2. **Service isolation**: LLM Gateway should not need payment-processor credentials. It should check a balance, do the work, and report usage. Payment processing is not its job.
-3. **Fraud prevention**: A single source of truth for balances prevents double-spending. If Cloud and Gateway each maintained independent balances, a race condition could allow a user to spend more than they have.
-4. **Regulatory compliance**: Financial transactions require audit trails, PCI compliance, and dispute resolution. Centralizing this in Commerce means one team handles compliance, not five.
-
-## Design Philosophy
-
-This section explains the *why* behind each major design decision. Payment systems are among the most consequential infrastructure choices a company makes. Mistakes are expensive -- literally.
-
-### Why Credits-Based Billing
-
-AI usage is unpredictable. A user might send one message that triggers a 4-token response or one that triggers a 4,000-token response with tool calls, image generation, and web search. Showing users a per-request cost breakdown like "$0.000847 for 423 input tokens at $0.002/1K + $0.000612 for 204 output tokens at $0.003/1K" is hostile UX.
-
-Credits provide a simple mental model: you buy credits, you spend credits. 1 credit = $0.001 USD. A $20 top-up gives you 20,000 credits. A typical GPT-4 conversation costs 50-200 credits. Users can reason about their spending without understanding tokenization, provider pricing tiers, or markup calculations.
-
-Credits also decouple the billing unit from provider pricing. When OpenAI changes their per-token rates (which happens quarterly), we adjust the internal credit-to-token conversion without changing the user-facing credit price. The user's mental model remains stable.
-
-The alternative -- real-time per-token billing in USD -- requires sub-cent transaction tracking, creates rounding errors that accumulate, and produces invoices with thousands of line items. Credits eliminate all three problems.
-
-### Why a Native PSP (Hanzo Pay)
-
-Hanzo originally bridged an external processor. That dependency proved fatal: a third-party processor can **deplatform an entire ecosystem at will** — freezing funds, disabling checkout, and cutting off every brand that rides on it, with no recourse and no portability. This is not hypothetical; it is exactly what happened, and it is why this standard now mandates a **native PSP**. Payment sovereignty — owning the rail end-to-end — is a first-class requirement, not an optimization.
-
-The native PSP (**Hanzo Pay**, the same engine white-labeled as `lux-pay` / per-brand) provides:
+Hanzo Pay**, the same engine white-labeled as `lux-pay` / per-brand) provides:
 
 - **Sovereignty**: No external party can disable, freeze, or deplatform a first-party flow. The rail is ours; outages and policy changes are ours to manage.
 - **PCI offload, in-house**: Card data never touches Commerce or any app server. The **Hanzo Vault** CDE (a dedicated PCI-DSS-scoped tokenization service) holds the card-handling surface; everything else operates on opaque tokens, keeping the broad system out of PCI scope exactly as an external processor would — but under our control.
@@ -92,40 +51,6 @@ The Hanzo ecosystem includes $AI token (HIP-1) and on-chain settlement (HIP-25).
 4. **Chargebacks**: Card users have dispute rights. Blockchain transactions are irreversible. Offering only crypto payments forfeits consumer protection, which is a regulatory risk.
 
 The correct approach is **both**: the native PSP for fiat, blockchain for crypto. Commerce accepts both and normalizes them into credits. The user does not need to know or care which payment rail was used.
-
-### Why IAM Holds Balances
-
-Every authenticated API call already hits IAM to validate the JWT. The LLM Gateway (HIP-4) receives a request, extracts the bearer token, and validates it against IAM's public key or calls `/api/get-account`. This round-trip is unavoidable -- you must authenticate before executing.
-
-If balance lived in Commerce, every LLM call would require two round-trips:
-
-```
-Request -> Gateway -> IAM (auth: 3ms) -> Commerce (balance: 5ms) -> Upstream (inference: 200ms)
-```
-
-By storing balance in IAM, the auth check and balance check collapse into one operation:
-
-```
-Request -> Gateway -> IAM (auth + balance: 3ms) -> Upstream (inference: 200ms)
-```
-
-At 1,000 requests/second, eliminating the Commerce round-trip saves 5,000ms of cumulative latency per second and removes Commerce as a critical-path dependency. If Commerce goes down, users cannot *buy* credits, but they can still *use* existing credits because IAM is independent.
-
-The tradeoff: balance is denormalized. Commerce is the authoritative ledger ("what transactions occurred"), and IAM is the balance cache ("what is the current balance"). A reconciliation job detects and corrects drift between the two. This is covered in detail in HIP-26 Section "Why Credit Balances Live in IAM."
-
-### Why Webhook-Driven Architecture
-
-Payment processing is inherently asynchronous. A user clicks "Pay" on the native hosted checkout page, enters their card, waits for 3D Secure, and the PSP processes the charge. This takes 5-30 seconds. Holding a synchronous HTTP connection open for this duration is fragile.
-
-Instead, Commerce uses webhooks:
-
-1. Commerce creates a native PSP checkout session and returns the URL to the client.
-2. Client redirects to the native hosted checkout page (served from the Vault/PSP boundary; card data never reaches Commerce).
-3. User completes payment on the PCI-scoped CDE.
-4. The PSP sends a signed `checkout.session.completed` webhook to Commerce.
-5. Commerce verifies the webhook signature, records the transaction, then calls IAM to add credits.
-
-This decouples payment processing from service delivery. If Commerce is briefly unavailable when the webhook fires, the PSP retries with exponential backoff for up to 72 hours. Eventual consistency is acceptable for billing -- a 30-second delay between payment and credit delivery is imperceptible to users.
 
 ## Specification
 
@@ -517,15 +442,6 @@ When the metering pipeline detects a balance crossing below the threshold, it en
 
 ## Implementation Roadmap
 
-### Phase 1: Core Billing (Completed)
-
-- [x] Native PSP checkout integration for one-time credit purchases
-- [x] Webhook handler for `checkout.session.completed`
-- [x] IAM balance update via `/api/add-balance`
-- [x] Transaction recording via `/api/add-transaction`
-- [x] Balance and transaction query endpoints
-- [x] Idempotency key tracking in Redis
-
 ### Phase 2: Subscriptions (Completed)
 
 - [x] Native PSP subscription creation for Pro/Team tiers
@@ -533,29 +449,6 @@ When the metering pipeline detects a balance crossing below the threshold, it en
 - [x] Subscription upgrade/downgrade with proration
 - [x] Dunning (failed payment) handling
 - [x] Subscription cancellation flow
-
-### Phase 3: Usage Metering (In Progress)
-
-- [ ] LLM Gateway batched transaction submission
-- [ ] Per-model credit cost configuration
-- [ ] Real-time usage dashboard
-- [ ] Usage breakdown by model, service, and time period
-- [ ] Overage billing via PSP metered usage
-
-### Phase 4: Multi-Org and Enterprise (Planned)
-
-- [ ] Org-level billing with shared pool mode
-- [ ] Individual credit allocation per member
-- [ ] Enterprise invoice billing (NET 30)
-- [ ] Custom rate cards for enterprise customers
-- [ ] SOC 2 Type II audit trail exports
-
-### Phase 5: Crypto Payments (Planned)
-
-- [ ] $AI token payment acceptance on Hanzo Network
-- [ ] USDC/USDT acceptance via Lux Bridge (HIP-101)
-- [ ] On-chain settlement receipts
-- [ ] Token-to-credit conversion via HMM oracle (HIP-8)
 
 ## Security Considerations
 

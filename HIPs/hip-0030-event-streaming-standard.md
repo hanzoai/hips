@@ -10,7 +10,6 @@ requires: HIP-0028
 ---
 
 
-
 # HIP-0030: Event Streaming Standard
 
 ## Abstract
@@ -21,54 +20,9 @@ This proposal defines the event streaming standard for the Hanzo ecosystem. Hanz
 **Protocol**: Kafka wire protocol (TCP 9092, TLS 9093)
 **Production**: `insights-kafka` on `hanzo-k8s` cluster (`24.199.76.156`)
 
-## Motivation
-
-The Hanzo platform generates millions of events per day across multiple services:
-
-1. **Insights** (PostHog fork) captures frontend/backend analytics events
-2. **LLM Gateway** (HIP-4) produces usage and billing events per API call
-3. **IAM** (hanzo.id) emits audit log events for authentication and authorization
-4. **Commerce** tracks payment and transaction events
-5. **Bot agents** (HIP-25) generate RPC billing and metering events
-
-Without a unified streaming layer, each service would either:
-- Poll databases (wasteful, high latency)
-- Use point-to-point HTTP webhooks (fragile, no replay, no fan-out)
-- Implement its own queue (operational burden, inconsistent guarantees)
-
-We need ONE streaming backbone that gives us durable replay, ordered delivery, parallel consumption, and schema evolution.
-
 ## Design Philosophy
 
 This section explains the architectural decisions behind Hanzo Stream. Understanding the *why* is essential for making correct integration choices.
-
-### Why Kafka Over NATS / RabbitMQ / Pulsar
-
-The core question is: **what happens when you need to reprocess events?**
-
-**Kafka** uses a log-based architecture. Events are appended to an immutable, ordered log. Consumers track their position (offset) in the log. The log is retained for a configurable period regardless of whether consumers have read it. This gives us:
-
-- **Replay capability**: Reset a consumer group's offset to reprocess historical events. This is critical for Insights, where schema changes or analytics bugs require reprocessing days of events.
-- **Multiple independent consumers**: The billing aggregator and the analytics pipeline both read from `llm_usage` independently, at their own pace, without interfering with each other.
-- **Ordering guarantees**: Events within a partition are strictly ordered. We partition by `team_id` so all events for a given team arrive in order.
-
-**NATS** (including JetStream) is simpler and lower-latency for pub/sub, but its replay semantics are weaker. Better fit for request-reply where replay is not needed.
-
-**RabbitMQ** is message-oriented, not log-oriented. Once acknowledged, messages are deleted. No concept of "replay the last 7 days." Excels at task queues, not our primary use case.
-
-**Apache Pulsar** is architecturally comparable (log-based, tiered storage), but has a smaller ecosystem and fewer battle-tested client libraries. Kafka's tooling (Connect, Schema Registry, Streams) gives us more out of the box.
-
-**Decision**: Kafka. Log-based replay is non-negotiable for analytics reprocessing.
-
-### Why Self-Hosted Over Confluent Cloud
-
-**Cost at scale.** Confluent Cloud charges per GB of throughput and per partition-hour. Our analytics pipeline processes multiple GB/hour of events. At our current volume, self-hosted Kafka on Kubernetes costs roughly 3-5x less than Confluent Cloud.
-
-**Data locality.** Our ClickHouse instance runs on the same Kubernetes cluster. Keeping Kafka co-located eliminates cross-network transfer costs and latency. Events flow from Kafka to ClickHouse over the cluster network, not over the public internet.
-
-**Operational simplicity with KRaft.** The traditional objection to self-hosted Kafka was ZooKeeper complexity. KRaft eliminates that objection entirely (see below).
-
-**Trade-off acknowledged**: We accept the operational responsibility of managing Kafka ourselves. This is manageable because KRaft mode reduces Kafka to a single StatefulSet with no external dependencies.
 
 ### Why KRaft Over ZooKeeper
 
@@ -84,7 +38,7 @@ The following diagram shows how Hanzo Stream fits into the broader data flow:
 
 ```
                                         ┌──────────────────┐
-                                        │   ClickHouse     │
+                                        │   Hanzo Datastore     │
                                         │  (Analytics DB)  │
                                         └────────▲─────────┘
                                                  │ consume
@@ -110,7 +64,7 @@ The following diagram shows how Hanzo Stream fits into the broader data flow:
 1. Producers (Insights capture, LLM Gateway, IAM) write events to Kafka topics
 2. Kafka retains events in the log for the configured retention period
 3. Consumer groups read events independently and at their own pace
-4. ClickHouse ingestion consumer writes analytics events to ClickHouse tables
+4. Hanzo Datastore ingestion consumer writes analytics events to Hanzo Datastore tables
 5. Billing aggregator consumes `llm_usage` events and produces `billing_events`
 6. Audit archiver consumes `audit_log` and writes to long-term storage
 
@@ -122,7 +76,7 @@ All Kafka topics MUST be registered in this section. Ad-hoc topic creation is pr
 
 | Topic | Partitions | Retention | Key | Producers | Consumers |
 |-------|-----------|-----------|-----|-----------|-----------|
-| `events_plugin_ingestion` | 16 | 7 days | `team_id` | Insights Capture | ClickHouse Ingestion |
+| `events_plugin_ingestion` | 16 | 7 days | `team_id` | Insights Capture | Hanzo Datastore Ingestion |
 | `llm_usage` | 8 | 14 days | `team_id` | LLM Gateway | Billing Aggregator, Analytics |
 | `billing_events` | 4 | 30 days | `org_id` | Billing Aggregator | Commerce, Reporting |
 | `audit_log` | 4 | 90 days | `org_id` | IAM, all services | Audit Archiver, Compliance |
@@ -145,7 +99,7 @@ Partitioning determines parallelism and ordering. The key design principle: **ev
 
 | Topic | Partition Key | Rationale |
 |-------|--------------|-----------|
-| `events_plugin_ingestion` | `team_id` | All events for a team arrive in order; ClickHouse ingests per-team batches |
+| `events_plugin_ingestion` | `team_id` | All events for a team arrive in order; Hanzo Datastore ingests per-team batches |
 | `llm_usage` | `team_id` | Billing must see all usage for a team in order to compute running totals |
 | `billing_events` | `org_id` | Organization-level billing aggregation |
 | `audit_log` | `org_id` | Audit trail must be ordered per organization |
@@ -292,7 +246,7 @@ Consumer groups enable parallel processing. Each consumer in a group reads from 
 
 | Consumer Group | Topic(s) | Consumers | Processing |
 |---------------|----------|-----------|------------|
-| `analytics-ingest` | `events_plugin_ingestion` | 4 | Write to ClickHouse `events` table |
+| `analytics-ingest` | `events_plugin_ingestion` | 4 | Write to Hanzo Datastore `events` table |
 | `billing-agg` | `llm_usage` | 2 | Aggregate usage per team per hour, produce `billing_events` |
 | `audit-archive` | `audit_log` | 1 | Write to S3-compatible long-term storage |
 | `llm-metrics` | `llm_usage` | 2 | Compute real-time latency/throughput metrics for Prometheus |
@@ -311,7 +265,7 @@ Examples: `analytics-ingest`, `billing-agg`, `audit-archive`. Kebab-case. MUST N
 
 | Category | Retention | Rationale |
 |----------|-----------|-----------|
-| Analytics events | 7 days | Sufficient for reprocessing; ClickHouse is the durable store |
+| Analytics events | 7 days | Sufficient for reprocessing; Hanzo Datastore is the durable store |
 | LLM usage | 14 days | Billing reconciliation window is 14 days |
 | Billing events | 30 days | Monthly billing cycle + buffer |
 | Audit log | 90 days | Compliance requirement; also archived to S3 |
@@ -344,7 +298,7 @@ The Insights Rust capture service is the highest-throughput producer. It receive
 ```
 Browser SDK  ──HTTP POST──→  Capture (Rust)  ──Kafka Produce──→  events_plugin_ingestion
                               Port 3000                            ↓
-                              Batch: 500 events                    ClickHouse consumer
+                              Batch: 500 events                    Hanzo Datastore consumer
                               Flush: 1 second                      ↓
                                                                    events table
 ```
@@ -352,7 +306,7 @@ Browser SDK  ──HTTP POST──→  Capture (Rust)  ──Kafka Produce──
 The capture service MUST:
 - Batch events (up to 500 or 1 second, whichever comes first)
 - Produce with `acks=all` and idempotence enabled
-- Return HTTP 200 immediately after Kafka acknowledgment (not after ClickHouse write)
+- Return HTTP 200 immediately after Kafka acknowledgment (not after Hanzo Datastore write)
 - Write to `dead_letter` topic on serialization or validation failure
 
 ## Implementation
@@ -453,7 +407,7 @@ Each producer and consumer MUST have minimal permissions:
 |-----------|-------|------------|-----------|
 | `insights-capture` | `events_plugin_ingestion` | WRITE | Capture only produces |
 | `llm-gateway` | `llm_usage` | WRITE | Gateway only produces |
-| `analytics-ingest` | `events_plugin_ingestion` | READ | ClickHouse consumer |
+| `analytics-ingest` | `events_plugin_ingestion` | READ | Hanzo Datastore consumer |
 | `billing-aggregator` | `llm_usage` | READ | Reads usage |
 | `billing-aggregator` | `billing_events` | WRITE | Produces billing |
 | `audit-archiver` | `audit_log` | READ | Archives to S3 |

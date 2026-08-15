@@ -10,24 +10,11 @@ requires: HIP-1, LP-102
 ---
 
 
-
 # HIP-0006: Per-User Fine-Tuning Architecture for Personalized AI
 
 ## Abstract
 
 This proposal defines Hanzo's per-user fine-tuning architecture where every user interaction automatically creates and updates a personalized model fork. Each user owns their unique AI model that learns from their interactions, with all training data and model evolution stored on an immutable ledger. This eliminates domain-specific pre-training in favor of continuous per-user adaptation.
-
-## Motivation
-
-Current AI systems use domain-specific fine-tuning (e.g., "medical AI", "legal AI") which has fundamental limitations:
-
-1. **One-Size-Fits-None**: Domain models still too generic for individuals
-2. **Privacy Violation**: User data pooled for domain training
-3. **No Ownership**: Users don't own their personalization
-4. **Slow Adaptation**: Batch training instead of real-time learning
-5. **Lost Context**: User history not preserved across sessions
-
-Per-user fine-tuning solves these by giving each user their own evolving model.
 
 ## Specification
 
@@ -342,71 +329,3 @@ training:
   total: ~35ms per interaction
 ```
 
-## Rationale
-
-### Why Per-User Instead of Domain-Specific?
-
-- **True Personalization**: Each user is unique, not just their domain
-- **Privacy**: User data never mixed with others
-- **Ownership**: Users own their specific model
-- **Real-time Learning**: Immediate adaptation to user needs
-- **Portability**: Users can move their models between platforms
-
-### Why Immediate Fine-Tuning?
-
-- **Better UX**: Model improves during conversation
-- **Context Preservation**: Never loses conversation context
-- **Faster Adaptation**: Learns user preferences quickly
-- **Reduced Latency**: No batch training delays
-
-### Why Immutable Ledger?
-
-- **Audit Trail**: Complete training history
-- **Attribution**: Credit for data contribution
-- **Evolution Tracking**: See how models improve
-- **Regulatory Compliance**: Provable training data
-
-## Implementation Phases
-
-### Phase 1: Basic Per-User Models (Q1 2025)
-- Simple LoRA adapters per user
-- Basic training recording
-- Local storage
-
-### Phase 2: Real-Time Learning (Q2 2025)
-- Live gradient updates
-- Conversation context preservation
-- Performance optimization
-
-### Phase 3: Privacy Features (Q3 2025)
-- Encrypted models
-- Zero-knowledge proofs
-- Federated aggregation
-
-### Phase 4: Evolution System (Q4 2025)
-- Model generations
-- Prior accumulation
-- Cross-platform portability
-
-## Security Considerations
-
-### Privacy
-- All user data encrypted with user keys
-- Zero-knowledge proofs for training
-- No central access to user models
-
-### Security
-- Post-quantum encryption (inherited from LP-100)
-- Secure enclaves for sensitive operations
-- Tamper-proof training records
-
-## References
-
-1. [HIP-1: Hanzo Multimodal Models](./hip-1.md)
-2. [LP-102: Immutable Training Ledger](https://github.com/luxfi/lps/blob/main/LPs/lp-102.md)
-3. [LoRA: Low-Rank Adaptation](https://arxiv.org/abs/2106.09685)
-4. [Federated Learning](https://arxiv.org/abs/1602.05629)
-
-## Copyright
-
-Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).

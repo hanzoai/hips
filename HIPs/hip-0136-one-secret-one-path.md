@@ -10,7 +10,6 @@ requires: HIP-0027, HIP-0119
 ---
 
 
-
 # HIP-0136: One Secret, One Path
 
 ## Abstract
@@ -209,19 +208,6 @@ superseded.
 What is **not** superseded is HIP-0027's *reason* for wanting it. That isolation
 goal remains unmet — see Security Considerations. Closing it is a change of
 identity topology, not of naming, and belongs in its own proposal.
-
-## Rationale
-
-The path could have been keyed on the secret's *purpose* (`/cloud-sign`) or its
-*category* (`/integrations/cloudflare`). Both were tried; both are in the fleet
-today; both fail the same way. A purpose is a sentence, and two people write it
-two ways. A category is a taxonomy, and a taxonomy needs a maintainer. The
-consumer is neither — it is a name that already exists, that CI already knows,
-that the values file is already called, and that cannot be argued about.
-
-Naming `NAME` after the environment variable rather than a prettier label is the
-same argument. The variable name is fixed by the code that reads it. Anything
-else is a second name for one thing, and this HIP exists because of four of them.
 
 ## Migration
 

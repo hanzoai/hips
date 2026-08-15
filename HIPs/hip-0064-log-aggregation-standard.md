@@ -4,11 +4,10 @@ title: Log Aggregation & Search Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-02-23
 requires: HIP-0047
 ---
-
 
 
 # HIP-0064: Log Aggregation & Search Standard
@@ -21,10 +20,10 @@ storage, full-text search, and AI-powered anomaly detection across all services
 in the Hanzo infrastructure.
 
 The stack consists of three components: **Vector** (collection and routing),
-**ClickHouse** (storage and indexing), and a **custom search UI** (query and
+**Hanzo Datastore** (storage and indexing), and a **custom search UI** (query and
 exploration). Every Hanzo service MUST emit structured JSON logs to stdout.
 Vector agents running as Kubernetes DaemonSets collect, enrich, and forward
-these logs to the shared ClickHouse cluster (HIP-0047) for long-term retention
+these logs to the shared Hanzo Datastore cluster (HIP-0047) for long-term retention
 and SQL-native querying.
 
 AI-specific log enrichment -- request/response correlation, token counting,
@@ -35,7 +34,7 @@ LLM workloads without application-level instrumentation changes.
 **Repository**: [github.com/hanzoai/logs](https://github.com/hanzoai/logs)
 **Image**: `ghcr.io/hanzoai/logs:latest`
 **Port**: 8064 (Search API)
-**Storage**: ClickHouse (HIP-0047), database `hanzo_logs`
+**Storage**: Hanzo Datastore (HIP-0047), database `hanzo_logs`
 
 ## Motivation
 
@@ -77,43 +76,6 @@ log aggregation:
 
 ## Design Philosophy
 
-### Why Not ELK (Elasticsearch + Logstash + Kibana)
-
-ELK was the default log aggregation stack for a decade. We reject it for
-three reasons:
-
-1. **Licensing.** Elasticsearch switched from Apache 2.0 to SSPL (Server
-   Side Public License) in January 2021. SSPL is not recognized as open
-   source by the OSI. It restricts offering Elasticsearch as a managed
-   service. While this does not directly affect self-hosted use, it signals
-   a vendor trajectory toward commercial lock-in. OpenSearch (the Apache 2.0
-   fork) exists but lags behind Elasticsearch in features and has its own
-   operational complexity.
-
-2. **Resource consumption.** Elasticsearch is a JVM application. A
-   production cluster for log volumes of 50-100 GB/day requires a minimum
-   of 3 nodes with 16 GB heap each -- 48 GB of RAM just for the search
-   engine. Add Logstash (another JVM process, 1-4 GB heap) and Kibana
-   (Node.js, 1-2 GB). Total baseline: 50-60 GB RAM. ClickHouse handles the
-   same volume with 8-16 GB RAM because columnar storage and compression
-   reduce the working set by 10-20x.
-
-3. **Operational complexity.** Elasticsearch requires careful shard
-   management, index lifecycle policies, and cluster balancing. Shard
-   count misconfiguration is the single most common cause of Elasticsearch
-   cluster instability. ClickHouse's MergeTree engine handles partitioning
-   and compaction automatically with minimal tuning.
-
-**Cost comparison at 100 GB/day log volume (30-day retention)**:
-
-| Stack | RAM Required | Disk (30 days) | Nodes |
-|-------|-------------|----------------|-------|
-| ELK | 48-64 GB | 3 TB (1x compression) | 3-5 |
-| ClickHouse + Vector | 8-16 GB | 200-300 GB (10-15x compression) | 1-2 |
-
-ClickHouse stores the same logs in 10-15x less disk space. This is not an
-optimization -- it is a fundamentally different storage architecture.
-
 ### Why Not Grafana Loki
 
 Loki is the log aggregation system from the Grafana ecosystem. It is
@@ -128,7 +90,7 @@ service to look at. It breaks down for Hanzo's use case:
    `"insufficient credits for model zen-72b"` across all services requires
    scanning every log line from every matching label stream. At 100 GB/day,
    a full-text search over 7 days scans 700 GB. Loki does this sequentially.
-   Response time: minutes. ClickHouse with a tokenized full-text index
+   Response time: minutes. Hanzo Datastore with a tokenized full-text index
    returns results in seconds.
 
 2. **Limited query language.** LogQL (Loki's query language) supports label
@@ -136,15 +98,15 @@ service to look at. It breaks down for Hanzo's use case:
    JOINs, subqueries, window functions, or complex aggregations. For
    queries like "show me the top 10 most expensive LLM requests per
    organization in the last 24 hours, correlated with their error rate,"
-   LogQL cannot express this. ClickHouse SQL can.
+   LogQL cannot express this. Hanzo Datastore SQL can.
 
 3. **No correlation with analytics.** Hanzo's analytics data already lives
-   in ClickHouse (HIP-0047). If logs also live in ClickHouse, engineers
+   in Hanzo Datastore (HIP-0047). If logs also live in Hanzo Datastore, engineers
    can JOIN log data with analytics events in a single query. With Loki,
    logs and analytics are in separate systems with different query
    languages, requiring manual correlation.
 
-**Decision**: Use ClickHouse for log storage. Same engine as analytics
+**Decision**: Use Hanzo Datastore for log storage. Same engine as analytics
 (HIP-0047), same query language (SQL), same operational tooling, and
 full-text search capability via tokenized indexes.
 
@@ -158,14 +120,14 @@ It collects, transforms, and routes logs, metrics, and traces.
 | Language | Rust | Ruby + C | C | JVM (Java) |
 | Memory (idle) | 15-30 MB | 100-200 MB | 10-20 MB | 500 MB+ |
 | Throughput | 10+ GB/s | 1-2 GB/s | 3-5 GB/s | 1-3 GB/s |
-| ClickHouse sink | Native | Plugin | Plugin | Plugin |
+| Hanzo Datastore sink | Native | Plugin | Plugin | Plugin |
 | VRL transforms | Yes (Turing-complete) | Ruby plugins | Lua plugins | Ruby/Grok |
 | End-to-end acks | Yes | Partial | Partial | Yes |
 | Disk buffering | Built-in | Plugin | Limited | Yes |
 
 Fluentbit is the nearest alternative on footprint. We choose Vector because:
 
-1. **Native ClickHouse sink.** Vector writes directly to ClickHouse via the
+1. **Native Hanzo Datastore sink.** Vector writes directly to Hanzo Datastore via the
    native TCP protocol (port 9000), batching inserts automatically. Fluentbit
    requires an HTTP output plugin with manual batch configuration.
 
@@ -175,13 +137,13 @@ Fluentbit is the nearest alternative on footprint. We choose Vector because:
    malformed transform silently drops log fields in production.
 
 3. **End-to-end acknowledgments.** Vector guarantees that a log event is
-   either delivered to ClickHouse and acknowledged, or buffered to disk for
-   retry. No silent data loss during ClickHouse restarts or network
+   either delivered to Hanzo Datastore and acknowledged, or buffered to disk for
+   retry. No silent data loss during Hanzo Datastore restarts or network
    partitions.
 
 **Trade-off**: Vector has a smaller community than Fluentd/Fluentbit. We
 accept this because the technical advantages (Rust performance, native
-ClickHouse support, VRL type safety) outweigh community size for our
+Hanzo Datastore support, VRL type safety) outweigh community size for our
 specific use case.
 
 ## Specification
@@ -189,7 +151,7 @@ specific use case.
 ### Structured JSON Logging Standard
 
 All Hanzo services MUST emit logs as single-line JSON objects to stdout. This
-is the canonical log format that Vector parses and ClickHouse stores.
+is the canonical log format that Vector parses and Hanzo Datastore stores.
 
 #### Required Fields
 
@@ -235,7 +197,7 @@ is the canonical log format that Vector parses and ClickHouse stores.
 ```
 
 Services MAY include additional fields as flat key-value pairs. Nested objects
-are discouraged -- they increase ClickHouse storage overhead and complicate
+are discouraged -- they increase Hanzo Datastore storage overhead and complicate
 queries. Use dot-delimited keys for namespacing (e.g., `http.method` not
 `http: { method: ... }`).
 
@@ -318,9 +280,9 @@ completion. Vector correlates these using the `trace_id` field, computing
 derived fields like end-to-end latency and time-to-first-token (TTFT) that
 appear only in the completion log.
 
-### ClickHouse Log Schema
+### Hanzo Datastore Log Schema
 
-Logs are stored in a dedicated `hanzo_logs` database on the shared ClickHouse
+Logs are stored in a dedicated `hanzo_logs` database on the shared Hanzo Datastore
 cluster (HIP-0047). The schema is optimized for log-specific access patterns:
 time-range queries, service filtering, level filtering, and full-text search.
 
@@ -460,7 +422,7 @@ SETTINGS index_granularity = 8192;
 
 Audit logs have a 2-year retention (730 days) and are partitioned monthly
 (lower write volume than operational logs). The table uses `ReplicatedMergeTree`
-with no `DELETE` or `UPDATE` support -- ClickHouse MergeTree tables are
+with no `DELETE` or `UPDATE` support -- Hanzo Datastore MergeTree tables are
 append-only by design, satisfying the immutability requirement without
 additional application logic.
 
@@ -587,7 +549,7 @@ source = '''
 type = "remap"
 inputs = ["redact_pii"]
 source = '''
-  # Flatten dot-notation LLM fields for ClickHouse columns
+  # Flatten dot-notation LLM fields for Hanzo Datastore columns
   if exists(.llm) {
     .llm_provider = .llm.provider ?? ""
     .llm_model = .llm.model ?? ""
@@ -617,32 +579,32 @@ condition = '''
   }
 '''
 
-# Sink: ClickHouse for operational logs
-[sinks.clickhouse_logs]
-type = "clickhouse"
+# Sink: Hanzo Datastore for operational logs
+[sinks.datastore_logs]
+type = "datastore"
 inputs = ["sample"]
-endpoint = "http://clickhouse.hanzo.svc:8123"
+endpoint = "http://datastore.hanzo.svc:8123"
 database = "hanzo_logs"
 table = "logs"
 auth.strategy = "basic"
 auth.user = "hanzo"
-auth.password = "${CLICKHOUSE_PASSWORD}"
+auth.password = "${DATASTORE_PASSWORD}"
 batch.max_events = 10000
 batch.timeout_secs = 5
 buffer.type = "disk"
 buffer.max_size = 1073741824  # 1 GB disk buffer
 encoding.timestamp_format = "rfc3339"
 
-# Sink: ClickHouse for audit logs (separate routing)
-[sinks.clickhouse_audit]
-type = "clickhouse"
+# Sink: Hanzo Datastore for audit logs (separate routing)
+[sinks.datastore_audit]
+type = "datastore"
 inputs = ["audit_filter"]
-endpoint = "http://clickhouse.hanzo.svc:8123"
+endpoint = "http://datastore.hanzo.svc:8123"
 database = "hanzo_logs"
 table = "audit"
 auth.strategy = "basic"
 auth.user = "hanzo"
-auth.password = "${CLICKHOUSE_PASSWORD}"
+auth.password = "${DATASTORE_PASSWORD}"
 batch.max_events = 1000
 batch.timeout_secs = 2
 buffer.type = "disk"
@@ -674,9 +636,9 @@ over time and compliance obligations.
 | LLM request logs | 180 days | Cost attribution and model performance analysis |
 | Error logs | 180 days | Extended retention for regression analysis |
 
-Retention is enforced at the ClickHouse level via TTL clauses (see schema
+Retention is enforced at the Hanzo Datastore level via TTL clauses (see schema
 above). Vector's sampling transform reduces volume for debug/trace levels
-before they reach ClickHouse, preventing storage waste.
+before they reach Hanzo Datastore, preventing storage waste.
 
 #### Sampling Strategy for High-Volume AI Traffic
 
@@ -700,7 +662,7 @@ problem).
 ### Log Search API
 
 The search API provides a REST interface for querying logs. It runs as a
-stateless Go service that translates search requests into ClickHouse SQL
+stateless Go service that translates search requests into Hanzo Datastore SQL
 and returns results.
 
 **Port**: 8064
@@ -747,8 +709,8 @@ the scan from potentially millions of rows to thousands.
 
 The `/api/v1/logs/tail` endpoint upgrades to a WebSocket connection and
 streams new log entries matching the filter criteria in real time. The
-implementation polls ClickHouse every 1 second with an incrementing
-timestamp cursor. This is not true streaming (ClickHouse does not support
+implementation polls Hanzo Datastore every 1 second with an incrementing
+timestamp cursor. This is not true streaming (Hanzo Datastore does not support
 push notifications), but the 1-second polling interval is acceptable for
 interactive debugging.
 
@@ -788,7 +750,7 @@ unusual patterns in log data without manual threshold configuration.
 
 2. **Novel error pattern detection.** New error messages that have not
    appeared in the past 7 days are flagged as "novel." This uses
-   ClickHouse's `uniqExact` function to compare today's distinct error
+   Hanzo Datastore's `uniqExact` function to compare today's distinct error
    messages against the historical set.
 
 3. **LLM cost anomaly detection.** Per-organization cost in the current
@@ -796,7 +758,7 @@ unusual patterns in log data without manual threshold configuration.
    triggers an alert. This catches runaway agent loops, prompt injection
    attacks that inflate token usage, or misconfigured retry logic.
 
-Anomaly detection queries run as scheduled ClickHouse materialized views
+Anomaly detection queries run as scheduled Hanzo Datastore materialized views
 that update every 5 minutes. Alerts are routed to the alerting pipeline
 defined in HIP-0031 (Prometheus Alertmanager -> Slack/PagerDuty).
 
@@ -811,7 +773,7 @@ Logs, metrics, and traces form the three pillars of observability. The
 ├──────────────┬──────────────────┬────────────────────────────┤
 │  Metrics     │  Traces          │  Logs                      │
 │  (HIP-0031)  │  (HIP-0031)      │  (HIP-0064)                │
-│  Prometheus  │  OTLP/ClickHouse │  ClickHouse                │
+│  Prometheus  │  OTLP/Hanzo Datastore │  Hanzo Datastore                │
 ├──────────────┴──────────────────┴────────────────────────────┤
 │         Correlation key: trace_id (W3C traceparent)          │
 └──────────────────────────────────────────────────────────────┘
@@ -825,13 +787,13 @@ An engineer investigating a slow LLM request can:
 4. All three views share the same `trace_id`, providing seamless
    drill-down from metric anomaly to root cause
 
-Grafana's ClickHouse data source plugin enables log panels alongside
+Grafana's Hanzo Datastore data source plugin enables log panels alongside
 metric panels in the same dashboard, querying the `hanzo_logs.logs`
 table directly.
 
 ### Integration with Analytics Datastore (HIP-0047)
 
-Logs and analytics events live in the same ClickHouse cluster but in
+Logs and analytics events live in the same Hanzo Datastore cluster but in
 different databases: `hanzo_logs` (this HIP) and `default` (HIP-0047).
 This enables cross-database queries for advanced analysis:
 
@@ -859,8 +821,8 @@ ORDER BY error_count DESC
 ```
 
 This query is possible only because both datasets live in the same
-ClickHouse cluster. With separate systems (e.g., Loki for logs,
-ClickHouse for analytics), this correlation would require exporting
+Hanzo Datastore cluster. With separate systems (e.g., Loki for logs,
+Hanzo Datastore for analytics), this correlation would require exporting
 data from both systems and joining externally.
 
 ### PII Redaction
@@ -869,7 +831,7 @@ PII redaction is enforced at two layers:
 
 1. **Vector transforms** (before storage). Email addresses, API keys, and
    IP address last octets are redacted in the Vector pipeline. This ensures
-   PII never reaches ClickHouse.
+   PII never reaches Hanzo Datastore.
 
 2. **Application-level logging guidelines**. Services MUST NOT log:
    - Raw user passwords or authentication tokens
@@ -898,9 +860,9 @@ The Hanzo Logs deployment consists of three components:
 
 1. **Vector DaemonSet** (hanzo-logs namespace): Log collection on every node
 2. **Search API Deployment** (hanzo-logs namespace): Stateless query service
-3. **ClickHouse tables** (existing cluster per HIP-0047): Storage
+3. **Hanzo Datastore tables** (existing cluster per HIP-0047): Storage
 
-No additional ClickHouse infrastructure is required. The `hanzo_logs`
+No additional Hanzo Datastore infrastructure is required. The `hanzo_logs`
 database is created on the existing cluster. Vector and the Search API
 are the only new deployments.
 
@@ -910,12 +872,12 @@ are the only new deployments.
 |-----------|------------|----------------|--------------|
 | Vector (per node) | 50m | 64 Mi | 256 Mi |
 | Search API | 100m | 128 Mi | 512 Mi |
-| ClickHouse (incremental) | +1 core | +4 Gi | +8 Gi |
+| Hanzo Datastore (incremental) | +1 core | +4 Gi | +8 Gi |
 
-The ClickHouse resource overhead is incremental -- the `hanzo_logs` tables
-share the existing ClickHouse cluster with analytics (HIP-0047). At
+The Hanzo Datastore resource overhead is incremental -- the `hanzo_logs` tables
+share the existing Hanzo Datastore cluster with analytics (HIP-0047). At
 100 GB/day raw log volume with 15x compression, logs add approximately
-6-7 GB/day to ClickHouse storage.
+6-7 GB/day to Hanzo Datastore storage.
 
 ## Security
 
@@ -936,8 +898,8 @@ to audit logs is itself logged (meta-auditing).
 
 ### Network Security
 
-Vector communicates only with ClickHouse (port 8123/9000) within the
-cluster network. The Search API communicates with ClickHouse and IAM.
+Vector communicates only with Hanzo Datastore (port 8123/9000) within the
+cluster network. The Search API communicates with Hanzo Datastore and IAM.
 No log data leaves the Kubernetes cluster network.
 
 ```yaml
@@ -957,7 +919,7 @@ spec:
           name: hanzo
       podSelector:
         matchLabels:
-          app: clickhouse
+          app: datastore
     ports:
     - port: 8123
     - port: 9000
@@ -967,39 +929,21 @@ spec:
 
 ### Audit Log Immutability
 
-ClickHouse MergeTree tables are append-only. There is no `UPDATE` or
-`DELETE` statement in standard ClickHouse SQL. The `ALTER TABLE DELETE`
+Hanzo Datastore MergeTree tables are append-only. There is no `UPDATE` or
+`DELETE` statement in standard Hanzo Datastore SQL. The `ALTER TABLE DELETE`
 mutation exists but requires the `ALTER DELETE` privilege, which is not
-granted to the `hanzo` application user. Only the `admin` ClickHouse
+granted to the `hanzo` application user. Only the `admin` Hanzo Datastore
 user (used exclusively by infrastructure automation) can execute
 mutations, and all mutations are logged in `system.mutations`.
 
 This provides defense-in-depth immutability: the application cannot
 modify or delete audit records, and any infrastructure-level mutation
-leaves a permanent trace in ClickHouse system tables.
-
-## Backward Compatibility
-
-Services currently emitting unstructured text logs to stdout continue to
-work. Vector's `parse_json` transform falls back to wrapping non-JSON
-output in the standard envelope with `level: "info"` and the raw text as
-`msg`. These logs are searchable but lack structured fields.
-
-Services SHOULD migrate to structured JSON logging over time. The
-migration path is:
-
-1. Add a structured logging library (zerolog for Go, structlog for Python,
-   pino for Node.js)
-2. Configure the library to output JSON to stdout
-3. Include the required fields (`ts`, `level`, `msg`, `service`, `version`,
-   `env`)
-4. Add `trace_id` and `span_id` from the request context (HIP-0031)
-5. No changes to deployment, Vector, or ClickHouse are needed
+leaves a permanent trace in Hanzo Datastore system tables.
 
 ## References
 
 1. HIP-0031: Observability & Metrics Standard -- Metrics, traces, and Zap sidecar
-2. [HIP-0047: Analytics Datastore Standard](./hip-0047-analytics-datastore-standard.md) -- ClickHouse cluster and schema conventions
+2. [HIP-0047: Analytics Datastore Standard](./hip-0047-analytics-datastore-standard.md) -- Hanzo Datastore cluster and schema conventions
 3. [HIP-0017: Analytics Event Standard](./hip-0017-analytics-event-standard.md) -- Product analytics events (Insights)
 4. [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) -- LLM request logging source
 5. [HIP-0026: Identity Access Management](./hip-0026-identity-access-management-standard.md) -- Authentication for Search API

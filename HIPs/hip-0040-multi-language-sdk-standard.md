@@ -11,7 +11,6 @@ requires: HIP-0004
 ---
 
 
-
 # HIP-0040: Multi-Language SDK Standard
 
 ## Abstract
@@ -79,18 +78,6 @@ The tradeoff is reduced flexibility. If the Go SDK needs a Go-specific feature t
 | Test coverage | Varies by team | Generated from spec |
 | Maintenance burden | O(N * endpoints) | O(1 * endpoints) |
 
-### Why OpenAI-Compatible
-
-OpenAI established the de facto standard API for LLM inference. Anthropic, Google, Mistral, and dozens of other providers have adopted compatible endpoints. The AI developer ecosystem has standardized on this interface:
-
-- `POST /v1/chat/completions` for conversational inference
-- `POST /v1/embeddings` for vector embeddings
-- `POST /v1/images/generations` for image generation
-- `POST /v1/audio/transcriptions` for speech-to-text
-
-By maintaining wire-level compatibility with this interface, Hanzo achieves zero-friction adoption. A developer using `openai.ChatCompletion.create()` can switch to Hanzo by changing two configuration values:
-
-```python
 # Before (OpenAI direct)
 client = OpenAI(api_key="sk-openai-...")
 
@@ -102,19 +89,6 @@ client = OpenAI(
 ```
 
 The Hanzo SDKs extend this base with platform-specific features (cost tracking, key management, team budgets, guardrails) while maintaining backward compatibility with any OpenAI-compatible client.
-
-### Why These Four Languages
-
-The language selection covers 95%+ of AI developer workflows:
-
-| Language | Use Case | Ecosystem Coverage |
-|----------|----------|-------------------|
-| **Python** | ML training, data science, Jupyter notebooks, research | ~70% of AI/ML developers |
-| **TypeScript** | Web frontends, Node.js backends, serverless functions | ~60% of web developers |
-| **Go** | Infrastructure, CLIs, cloud services, Kubernetes operators | ~30% of platform engineers |
-| **Rust** | Performance-critical systems, blockchain, edge inference | ~10% of systems developers |
-
-Ruby, Java, .NET, and other languages are supported through the OpenAI-compatible API. Any OpenAI SDK in any language works with Hanzo by changing the base URL. Official Hanzo SDKs for these languages are community-maintained and not auto-generated, as the engineering cost of maintaining Stainless configurations for low-demand languages exceeds the benefit.
 
 ### Why Typed Clients Over Raw HTTP
 

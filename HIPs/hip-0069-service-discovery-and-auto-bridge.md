@@ -3,12 +3,11 @@ hip: 0069
 title: Service Discovery & Auto-Bridge
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Active
 author: Hanzo AI
 created: 2026-05-08
 requires: HIP-007 (ZAP), HIP-0010 (MCP Integration), HIP-0068 (Ingress)
 ---
-
 
 
 # HIP-0069: Service Discovery & Auto-Bridge
@@ -26,25 +25,6 @@ This HIP closes the gap between HIP-007 (ZAP transport), HIP-0010 (MCP
 integration) and HIP-0068 (Ingress), removing every hard-coded URL,
 port range, lockfile registry and service-name env-var from the Hanzo
 stack.
-
-## Motivation
-
-Pre-HIP-0069 the system used three distinct mechanisms to find services:
-
-1. Hard-coded ports — `[9999..9995]` for ZAP, `9224` for the legacy
-   browser bridge, `:80` / `:443` for ingress.
-2. Lockfile registry — `~/.hanzo/extension/config.json` for the
-   browser-extension ↔ MCP pairing.
-3. Environment variables — `HANZO_KMS_URL`, `HANZO_IAM_URL`,
-   `HANZO_BASE_URL`, … duplicated across every consumer.
-
-All three break under at least one of:
-- Multiple parallel agents competing for the same fixed port.
-- A service moving to a different host on the LAN.
-- Lockfile races (`finally`-clause cleanup deleting another
-  connection's registration; see hanzo-tools-browser 0.5.0 fix).
-
-The mDNS path is collision-free, host-agnostic, and standard.
 
 ## Specification
 

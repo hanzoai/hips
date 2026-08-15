@@ -4,11 +4,10 @@ title: Serving Topology — Three Tiers, Horizontally Scalable, Pinned Per Entit
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-07-29
 requires: HIP-0519
 ---
-
 
 
 # HIP-0520: Serving Topology — Three Tiers, Horizontally Scalable, Pinned Per Entity
@@ -30,14 +29,6 @@ on-host. Every tier scales by adding replicas.
 Cloud is **stateless but pinned**: a replica owns no durable state, yet requests
 for one entity land on one replica, because a per-org store has exactly one
 writer.
-
-## Motivation
-
-Stateless and single-writer look contradictory. Resolving them by making the
-store shared (one Postgres for everyone) throws away tenant isolation and the
-local-latency property; resolving them by making replicas sticky-by-session
-throws away scaling. Neither is necessary: the two are orthogonal once you
-separate WHERE A REQUEST GOES from WHAT A REPLICA REMEMBERS.
 
 ## Specification
 

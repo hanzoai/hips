@@ -56,23 +56,6 @@ disabled, it is absent.
 Most of this is already true. We are largely enforcing and documenting what
 exists, plus the lazy-mount work.
 
-## Motivation
-
-Two forces meet here.
-
-A developer cannot evaluate Hanzo by reading marketing. They evaluate it by
-running it. Today running it means a Kubernetes cluster, a KMS, an IAM, and a
-Cloudflare account — so nobody evaluates it. `make e2e` already proves the
-binary boots standalone in seconds on a laptop with none of those. That
-capability exists and is not shipped.
-
-Against that: the parts of this system that took the longest to get right are
-the parts a competitor would most like to read. The router that picks a model,
-the rate card, the plan matrix. Those are the business.
-
-Open core resolves it, but only if the line is drawn on a property that can be
-**tested**, not negotiated per subsystem. This HIP defines that property.
-
 ## Specification
 
 ### 1. The Line
@@ -1176,7 +1159,7 @@ shape that already exists. A config surface grows to fill whatever shape it is
 given; this one is given a narrow one.
 
 **Not folded into the existing `~/.hanzo/config.json`.** That file today holds
-one thing — a live `hk-` API key. It is a credential store, not a config file,
+one thing — a live `sk-` API key. It is a credential store, not a config file,
 and mixing subsystem policy into a secrets file is how secrets end up
 committed. (Separately: that key is sitting in plaintext on disk and belongs in
 KMS. Out of scope here, worth fixing.)

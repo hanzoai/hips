@@ -10,23 +10,11 @@ requires: HIP-1, HIP-18, HIP-24, HIP-101
 ---
 
 
-
 # HIP-0025: Bot Agent Wallet & RPC Billing Protocol
 
 ## Abstract
 
 This proposal defines the protocol for provisioning on-chain identities and wallets for AI bot agents on the Hanzo Network (chain ID 36963). Every bot agent gets a W3C Decentralized Identifier (DID) and a Safe smart-contract wallet capable of receiving payments, charging for RPC/API usage, and participating in cross-chain commerce via the Lux Bridge (HIP-101).
-
-## Motivation
-
-AI agents are becoming economic actors. They need:
-
-1. **On-chain identity**: A verifiable, self-sovereign identity (W3C DID) that persists across platforms and contexts
-2. **Programmable wallets**: Safe smart-contract wallets that can hold funds, pay for compute, and receive revenue
-3. **Metered RPC billing**: An open protocol for agents to charge consumers for API/RPC calls with transparent, on-chain settlement
-4. **Cross-chain universality**: Accept payments from any EVM chain via Lux Bridge, settle on Hanzo Network
-
-Current bot platforms treat agents as stateless functions with no financial agency. HIP-25 makes agents first-class economic participants.
 
 ## Specification
 
@@ -270,39 +258,6 @@ Default team bot presets (Vi, Dev, Des, Opera, Su, Mark, Fin, Art, Three, Fil) a
 - Default billing: Free tier (team-internal usage)
 
 ## Implementation
-
-### Phase 1: DID + Wallet Config (Completed)
-
-- [x] `DIDConfig` and `WalletConfig` types in `types.base.ts`
-- [x] `IdentityConfig` extended with `did` and `wallet` fields
-- [x] `TeamPreset` updated with `didMethod` and `walletChain`
-- [x] Chain ID constants from `hanzo-did` Rust crate
-- [x] Gateway handlers: `agent.did.get/create`, `agent.wallet.get/create`, `agent.identity.full`
-- [x] Console tRPC endpoints for team presets and agent identity
-
-### Phase 2: On-Chain Deployment (Planned)
-
-- [ ] BIP-32/39 HD wallet derivation from workspace seed
-- [ ] Safe smart-contract wallet deployment on Hanzo Network
-- [ ] DID Document anchoring on-chain
-- [ ] EOA address population in agent config
-- [ ] Safe address population after deployment
-
-### Phase 3: RPC Billing (Planned)
-
-- [ ] Rate schedule publication via DID Document
-- [ ] Metering middleware in bot gateway
-- [ ] Prepaid credit system
-- [ ] Batch on-chain settlement
-- [ ] Usage reporting API
-- [ ] Free tier enforcement
-
-### Phase 4: Cross-Chain (Planned)
-
-- [ ] Lux Bridge integration for cross-chain payments
-- [ ] Multi-chain Safe deployment (Hanzo + Lux + Zoo)
-- [ ] Omnichain DID resolution
-- [ ] Universal payment acceptance
 
 ## Security Considerations
 

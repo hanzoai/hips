@@ -10,7 +10,6 @@ requires: HIP-0026
 ---
 
 
-
 # HIP-0068: Ingress Standard
 
 ## Abstract
@@ -57,16 +56,6 @@ The NGINX Ingress Controller is the Kubernetes default. It has three problems th
 | Dashboard | None (third-party) | Built-in (disabled by default) |
 
 The tradeoff: NGINX has marginally higher raw throughput for static content. For a dynamic Kubernetes environment where routing changes frequently and services come and go, Traefik's native Kubernetes integration is decisive.
-
-### Why a Fork?
-
-Upstream Traefik is open-source and well-maintained. The fork exists for three reasons:
-
-1. **Hanzo branding**: The container image, CRD names in documentation, and dashboard reference Hanzo, not Traefik Labs.
-2. **Default configuration**: The fork ships with Hanzo-specific defaults (Cloudflare TLS, internal dashboard disabled, Prometheus metrics enabled, access log format matching Hanzo's log aggregation schema).
-3. **PaaS patches**: Minor patches for tighter integration with Dokploy's deployment lifecycle hooks.
-
-The fork tracks upstream Traefik releases. Merge conflicts are rare because changes are limited to defaults and branding.
 
 ## Specification
 
@@ -670,27 +659,12 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 - Prometheus metrics on port 9100
 - JSON access logs on stdout
 
-### Phase 2: Advanced Middleware (Q1 2026)
-
-- Rate limiting middleware on high-traffic routes
-- Security headers middleware (HSTS, X-Frame-Options, CSP)
-- Circuit breaker middleware for degraded backend protection
-- Retry middleware with exponential backoff
-- IP whitelist middleware for admin services
-
 ### Phase 3: Multi-Cluster (Q2 2026)
 
 - Deploy Ingress on lux-k8s cluster
 - Cross-cluster service discovery via ExternalName services
 - Global server load balancing (GSLB) via Cloudflare DNS
 - Canary deployments with weighted IngressRoute services
-
-### Phase 4: Edge Expansion (Q3 2026)
-
-- Edge Ingress instances in multiple DigitalOcean regions
-- CertManager integration for strict SSL on all domains
-- OpenTelemetry tracing pipeline integration
-- Custom Traefik plugins for Hanzo-specific middleware
 
 ## References
 

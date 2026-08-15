@@ -10,7 +10,6 @@ requires: HIP-0010
 ---
 
 
-
 # HIP-0045: Documentation Framework Standard
 
 ## Abstract
@@ -23,33 +22,6 @@ The framework ships as 24 independently versioned packages in a pnpm monorepo. A
 **Primary Package**: `@hanzo/docs` (unified wrapper)
 **Build Toolchain**: tsdown for packages, Turbo for monorepo orchestration
 **Runtime**: Next.js 15+ with App Router, React 19+, Tailwind CSS 4+
-
-## Motivation
-
-### The Problem
-
-The Hanzo ecosystem spans five brands (Hanzo, Lux, Zoo, Zen, ZAP) and dozens of products. Before this standard, documentation was fragmented:
-
-1. **Framework sprawl**: Some projects used Docusaurus, others used GitBook, others used hand-rolled Next.js pages. Each had different navigation patterns, search capabilities, and styling. Contributors had to learn a new system for each site.
-
-2. **No multi-brand support**: Hanzo, Lux, Zoo, and Zen each need distinct visual identities (colors, logos, typography) but identical UX patterns. Off-the-shelf frameworks treat branding as an afterthought -- they support one theme per deployment. Running five separate framework instances multiplies maintenance.
-
-3. **No OpenAPI integration**: API-heavy products (LLM Gateway, Cloud, Commerce) need endpoint documentation generated from OpenAPI specs. Most doc frameworks require a separate tool (Swagger UI, Redoc) embedded via iframe, breaking navigation and search.
-
-4. **No code-alongside-docs workflow**: Proprietary platforms (Mintlify, GitBook, Notion) separate documentation from the codebase. Developers cannot version docs alongside code, cannot use MDX with custom React components, and cannot run docs through the same CI pipeline.
-
-5. **Search fragmentation**: Each site had its own search (or none). There was no way to search across all Hanzo documentation from a single query.
-
-### The Solution
-
-A forked and extended Fumadocs framework, published as `@hanzo/docs-*` packages, that provides:
-
-- Multi-brand theming via CSS custom properties (one codebase, five visual identities)
-- Built-in OpenAPI documentation generation from spec files
-- MDX-first content with React Server Components
-- Unified full-text search across all sites (built-in Orama, Algolia adapter)
-- TypeScript and Python API documentation generation from source
-- Static export support for zero-runtime deployment
 
 ## Design Philosophy
 
@@ -72,39 +44,6 @@ We forked it because we need capabilities that do not fit upstream's scope:
 The fork maintains an `upstream` remote pointing to `fuma-nama/fumadocs`. We periodically merge upstream changes and resolve conflicts in our extension points. This gives us upstream improvements (bug fixes, performance, new Radix UI components) while maintaining our custom features.
 
 **Trade-off acknowledged**: Maintaining a fork requires ongoing merge effort. We accept this because the alternative -- building a docs framework from scratch -- is orders of magnitude more work, and using upstream directly does not meet our multi-brand and OpenAPI requirements.
-
-### Why Not Docusaurus
-
-Docusaurus is the most widely used documentation framework. We evaluated it and rejected it for these reasons:
-
-- **No App Router support**: Docusaurus uses React client-side rendering exclusively. It does not support React Server Components or the Next.js App Router. This means every page ships the full React runtime to the client, and we cannot use server-only features (database queries, KMS secret access) in documentation pages.
-
-- **Heavy bundle**: A default Docusaurus site ships ~400KB of JavaScript. A Fumadocs site ships ~240KB. For documentation that is primarily text, this overhead is unjustifiable.
-
-- **Plugin architecture friction**: Docusaurus plugins must conform to its lifecycle hooks, which are designed around its own build pipeline (Webpack, not Turbopack). Integrating our OpenAPI generator and type table components would require fighting the framework rather than extending it.
-
-- **No MDX 3 support**: As of evaluation, Docusaurus uses MDX 2. Our content pipeline requires MDX 3 features (ESM-only, improved JSX handling, better error messages).
-
-### Why Not Mintlify
-
-Mintlify is a proprietary documentation platform with excellent design defaults. We rejected it because:
-
-- **No self-hosting**: Mintlify is SaaS-only. We cannot run it on our own infrastructure, which violates our requirement for infrastructure sovereignty (we must own our docs pipeline end-to-end).
-
-- **Cost at scale**: Mintlify pricing scales with page count and team size. With 6+ documentation sites and growing content, the annual cost exceeds what we would spend maintaining our own framework.
-
-- **No MDX component embedding**: Mintlify supports a subset of MDX but does not allow importing arbitrary React components. Our docs include interactive API playgrounds, live code editors, and protocol visualizations that require full React component support.
-
-- **No version-alongside-code**: Mintlify content lives in a separate repository synced via their CLI. We need docs to live in the same monorepo as the code they document, so a PR that changes an API also updates its documentation.
-
-### Why Not GitBook or Notion
-
-GitBook and Notion are content platforms, not developer documentation frameworks. They lack:
-
-- **No MDX**: Content is stored in their proprietary formats. No support for embedding React components, importing TypeScript types, or running code transformations.
-- **No CI integration**: Cannot run documentation builds through the same CI pipeline as code.
-- **No static export**: Cannot produce static HTML for CDN deployment.
-- **No programmatic content generation**: Cannot auto-generate pages from OpenAPI specs or TypeScript declarations.
 
 ### Why a Monorepo with 24 Packages
 
@@ -982,26 +921,6 @@ All documentation sites MUST meet these Lighthouse scores:
 
 Documentation sites are monitored via the Hanzo status page. Target uptime: 99.9%.
 
-## Migration Guide
-
-### From Docusaurus
-
-1. Convert `docs/` markdown files to MDX format (usually minimal changes)
-2. Replace `docusaurus.config.js` with `source.config.ts` and `next.config.ts`
-3. Convert `sidebars.js` to `meta.json` files in content directories
-4. Replace Docusaurus-specific components (`<CodeBlock>`, `<Tabs>`) with `@hanzo/docs-ui` equivalents
-5. Move static assets from `static/` to `public/`
-
-### From Upstream Fumadocs
-
-1. Replace all `fumadocs-*` imports with `@hanzo/docs-*` equivalents (see Rename Mapping)
-2. Update `package.json` dependencies
-3. Add brand CSS custom properties
-4. No content changes required -- MDX format is identical
-
-### From Scratch
-
-```bash
 # 1. Scaffold a new docs site
 npx @hanzo/docs-create-app my-docs
 
@@ -1019,25 +938,6 @@ pnpm build
 ```
 
 ## Future Work
-
-### Phase 1: Current (Q1 2026)
-
-- All Hanzo ecosystem documentation on `@hanzo/docs-*` framework
-- Multi-brand theming for Hanzo, Zen, ZAP, Bot
-- OpenAPI doc generation for LLM Gateway and Cloud APIs
-- Built-in Orama search on all sites
-
-### Phase 2: Unified Search (Q2 2026)
-
-- Cross-site federated search (search docs.hanzo.ai and find results from zenlm.org)
-- Integration with Hanzo Search (HIP-0012) for AI-powered search
-- Search analytics dashboard
-
-### Phase 3: Interactive Docs (Q3 2026)
-
-- Embedded code sandboxes (run examples in-browser)
-- Live API playground with authentication flow
-- Interactive protocol visualizations for HIPs
 
 ### Phase 4: Automation (Q4 2026)
 

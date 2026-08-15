@@ -4,7 +4,7 @@ title: Datastore CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Draft
 created: 2026-05-19
 ---
 
@@ -78,12 +78,6 @@ spec:
 
 ### Related services
 
-- `Datastore`: HIP-496 (datastore)
-- `SQL` (Postgres): HIP-502 (sql)
-- `KV` (Valkey): HIP-498 (kv)
-- `S3` (MinIO): HIP-476 (s3), HIP-477 (s3-demo)
-- `Insights-KV` (Valkey): HIP-454
-- `Insights-SQL` (Postgres): HIP-456
 
 ## Status
 

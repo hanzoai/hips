@@ -4,7 +4,7 @@ title: SQL CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -68,8 +68,6 @@ Same as `Datastore`: StatefulSet, headless + ClusterIP Services, PVCs.
 
 ### Related services
 
-- HIP-502 (sql service)
-- HIP-456 (insights-sql)
 - Used as the relational store by IAM, Console, Commerce, Cloud, Platform, KMS.
 
 ## Status

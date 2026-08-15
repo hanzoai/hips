@@ -4,11 +4,10 @@ title: SuperAdmin & Tenant Isolation Model
 author: Hanzo AI Team
 type: Standards Track
 category: Security
-status: Review
+status: Draft
 created: 2026-07-07
 requires: HIP-0026, HIP-0068, HIP-0111
 ---
-
 
 
 # HIP-0118: SuperAdmin & Tenant Isolation Model
@@ -206,32 +205,6 @@ SuperAdmin session only when the validated token's `owner` equals the admin org.
 Identity MAY be resolved from more than one transport (a signed edge session cookie, a
 Bearer/Basic JWT, an IAM SSO session), but all transports MUST collapse to the single
 §3 predicate. No transport may widen the scope.
-
-## Rationale
-
-**Why `owner == admin`, not `isAdmin`.** `isAdmin` answers "admin of my own org" — and
-in a self-service platform *every customer is that*. Gating platform scope on `isAdmin`
-therefore grants platform scope to the whole customer base. `owner` answers "which
-tenant is this identity," and the reserved `admin` tenant is, by construction, the only
-one that is not a customer. Reading `owner` makes the platform-privileged set a small,
-explicit, enumerable org rather than an emergent property of a boolean that means
-something else. The two claims are different questions; the model refuses to answer the
-platform question with the tenant answer.
-
-**Why provision, not promote.** Promotion is a mutation, and every mutation is an
-escalation surface: it can be replayed, under-guarded on one of N subsystems, or
-performed by anyone who can edit a user. Provisioning has no such surface — there is no
-"make me admin" operation to attack, because platform privilege is *membership of an
-org you must be separately created in*. It also preserves separation of duties (AC-5):
-the tenant-facing identity and the platform-facing identity are distinct accounts with
-distinct credentials and distinct audit trails, so a compromise of a customer's
-day-to-day admin account yields no platform scope.
-
-**Why one predicate, spelled once.** N independent "is this an admin?" tests are N
-places to drift and N independent escalation surfaces. Collapsing every gate — edge,
-gateway, console, subsystem — onto the identical claim comparison means there is exactly
-one thing to reason about and audit, and adding a subsystem adds no new authorization
-logic, only the same predicate over the same header.
 
 ## Security Considerations
 

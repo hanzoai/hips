@@ -4,11 +4,10 @@ title: ZAP — Inter-VM Cognitive Transport for Thinking Chains
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Review
+status: Draft
 created: 2026-06-21
 requires: 0113
 ---
-
 
 
 # HIP-0114: ZAP — Inter-VM Cognitive Transport for Thinking Chains
@@ -169,25 +168,6 @@ result. Concretely:
 This is what "transport only" buys: the messaging layer can be lossy-but-retrying,
 reordered, and duplicated, and the chain is still deterministic, because authority
 lives in the committed proofs, not in the wire.
-
-## Rationale
-
-**Why a separate HIP for the transport.** Braiding transport with proof is the exact
-mistake the Bridge Law forbids. Specifying ZAP on its own — and stating in one place
-that it is non-authoritative — lets the proof/receipt layer (HIP-0113, the PoT
-receipt ZIP) be audited for soundness without anyone having to reason about delivery
-semantics, and lets the transport be hardened (auth, replay, framing) without
-anyone fearing a wire change alters consensus. One concern per artifact.
-
-**Why reuse the existing ZAP surface.** Hanzo already speaks ZAP service-to-service
-with a dot-prefixed procedure convention and consensus-native authorization. Adding
-a `cog.*` procedure set is the smallest change that gives the Thinking Chain its
-messaging layer; inventing a second transport would violate "exactly one way to do
-everything."
-
-**Why timestamps are advisory.** Wall-clock is not reproducible across nodes; the
-only nondeterminism a Thinking Chain tolerates is block height. Forbidding
-`Timestamp` from any consensus path keeps ZAP honest about being a transport.
 
 ## Security Considerations
 

@@ -10,14 +10,13 @@ requires: HIP-0027, HIP-0028, HIP-0029, HIP-0047
 ---
 
 
-
 # HIP-0065: Backup & Disaster Recovery Standard
 
 ## Abstract
 
 This proposal defines the unified backup and disaster recovery (DR) standard
 for all stateful services in the Hanzo ecosystem. Every data store -- PostgreSQL
-(HIP-0029), Valkey/KV (HIP-0028), ClickHouse (HIP-0047), MinIO/S3 (HIP-0032),
+(HIP-0029), Valkey/KV (HIP-0028), Hanzo Datastore (HIP-0047), MinIO/S3 (HIP-0032),
 model artifacts, training checkpoints, datasets, and configuration secrets --
 MUST be backed up, verified, and recoverable through the single Hanzo Backup
 service defined here.
@@ -34,7 +33,7 @@ lux-k8s). Each service adopted its own backup approach:
 
 - **PostgreSQL** runs a CronJob with `pg_dump` every 6 hours (HIP-0029).
 - **Valkey** relies on RDB snapshots that only persist to the local PVC.
-- **ClickHouse** has no automated backup; operators run manual `BACKUP` commands.
+- **Hanzo Datastore** has no automated backup; operators run manual `BACKUP` commands.
 - **MinIO** replicates buckets between clusters but has no off-site copy.
 - **Model artifacts** are stored in S3 buckets with no versioning policy.
 - **KMS secrets** are backed up only through the KMS built-in export.
@@ -42,7 +41,7 @@ lux-k8s). Each service adopted its own backup approach:
 This patchwork creates five problems:
 
 1. **No unified Recovery Point Objective (RPO).** Some services can lose 6 hours
-   of data (PostgreSQL) while others can lose days (ClickHouse). There is no
+   of data (PostgreSQL) while others can lose days (Hanzo Datastore). There is no
    organizational agreement on acceptable data loss per service tier.
 
 2. **No tested Recovery Time Objective (RTO).** Nobody has timed a full restore
@@ -74,7 +73,7 @@ Every heading addresses a single decision and why the alternatives were rejected
 ### Why Unified Backup Over Per-Service Scripts
 
 The status quo is per-service backup scripts: a CronJob for PostgreSQL, a
-ConfigMap-driven script for Valkey, nothing for ClickHouse. This approach has
+ConfigMap-driven script for Valkey, nothing for Hanzo Datastore. This approach has
 three fundamental problems:
 
 1. **Inconsistent scheduling.** Each team picks its own cron schedule. There is
@@ -97,63 +96,6 @@ The trade-off is coupling: a bug in the backup controller affects all stores.
 We accept this because backup infrastructure is inherently cross-cutting. A
 single well-tested controller is more reliable than five untested scripts.
 
-### Why Not Cloud-Provider Snapshots Alone
-
-DigitalOcean offers volume snapshots for block storage. These are tempting
-because they require zero application logic -- just snapshot the PVC. However:
-
-1. **Vendor lock-in.** DO volume snapshots are DigitalOcean-specific. If we
-   migrate to another provider (or add a second region on a different cloud),
-   snapshots do not transfer. Application-level backups (pg_dump, clickhouse-
-   backup, rdb files) are portable to any environment.
-
-2. **No granular restore.** A volume snapshot restores the entire volume. You
-   cannot restore a single database from a multi-database PostgreSQL volume, or
-   a single ClickHouse table from a shared volume. Application-level backups
-   support selective restore.
-
-3. **Snapshot consistency.** Volume snapshots are crash-consistent, not
-   application-consistent. A snapshot taken while PostgreSQL is mid-checkpoint
-   may produce a WAL replay on restore. Application-level backups (taken with
-   `pg_dump` or `BACKUP TABLE`) are guaranteed consistent.
-
-4. **Cross-region portability.** Application-level backups are files. We upload
-   them to any S3-compatible endpoint in any region. Volume snapshots can only
-   be copied within the same cloud provider's snapshot system.
-
-We use volume snapshots as a secondary defense layer (belt-and-suspenders) but
-rely on application-level backups as the primary recovery mechanism.
-
-### Why Velero for Kubernetes Resources
-
-Kubernetes resources (Deployments, StatefulSets, ConfigMaps, Services,
-CRDs) are declarative but not always stored in Git. Custom resources from
-operators (KMSSecret, ClickHouse cluster definitions) evolve at runtime.
-Helm release state lives in cluster secrets. Losing these resources means
-manually reconstructing the cluster state.
-
-Velero solves this by snapshotting all Kubernetes API objects to S3. It
-handles CRD backup, namespace-scoped restore, and PV snapshot coordination.
-Alternatives like `kubectl get --all-namespaces -o yaml` produce a dump that
-is difficult to selectively restore and does not handle PV state.
-
-Velero is additive to application-level backups. It does not replace them.
-Velero backs up the orchestration layer; application-level backups protect the
-data layer.
-
-### Why Tiered RPO/RTO Instead of One-Size-Fits-All
-
-Not all data is equally critical. IAM (authentication) going down for 5
-minutes costs every user across every service. Analytics being unavailable
-for an hour has minimal business impact. Applying the strictest RPO/RTO to
-every service wastes resources on continuous replication for non-critical
-stores.
-
-Tiered targets let us allocate backup resources proportional to business
-impact. Critical services get WAL streaming and sub-minute RPO. Standard
-services get periodic snapshots and hourly RPO. Archival data gets daily
-backups with relaxed RTO.
-
 ## Specification
 
 ### Service Tiers and RPO/RTO Targets
@@ -163,7 +105,7 @@ Every Hanzo service is assigned one of three tiers:
 | Tier | RPO | RTO | Backup Frequency | Replication | Examples |
 |------|-----|-----|------------------|-------------|----------|
 | **Critical** | 1 minute | 5 minutes | Continuous (WAL/AOF streaming) | Synchronous cross-region | PostgreSQL (IAM, Cloud), KMS secrets |
-| **Standard** | 1 hour | 1 hour | Hourly snapshots | Async cross-region | Valkey/KV, ClickHouse, MinIO buckets |
+| **Standard** | 1 hour | 1 hour | Hourly snapshots | Async cross-region | Valkey/KV, Hanzo Datastore, MinIO buckets |
 | **Archival** | 24 hours | 4 hours | Daily snapshots | Async, single copy | Model artifacts, training datasets, logs |
 
 RPO = Recovery Point Objective (maximum acceptable data loss).
@@ -178,7 +120,7 @@ Backup Controller (:8065)
   │
   ├── PostgreSQL (HIP-0029)  ── pg_basebackup + WAL archiving
   ├── Valkey/KV  (HIP-0028)  ── RDB snapshot export
-  ├── ClickHouse (HIP-0047)  ── BACKUP DATABASE ... TO S3
+  ├── Hanzo Datastore (HIP-0047)  ── BACKUP DATABASE ... TO S3
   ├── MinIO/S3   (HIP-0032)  ── mc mirror (bucket replication)
   ├── Model Weights / Checkpoints / Datasets  ── versioned S3
   └── Config / Secrets  ── Velero + KMS export
@@ -239,9 +181,9 @@ backup-kv-snapshot --host kv.hanzo.svc:6379 \
   --output s3://hanzo-backups/kv/$(date +%Y%m%d_%H%M%S).rdb
 ```
 
-#### ClickHouse (Standard Tier)
+#### Hanzo Datastore (Standard Tier)
 
-ClickHouse provides native `BACKUP TABLE ... TO S3(...)` syntax. The backup
+Hanzo Datastore provides native `BACKUP TABLE ... TO S3(...)` syntax. The backup
 controller issues backup commands for each database on an hourly schedule.
 
 ```sql
@@ -358,7 +300,7 @@ backup-pg-restore \
 kubectl scale statefulset postgres --replicas=1 -n hanzo
 ```
 
-For Valkey and ClickHouse, PITR is not natively supported. Recovery is to the
+For Valkey and Hanzo Datastore, PITR is not natively supported. Recovery is to the
 most recent snapshot. If sub-hour granularity is needed for Valkey, enable AOF
 streaming.
 
@@ -401,7 +343,7 @@ automated restore tests on every backup:
    and basic health checks pass, the test passes.
 
 3. **Data consistency check**: For PostgreSQL, run `pg_restore --list` to
-   verify the dump TOC is valid. For ClickHouse, run `CHECK TABLE` on
+   verify the dump TOC is valid. For Hanzo Datastore, run `CHECK TABLE` on
    restored tables. For Valkey, load the RDB and run `DBSIZE` to verify
    non-zero key count.
 
@@ -415,7 +357,7 @@ Failures trigger PagerDuty alerts at the same severity as a production outage.
 | WAL segments | 7 days | Automatic after base backup + WAL coverage |
 | PostgreSQL base backups | 30 days | Oldest pruned when count exceeds 30 |
 | Valkey RDB snapshots | 30 days | Oldest pruned when count exceeds 720 (hourly) |
-| ClickHouse backups | 90 days | Oldest pruned when count exceeds 2160 |
+| Hanzo Datastore backups | 90 days | Oldest pruned when count exceeds 2160 |
 | MinIO bucket mirrors | Current + 1 previous | Continuous mirror, version history in bucket |
 | Velero cluster backups | 30 days | TTL-based (720h) |
 | KMS secret exports | 90 days | Oldest pruned on schedule |
@@ -521,7 +463,7 @@ and stores both the encrypted payload and wrapped DEK in S3.
 
 A NetworkPolicy restricts the backup controller's egress to only the required
 ports within the `hanzo` namespace (5432 PostgreSQL, 6379 Valkey, 8123
-ClickHouse, 9000 MinIO) and port 443 for external HTTPS (KMS API, secondary
+Hanzo Datastore, 9000 MinIO) and port 443 for external HTTPS (KMS API, secondary
 S3 endpoint). All other egress is denied.
 
 ### Access Control
@@ -540,20 +482,6 @@ buckets have Object Lock enabled (WORM -- write once read many) for
 Critical-tier backups to prevent ransomware-style deletion.
 
 ## Future Work
-
-### Phase 2: Automated Failover
-
-Currently, disaster recovery requires human-initiated runbook execution. Phase
-2 will introduce automated failover for Critical-tier services. The backup
-controller will monitor primary service health and automatically promote a
-standby replica or initiate restore to a secondary cluster when the primary is
-unreachable for a configurable threshold (default: 3 minutes).
-
-### Phase 3: Continuous Data Protection (CDP)
-
-For services that require RPO approaching zero (sub-second), continuous data
-protection captures every write in real time and ships it to the backup store.
-This extends WAL archiving to all stores, not just PostgreSQL.
 
 ### Phase 4: Multi-Cloud DR
 

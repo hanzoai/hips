@@ -4,7 +4,7 @@ title: DocDB CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Draft
 created: 2026-05-19
 ---
 
@@ -60,7 +60,6 @@ StatefulSet, headless + ClusterIP Services, PVC (small — FerretDB itself is st
 ### Related services
 
 - No standalone DocDB CR currently runs in `do-sfo3-hanzo-k8s` (FerretDB is invoked via library by services that need a MongoDB-compatible layer).
-- Backing store: `SQL` CR (HIP-502).
 
 ## Status
 

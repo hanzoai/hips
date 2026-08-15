@@ -10,7 +10,6 @@ requires: HIP-1, HIP-2
 ---
 
 
-
 # HIP-0003: Jin Multimodal AI Architecture
 
 ## Abstract
@@ -18,17 +17,6 @@ requires: HIP-1, HIP-2
 This proposal defines the Jin architecture, Hanzo's unified multimodal AI framework supporting text, vision, audio, and 3D modalities through joint embedding spaces. Jin represents our next-generation foundational model with variants from nano (1B) to ultra (1T+) parameters, featuring diffusion transformer MoE architectures and cross-modal understanding.
 
 **Repository**: [github.com/hanzoai/jin](https://github.com/hanzoai/jin)
-
-## Motivation
-
-Current multimodal models suffer from:
-1. **Modality Silos**: Separate encoders lose cross-modal relationships
-2. **Scale Limitations**: Difficulty scaling to trillion+ parameters
-3. **Training Inefficiency**: Redundant learning across modalities
-4. **Inference Bottlenecks**: Sequential processing of modalities
-5. **Limited 3D Understanding**: Poor spatial reasoning capabilities
-
-Jin addresses these through unified joint embedding spaces with efficient MoE routing.
 
 ## Specification
 
@@ -299,81 +287,3 @@ class HLLM_Jin(HLLM):
         return self.base_model.decode(actions)
 ```
 
-## Rationale
-
-### Why Joint Embedding Spaces?
-
-Joint embedding enables:
-- **True multimodal understanding**: Shared representations across modalities
-- **Zero-shot transfer**: Apply learning from one modality to another
-- **Efficient scaling**: Single model instead of multiple specialists
-- **Emergent capabilities**: Cross-modal reasoning emerges naturally
-
-### Why Hyperbolic Geometry?
-
-Hyperbolic spaces offer:
-- **Hierarchical representation**: Natural for tree-like structures
-- **Exponential capacity**: More representational power
-- **Better separation**: Improved clustering of concepts
-- **Semantic preservation**: Maintains relationships
-
-### Why MoE Architecture?
-
-Mixture of Experts provides:
-- **Conditional computation**: Only activate relevant experts
-- **Efficient scaling**: Scale to trillions of parameters
-- **Specialization**: Experts can specialize by modality/task
-- **Fast inference**: Sparse activation reduces compute
-
-## Implementation Roadmap
-
-### Phase 1: Jin-nano (Q1 2025)
-- 1B parameter model
-- Text + Vision modalities
-- Edge deployment ready
-- Open source release
-
-### Phase 2: Jin-base (Q2 2025)
-- 32B parameter model
-- All core modalities
-- Cloud deployment
-- API access
-
-### Phase 3: Jin-large (Q3 2025)
-- 175B parameter model
-- Video support
-- Enterprise features
-- Fine-tuning API
-
-### Phase 4: Jin-ultra (Q4 2025+)
-- 1T+ parameter model
-- Specialized modalities
-- AGI research
-- Academic partnerships
-
-## Security Considerations
-
-### Model Security
-- **Watermarking**: Invisible watermarks in generated content
-- **Safety filters**: Multimodal content filtering
-- **Adversarial robustness**: Defense against attacks
-- **Privacy**: No training data memorization
-
-### Deployment Security
-- **TEE inference**: Secure enclaves for sensitive data
-- **Encrypted models**: Model encryption at rest
-- **Access control**: Fine-grained permissions
-- **Audit logging**: Complete inference trails
-
-## References
-
-1. [Flamingo: Visual Language Model](https://arxiv.org/abs/2204.14198)
-2. [Gemini: Multimodal Models](https://arxiv.org/abs/2312.11805)
-3. [Switch Transformers: MoE](https://arxiv.org/abs/2101.03961)
-4. [Hyperbolic Neural Networks](https://arxiv.org/abs/1805.09112)
-5. [HIP-2: HLLMs Specification](./hip-2.md)
-6. [Jin Repository](https://github.com/hanzoai/jin)
-
-## Copyright
-
-Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).

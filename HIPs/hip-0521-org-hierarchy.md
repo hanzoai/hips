@@ -10,7 +10,6 @@ requires: HIP-0026, HIP-0118, HIP-0519
 ---
 
 
-
 # HIP-0521: Org Hierarchy
 
 ## Abstract
@@ -28,25 +27,6 @@ is not on this edge at all — it remains membership of the reserved `admin` org
 Tenant isolation stays exactly where HIP-0118 put it: on the org boundary. A
 parent's reach is an authorization decision evaluated per request. It is not a
 storage merge, and two orgs never share a store because one owns the other.
-
-## Motivation
-
-Two requirements, one edge.
-
-**B2B resale.** A customer builds on Hanzo and signs up customers of their own.
-Those customers need to be tenants — their own users, apps, data, isolation —
-while the builder needs to administer them. Today the only way to express "these
-tenants are mine" is to make them members of one org, which destroys the
-isolation that made them tenants.
-
-**One company, several orgs.** `hanzo`, `lux`, `zoo` and `pars` are separate
-tenants by design, and separate is correct: separate stores, separate keys,
-separate blast radius. But they are one company. Operators want one login across
-them, and finance wants one invoice. Absent a parent edge the only mechanism is
-to give a human membership in all four, which spreads authority by hand and
-audits as four unrelated grants.
-
-Both are the same shape: an org that owns orgs.
 
 ## Specification
 
@@ -125,27 +105,6 @@ value is found.
 
 Because the payer is resolved by ancestry, setting a parent CAN move who pays.
 That is the feature (one invoice), and it is why §4 makes attachment privileged.
-
-## Rationale
-
-**Why one direction.** A parent already holds its descendant's data by §5, so
-downward authority grants nothing the parent could not otherwise be given.
-Upward authority would let a tenant reach its owner, which inverts the
-relationship and would make every sub-org a path into the org above it.
-
-**Why SuperAdmin is off the edge.** Platform sudo is the one cross-tenant scope,
-and HIP-0118 makes it a single flat membership test precisely so it has exactly
-one source. Letting ancestry confer it would add a second, transitive source —
-the flag-for-scope confusion that HIP-0118 exists to prevent, with a longer
-path.
-
-**Why a forest and not a graph.** Multiple parents make "who may act on this
-org?" a reachability query with no single answer to audit, and make the payer
-ambiguous. One parent keeps both answers unique.
-
-**Why depth 8.** It is far past any real corporate structure and small enough
-that a bounded walk is cheap on every request. The bound exists so the walk is
-bounded, not because 8 is meaningful.
 
 ## Security Considerations
 

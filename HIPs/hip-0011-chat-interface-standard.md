@@ -10,7 +10,6 @@ requires: HIP-4
 ---
 
 
-
 # HIP-0011: Chat Interface Standard
 
 ## Abstract
@@ -20,19 +19,6 @@ This proposal defines the comprehensive chat interface standard for AI model int
 **Repository**: [github.com/hanzoai/chat](https://github.com/hanzoai/chat)  
 **Port**: 3081  
 **Status**: Production-ready (LibreChat fork with Hanzo extensions)
-
-## Motivation
-
-The Hanzo ecosystem requires a unified chat interface to:
-
-1. **Standardize Interactions**: Provide consistent chat experience across all AI models
-2. **Enable Multimodality**: Support text, images, files, and code in conversations
-3. **Tool Integration**: Leverage MCP for AI tool use and function calling
-4. **Session Persistence**: Maintain conversation history and context
-5. **Enterprise Features**: Support multi-user, authentication, and audit trails
-6. **Provider Agnostic**: Work seamlessly with 100+ LLM providers via HIP-4
-
-Without standardization, each application would implement chat differently, leading to fragmentation and poor user experience.
 
 ## Specification
 
@@ -488,50 +474,7 @@ enum ErrorCode {
 }
 ```
 
-## Rationale
-
-### Why This Design?
-
-- **Single Interface**: One canonical way to chat with AI models across the ecosystem
-- **Model Agnostic**: Works with any model via HIP-4 (LLM Gateway)
-- **Streaming First**: Real-time responses are the default for better UX
-- **Multimodal Native**: Built-in support for images, files, and code
-- **MCP Integration**: Seamless tool use and function calling
-- **Enterprise Ready**: Authentication, rate limiting, and audit trails
-
-### Why LibreChat Base?
-
-- **Proven Implementation**: Battle-tested with millions of users
-- **Feature Complete**: Already implements most requirements
-- **Active Development**: Regular updates and improvements
-- **Open Source**: Can be forked and customized
-
-### Architecture Decisions
-
-1. **SSE over WebSockets for streaming**: Better proxy support, simpler implementation
-2. **Session-based over stateless**: Maintains context for better conversations
-3. **File storage abstraction**: Support for S3, local, and other providers
-4. **JWT + API keys**: Flexible authentication for different use cases
-
-## Implementation
-
-### System Architecture
-
-```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Client    │────▶│  Chat API    │────▶│ LLM Gateway  │
-│  (Browser)  │◀────│   (HIP-11)   │◀────│   (HIP-4)    │
-└─────────────┘     └──────────────┘     └──────────────┘
-                           │                      │
-                           ▼                      ▼
-                    ┌──────────────┐       ┌──────────┐
-                    │   Database   │       │   100+   │
-                    │  (Sessions)  │       │ Providers│
-                    └──────────────┘       └──────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │ File Storage │
+          │ File Storage │
                     │  (S3/Local)  │
                     └──────────────┘
 ```
@@ -651,16 +594,6 @@ npm run test:security
 - **SOC 2**: Audit trails, access controls
 - **HIPAA**: Optional encryption and access controls for healthcare
 - **CCPA**: California privacy requirements
-
-## Migration Guide
-
-For applications currently using other chat interfaces:
-
-1. **Map message formats** to the standard schema
-2. **Implement session management** if stateless
-3. **Update streaming protocol** to SSE format
-4. **Add MCP tool registration** for function calling
-5. **Migrate user data** preserving conversation history
 
 ## Performance Targets
 

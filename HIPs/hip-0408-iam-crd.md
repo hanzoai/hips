@@ -4,7 +4,7 @@ title: IAM CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -66,7 +66,6 @@ Deployment, Service, optional Ingress (in practice Ingress is managed separately
 
 ### Related services
 
-- HIP-451 (iam service)
 - HIP-0026 (IAM standard)
 - Consumers: every authenticated service in the cluster.
 

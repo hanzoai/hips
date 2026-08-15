@@ -4,7 +4,7 @@ title: "Hanzo Replicate: Encrypted SQLite Durability for Base Services"
 author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Active
 created: 2026-04-09
 requires: HIP-0027, HIP-0065
 ---

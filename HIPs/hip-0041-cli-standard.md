@@ -36,24 +36,6 @@ it gets quoted.
 **Numbers here were measured on 2026-08-04**, each against the artifact named
 beside it. Re-measure before quoting one.
 
-## Motivation
-
-Hanzo Cloud publishes an API document describing **2,341 operations**. A person
-at a terminal needs to reach them, and there are only three ways to arrange that:
-
-1. **Write commands by hand.** The surface is then whatever somebody remembered
-   to write. It is always a subset, always stale, and the gap is silent.
-2. **Make the user construct requests.** Correct, and it makes the CLI a worse
-   HTTP client than the one they already have.
-3. **Project the command tree from the document.** Complete by construction,
-   stale only as far as one pinned reference, and the gap is a number anyone can
-   print.
-
-Only the third scales with an API that gains operations weekly. This HIP
-specifies it, and names — with counts — every place the current implementation
-does not yet meet it, so the document is a target rather than a flattering
-description.
-
 ## Specification
 
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted
@@ -406,14 +388,6 @@ against them is countable.
 - **A stale binary is a security property, not only an annoyance.** With `hanzo`
   ambiguous across crates and package managers, a user may be running a build far
   behind the one that fixed a defect. §13 is the mitigation.
-
-## Backwards Compatibility
-
-The previous revision of this HIP specified a Go binary with hand-written
-commands, a plugin system and an auto-updater. None of it was built, so there is
-nothing to stay compatible with. Command names generated from the API document
-are stable as long as the operation is stable; an operation renamed upstream
-renames its command, and that coupling is intended.
 
 ## References
 

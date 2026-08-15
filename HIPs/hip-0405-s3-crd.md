@@ -4,7 +4,7 @@ title: S3 CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -74,8 +74,6 @@ StatefulSet, headless + ClusterIP Services, PVC.
 
 ### Related services
 
-- HIP-476 (s3 service)
-- HIP-477 (s3-demo)
 - Consumers: dataroom, captable, Hanzo storage CDN, backup targets.
 
 ## Status

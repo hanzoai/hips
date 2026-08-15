@@ -4,7 +4,7 @@ title: KV CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Final
+status: Active
 created: 2026-05-19
 ---
 
@@ -58,8 +58,6 @@ StatefulSet, headless + ClusterIP Services, PVC.
 
 ### Related services
 
-- HIP-498 (kv service)
-- HIP-454 (insights-kv)
 - Consumers: LLM gateway response cache, console queue, chat rate limiter.
 
 ## Status
