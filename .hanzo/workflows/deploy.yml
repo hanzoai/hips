@@ -30,12 +30,16 @@ name: deploy
 # completion and cloud prunes the prefix, because a write-only grant cannot
 # delete.
 #
-# The one secret this needs: HANZO_DEPLOY_TOKEN, set on the FORGE. This file
-# lives under .hanzo/workflows/, which only git.hanzo.ai reads, so the secret
-# comes from the forge's store and GitHub's plan rules never enter into it. An
-# earlier revision of this comment said "REPO scope, because org secrets do not
-# reach private repos on the Free plan" — wrong twice over: the job does not run
-# on GitHub, and hanzoai/HIPs is public anyway.
+# THE DEPLOY KEY IS IN KMS and the action reads it there, so this file names no
+# token at all. It used to pass secrets.HANZO_DEPLOY_TOKEN, a forge org secret
+# holding a key that had stopped resolving — and a secret nobody can read back is
+# a secret nobody can tell is dead, which is how this site went on failing 403
+# while hanzo.ai, which had moved to KMS, published fine. What this file passes
+# now is the KMS client identity, and resealing rotates every site at once.
+#
+# The credentials come from the FORGE's store, because this file lives under
+# .hanzo/workflows/ and only git.hanzo.ai reads that. GitHub's plan rules never
+# enter into it: the job does not run on GitHub.
 #
 # WHERE THINGS FIT, since these are orthogonal and composable:
 #   Project  — IAM-owned (iam/internal/schema/project.go); the billing bucket.
@@ -94,4 +98,5 @@ jobs:
           slug: hips
           dir: docs/out
         env:
-          HANZO_DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
+          KMS_CLIENT_ID: ${{ secrets.KMS_CLIENT_ID }}
+          KMS_CLIENT_SECRET: ${{ secrets.KMS_CLIENT_SECRET }}
