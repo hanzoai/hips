@@ -15,9 +15,9 @@ requires: HIP-0, HIP-14
 ## Abstract
 
 This proposal defines the relational database standard for all Hanzo services.
-Hanzo SQL provides relational data storage via PostgreSQL, deployed as in-cluster
-StatefulSets on each DOKS Kubernetes cluster. Every Hanzo service that requires
-persistent relational storage MUST connect to the cluster-local PostgreSQL instance
+Hanzo SQL provides relational data storage via SQL, deployed as in-cluster
+StatefulSets on each Kubernetes Kubernetes cluster. Every Hanzo service that requires
+persistent relational storage MUST connect to the cluster-local SQL instance
 following this specification.
 
 **Repository**: [github.com/hanzoai/postgres](https://github.com/hanzoai/postgres)
@@ -75,7 +75,7 @@ superuser account.
 
 ### Container Image
 
-The Hanzo SQL image is built from the official PostgreSQL 16 image with
+The Hanzo SQL image is built from the official SQL 16 image with
 extensions pre-installed:
 
 ```dockerfile
@@ -212,7 +212,7 @@ spec:
 
                   # Dump each database separately
                   for db in iam cloud console hanzo_cloud kms platform; do
-                    pg_dump -h postgres.hanzo.svc -U hanzo \
+                    pg_dump -h localhost -U hanzo \
                       -Fc --no-owner --no-acl \
                       ${db} > ${BACKUP_DIR}/${db}.dump
                   done
@@ -259,14 +259,14 @@ aws s3 cp s3://hanzo-backups/postgres/20260215_060000/iam.dump ./iam.dump \
   --endpoint-url ${S3_ENDPOINT}
 
 # Restore to database
-pg_restore -h postgres.hanzo.svc -U hanzo \
+pg_restore -h localhost -U hanzo \
   -d iam --clean --if-exists --no-owner \
   ./iam.dump
 ```
 
 ### Monitoring
 
-PostgreSQL metrics are exposed via `postgres_exporter` sidecar to Prometheus:
+SQL metrics are exposed via `postgres_exporter` sidecar to Prometheus:
 
 | Metric | Alert Threshold | Description |
 |--------|----------------|-------------|
@@ -274,7 +274,7 @@ PostgreSQL metrics are exposed via `postgres_exporter` sidecar to Prometheus:
 | `pg_database_size_bytes` | > 40GB | Database size |
 | `pg_stat_bgwriter_buffers_backend` | Increasing | Shared buffer pressure |
 | `pg_replication_lag_seconds` | > 60s | Replication lag (when enabled) |
-| `pg_up` | 0 | PostgreSQL is down |
+| `pg_up` | 0 | SQL is down |
 
 ## Security
 
@@ -309,12 +309,12 @@ Only pods in the `hanzo` namespace can connect. All other traffic is denied.
 ```
 # TYPE  DATABASE  USER       ADDRESS        METHOD
 local   all       all                       trust
-host    all       all        10.0.0.0/8     md5
+host    all       all        127.0.0.1/8     md5
 host    all       all        0.0.0.0/0      reject
 ```
 
 - Local socket connections (within the pod): trusted
-- Pod network (10.0.0.0/8): password authentication
+- Pod network (127.0.0.1/8): password authentication
 - Everything else: rejected
 
 ### Credential Management
@@ -352,7 +352,7 @@ spec:
 ### Encryption
 
 - **In transit**: Not required within cluster (pod-to-pod traffic is encrypted
-  at the CNI level on DOKS). If cross-cluster replication is ever added,
+  at the CNI level on Kubernetes). If cross-cluster replication is ever added,
   TLS MUST be enabled on the replication connection.
 - **At rest**: DigitalOcean block storage volumes are encrypted at the
   infrastructure level. PVC data inherits this encryption.
@@ -361,7 +361,7 @@ spec:
 
 ### IAM Dual-Engine Support
 
-Hanzo IAM supports both MySQL and PostgreSQL. For local
+Hanzo IAM supports both MySQL and SQL. For local
 development convenience, MySQL is available:
 
 ```bash
@@ -369,8 +369,8 @@ development convenience, MySQL is available:
 docker compose -f compose.mysql.yml up -d
 cp conf/app.mysql.conf conf/app.conf
 
-# Staging/Production MUST use PostgreSQL
-cp conf/app.dev.conf conf/app.conf  # PostgreSQL config
+# Staging/Production MUST use SQL
+cp conf/app.dev.conf conf/app.conf  # SQL config
 ```
 
 The `driverName` in `conf/app.conf` determines the engine:
@@ -391,7 +391,7 @@ connection pooling via PgBouncer MAY be deployed as a sidecar:
   image: bitnami/pgbouncer:latest
   env:
     - name: POSTGRESQL_HOST
-      value: postgres.hanzo.svc
+      value: localhost
     - name: PGBOUNCER_POOL_MODE
       value: transaction
     - name: PGBOUNCER_MAX_CLIENT_CONN
@@ -407,10 +407,10 @@ require pooling.
 
 ### Phase 3: Logical Replication for Cross-Cluster Sync
 
-If hanzo-k8s and lux-k8s need shared data (e.g., unified user directory):
+If the cluster and lux-k8s need shared data (e.g., unified user directory):
 
 ```
-hanzo-k8s postgres → Logical Replication → lux-k8s postgres
+the cluster postgres → Logical Replication → lux-k8s postgres
     (publisher)                              (subscriber)
 ```
 

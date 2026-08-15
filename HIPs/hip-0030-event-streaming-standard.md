@@ -18,7 +18,7 @@ This proposal defines the event streaming standard for the Hanzo ecosystem. Hanz
 
 **Repository**: [github.com/hanzoai/stream](https://github.com/hanzoai/stream)
 **Protocol**: Kafka wire protocol (TCP 9092, TLS 9093)
-**Production**: `insights-kafka` on `hanzo-k8s` cluster (`24.199.76.156`)
+**Production**: `insights-kafka` on `the cluster` cluster (`24.199.76.156`)
 
 ## Design Philosophy
 
@@ -227,7 +227,7 @@ Event schemas MUST be registered in a schema registry to enable:
 ```yaml
 schema_registry:
   type: json-schema       # JSON Schema (not Avro - see rationale below)
-  url: http://schema-registry.hanzo.svc:8081
+  url: http://localhost:8081
   compatibility: BACKWARD  # New schemas must be readable by old consumers
 ```
 
@@ -313,7 +313,7 @@ The capture service MUST:
 
 ### Production Deployment
 
-Deployed as a Kubernetes StatefulSet on `hanzo-k8s` using `bitnami/kafka:3.7` in KRaft combined mode (broker + controller in one process).
+Deployed as a Kubernetes StatefulSet on `the cluster` using `bitnami/kafka:3.7` in KRaft combined mode (broker + controller in one process).
 
 ```yaml
 # Key configuration (insights-kafka StatefulSet, namespace: hanzo)
@@ -323,7 +323,7 @@ ports: [9092 (PLAINTEXT), 9093 (TLS), 9094 (CONTROLLER)]
 env:
   KAFKA_CFG_PROCESS_ROLES: "broker,controller"
   KAFKA_CFG_NODE_ID: "0"
-  KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "0@insights-kafka-0.insights-kafka.hanzo.svc:9094"
+  KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "0@localhost:9094"
   KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9094"
   KAFKA_CFG_LOG_RETENTION_HOURS: "168"          # 7 days default
   KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"  # Explicit topic creation only
@@ -338,7 +338,7 @@ storage: 50Gi (do-block-storage PVC)
 Topics MUST be created explicitly. Auto-creation is disabled in production.
 
 ```bash
-BROKER=insights-kafka-0.insights-kafka.hanzo.svc:9092
+BROKER=localhost:9092
 
 # Each topic: --partitions N --replication-factor 1 --config retention.ms=MS
 kafka-topics.sh --bootstrap-server $BROKER --create \
@@ -359,7 +359,7 @@ kafka-topics.sh --bootstrap-server $BROKER --create \
 
 The current deployment is a single broker. This is sufficient for our current throughput (< 50 MB/s). The scaling path is:
 
-1. **Single broker** (current): All topics on one node. Replication factor 1. Acceptable for non-critical analytics; billing events are also persisted in PostgreSQL.
+1. **Single broker** (current): All topics on one node. Replication factor 1. Acceptable for non-critical analytics; billing events are also persisted in SQL.
 2. **Three brokers**: Replication factor 3. Automatic failover. Required when billing events become the sole source of truth.
 3. **Multi-rack**: Spread brokers across availability zones. Required for 99.99% uptime SLA.
 

@@ -179,7 +179,7 @@ The architecture is tractable only with these stated explicitly:
 
 ### §7 Splitting and promotion are policy, not a mode
 
-Postgres MUST NOT be a manually chosen "large customer mode". Selection is policy-driven.
+SQL MUST NOT be a manually chosen "large customer mode". Selection is policy-driven.
 
 Split thresholds: database bytes · working-set bytes · writes per second · writer queue
 latency · snapshot duration · recovery duration · cache residency pressure · cross-entity
@@ -193,7 +193,7 @@ Acme organization
 ├── identity groups       → SQLite
 ├── project groups        → SQLite
 ├── audit/event stream    → columnar/object storage
-├── high-volume messages  → distributed SQL/Postgres
+├── high-volume messages  → distributed SQL/SQL     
 └── analytics             → derived warehouse
 ```
 

@@ -221,7 +221,7 @@ Free-tier credits reset monthly and do not accumulate. Paid-tier included credit
 4. User completes payment on the native hosted checkout page (Hanzo Vault CDE)
 5. PSP fires webhook: checkout.session.completed
 6. Commerce verifies webhook signature (HMAC-SHA256)
-7. Commerce checks idempotency key in Redis (prevent double-processing)
+7. Commerce checks idempotency key in KV (prevent double-processing)
 8. Commerce calls IAM: POST /api/add-balance { owner: "hanzo", user: "z", amount: 21.0 }
 9. Commerce records transaction: POST /api/add-transaction
    { category: "Recharge", user: "z", amount: 21.0, name: "txn_psp_cs_..." }
@@ -498,7 +498,7 @@ These three layers provide defense-in-depth against double-processing.
 | `/v1/billing/usage` | 10 | per minute per user |
 | `/webhooks/psp` | 1000 | per minute (global) |
 
-Rate limiting is enforced via Redis sliding window counters. Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header.
+Rate limiting is enforced via KV sliding window counters. Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header.
 
 ### Audit Trail
 

@@ -45,7 +45,7 @@ spec:
   replicas: 2
   env:
     - name: INDEXER_URL
-      value: http://hanzo-indexer.hanzo.svc:80
+      value: http://localhost:80
     - name: RPC_URL
       value: https://api.lux.network/mainnet/ext/bc/hanzo/rpc
   ingress:

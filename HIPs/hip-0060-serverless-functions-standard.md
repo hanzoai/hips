@@ -310,7 +310,7 @@ The `Context` object provides:
 | `ctx.headers` | dict | HTTP headers (for HTTP triggers) or message headers |
 | `ctx.trigger` | TriggerInfo | Trigger metadata (type, source, timestamp) |
 | `ctx.model(name)` | Model | Load a model from the GPU model cache |
-| `ctx.kv` | KVClient | Valkey client (HIP-0028) |
+| `ctx.kv` | KVClient | KV client (HIP-0028) |
 | `ctx.storage` | StorageClient | Object storage client (HIP-0032) |
 | `ctx.publish(subject, data)` | None | Publish to MQ (HIP-0055) or Stream (HIP-0030) |
 | `ctx.log` | Logger | Structured logger with request correlation ID |
@@ -468,7 +468,7 @@ triggers:
     payload: '{"type": "full_reconcile"}'
 ```
 
-The Trigger Manager uses an internal scheduler (backed by PostgreSQL, not Kubernetes CronJobs) to fire cron triggers. This avoids the Kubernetes CronJob limitation of 1-minute granularity and provides better observability through the management API.
+The Trigger Manager uses an internal scheduler (backed by SQL, not Kubernetes CronJobs) to fire cron triggers. This avoids the Kubernetes CronJob limitation of 1-minute granularity and provides better observability through the management API.
 
 #### Inference Event Trigger
 
@@ -729,9 +729,9 @@ spec:
               name: hanzo-functions-db
               key: url
         - name: NATS_URL
-          value: nats://nats-mq.hanzo.svc:4222
+          value: nats://localhost:4222
         - name: KAFKA_BROKERS
-          value: insights-kafka-0.insights-kafka.hanzo.svc:9092
+          value: localhost:9092
         volumeMounts:
         - name: config
           mountPath: /etc/functions
@@ -843,7 +843,7 @@ triggers:
     brokers: ${KAFKA_BROKERS}
     group_prefix: fn-
   cron:
-    store: database       # Cron state in PostgreSQL
+    store: database       # Cron state in SQL
 
 gpu_pool:
   enabled: true
@@ -922,11 +922,11 @@ spec:
     - protocol: TCP
       port: 9092    # Kafka
     - protocol: TCP
-      port: 6379    # Valkey
+      port: 6379    # KV
     - protocol: TCP
       port: 9000    # MinIO
     - protocol: TCP
-      port: 5432    # PostgreSQL
+      port: 5432    # SQL
   policyTypes:
   - Egress
 ```
@@ -955,7 +955,7 @@ User function code is injected into these base images at deployment time. The co
 | **HIP-19** (Tensor Operations) | Candle library used in Rust GPU runtime for tensor operations. |
 | **HIP-26** (IAM) | Authentication for function deployment and HTTP trigger invocation. |
 | **HIP-27** (KMS) | Secret injection into function environments. |
-| **HIP-28** (KV Store) | Functions access Valkey via `ctx.kv` for caching and state. |
+| **HIP-28** (KV Store) | Functions access KV via `ctx.kv` for caching and state. |
 | **HIP-30** (Event Streaming) | Stream trigger consumes Kafka topics. Functions publish to Stream. |
 | **HIP-31** (Observability) | Prometheus metrics and structured logging. |
 | **HIP-32** (Object Storage) | Model cache storage. Container snapshot storage. Function access via `ctx.storage`. |

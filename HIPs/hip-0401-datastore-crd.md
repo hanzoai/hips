@@ -81,4 +81,4 @@ spec:
 
 ## Status
 
-Implemented in `hanzoai/operator` v0.3.0+. Backs all stateful workloads in `do-sfo3-hanzo-k8s`.
+Implemented in `hanzoai/operator` v0.3.0+. Backs all stateful workloads in `do-sfo3-the cluster`.

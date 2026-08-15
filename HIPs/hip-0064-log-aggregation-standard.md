@@ -345,7 +345,7 @@ CREATE TABLE hanzo_logs.logs ON CLUSTER '{cluster}'
     INDEX idx_error error_message TYPE tokenbf_v1(32768, 3, 0) GRANULARITY 4
 )
 ENGINE = ReplicatedMergeTree(
-    '/clickhouse/tables/{shard}/hanzo_logs/logs',
+    '/datastore/tables/{shard}/hanzo_logs/logs',
     '{replica}'
 )
 PARTITION BY toYYYYMMDD(ts)
@@ -411,7 +411,7 @@ CREATE TABLE hanzo_logs.audit ON CLUSTER '{cluster}'
     _inserted_at    DateTime64(3) DEFAULT now64(3)
 )
 ENGINE = ReplicatedMergeTree(
-    '/clickhouse/tables/{shard}/hanzo_logs/audit',
+    '/datastore/tables/{shard}/hanzo_logs/audit',
     '{replica}'
 )
 PARTITION BY toYYYYMM(ts)
@@ -583,7 +583,7 @@ condition = '''
 [sinks.datastore_logs]
 type = "datastore"
 inputs = ["sample"]
-endpoint = "http://datastore.hanzo.svc:8123"
+endpoint = "http://localhost:8123"
 database = "hanzo_logs"
 table = "logs"
 auth.strategy = "basic"
@@ -599,7 +599,7 @@ encoding.timestamp_format = "rfc3339"
 [sinks.datastore_audit]
 type = "datastore"
 inputs = ["audit_filter"]
-endpoint = "http://datastore.hanzo.svc:8123"
+endpoint = "http://localhost:8123"
 database = "hanzo_logs"
 table = "audit"
 auth.strategy = "basic"

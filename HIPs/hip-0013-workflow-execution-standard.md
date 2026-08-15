@@ -462,7 +462,7 @@ export async function run(query: string): Promise<string> {
                         │  React + RF   │  FastAPI     │
                         │  (Canvas UI)  │  (Backend)   │
                         ├───────────────┴──────────────┤
-                        │  PostgreSQL  │  Redis        │
+                        │  SQL  │  KV                  │
                         │  (flows,     │  (sessions,   │
                         │   versions)  │   job queue)  │
                         └──────┬───────┴──────┬────────┘
@@ -476,7 +476,7 @@ export async function run(query: string): Promise<string> {
 ### Production Deployment
 
 - **URL**: `flow.hanzo.ai`
-- **Cluster**: hanzo-k8s (`24.199.76.156`)
+- **Cluster**: the cluster (`24.199.76.156`)
 - **Namespace**: `hanzo`
 - **Replicas**: 2 (backend), 1 (worker pool)
 - **Resources**: 2 CPU / 4Gi RAM per backend replica, 4 CPU / 8Gi RAM per worker
@@ -494,7 +494,7 @@ export async function run(query: string): Promise<string> {
 - **Framework**: FastAPI (Python 3.11+)
 - **ORM**: SQLAlchemy 2.0 with async support
 - **LangChain**: langchain 0.2+, langchain-community, langchain-openai
-- **Task queue**: Celery with Redis broker for async flow execution
+- **Task queue**: Celery with KV broker for async flow execution
 - **Streaming**: Server-Sent Events via Starlette StreamingResponse
 
 ### Database Schema
@@ -633,7 +633,7 @@ Each flow can be assigned a scoped API key for external invocation.
 
 - Keys are created via `POST /api/v1/flows/{flow_id}/keys`.
 - Keys grant execute-only access to a single flow. They cannot read, modify, or delete the flow definition.
-- Keys are stored hashed (bcrypt) in PostgreSQL. The plaintext key is returned only once at creation.
+- Keys are stored hashed (bcrypt) in SQL. The plaintext key is returned only once at creation.
 
 ### Rate Limiting
 
@@ -643,7 +643,7 @@ Flow execution is rate-limited at three levels:
 2. **Per-flow**: 1000 executions per hour (configurable per flow).
 3. **Per-organization**: 10,000 executions per hour (configurable per org).
 
-Rate limits are enforced in Redis using sliding window counters. When a limit is exceeded, the API returns `429 Too Many Requests` with a `Retry-After` header.
+Rate limits are enforced in KV using sliding window counters. When a limit is exceeded, the API returns `429 Too Many Requests` with a `Retry-After` header.
 
 ### Audit Logging
 
@@ -666,7 +666,7 @@ Every flow execution produces an immutable audit log entry.
 ```
 
 Audit logs are:
-- Written to a dedicated `flow_audit_log` table in PostgreSQL.
+- Written to a dedicated `flow_audit_log` table in SQL.
 - Retained for 90 days (configurable per org).
 - Queryable via `GET /api/v1/audit?flow_id=...&since=...&until=...`.
 - Exportable in JSON Lines format for external SIEM integration.

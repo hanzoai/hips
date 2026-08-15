@@ -17,9 +17,9 @@ requires: HIP-0030
 This proposal defines the analytics event standard for the Hanzo ecosystem. All product analytics, session replay, feature flags, and A/B testing MUST use Hanzo Insights as specified in this document. Hanzo Insights is a fork of PostHog, rebranded with Hanzo token prefixes (`ha_`, `hax_`, `has_`, `haa_`), integrated with Hanzo IAM (hanzo.id), and backed by a Rust capture service for high-throughput event ingestion.
 
 **Repository**: [github.com/hanzoai/insights](https://github.com/hanzoai/insights)
-**Production**: `insights.hanzo.ai` on `hanzo-k8s` cluster (`24.199.76.156`)
+**Production**: `insights.hanzo.ai` on `the cluster` cluster (`24.199.76.156`)
 **Capture**: Rust binary at `/e`, `/batch`, `/capture` endpoints
-**Storage**: Hanzo Datastore (analytics), Kafka (buffering, HIP-0030), PostgreSQL (metadata), Redis (cache)
+**Storage**: Hanzo Datastore (analytics), Kafka (buffering, HIP-0030), SQL (metadata), KV (cache)
 
 ## Design Philosophy
 
@@ -29,13 +29,13 @@ This section explains the architectural decisions behind Hanzo Insights. Underst
 
 The original HIP-17 draft specified TimescaleDB. We replaced it with Hanzo Datastore. Here is why.
 
-**TimescaleDB** is PostgreSQL with time-series extensions. It stores data row-by-row (row-oriented). It is excellent for transactional workloads where you read and write individual rows. For analytics queries that scan millions of rows and aggregate them (e.g., "count pageviews per day for the last 90 days, grouped by browser"), TimescaleDB performs roughly the same as PostgreSQL -- because the query must read every column of every matching row, even if it only needs two columns.
+**TimescaleDB** is SQL with time-series extensions. It stores data row-by-row (row-oriented). It is excellent for transactional workloads where you read and write individual rows. For analytics queries that scan millions of rows and aggregate them (e.g., "count pageviews per day for the last 90 days, grouped by browser"), TimescaleDB performs roughly the same as SQL -- because the query must read every column of every matching row, even if it only needs two columns.
 
-**Hanzo Datastore** is a columnar database purpose-built for analytics. It stores data column-by-column. When a query needs only `timestamp` and `event` from a table with 50 columns, Hanzo Datastore reads only those 2 columns from disk. This alone gives a 10-25x speedup for typical analytics queries. Add vectorized execution (SIMD operations on column batches), aggressive compression (LZ4 on columns of similar data), and sparse indexing, and Hanzo Datastore delivers 10-100x faster query performance than PostgreSQL/TimescaleDB for analytical workloads.
+**Hanzo Datastore** is a columnar database purpose-built for analytics. It stores data column-by-column. When a query needs only `timestamp` and `event` from a table with 50 columns, Hanzo Datastore reads only those 2 columns from disk. This alone gives a 10-25x speedup for typical analytics queries. Add vectorized execution (SIMD operations on column batches), aggressive compression (LZ4 on columns of similar data), and sparse indexing, and Hanzo Datastore delivers 10-100x faster query performance than SQL/TimescaleDB for analytical workloads.
 
-**Concrete numbers**: A query like "count distinct users per day for the last 30 days" over 100M events takes ~200ms in Hanzo Datastore and ~15-30 seconds in PostgreSQL. Funnel analysis over 50M events: ~500ms in Hanzo Datastore, timeout in PostgreSQL.
+**Concrete numbers**: A query like "count distinct users per day for the last 30 days" over 100M events takes ~200ms in Hanzo Datastore and ~15-30 seconds in SQL. Funnel analysis over 50M events: ~500ms in Hanzo Datastore, timeout in SQL.
 
-**Trade-off**: Hanzo Datastore is not good for transactional workloads (single-row updates, foreign keys, ACID transactions). We use PostgreSQL for metadata (projects, users, feature flag definitions, dashboard configurations) and Hanzo Datastore exclusively for event analytics. This is exactly PostHog's architecture.
+**Trade-off**: Hanzo Datastore is not good for transactional workloads (single-row updates, foreign keys, ACID transactions). We use SQL for metadata (projects, users, feature flag definitions, dashboard configurations) and Hanzo Datastore exclusively for event analytics. This is exactly PostHog's architecture.
 
 ### How Insights Connects to the Data Pipeline
 
@@ -258,7 +258,7 @@ All capture endpoints MUST:
 
 All capture endpoints MUST NOT:
 - Query Hanzo Datastore
-- Query PostgreSQL (except for API key validation, which is cached in Redis)
+- Query SQL (except for API key validation, which is cached in KV)
 - Block on any downstream processing
 
 ### Ingestion Pipeline
@@ -269,7 +269,7 @@ The full ingestion pipeline from client to queryable data:
 1. Client SDK batches events locally (max 20 events or 5 seconds)
 2. SDK sends POST /batch to insights.hanzo.ai
 3. K8s Ingress routes /e, /batch, /capture to Rust capture service
-4. Capture validates api_key (Redis cache lookup, TTL 5min)
+4. Capture validates api_key (KV cache lookup, TTL 5min)
 5. Capture produces events to Kafka topic: events_plugin_ingestion
 6. Kafka acknowledges (acks=all, idempotent)
 7. Capture returns HTTP 200 to client
@@ -468,7 +468,7 @@ Response:
 }
 ```
 
-The `/decide` endpoint is served by Django, NOT the Rust capture service. It requires PostgreSQL access for flag definitions and person property lookups.
+The `/decide` endpoint is served by Django, NOT the Rust capture service. It requires SQL access for flag definitions and person property lookups.
 
 ### SDK Integration
 
@@ -612,7 +612,7 @@ function Dashboard() {
 
 ### Production Deployment
 
-Hanzo Insights runs on `hanzo-k8s` (`24.199.76.156`) with the following services:
+Hanzo Insights runs on `the cluster` (`24.199.76.156`) with the following services:
 
 | Service | Image | Replicas | CPU | Memory | Purpose |
 |---------|-------|----------|-----|--------|---------|
@@ -711,7 +711,7 @@ CREATE TABLE IF NOT EXISTS sharded_events
     _timestamp DateTime,
     _offset UInt64
 )
-ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/events', '{replica}', _timestamp)
+ENGINE = ReplicatedReplacingMergeTree('/datastore/tables/{shard}/events', '{replica}', _timestamp)
 PARTITION BY toYYYYMM(timestamp)
 ORDER BY (team_id, toDate(timestamp), event, cityHash64(distinct_id), cityHash64(uuid))
 SAMPLE BY cityHash64(distinct_id)
@@ -792,8 +792,8 @@ Event properties MUST NOT contain raw PII unless explicitly opted in per propert
 |-----------|------------------|--------------|---------|
 | Analytics events | 365 days | Yes, per team | Hanzo Datastore |
 | Session replay | 30 days | Yes, per team | Hanzo Datastore |
-| Person profiles | Indefinite | Deletable | Hanzo Datastore + PostgreSQL |
-| Feature flag definitions | Indefinite | N/A | PostgreSQL |
+| Person profiles | Indefinite | Deletable | Hanzo Datastore + SQL |
+| Feature flag definitions | Indefinite | N/A | SQL |
 | Kafka events | 7 days | Per topic (HIP-0030) | Kafka |
 
 Retention enforcement is via Hanzo Datastore TTL:
@@ -829,11 +829,11 @@ hanzo.opt_in_capturing()
 
 The Rust capture service validates API keys on every request:
 
-1. Check Redis cache for key → team_id mapping (TTL 5 minutes)
-2. On cache miss, query PostgreSQL `posthog_team` table
+1. Check KV cache for key → team_id mapping (TTL 5 minutes)
+2. On cache miss, query SQL `posthog_team` table
 3. Reject if key prefix is not `ha_` (capture only accepts project keys)
 4. Reject if key is not found or team is disabled
-5. Cache the result in Redis
+5. Cache the result in KV
 
 This validation adds < 1ms latency on cache hit and < 10ms on cache miss.
 
@@ -872,7 +872,7 @@ spec:
     - port: 6379
 ```
 
-The capture service can only talk to Kafka (write events) and Redis (validate keys). It has no access to Hanzo Datastore, PostgreSQL, or the internet.
+The capture service can only talk to Kafka (write events) and KV (validate keys). It has no access to Hanzo Datastore, SQL, or the internet.
 
 ## Operational Runbook
 
@@ -890,12 +890,12 @@ curl -X POST https://insights.hanzo.ai/e \
   }'
 
 # Check Kafka consumer lag
-kubectl exec -n hanzo insights-kafka-0 -- \
+kubectl exec insights-kafka-0 -- \
   kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
   --group analytics-ingest --describe
 
 # Query Hanzo Datastore directly
-kubectl exec -n hanzo insights-datastore-0 -- \
+kubectl exec insights-datastore-0 -- \
   hanzo-datastore-client --query "
     SELECT event, count()
     FROM events
@@ -913,7 +913,7 @@ If events are captured but not appearing in the UI:
 1. **Check capture returned 200**: SDK network tab or server logs
 2. **Check Kafka**: Consumer lag for `analytics-ingest` group -- if lag is growing, Hanzo Datastore consumer is stuck
 3. **Check Hanzo Datastore**: Query `events` table directly -- if events are there, the issue is in the PostHog query layer
-4. **Check team_id**: Verify the API key maps to the correct team in PostgreSQL
+4. **Check team_id**: Verify the API key maps to the correct team in SQL
 
 ### Hanzo Datastore Maintenance
 

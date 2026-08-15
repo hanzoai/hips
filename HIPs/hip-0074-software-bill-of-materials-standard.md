@@ -214,7 +214,7 @@ The `/api/v1/sbom/{artifact}` endpoint respects the `Accept` header:
 ```
 SBOM Service (sbom.hanzo.ai:8074)
   |
-  +---> PostgreSQL (sbom database)
+  +---> SQL (sbom database)
   |       - Artifact metadata, scan results, exemptions
   |       - Indexed by artifact digest for fast CVE lookups
   |

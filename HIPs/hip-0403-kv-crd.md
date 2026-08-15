@@ -14,7 +14,7 @@ created: 2026-05-19
 
 ## Abstract
 
-The `KV` CRD is the facade Kind for Valkey/Redis-compatible workloads (`hanzoai/kv`). It delegates to the `Datastore` reconciler with `type: valkey`. Used as the cache/queue substrate by the LLM gateway, console, chat, and analytics. The CR's spec is `DatastoreSpec` verbatim.
+The `KV` CRD is the facade Kind for KV-compatible workloads (`hanzoai/kv`). It delegates to the `Datastore` reconciler with `type: valkey`. Used as the cache/queue substrate by the LLM gateway, console, chat, and analytics. The CR's spec is `DatastoreSpec` verbatim.
 
 ## Specification
 

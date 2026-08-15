@@ -216,7 +216,7 @@ shard, a singleton job name):
   (`ha/k8s`, roadmap) or single-process `Static` for dev and tests.
 - **Fail-closed:** empty membership yields `ok=false` — never a wrong
   writer. No election protocol, no lock service, no service discovery,
-  **no Postgres, no Redis.** Pure Go, stdlib only.
+  **no SQL, no KV.** Pure Go, stdlib only.
 
 Ownership is PER-ORG: the owning replica writes ALL of an org's DBs (root +
 every per-project + per-user file) so an org's data has locality and moves
@@ -292,7 +292,7 @@ as follows — **this is the decision, stated plainly:**
 | Concern | Winner | Why |
 |---|---|---|
 | Durability / replication transport | **`hanzoai/replicate`** (Litestream fork) | Continuous streaming WAL → object store (converted to immutable LTX, shipped as age-encrypted `.zap.age`) is strictly better than whole-object snapshots: lower RPO, incremental bytes, no periodic full-DB rewrite. CGO-free (`modernc.org/sqlite`). Canonical replication path. |
-| Single-writer coordination | **`hanzoai/ha`** | Litestream / `replicate` do NOT elect a writer. HRW / Rendezvous election is the genuinely-novel piece — coordinator-free, fail-closed, no Postgres/Redis. Extracted from `vfs/replica` so a non-SQLite singleton (cron, queue drain) elects without importing a storage library. |
+| Single-writer coordination | **`hanzoai/ha`** | Litestream / `replicate` do NOT elect a writer. HRW / Rendezvous election is the genuinely-novel piece — coordinator-free, fail-closed, no SQL/KV. Extracted from `vfs/replica` so a non-SQLite singleton (cron, queue drain) elects without importing a storage library. |
 | Adoption / hydrate / restore | **`hanzoai/vfs/replica`** (`SnapshotFile` / `RestoreFile`) | Handle-less primitives let any service hydrate-on-open and adopt HA regardless of its own DB library. |
 | Whole-object `VACUUM INTO` snapshot | **superseded for replication** | Kept as the consistent-copy primitive behind `SnapshotFile` and as the currently-shipped ship path; replaced by streaming as the durability transport as services migrate. |
 

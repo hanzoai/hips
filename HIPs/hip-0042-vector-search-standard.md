@@ -288,9 +288,9 @@ exactly K filtered results by continuing graph traversal until K matching points
 #### Connection Parameters
 
 ```yaml
-grpc_host: vector.hanzo.svc.cluster.local
+grpc_host: localhost:6334
 grpc_port: 6333
-http_host: vector.hanzo.svc.cluster.local
+http_host: localhost:6334
 http_port: 6334
 api_key: <from K8s secret "vector", key "api-key">
 tls: false  # intra-cluster
@@ -735,9 +735,9 @@ The deploy workflow (`.github/workflows/deploy.yml`):
 **Stage 2: Deploy (main branch only)**
 
 1. Authenticate to Hanzo KMS for DigitalOcean API token
-2. Configure `kubectl` for `hanzo-k8s` cluster via `doctl`
-3. Rolling update: `kubectl -n hanzo set image statefulset/vector vector=ghcr.io/hanzoai/vector:latest`
-4. Wait for rollout: `kubectl -n hanzo rollout status statefulset/vector --timeout=180s`
+2. Configure `kubectl` for `the cluster` cluster via `doctl`
+3. Rolling update: `kubectl set image statefulset/vector vector=ghcr.io/hanzoai/vector:latest`
+4. Wait for rollout: `kubectl rollout status statefulset/vector --timeout=180s`
 
 ### Client SDKs
 
@@ -757,7 +757,7 @@ pooling, and structured logging.
 from hanzo_vector import VectorClient
 
 client = VectorClient(
-    url="http://vector.hanzo.svc:6334",
+    url="http://localhost:6334",
     api_key=os.environ["VECTOR_API_KEY"],
     tenant_id="hanzo",
 )
@@ -834,7 +834,7 @@ Bearer` header:
 
 ```bash
 curl -H "api-key: ${VECTOR_API_KEY}" \
-  http://vector.hanzo.svc:6334/collections
+  http://localhost:6334/collections
 ```
 
 The API key is stored in a K8s Secret:
@@ -866,7 +866,7 @@ Operator.
 TLS is supported but not enabled for intra-cluster communication. The reasoning mirrors
 HIP-0028 (Key-Value Store):
 
-- All traffic stays within the DOKS VPC, encrypted at the network layer
+- All traffic stays within the Kubernetes VPC, encrypted at the network layer
 - TLS adds latency overhead on every query
 - If cross-cluster replication or external access is required, TLS will be enabled via
   Hanzo Vector's built-in TLS configuration
@@ -888,7 +888,7 @@ is scoped to their collections via an API gateway (future work).
 Hanzo Vector stores payload data in segment files on disk. For sensitive payloads (PII,
 proprietary content), encryption at rest is provided by:
 
-1. **Volume encryption**: DOKS volumes are encrypted at the block level by DigitalOcean
+1. **Volume encryption**: Kubernetes volumes are encrypted at the block level by DigitalOcean
 2. **Application-level encryption**: The Hanzo Vector SDK supports encrypting payload
    fields before storage using AES-256-GCM with keys from Hanzo KMS. Encrypted fields
    are stored as opaque byte strings and decrypted on retrieval.
@@ -924,7 +924,7 @@ system-wide collections. This enables:
 Hanzo Vector exposes Prometheus metrics on the HTTP port at `/metrics`:
 
 ```bash
-curl http://vector.hanzo.svc:6334/metrics
+curl http://localhost:6334/metrics
 ```
 
 Key metrics:
@@ -942,11 +942,11 @@ Key metrics:
 
 ```bash
 # Quick health check
-curl http://vector.hanzo.svc:6334/healthz
+curl http://localhost:6334/healthz
 
 # Detailed telemetry
 curl -H "api-key: ${VECTOR_API_KEY}" \
-  http://vector.hanzo.svc:6334/telemetry
+  http://localhost:6334/telemetry
 ```
 
 ### Collection-Level Monitoring
@@ -954,7 +954,7 @@ curl -H "api-key: ${VECTOR_API_KEY}" \
 ```bash
 # Collection statistics
 curl -H "api-key: ${VECTOR_API_KEY}" \
-  http://vector.hanzo.svc:6334/collections/{name}
+  http://localhost:6334/collections/{name}
 
 # Response includes:
 # - vectors_count
@@ -984,7 +984,7 @@ curl -H "api-key: ${VECTOR_API_KEY}" \
 - `secret.yaml` -- API key secret
 - `kustomization.yaml` -- Kustomize aggregation
 
-**Status**: Specified, pending initial deployment on `hanzo-k8s`
+**Status**: Specified, pending initial deployment on `the cluster`
 
 ## References
 

@@ -31,7 +31,7 @@ Hanzo operates 40+ domains across four organizations (hanzo.ai, lux.network, zoo
 
 1. **Registrar-level DNS management**: Each domain's records are edited in a registrar web UI. A PaaS deployment that takes 30 seconds is followed by a DNS change that takes 30 minutes of human coordination.
 
-2. **No service discovery**: Pods reach each other via `<service>.hanzo.svc.cluster.local` inside the cluster. Outside, developers hardcode endpoints. When an IP changes, every hardcoded reference breaks.
+2. **No service discovery**: Pods reach each other via `<service>.<namespace>.svc.cluster.local` inside the cluster. Outside, developers hardcode endpoints. When an IP changes, every hardcoded reference breaks.
 
 3. **No geo-routing**: All DNS queries resolve to the same IP regardless of location. A user in Frankfurt adds 80ms of latency hitting a New York endpoint.
 
@@ -39,11 +39,11 @@ Hanzo operates 40+ domains across four organizations (hanzo.ai, lux.network, zoo
 
 5. **Manual certificate provisioning**: Wildcard TLS certificates require DNS-01 ACME challenges, which require programmatic DNS record creation. Without a DNS API, certificate renewal breaks at 3 AM.
 
-6. **Split-horizon gap**: Internal services (PostgreSQL, Redis, KMS) should resolve to cluster-internal IPs from within the cluster and should not resolve at all from the public internet.
+6. **Split-horizon gap**: Internal services (SQL, KV, KMS) should resolve to cluster-internal IPs from within the cluster and should not resolve at all from the public internet.
 
 ### What Hanzo DNS Solves
 
-A single DNS service eliminates all six problems. Platform creates DNS records automatically on deploy. Internal services resolve via `*.hanzo.svc` without touching public DNS. DNSSEC signs every zone. Geo-routing directs users to the nearest edge. Wildcard certificates renew unattended. Engineers never log in to a registrar dashboard again.
+A single DNS service eliminates all six problems. Platform creates DNS records automatically on deploy. Internal services resolve via `*.<namespace>.svc` without touching public DNS. DNSSEC signs every zone. Geo-routing directs users to the nearest edge. Wildcard certificates renew unattended. Engineers never log in to a registrar dashboard again.
 
  CAA | Certificate authority auth | `hanzo.ai -> 0 issue letsencrypt.org` |
 | NS | Nameserver delegation | `hanzo.ai -> ns1.hanzo.ai` |
@@ -54,7 +54,7 @@ DNSSEC-related types (RRSIG, DNSKEY, DS, NSEC/NSEC3) are generated automatically
 
 The management API provides CRUD operations for DNS records. It runs on port 8053 and authenticates via IAM JWT tokens (HIP-26).
 
-**Base URL**: `http://dns-api.hanzo.svc:8053/v1` (internal), `https://api.hanzo.ai/v1/dns` (external, via API Gateway)
+**Base URL**: `http://localhost:8053/v1` (internal), `https://api.hanzo.ai/v1/dns` (external, via API Gateway)
 
 #### Endpoints
 
@@ -229,7 +229,7 @@ hanzo_sync:github.com/hanzoai/dns/plugin/sync
 
 ### Management API Implementation
 
-The management API is a standalone Go binary that stores records in an embedded BoltDB database. BoltDB was chosen over PostgreSQL to maintain the zero-external-dependency constraint -- DNS cannot depend on the database it helps other services discover. The API and CoreDNS run as separate containers in the same pod, communicating over localhost on port 8053.
+The management API is a standalone Go binary that stores records in an embedded BoltDB database. BoltDB was chosen over SQL to maintain the zero-external-dependency constraint -- DNS cannot depend on the database it helps other services discover. The API and CoreDNS run as separate containers in the same pod, communicating over localhost on port 8053.
 
 On each record mutation, the API: (1) validates the JWT against IAM JWKS, (2) checks org membership matches zone ownership, (3) validates the record format, (4) writes to BoltDB, (5) notifies the CoreDNS plugin to refresh its in-memory zone, and (6) triggers an IXFR to the secondary if configured.
 

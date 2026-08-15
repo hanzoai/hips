@@ -49,12 +49,12 @@ spec:
   replicas: 2
   routes:
     - prefix: /v1/chat
-      backend: http://chat.hanzo.svc:80
+      backend: http://localhost:80
       methods: [POST]
       authPolicy: iam-jwt
       rateLimit: per-user
     - prefix: /v1/models
-      backend: http://cloud-api.hanzo.svc:80
+      backend: http://localhost:80
       methods: [GET]
   rateLimits:
     - name: per-user

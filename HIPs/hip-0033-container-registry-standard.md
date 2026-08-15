@@ -139,7 +139,7 @@ ghcr.io/hanzoai/{service}:{branch}-{sha}
 docker.io/hanzoai/{service}:{tag}
 
 # Tertiary (in-cluster) - runtime cache
-registry.hanzo.svc:5000/hanzoai/{service}:{tag}
+localhost:5000/hanzoai/{service}:{tag}
 ```
 
 The `{service}` name MUST match the GitHub repository name. Examples:
@@ -422,7 +422,7 @@ http:
     X-Content-Type-Options: [nosniff]
 ```
 
-When a node requests an image from `registry.hanzo.svc:5000`, the registry
+When a node requests an image from `localhost:5000`, the registry
 checks its local storage first. On a cache miss, it pulls from GHCR, caches
 the layers locally, and serves them to the node. Subsequent pulls from any
 node in the cluster hit the local cache.
@@ -436,18 +436,18 @@ deploy:
   needs: build
   steps:
     - name: Configure kubectl
-      run: doctl kubernetes cluster kubeconfig save hanzo-k8s
+      run: doctl kubernetes cluster kubeconfig save the cluster
 
     - name: Deploy to K8s
       run: |
-        kubectl -n hanzo set image deployment/iam \
+        kubectl set image deployment/iam \
           iam=ghcr.io/hanzoai/iam:latest
-        kubectl -n hanzo rollout status deployment/iam --timeout=300s
+        kubectl rollout status deployment/iam --timeout=300s
 
     - name: Verify health
       run: |
         kubectl wait --for=condition=available deployment/iam \
-          -n hanzo --timeout=120s
+          --timeout=120s
 ```
 
 ## Security

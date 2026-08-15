@@ -50,7 +50,7 @@ spec:
       tag: v1.23.6
     replicas: 5
     bootstrapNodes:
-      - bootnode-0.bootnode.hanzo.svc:9651
+      - localhost:9651
     httpPort: 9650
     stakingPort: 9651
     storage:
@@ -81,7 +81,7 @@ spec:
 
 - HIP-0020 (Blockchain node standard)
 - HIP-0024 (Hanzo sovereign L1 chain architecture)
-- No `Network` CR currently runs in `do-sfo3-hanzo-k8s` — primary deployments are on `lux-k8s`.
+- No `Network` CR currently runs in `do-sfo3-the cluster` — primary deployments are on `lux-k8s`.
 
 ## Status
 

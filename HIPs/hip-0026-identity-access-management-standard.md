@@ -64,7 +64,7 @@ Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and
                     └────┬─────────┬────┘
                          │         │
                 ┌────────┴──┐  ┌───┴────────┐
-                │ PostgreSQL │  │   Redis     │
+                │ SQL │  │   KV               │
                 │   :5432    │  │   :6379     │
                 │ hanzo_iam  │  │  (sessions) │
                 └────────────┘  └────────────┘
@@ -365,7 +365,7 @@ Framework providers (`@hanzo/iam/betterauth`, `@hanzo/iam/nextauth`), the React 
 
 ### Production Deployment
 
-IAM runs on the **hanzo-k8s** DOKS cluster at `24.199.76.156`. The deployment uses Docker Compose with Traefik for TLS termination and automatic certificate provisioning via Let's Encrypt.
+IAM runs on the **the cluster** Kubernetes cluster at `24.199.76.156`. The deployment uses Docker Compose with Traefik for TLS termination and automatic certificate provisioning via Let's Encrypt.
 
 ```yaml
 # compose.production.yml (simplified)
@@ -432,7 +432,7 @@ Key configuration decisions:
 
 ### Database Schema
 
-IAM uses PostgreSQL (HIP-29) in production and supports MySQL for local development. The schema is managed by XORM auto-migration. Key tables:
+IAM uses SQL (HIP-29) in production and supports MySQL for local development. The schema is managed by XORM auto-migration. Key tables:
 
 | Table | Description | Primary Key |
 |-------|-------------|-------------|
@@ -452,7 +452,7 @@ IAM uses PostgreSQL (HIP-29) in production and supports MySQL for local developm
 ```
 Push to main
     │
-    ├─ Go tests (with PostgreSQL service)
+    ├─ Go tests (with SQL        service)
     ├─ Frontend build (yarn build)
     ├─ Backend build (go build -race)
     ├─ Linter (gofumpt)
@@ -468,7 +468,7 @@ Push to main
           └─ Push to Docker Hub (continue-on-error)
                 │
                 ▼
-          SSH Deploy to hanzo-k8s
+          SSH Deploy to the cluster
                 │
                 ├─ docker compose pull
                 ├─ docker compose up -d
@@ -480,7 +480,7 @@ Push to main
 #### MySQL (recommended for fast iteration)
 
 ```bash
-# Start MySQL + Redis
+# Start MySQL + KV
 docker compose -f compose.mysql.yml up -d
 
 # Build Go binary
@@ -502,7 +502,7 @@ dataSourceName = hanzo:password@tcp(localhost:3306)/
 dbName = hanzo_iam
 ```
 
-#### PostgreSQL (matches production)
+#### SQL (matches production)
 
 ```bash
 docker compose -f compose.dev.yml up -d
@@ -576,7 +576,7 @@ There are no legacy paths. `/oauth/*`, `/api/login/oauth/*`, and `/api/`-prefixe
 
 - **Session timeout**: `inactiveTimeoutMinutes = 30` in production. Idle sessions expire after 30 minutes.
 - **Secure cookies**: Sessions use HttpOnly, Secure, SameSite=Lax cookies. The `authState` configuration pins sessions to the IAM origin.
-- **Redis-backed sessions**: Sessions are stored in Redis with TTL. If the Redis instance is restarted, all sessions are invalidated (fail-secure).
+- **KV-backed sessions**: Sessions are stored in KV with TTL. If the KV instance is restarted, all sessions are invalidated (fail-secure).
 
 ### Network Security
 
@@ -601,7 +601,7 @@ IAM handles both authentication (identity verification) and authorization (acces
 - Social login (GitHub, Google, etc.) via identity providers
 - WebAuthn / FIDO2 for phishing-resistant MFA
 - SAML 2.0 and CAS for enterprise SSO
-- Session management (Redis-backed, 30-min idle timeout)
+- Session management (KV-backed, 30-min idle timeout)
 
 **Authorization (AuthZ)** — "What can you do?"
 - **OAuth scopes**: Applications request scopes (openid, profile, email, custom). IAM validates requested scopes against the application's allowed scope set and returns `invalid_scope` per RFC 6749 §4.1.2.1 if the client requests scopes not configured for its application.
@@ -630,7 +630,7 @@ The key design principle: **IAM authenticates users and issues scoped tokens. Se
 7. [HIP-18: Payment Processing Standard](./hip-0018-payment-processing-standard.md) - Commerce billing (feeds credits into IAM)
 8. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) - Agent identity (built on IAM)
 9. [HIP-27: KMS for Secrets Management](./hip-0027-secrets-management-standard.md) - Secret resolution at startup
-10. [HIP-29: PostgreSQL Storage Standard](./hip-0029-relational-database-standard.md) - Database layer
+10. [HIP-29: SQL Storage Standard](./hip-0029-relational-database-standard.md) - Database layer
 11. [Hanzo IAM Repository](https://github.com/hanzoai/iam)
 
 ## Copyright

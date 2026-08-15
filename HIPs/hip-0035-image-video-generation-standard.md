@@ -516,7 +516,7 @@ Response:
 │                    Storage Layer                                  │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────────┐    │
 │  │ Model Storage │  │ Output Storage│  │ Workflow Storage  │    │
-│  │ (S3/MinIO)   │  │ (S3/MinIO)   │  │ (PostgreSQL)      │    │
+│  │ (S3/MinIO)   │  │ (S3/MinIO)   │  │ (SQL       )      │    │
 │  │ safetensors   │  │ PNG/MP4      │  │ JSON documents    │    │
 │  └───────────────┘  └───────────────┘  └───────────────────┘    │
 └──────────────────────────────────────────────────────────────────┘

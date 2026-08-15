@@ -154,7 +154,7 @@ ZAP.
 - **Selection is by environment; no code branches per deploy.**
   `cloud/cmd/cloud/telemetry.go` installs exactly one tracer provider:
   - `OTEL_EXPORTER_ZAP_ENDPOINT` set (or unset with a ZAP default of
-    `otel-collector.hanzo.svc:4319`) → spans ride ZAP.
+    `localhost:4319`) → spans ride ZAP.
   - Only a legacy `OTEL_EXPORTER_OTLP_*` endpoint set → spans ride OTLP-HTTP
     (the interop/loopback fallback used while the standalone collector is
     folded in). This fallback is HTTP, never gRPC.

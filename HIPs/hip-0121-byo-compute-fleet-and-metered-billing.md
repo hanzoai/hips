@@ -49,7 +49,7 @@ is owned by exactly one org (narrowed by project), and is served through the ONE
 
 | Source kind | How it attaches | Where it lives |
 |---|---|---|
-| **Managed cluster** | Hanzo provisions k8s (DOKS today; AWS/Azure/GCP via Visor provider backends) | Visor — merged into `GET /v1/clusters` |
+| **Managed cluster** | Hanzo provisions k8s (Kubernetes today; AWS/Azure/GCP via Visor provider backends) | Visor — merged into `GET /v1/clusters` |
 | **BYO k8s cluster** | Org pastes a kubeconfig → `POST /v1/clusters` | `fleet.Registry` (KMS-sealed) |
 | **BYO GPU / bare metal** | Box becomes a cluster via k3s + device plugins, OR a single box via `hanzo gpu connect` / desktop-link | `fleet.Registry` (cluster) / `FleetWorker` (box) |
 | **Cloud account (BYOC)** | Org connects THEIR AWS/Azure/GCP/DO/Nebius credentials; Visor provisions + manages **in their account** | Visor `Provider` (per-owner, sealed) |

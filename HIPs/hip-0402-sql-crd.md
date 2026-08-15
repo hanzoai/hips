@@ -14,7 +14,7 @@ created: 2026-05-19
 
 ## Abstract
 
-The `SQL` CRD is the facade Kind for PostgreSQL workloads (`hanzoai/sql`). It is structurally identical to `Datastore` with `type: postgresql` and exists to give Postgres a first-class API surface — `kubectl get sql` instead of `kubectl get datastore`. The reconciler delegates to the `Datastore` controller. The CR's spec is `DatastoreSpec` verbatim.
+The `SQL` CRD is the facade Kind for SQL workloads (`hanzoai/sql`). It is structurally identical to `Datastore` with `type: postgresql` and exists to give SQL a first-class API surface — `kubectl get sql` instead of `kubectl get datastore`. The reconciler delegates to the `Datastore` controller. The CR's spec is `DatastoreSpec` verbatim.
 
 ## Specification
 

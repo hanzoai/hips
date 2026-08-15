@@ -57,7 +57,7 @@ Hanzo infrastructure runs on two architectures:
 
 | Environment | Architecture | Examples |
 |-------------|-------------|----------|
-| Production K8s | AMD64 | DigitalOcean droplets, hanzo-k8s cluster |
+| Production K8s | AMD64 | DigitalOcean droplets, Kubernetes cluster  |
 | Developer machines | ARM64 | Apple Silicon MacBooks (M1/M2/M3/M4) |
 | CI runners | AMD64 | GitHub-hosted ubuntu-latest |
 
@@ -115,7 +115,7 @@ CI builds image -> CI runs kubectl set image -> K8s rolls out new pods
 
 ArgoCD and Flux provide declarative GitOps: a Git repository defines the desired state, and a controller in the cluster continuously reconciles toward it. This is superior in theory but premature for our current scale:
 
-- **Two clusters**: We operate hanzo-k8s and lux-k8s. ArgoCD's value scales with cluster count. At 2 clusters, the overhead of running and maintaining ArgoCD (its own HA setup, RBAC, UI, SSO integration) exceeds the benefit.
+- **Two clusters**: We operate the cluster and lux-k8s. ArgoCD's value scales with cluster count. At 2 clusters, the overhead of running and maintaining ArgoCD (its own HA setup, RBAC, UI, SSO integration) exceeds the benefit.
 - **Deployment frequency**: Most services deploy 1-3 times per day. We do not need continuous reconciliation for this cadence.
 - **Migration cost**: Moving 40+ services to ArgoCD ApplicationSets requires writing and testing manifests for each. This is a month of work for marginal immediate gain.
 
@@ -143,7 +143,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
-    # Language-specific service containers (PostgreSQL, Redis, etc.)
+    # Language-specific service containers (SQL, KV, etc.)
     services:
       postgres:
         image: ghcr.io/hanzoai/sql:latest
@@ -363,16 +363,16 @@ Triggered after a successful Docker build on the default branch. Supports two de
 
       - name: Deploy to K8s
         run: |
-          doctl kubernetes cluster kubeconfig save hanzo-k8s
-          kubectl -n hanzo set image deployment/$SERVICE \
+          doctl kubernetes cluster kubeconfig save the cluster
+          kubectl set image deployment/$SERVICE \
             $SERVICE=ghcr.io/hanzoai/$SERVICE:latest
-          kubectl -n hanzo rollout status deployment/$SERVICE \
+          kubectl rollout status deployment/$SERVICE \
             --timeout=300s
 
       - name: Health check
         run: |
           kubectl wait --for=condition=available \
-            deployment/$SERVICE -n hanzo --timeout=120s
+            deployment/$SERVICE --timeout=120s
 ```
 
 ### Caching Strategy
@@ -419,7 +419,7 @@ CI workflows that require databases or caches MUST use Hanzo-maintained service 
 |---------|-------|-------|
 | PostgreSQL | `ghcr.io/hanzoai/sql:latest` | PostgreSQL with extensions |
 | Redis | `ghcr.io/hanzoai/kv:latest` | Redis-compatible KV store |
-| MongoDB | `mongo:7` | Upstream (no Hanzo fork needed) |
+| DocumentDB | `mongo:7` | Upstream (no Hanzo fork needed) |
 | MinIO | `minio/minio:latest` | S3-compatible object storage |
 
 ### Branch Protection Requirements
@@ -495,21 +495,21 @@ Each repository's KMS Universal Auth identity is scoped to read only from `/ci`.
 
 Hanzo services deploy to one of two target types:
 
-#### Target 1: Kubernetes (hanzo-k8s)
+#### Target 1: Kubernetes (the cluster)
 
 The preferred deployment target. The CI workflow:
 
 1. Authenticates to DigitalOcean via `doctl` using a KMS-sourced token
-2. Configures `kubectl` for the `hanzo-k8s` cluster
+2. Configures `kubectl` for the `the cluster` cluster
 3. Updates the deployment image tag: `kubectl set image deployment/SERVICE`
 4. Waits for rollout: `kubectl rollout status`
 5. Verifies health: `kubectl wait --for=condition=available`
 
 ```
-Services on hanzo-k8s (24.199.76.156):
+Services on the cluster (24.199.76.156):
   IAM, KMS, Platform, Cloud, Console, Gateway,
   Commerce, hanzo-app, web3, registry, bootnode-api
-  PostgreSQL, Redis, MongoDB, MinIO
+  SQL, KV, DocumentDB, MinIO
 ```
 
 #### Target 2: Docker Compose (legacy)
@@ -621,7 +621,7 @@ Build results are posted to Slack via webhook:
   Version: 1.5.2
   Commit: a1b2c3d "feat: apply application.DefaultGroup for OAuth signups"
   Duration: 3m 42s
-  Cluster: hanzo-k8s
+  Cluster: the cluster
 ```
 
 Failed builds include the failure step and a link to the workflow run.

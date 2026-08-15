@@ -16,7 +16,7 @@ requires: HIP-0017, HIP-0029
 
 This proposal defines the analytics datastore standard for the Hanzo ecosystem.
 Hanzo Datastore, our Apache-2.0 Hanzo Datastore fork, provides columnar analytics
-storage, deployed as a replicated cluster on each DOKS Kubernetes cluster.
+storage, deployed as a replicated cluster on each Kubernetes Kubernetes cluster.
 Every Hanzo service that requires high-throughput event ingestion, OLAP
 queries, or time-series aggregation MUST use the cluster-local Datastore
 instance following this specification.
@@ -36,21 +36,21 @@ API call volumes across every organization.
 
 All of this data shares a common characteristic: it is **append-only**, **time-
 stamped**, and **queried in aggregate**. These are the exact access patterns
-that row-oriented databases like PostgreSQL handle poorly and columnar databases
+that row-oriented databases like SQL handle poorly and columnar databases
 handle exceptionally well.
 
 Without a dedicated analytics datastore:
 
-1. **PostgreSQL becomes the bottleneck.** Running `SELECT COUNT(*) FROM events
-   WHERE timestamp > '2026-01-01' GROUP BY user_id` on a 500M-row PostgreSQL
+1. **SQL becomes the bottleneck.** Running `SELECT COUNT(*) FROM events
+   WHERE timestamp > '2026-01-01' GROUP BY user_id` on a 500M-row SQL
    table takes 45-120 seconds. The same query on Hanzo Datastore completes in
-   200-800 milliseconds. PostgreSQL scans every column of every row;
+   200-800 milliseconds. SQL scans every column of every row;
    Hanzo Datastore reads only the columns referenced in the query.
 
 2. **Storage costs explode.** A single analytics event averages 1-2 KB in
-   PostgreSQL (row storage, TOAST overhead, indexes). Hanzo Datastore compresses
+   SQL (row storage, TOAST overhead, indexes). Hanzo Datastore compresses
    the same event to 50-100 bytes using columnar compression. At 10M
-   events/day, PostgreSQL consumes ~15 GB/day; Hanzo Datastore consumes ~700 MB/day.
+   events/day, SQL consumes ~15 GB/day; Hanzo Datastore consumes ~700 MB/day.
    Over a year, that is 5.4 TB vs 250 GB.
 
 3. **SaaS analytics are prohibitively expensive.** BigQuery charges $5/TB
@@ -73,16 +73,16 @@ interface.
 This section explains the reasoning behind each major architectural decision.
 Understanding the *why* is as important as understanding the *what*.
 
-### Why Hanzo Datastore Over PostgreSQL for Analytics
+### Why Hanzo Datastore Over SQL for Analytics
 
-PostgreSQL is the Hanzo standard for transactional data (HIP-0029). It excels
+SQL is the Hanzo standard for transactional data (HIP-0029). It excels
 at OLTP: small reads and writes, row-level locking, ACID transactions, foreign
 keys, and joins across normalized tables. IAM stores users, organizations, and
-OAuth tokens in PostgreSQL. Cloud stores projects, API keys, and configuration.
+OAuth tokens in SQL. Cloud stores projects, API keys, and configuration.
 
 Analytics data has the opposite access pattern:
 
-| Property | OLTP (PostgreSQL) | OLAP (Hanzo Datastore) |
+| Property | OLTP (SQL) | OLAP (Hanzo Datastore) |
 |----------|-------------------|-------------------|
 | Write pattern | Single-row inserts/updates | Batch inserts (1000+ rows) |
 | Read pattern | Point lookups by primary key | Full-column scans with aggregation |
@@ -92,22 +92,22 @@ Analytics data has the opposite access pattern:
 | Typical query | `SELECT * FROM users WHERE id = 42` | `SELECT COUNT(*) FROM events WHERE ts > '2026-01-01' GROUP BY browser` |
 
 Hanzo Datastore stores data column-by-column on disk. When a query references 3 out
-of 50 columns, only those 3 columns are read from disk. PostgreSQL stores data
+of 50 columns, only those 3 columns are read from disk. SQL stores data
 row-by-row, so it must read all 50 columns even if only 3 are needed.
 
 For a table with 1 billion rows and 50 columns, a query touching 3 columns:
-- **PostgreSQL**: Reads ~1 TB from disk (all columns, all rows)
+- **SQL**: Reads ~1 TB from disk (all columns, all rows)
 - **Hanzo Datastore**: Reads ~6 GB from disk (3 columns, compressed)
 
 This is not a marginal difference. It is 100-200x less I/O, which translates
 directly into 100-200x faster queries.
 
-**Decision**: Use Hanzo Datastore for all analytics workloads. Keep PostgreSQL for
+**Decision**: Use Hanzo Datastore for all analytics workloads. Keep SQL for
 transactional data per HIP-0029.
 
 ### Why Hanzo Datastore Over TimescaleDB
 
-TimescaleDB is PostgreSQL with time-series extensions. It is excellent for
+TimescaleDB is SQL with time-series extensions. It is excellent for
 metrics (CPU usage, request latency, disk I/O) where each data point is a
 small fixed-schema tuple with a timestamp and a few numeric values.
 
@@ -117,7 +117,7 @@ referrer, UTM parameters, custom properties (JSON), and more. Events arrive
 at 100-1000x the rate of metrics. A busy dashboard page load generates
 10-20 analytics events; the same page generates 1-2 metric data points.
 
-TimescaleDB inherits PostgreSQL's row-oriented storage. For wide tables with
+TimescaleDB inherits SQL's row-oriented storage. For wide tables with
 billions of rows, it cannot match Hanzo Datastore's columnar performance:
 
 | Workload | TimescaleDB | Hanzo Datastore |
@@ -549,7 +549,7 @@ merge, not immediately upon expiration. This is a lazy deletion model that
 avoids write amplification.
 
 Organizations on enterprise plans MAY override TTL via the `team_settings`
-table in PostgreSQL. The ingestion service respects per-team TTL overrides
+table in SQL. The ingestion service respects per-team TTL overrides
 when creating partitions.
 
 ### Compression
@@ -712,7 +712,7 @@ s3:
   bucket: "clickhouse-backups"
   endpoint: "http://minio:9000"
   region: "us-east-1"
-  path: "hanzo-k8s/"
+  path: "the cluster/"
   compression_format: "zstd"
 ```
 
@@ -758,7 +758,7 @@ Hanzo Datastore exposes internal metrics through system tables. Hanzo Zap
 | Disk Usage | `SELECT free_space FROM system.disks WHERE name = 'default'` < 10 GB | Critical |
 | Query Duration | p99 query time > 30 seconds | Warning |
 | Insert Failures | `system.events` counter `FailedInsertQuery` increasing | Critical |
-| Keeper Disconnect | `SELECT * FROM system.zookeeper WHERE path = '/clickhouse'` fails | Critical |
+| Keeper Disconnect | `SELECT * FROM system.zookeeper WHERE path = '/datastore'` fails | Critical |
 
 #### Grafana Dashboard
 
@@ -845,11 +845,11 @@ spec:
 
     users:
       hanzo/password_sha256_hex: "${DATASTORE_PASSWORD_SHA256}"
-      hanzo/networks/ip: "10.0.0.0/8"
+      hanzo/networks/ip: "127.0.0.1/8"
       hanzo/profile: default
       hanzo/quota: default
       readonly/password_sha256_hex: "${DATASTORE_READONLY_PASSWORD_SHA256}"
-      readonly/networks/ip: "10.0.0.0/8"
+      readonly/networks/ip: "127.0.0.1/8"
       readonly/profile: readonly
 
   templates:
@@ -904,7 +904,7 @@ secrets.
 #### Network
 
 - HTTP port (8123) and native port (9000) MUST be accessible only from within
-  the Kubernetes cluster network (`10.0.0.0/8`).
+  the Kubernetes cluster network (`127.0.0.1/8`).
 - Native TLS port (9440) is used for cross-cluster replication if needed.
 - No ports are exposed to the public internet.
 - Kubernetes NetworkPolicy restricts access to pods with the label
@@ -933,7 +933,7 @@ flow is:
 
 ```
 SDK (browser/server) --> Capture Service (Rust) --> Kafka --> Hanzo Datastore
-                                                         --> PostgreSQL (metadata only)
+                                                         --> SQL (metadata only)
 ```
 
 Insights queries Datastore for:

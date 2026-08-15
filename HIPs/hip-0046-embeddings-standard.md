@@ -116,7 +116,7 @@ The Gateway implements a semantic embedding cache to eliminate redundant computa
 ```
 ┌────────────────┐     ┌───────────────┐     ┌──────────────┐
 │  Embedding     │────▶│  Cache Layer  │────▶│  Provider    │
-│  Request       │     │  (Redis)      │     │  (OpenAI,    │
+│  Request       │     │  (KV   )      │     │  (OpenAI,    │
 │                │◀────│               │◀────│   Cohere)    │
 └────────────────┘     └───────────────┘     └──────────────┘
 ```
@@ -493,7 +493,7 @@ curl -X POST https://llm.hanzo.ai/v1/embeddings \
 ## Security Considerations
 
 1. **Data in Transit**: All API communication MUST use TLS 1.3. The Gateway terminates TLS; upstream provider calls use TLS.
-2. **Data at Rest**: Cached embeddings in Redis SHOULD be encrypted at rest when the deployment requires it. Embeddings themselves are not directly invertible to source text, but they can leak semantic information.
+2. **Data at Rest**: Cached embeddings in KV SHOULD be encrypted at rest when the deployment requires it. Embeddings themselves are not directly invertible to source text, but they can leak semantic information.
 3. **API Key Scoping**: Embedding API keys can be scoped to specific models and rate limits. A key with `embedding:read` scope cannot access chat completions.
 4. **Input Logging**: Raw input text MUST NOT be logged at INFO level. Only token counts, model names, and latency are logged by default. Debug-level logging of inputs requires explicit opt-in.
 5. **Provider Key Isolation**: Provider API keys (OpenAI, Cohere) are stored in KMS (HIP-0027) and injected at runtime. They never appear in config files, logs, or error messages.

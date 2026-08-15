@@ -20,7 +20,7 @@ The canonical database architecture (`hanzoai/.github` →
 boundary. Do not add a tenant column."* Decision #7 of that document is explicit
 that **"Deviation needs a HIP, not a Slack thread."** This is that HIP.
 
-esign (a Documenso fork) is being migrated Postgres → Base SQLite (PR
+esign (a Documenso fork) is being migrated SQL → Base SQLite (PR
 `hanzoai/esign#7`). Its data shape does not fit file-per-tenant:
 
 1. **Bootstrap paradox.** `validateSessionToken` reads the global `Session`
@@ -64,7 +64,7 @@ file exactly as to a per-tenant one.
 - **Defense in depth (the file is not the only guard):**
   - The list-field codec (`json-array.ts`) throws — fails closed — on any
     non-array / corrupt `roles` rather than silently degrading.
-  - 68 `BEFORE INSERT/UPDATE` enum/domain triggers reconstruct the Postgres enum
+  - 68 `BEFORE INSERT/UPDATE` enum/domain triggers reconstruct the SQL enum
     domains SQLite drops, including a `User.roles` **shape** guard
     (`json_type != 'array'`) + a **domain** guard (every element ∈ Role). A
     fabricated privilege string, or a non-array masquerading as roles, can never
@@ -80,7 +80,7 @@ forgets `buildTeamWhereQuery`) can leak across orgs in a shared file, whereas a
 per-tenant file makes cross-org reads physically impossible. We accept this
 weaker boundary because per-tenant files would have required **re-architecting
 global identity** (sessions, accounts, passkeys, the many-orgs-per-user model) —
-out of scope for, and orthogonal to, a Postgres→SQLite storage migration. The
+out of scope for, and orthogonal to, a SQL→SQLite storage migration. The
 codec-throw + trigger layers are the compensating controls that keep a
 forgotten predicate from silently corrupting or leaking auth-relevant state.
 

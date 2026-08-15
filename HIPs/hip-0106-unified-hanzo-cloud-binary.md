@@ -194,7 +194,7 @@ parallel ORMs, no parallel loggers, no parallel wire formats.
 | Concern | Canonical | Notes |
 |---|---|---|
 | Web framework | `hanzoai/zip` | The ONE Go web framework. Built on Fiber v3 / fasthttp (implementation detail). Sinatra/Express-style primary API. **No `.Fast` escape hatch — zip is fast.** |
-| ORM | `hanzoai/orm` | Backends: SQLite (today), PostgreSQL/MySQL/MSSQL/Oracle via `dbx` (wiring pending), ZapDB via `luxfi/database`, CR-SQLite for client-side distributed (license-permitting). |
+| ORM | `hanzoai/orm` | Backends: SQLite (today), SQL/MySQL/MSSQL/Oracle via `dbx` (wiring pending), ZapDB via `luxfi/database`, CR-SQLite for client-side distributed (license-permitting). |
 | Logger | `luxfi/log` | NEVER `uber-go/zap`, NEVER `log/slog`, NEVER stdlib `log`. |
 | Wire protocol | ZAP | Every subsystem ships `<svc>/schema/<name>.zap`. `zapc` generates Go/TS/Py/Rust bindings. No `.capnp` files in Hanzo-authored source. |
 | Storage durability | `hanzoai/replicate` over `hanzo/vfs` | Per HIP-0107 (streaming replication over vfs). Covers SQLite WAL, ZapDB log, blockchain state, generic logs through one pipeline. |
@@ -505,7 +505,7 @@ beyond standard k8s pod lifecycle.
 | **Auth** | Per-domain IAM (multi-tenant) | Unchanged. IAM resolves `(app, org)` from origin; subsystems see JWT claims via `X-Org-Id`. |
 | **Storage** | Per-service postgres or per-tenant SQLite (varies) | Always per-tenant SQLite (`{data-dir}/orgs/{org}/{service}.db`) with per-org DEK per HIP-0302. No postgres in the unified path. |
 | **KMS** | Per-org master keys today | Unchanged. KMS in-process serves `kms://<deployment>/<org>/<purpose>` references. |
-| **Cache** | Per-service Redis (varies) | Process-local LRU or per-org sub-buckets in shared in-memory cache. No Redis. |
+| **Cache** | Per-service KV (varies) | Process-local LRU or per-org sub-buckets in shared in-memory cache. No KV. |
 | **Brand** | Per-domain detection in app code | `cfg.Brand` at startup; subsystems read brand from deps; UI templates resolved from embedded assets. |
 
 ### Subsystem-to-subsystem calls

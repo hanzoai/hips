@@ -22,13 +22,13 @@ Every Hanzo service MUST be deployable through Platform. The deployment flow is:
 **Production**: https://platform.hanzo.ai
 **Port**: 3000 (Platform UI), 5173 (legacy admin)
 **Docker**: `ghcr.io/hanzoai/platform:latest`
-**Cluster**: hanzo-k8s (`24.199.76.156`)
+**Cluster**: the cluster (`24.199.76.156`)
 
 ## Motivation
 
 ### The Problem
 
-Hanzo operates 30+ services across two Kubernetes clusters (hanzo-k8s, lux-k8s). Without a standardized deployment layer, each team deploys independently:
+Hanzo operates 30+ services across two Kubernetes clusters (the cluster, lux-k8s). Without a standardized deployment layer, each team deploys independently:
 
 1. **Manual kubectl**: Engineers write Kubernetes manifests by hand, SSH into the cluster, and `kubectl apply`. Manifests drift between what is in Git and what is deployed. A typo in a resource limit brings down a service with no audit trail of who changed what.
 
@@ -64,7 +64,7 @@ Dokploy was selected after evaluating all major open-source PaaS platforms:
 | Active development | Yes (2024+) | Yes | Stagnant | Yes |
 | Self-hostable | Yes | Yes (with license) | Yes | No |
 
-Dokploy's architecture is the simplest correct design: applications are Docker containers, routing is Traefik, builds are Docker builds, and state is PostgreSQL. There is no custom scheduler, no proprietary runtime, no magic. When something breaks, `docker logs` and `docker inspect` tell you everything you need to know.
+Dokploy's architecture is the simplest correct design: applications are Docker containers, routing is Traefik, builds are Docker builds, and state is SQL. There is no custom scheduler, no proprietary runtime, no magic. When something breaks, `docker logs` and `docker inspect` tell you everything you need to know.
 
 ### Why Fork
 
@@ -72,7 +72,7 @@ Upstream Dokploy covers the common case well. Our fork adds capabilities specifi
 
 1. **Hanzo IAM integration (HIP-26)**: Upstream Dokploy supports GitHub and GitLab OAuth for login. We need login via hanzo.id (our IAM provider) using the OAuth 2.0 Authorization Code Grant with PKCE. This requires a custom OAuth provider implementation in Better Auth, the authentication library Dokploy uses.
 
-2. **KMS secret injection (HIP-27)**: Upstream Dokploy stores environment variables in its own PostgreSQL database. We need environment variables to be sourced from Hanzo KMS at deploy time, so that secrets are never stored in the Platform database and rotation in KMS propagates to all deployments automatically.
+2. **KMS secret injection (HIP-27)**: Upstream Dokploy stores environment variables in its own SQL database. We need environment variables to be sourced from Hanzo KMS at deploy time, so that secrets are never stored in the Platform database and rotation in KMS propagates to all deployments automatically.
 
 3. **Multi-org tenancy**: Upstream Dokploy is single-tenant -- one admin, one set of applications. We need organizational boundaries: the `hanzo` org sees IAM, Cloud, Console; the `lux` org sees validators, gateway, markets; the `zoo` org sees research services. A user's org membership (from IAM) determines what they see in Platform.
 
@@ -147,10 +147,10 @@ env:
     value: info
 
 resources:
-  postgres:                           # Managed PostgreSQL (optional).
+  postgres:                           # Managed SQL (optional).
     version: "16"
     storage: 10Gi
-  redis:                              # Managed Redis (optional).
+  redis:                              # Managed KV (optional).
     version: "7"
     maxmemory: 256mb
 ```
@@ -188,7 +188,7 @@ The build pipeline executes in isolated Docker containers. No build shares state
    │
 5. docker push ghcr.io/hanzoai/<org>-<app>:<git-sha-short>
    │
-6. Update deployment record in PostgreSQL
+6. Update deployment record in SQL
    │
 7. Deploy (see Deployment section)
 ```
@@ -422,7 +422,7 @@ hanzo domains my-app remove ex.com   # Remove a domain
      └────┬─────────┬────┘
           │         │
  ┌────────┴──┐  ┌───┴────────┐    ┌─────────────┐
- │ PostgreSQL │  │   Redis     │    │  Hanzo IAM  │
+ │ SQL │  │   KV               │    │  Hanzo IAM  │
  │   :5432    │  │   :6379     │    │  hanzo.id   │
  │  platform  │  │  (queues)   │    │  (OAuth)    │
  └────────────┘  └────────────┘    └─────────────┘
@@ -478,7 +478,7 @@ For users who previously logged in via GitHub (legacy Dokploy flow), Platform ma
 
 ### Database
 
-Platform uses PostgreSQL (HIP-29) to store:
+Platform uses SQL (HIP-29) to store:
 
 - Application definitions (name, org, repo, branch, runtime configuration)
 - Deployment history (image tags, Git commits, status, timestamps)
@@ -487,7 +487,7 @@ Platform uses PostgreSQL (HIP-29) to store:
 - Audit log entries
 - User sessions (via Better Auth)
 
-The database is `platform` on `postgres.hanzo.svc` in the hanzo-k8s cluster.
+The database is `platform` on `localhost` in the Kubernetes cluster .
 
 ### Container Registry
 
@@ -586,7 +586,7 @@ spec:
           protocol: UDP
 ```
 
-Applications must explicitly declare their network dependencies in the manifest. Platform generates NetworkPolicy rules that allow only declared communication paths. For example, if `cloud` declares `resources.postgres`, Platform creates a NetworkPolicy allowing egress from the `cloud` pods to the PostgreSQL service on port 5432.
+Applications must explicitly declare their network dependencies in the manifest. Platform generates NetworkPolicy rules that allow only declared communication paths. For example, if `cloud` declares `resources.postgres`, Platform creates a NetworkPolicy allowing egress from the `cloud` pods to the SQL service on port 5432.
 
 ### Audit Logging
 
@@ -637,7 +637,7 @@ roles:
 5. [Let's Encrypt](https://letsencrypt.org/) - Free, automated TLS certificate authority
 6. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - IAM for authentication
 7. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for secret injection
-8. [HIP-29: Relational Database Standard](./hip-0029-relational-database-standard.md) - PostgreSQL for deployment state
+8. [HIP-29: Relational Database Standard](./hip-0029-relational-database-standard.md) - SQL for deployment state
 9. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Example service deployed via Platform
 10. [Hanzo Platform Repository](https://github.com/hanzoai/platform)
 

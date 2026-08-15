@@ -61,7 +61,7 @@ Five shapes is not a convention with exceptions. It is the absence of one.
 It answers `path` / `env` / `name`, resolving to `/orgs/<org>/<path>/<NAME>`, and
 it is the only store any service reads.
 
-There is currently a SECOND DEPLOYMENT of it — `kms.hanzo.svc` / `kms.hanzo.ai`,
+There is currently a SECOND DEPLOYMENT of it — `localhost:8200` / `kms.hanzo.ai`,
 which every chart's `kmsSecrets` still points at through the KMSSecret CRD's
 `hostAPI`. That is not a second architecture and must never be written up as one.
 It is the same `luxfi/kms` binary serving the same `/v1/kms/secrets` routes under
@@ -81,7 +81,7 @@ every `hostAPI` repoints there, and the standalone is scaled to zero.
 resolves to this same API with Lux branding, as `kms.hanzo.ai` does with Hanzo's;
 the org boundary already separates the data. A brand does not earn a deployment.
 An operator that needs its own MPC root — a Lux committee signing in `lux-k8s`
-rather than `hanzo-k8s` — configures that under one API too; the REK's location
+rather than `the cluster` — configures that under one API too; the REK's location
 is deployment configuration, not a fork of the service.
 
 ## Specification
@@ -250,7 +250,7 @@ deployment of this same service holds most of the data, and it goes away:
    JWT boundary, so this is a read here / write there with one token — not an
    envelope conversion.
 2. Repoint every chart's `kmsSecrets` `hostAPI` at cloud, and drop the
-   `kms.hanzo.svc` default from `charts/app/values.yaml`.
+   `localhost:8200` default from `charts/app/values.yaml`.
 3. Confirm each app's Secret still carries byte-identical values, from a RUNNING
    pod, before anything is deleted.
 4. Scale the standalone to zero, then remove it.

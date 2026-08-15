@@ -15,9 +15,9 @@ created: 2025-01-15
 
 This proposal defines the standard for Hanzo KV, the high-performance key-value store
 that serves as the shared caching, session, pub/sub, and streaming backbone for all
-services in the Hanzo ecosystem. Hanzo KV is built on Valkey 8.1, the Linux Foundation
+services in the Hanzo ecosystem. Hanzo KV is built on KV 8.1, the Linux Foundation
 fork of Redis, and is distributed as `ghcr.io/hanzoai/kv:latest`. It exposes the RESP3
-wire protocol on port 6379 and is a drop-in replacement for any Redis client.
+wire protocol on port 6379 and is a drop-in replacement for any KV client.
 
 **Repository**: [github.com/hanzoai/kv](https://github.com/hanzoai/kv)
 **Port**: 6379
@@ -35,23 +35,23 @@ Analytics, Zen -- needs a fast shared store for at least one of the following:
 4. **Ephemeral state**: inference request queues, job locks, circuit-breaker state
 5. **Leaderboard/sorted-set operations**: billing rank, usage tracking
 
-Previously, the Hanzo infrastructure relied on the Bitnami Redis Helm chart deployed via
+Previously, the Hanzo infrastructure relied on the Bitnami KV Helm chart deployed via
 `helm install redis bitnami/redis`. This worked, but introduced three problems:
 
-- **Licensing risk**: Redis Labs changed Redis to a dual-license model (RSALv2 + SSPLv1)
+- **Licensing risk**: KV Labs changed KV to a dual-license model (RSALv2 + SSPLv1)
   in March 2024. Both licenses restrict how cloud providers and SaaS platforms can
-  distribute Redis. For an infrastructure company like Hanzo that ships managed services,
+  distribute KV. For an infrastructure company like Hanzo that ships managed services,
   this is a direct legal exposure.
 - **Operational opacity**: The Bitnami chart bundles a metrics sidecar (redis-exporter),
   init containers, and Sentinel by default. When any of these sidecars fail (e.g., the
   exporter cannot authenticate to a password-protected instance), the entire pod enters
   CrashLoopBackOff and the root cause is obscured.
-- **Image bloat**: The Bitnami Redis image is ~150MB compressed. A minimal Alpine-based
-  Valkey image is ~12MB. In a cluster with rolling updates, smaller images mean faster
+- **Image bloat**: The Bitnami KV image is ~150MB compressed. A minimal Alpine-based
+  KV image is ~12MB. In a cluster with rolling updates, smaller images mean faster
   pulls and shorter disruption windows.
 
 Hanzo KV solves all three by replacing the entire Bitnami stack with a single,
-purpose-built container image based on Valkey.
+purpose-built container image based on KV.
 
 ## Design Philosophy
 
@@ -66,13 +66,13 @@ a 2Gi memory limit. This is a deliberate choice, not a shortcut.
 
 **Scale math**: Our current production dataset (sessions, rate-limit counters, cache
 entries across all services) occupies approximately 400MB of memory. Even with 10x
-growth, we stay under 4GB. A single Valkey instance on modern hardware can saturate a
+growth, we stay under 4GB. A single KV instance on modern hardware can saturate a
 10Gbps NIC at ~1.2 million ops/sec. Our peak observed throughput is approximately 8,000
 ops/sec. We are three orders of magnitude below the single-node ceiling.
 
-**Cluster complexity**: Redis Cluster (and by extension Valkey Cluster) introduces hash
+**Cluster complexity**: KV Cluster (and by extension KV Cluster) introduces hash
 slots, cross-slot restrictions on multi-key operations, MOVED/ASK redirects, and cluster
-bus gossip traffic. Every Redis client library must understand cluster topology. Some
+bus gossip traffic. Every KV client library must understand cluster topology. Some
 operations (MULTI/EXEC across slots, Lua scripts touching multiple keys on different
 slots) simply do not work. This complexity buys horizontal scaling we do not need.
 
@@ -82,13 +82,13 @@ interval (1 second by default). A cluster has N failure modes: split-brain durin
 network partition, slot migration failures, gossip protocol desynchronization, and
 partial availability when a master is down and its replica has not yet been promoted.
 
-**Vertical ceiling**: DOKS nodes support up to 64GB of memory. We can scale the KV
+**Vertical ceiling**: Kubernetes nodes support up to 64GB of memory. We can scale the KV
 StatefulSet to 32GB before even considering cluster mode. When we reach that point
 (which would imply ~80x current load), we will revisit with a separate HIP.
 
 ### Why We Removed the Metrics Sidecar
 
-The Bitnami Redis chart ships with a `redis-exporter` sidecar that scrapes `INFO` output
+The Bitnami KV chart ships with a `redis-exporter` sidecar that scrapes `INFO` output
 and exposes Prometheus metrics on port 9121. When we migrated to Hanzo KV with password
 authentication, the exporter sidecar could not authenticate because it expected the
 password in a different environment variable format than our secret layout provided.
@@ -96,7 +96,7 @@ password in a different environment variable format than our secret layout provi
 Rather than debug the exporter's authentication logic and add another secret reference,
 we removed the sidecar entirely. The reasoning:
 
-- Valkey's built-in `INFO` command already provides all metrics (memory, connections,
+- KV's built-in `INFO` command already provides all metrics (memory, connections,
   keyspace, replication, persistence) in a machine-parseable format.
 - For our current scale, `kubectl exec` into the pod and running `kv-cli INFO` is
   sufficient for debugging.
@@ -112,13 +112,13 @@ sidecar is a potential crash-loop vector that takes the database down with it.
 ### Wire Protocol
 
 Hanzo KV implements RESP3 (REdis Serialization Protocol version 3) as defined by the
-Redis protocol specification. All commands from the Redis 7.2 command set are supported.
+KV protocol specification. All commands from the KV 7.2 command set are supported.
 Any client library that speaks RESP2 or RESP3 is compatible.
 
 ### Connection Parameters
 
 ```yaml
-host: redis-master.hanzo.svc.cluster.local
+host: localhost
 port: 6379
 password: <from K8s secret "redis", key "redis-password">
 db: 0           # default database
@@ -137,7 +137,7 @@ redis://:${REDIS_PASSWORD}@redis-master:6379/0
 Or for explicit host within the hanzo namespace:
 
 ```
-redis://:${REDIS_PASSWORD}@redis-master.hanzo.svc.cluster.local:6379/0
+redis://:${REDIS_PASSWORD}@localhost:6379/0
 ```
 
 ### Configuration Reference
@@ -204,7 +204,7 @@ resources:
     memory: 2Gi
 ```
 
-The memory limit (2Gi) acts as a hard ceiling. Combined with `allkeys-lru`, Valkey will
+The memory limit (2Gi) acts as a hard ceiling. Combined with `allkeys-lru`, KV will
 evict the least-recently-used keys when approaching this limit rather than crashing with
 an OOM error.
 
@@ -265,10 +265,10 @@ CMD ["--bind", "0.0.0.0", "--dir", "/data", \
 Key points:
 
 - **Base image**: `valkey/valkey:8.1-alpine` (~12MB compressed)
-- **CLI renaming**: All Valkey binaries are copied to `kv-*` names. The original
+- **CLI renaming**: All KV binaries are copied to `kv-*` names. The original
   `valkey-*` names remain as the originals. This gives operators a clean Hanzo-branded
   CLI while maintaining compatibility with scripts that reference `valkey-cli`.
-- **No custom compilation**: We use the upstream Valkey binary as-is. Custom patches
+- **No custom compilation**: We use the upstream KV binary as-is. Custom patches
   would create a maintenance burden and diverge from upstream security fixes.
 
 ### CLI Tools
@@ -298,9 +298,9 @@ The deploy workflow (`.github/workflows/deploy.yml`) has two stages:
 **Stage 2: Deploy (main branch only)**
 
 1. Authenticate to Hanzo KMS for DigitalOcean API token
-2. Configure `kubectl` for `hanzo-k8s` cluster via `doctl`
-3. Rolling update: `kubectl -n hanzo set image statefulset/redis-master kv=ghcr.io/hanzoai/kv:latest`
-4. Wait for rollout: `kubectl -n hanzo rollout status statefulset/redis-master --timeout=120s`
+2. Configure `kubectl` for `the cluster` cluster via `doctl`
+3. Rolling update: `kubectl set image statefulset/redis-master kv=ghcr.io/hanzoai/kv:latest`
+4. Wait for rollout: `kubectl rollout status statefulset/redis-master --timeout=120s`
 
 Trigger conditions: push to `main`, tag push (`v*`), or manual `workflow_dispatch`.
 
@@ -319,9 +319,9 @@ resources:
   - configmap.yaml
 ```
 
-### Migration from Bitnami Redis
+### Migration from Bitnami KV
 
-The migration from the Bitnami Redis Helm chart to Hanzo KV was performed as follows:
+The migration from the Bitnami KV Helm chart to Hanzo KV was performed as follows:
 
 1. **Scale down Bitnami**: `helm uninstall redis` removes the Deployment and Service but
    preserves the PVC (Helm default `resourcePolicy: keep`).
@@ -345,9 +345,9 @@ Hanzo services.
 | Go | [hanzo/kv-go](https://github.com/hanzoai/kv-go) | `go get github.com/hanzoai/kv-go` |
 | Node.js | [@hanzo/kv](https://github.com/hanzoai/kv-client) | `npm install @hanzo/kv` |
 
-All three are thin wrappers around standard Redis client libraries (`redis-py`,
+All three are thin wrappers around standard KV client libraries (`redis-py`,
 `go-redis`, `ioredis`) with Hanzo-specific defaults (connection URL construction,
-KMS secret resolution, structured logging). Any vanilla Redis client works equally well.
+KMS secret resolution, structured logging). Any vanilla KV client works equally well.
 
 ## Security
 
@@ -381,7 +381,7 @@ overwritten on first KMS sync.
 - Only pods within the `hanzo` namespace (or with appropriate NetworkPolicy) can reach
   port 6379
 - The `--protected-mode no` flag is safe because the pod is never exposed outside the
-  cluster. Protected mode is a Redis safety net for instances accidentally exposed to
+  cluster. Protected mode is a KV safety net for instances accidentally exposed to
   the internet without a password; our instance has both network isolation and a password.
 
 ### Dangerous Command Disablement
@@ -398,10 +398,10 @@ environment where only operators have `kubectl exec` access.
 
 ### TLS
 
-TLS is available in Valkey 8.1 but not enabled for intra-cluster communication. The
+TLS is available in KV 8.1 but not enabled for intra-cluster communication. The
 reasoning:
 
-- All traffic stays within the DOKS VPC, encrypted at the network layer by DigitalOcean
+- All traffic stays within the Kubernetes VPC, encrypted at the network layer by DigitalOcean
 - TLS adds ~15% latency overhead on every command due to encryption/decryption
 - The threat model (attacker with VPC access) implies they already have `kubectl` access
   and can read secrets directly
@@ -413,7 +413,7 @@ will be enabled via `--tls-port 6380 --tls-cert-file --tls-key-file --tls-ca-cer
 
 The 2Gi memory limit prevents a runaway client from consuming all node memory and
 triggering the Linux OOM killer (which would kill the KV process and potentially other
-pods on the same node). With `allkeys-lru`, Valkey gracefully evicts cold keys instead
+pods on the same node). With `allkeys-lru`, KV gracefully evicts cold keys instead
 of refusing writes or crashing.
 
 ## Consumers
@@ -444,7 +444,7 @@ All keys SHOULD be prefixed with `<service>:<category>:<id>`. This enables:
 
 ### Built-in Metrics
 
-Valkey's `INFO` command provides comprehensive metrics without any sidecar:
+KV's `INFO` command provides comprehensive metrics without any sidecar:
 
 ```bash
 # Memory usage
@@ -512,9 +512,9 @@ This runs as a separate pod, not a sidecar. If the exporter crashes, KV is unaff
 
 **Key Files**:
 
-- `Dockerfile` -- Multi-arch container image based on Valkey 8.1 Alpine
+- `Dockerfile` -- Multi-arch container image based on KV 8.1 Alpine
 - `.github/workflows/deploy.yml` -- CI/CD: build, push to GHCR/Docker Hub, deploy to K8s
-- `.github/workflows/ci.yml` -- Upstream Valkey test suite
+- `.github/workflows/ci.yml` -- Upstream KV test suite
 - `valkey.conf` -- Full reference configuration (upstream defaults)
 - `sentinel.conf` -- Sentinel configuration for HA deployments
 
@@ -523,18 +523,18 @@ This runs as a separate pod, not a sidecar. If the exporter crashes, KV is unaff
 - `statefulset.yaml` -- StatefulSet `redis-master` with PVC and health checks
 - `service.yaml` -- ClusterIP Service on port 6379
 - `configmap.yaml` -- `kv.conf` (AOF, eviction policy, disabled commands)
-- `secret.yaml` -- Redis-compatible password secret
+- `secret.yaml` -- KV-compatible password secret
 - `kustomization.yaml` -- Kustomize aggregation
 
-**Status**: Implemented and running in production on `hanzo-k8s` (`24.199.76.156`)
+**Status**: Implemented and running in production on `the cluster` (`24.199.76.156`)
 
 ## References
 
 1. [HIP-0: Hanzo AI Architecture Framework](./hip-0000-hanzo-ai-architecture-framework.md)
 2. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
-3. [Valkey Project](https://valkey.io/) -- Linux Foundation fork of Redis
+3. [KV Project](https://valkey.io/) -- Linux Foundation fork of KV
 4. [Redis License Change Announcement](https://redis.io/blog/redis-adopts-dual-source-available-licensing/) -- March 2024
-5. [Valkey 8.1 Release Notes](https://valkey.io/blog/valkey-8-1-0-rc1/)
+5. [KV 8.1 Release Notes](https://valkey.io/blog/valkey-8-1-0-rc1/)
 6. [RESP3 Protocol Specification](https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md)
 
 ## Copyright

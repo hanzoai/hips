@@ -23,7 +23,7 @@ The service distinguishes between transactional notifications (auth codes, recei
 **Repository**: [github.com/hanzoai/notify](https://github.com/hanzoai/notify)
 **Port**: 8061
 **Docker**: `ghcr.io/hanzoai/notify:latest`
-**Cluster**: `hanzo-k8s` (`24.199.76.156`)
+**Cluster**: `the cluster` (`24.199.76.156`)
 
 ## Motivation
 
@@ -444,7 +444,7 @@ Browser  ──WSS──>  Notify :8061/ws  ──authenticate via IAM token─�
                    Notify pushes JSON to all active sessions for user
 ```
 
-In-app notifications are stored in a per-user inbox (PostgreSQL) and served via REST for session history:
+In-app notifications are stored in a per-user inbox (SQL) and served via REST for session history:
 
 ```
 GET /v1/inbox?user_id=hanzo/zach&unread=true
@@ -524,7 +524,7 @@ Response:
 }
 ```
 
-**Preference sync**: User preferences are cached in Notify's Redis instance (TTL 5 minutes). When a user updates preferences via the IAM UI or Notify's preference API, the cache is invalidated immediately via a Kafka event on the `iam.user.updated` topic (HIP-0030).
+**Preference sync**: User preferences are cached in Notify's KV instance (TTL 5 minutes). When a user updates preferences via the IAM UI or Notify's preference API, the cache is invalidated immediately via a Kafka event on the `iam.user.updated` topic (HIP-0030).
 
 ### Integration with Analytics (HIP-0017)
 
@@ -554,7 +554,7 @@ Rate limits protect both users (from notification fatigue) and providers (from A
 | Per org per hour | 10,000 | 1,000 | 500 |
 | Global per second | 1,000 | 100 | 50 |
 
-Rate limits are enforced via Redis sliding window counters. When a limit is exceeded, the API returns HTTP 429 with a `Retry-After` header.
+Rate limits are enforced via KV sliding window counters. When a limit is exceeded, the API returns HTTP 429 with a `Retry-After` header.
 
 Security-critical notifications (category `security`) bypass all rate limits. These include: MFA codes, password reset links, account breach alerts, and login from new device warnings.
 
@@ -562,7 +562,7 @@ Security-critical notifications (category `security`) bypass all rate limits. Th
 
 ### Production Deployment
 
-Notify runs on `hanzo-k8s` as a Go service with dedicated delivery workers per channel.
+Notify runs on `the cluster` as a Go service with dedicated delivery workers per channel.
 
 | Component | Image | Replicas | CPU | Memory | Purpose |
 |-----------|-------|----------|-----|--------|---------|
@@ -582,7 +582,7 @@ All workers consume from the Hanzo MQ (HIP-0055) NATS queue `mq.notify.>`, filte
 
 ### Database Schema
 
-Notify uses PostgreSQL (`hanzo_notify` on `postgres.hanzo.svc`) for templates, inbox, and webhook registrations. Delivery logs go to Insights (Datastore) via analytics events, not PostgreSQL.
+Notify uses SQL (`hanzo_notify` on `localhost`) for templates, inbox, and webhook registrations. Delivery logs go to Insights (Datastore) via analytics events, not SQL.
 
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
@@ -604,8 +604,8 @@ All configuration uses `${VARIABLE}` placeholders resolved from KMS (HIP-0027) a
 | Email | `SENDGRID_API_KEY`, `SES_ACCESS_KEY`, `SES_SECRET_KEY` | Email provider credentials |
 | SMS | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | SMS provider credentials |
 | Push | `FCM_CREDENTIALS_JSON`, `APNS_KEY_ID`, `APNS_TEAM_ID` | Push provider credentials |
-| LLM | `llm_gateway_url=http://llm-gateway.hanzo.svc:4000`, `llm_model=zen-8b` | Personalization config |
-| Storage | `NOTIFY_DATABASE_URL`, `redis://redis.hanzo.svc:6379/3` | PostgreSQL and Redis |
+| LLM | `llm_gateway_url=http://localhost:4000`, `llm_model=zen-8b` | Personalization config |
+| Storage | `NOTIFY_DATABASE_URL`, `redis://localhost:6379/3` | PostgreSQL and Redis |
 
 No credentials appear in config files or Docker images.
 

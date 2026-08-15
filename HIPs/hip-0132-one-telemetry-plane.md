@@ -156,7 +156,7 @@ it is removed as each app moves.
 (18 pods for 18 nodes — one per NODE, not per pod, and not a sidecar) runs exactly two
 receivers: `otlp` and `filelog`. The first is the relay above. The second tails
 `/var/log/pods/*` — stdout from containers that emit no telemetry at all: the datastore,
-Postgres, every third-party image, and any process that **dies before an SDK
+SQL, every third-party image, and any process that **dies before an SDK
 initializes**. No transport reaches that; the log is on disk and nothing is left running
 to send it. A telemetry plane that cannot explain a crash-on-startup is not finished.
 

@@ -281,7 +281,7 @@ silently 404s" already true rather than aspirational.
 | `paas` | `discoverNamespaces` LISTs **every namespace in the cluster**. | private |
 | `ml` | Namespace per `org[+project]`, plus a **live balance gate before every create** ("so an unfunded org cannot run free GPU compute"). | private |
 | `validators` | **All orgs' CRs share one fixed namespace** (`lux-validators`), disambiguated by name, not isolated by namespace. | private |
-| `venue`, `admin` | Per-org billing meter; `admin/infra` scans every DOKS cluster under one account token, spanning many customer orgs. | private |
+| `venue`, `admin` | Per-org billing meter; `admin/infra` scans every Kubernetes cluster under one account token, spanning many customer orgs. | private |
 
 #### 2.4 The rule sharpens: money is wiring, tenancy is structure
 

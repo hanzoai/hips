@@ -29,7 +29,7 @@ This HIP is explicitly distinct from **HIP-44 (API Gateway)**, which is the appl
 
 ### The Edge Routing Problem
 
-Hanzo operates two Kubernetes clusters (`hanzo-k8s` and `lux-k8s`) serving 30+ domains across multiple services. Each domain needs:
+Hanzo operates two Kubernetes clusters (`the cluster` and `lux-k8s`) serving 30+ domains across multiple services. Each domain needs:
 
 1. **Host-based routing**: `api.hanzo.ai` goes to the API Gateway, `platform.hanzo.ai` goes to Dokploy, `kms.hanzo.ai` goes to KMS. Each domain is a separate routing decision at the edge.
 2. **TLS termination**: Every domain needs HTTPS. Managing 30+ TLS certificates manually is operationally unsustainable.
@@ -156,17 +156,17 @@ spec:
 
 | Host | Backend Service | Port | Cluster |
 |------|----------------|------|---------|
-| `api.hanzo.ai` | API Gateway (HIP-44) | 8080 | hanzo-k8s |
-| `llm.hanzo.ai` | LLM Gateway (HIP-4) | 4000 | hanzo-k8s |
-| `hanzo.id` | Hanzo IAM | 8000 | hanzo-k8s |
-| `lux.id` | Hanzo IAM | 8000 | hanzo-k8s |
-| `zoo.id` | Hanzo IAM | 8000 | hanzo-k8s |
-| `pars.id` | Hanzo IAM | 8000 | hanzo-k8s |
-| `kms.hanzo.ai` | KMS (Hanzo KMS) | 8080 | hanzo-k8s |
-| `platform.hanzo.ai` | Platform (Dokploy) | 3000 | hanzo-k8s |
-| `console.hanzo.ai` | Console | 3001 | hanzo-k8s |
-| `cloud.hanzo.ai` | Cloud | 3002 | hanzo-k8s |
-| `hanzo.app` | Main App | 3000 | hanzo-k8s |
+| `api.hanzo.ai` | API Gateway (HIP-44) | 8080 | the cluster |
+| `llm.hanzo.ai` | LLM Gateway (HIP-4) | 4000 | the cluster |
+| `hanzo.id` | Hanzo IAM | 8000 | the cluster |
+| `lux.id` | Hanzo IAM | 8000 | the cluster |
+| `zoo.id` | Hanzo IAM | 8000 | the cluster |
+| `pars.id` | Hanzo IAM | 8000 | the cluster |
+| `kms.hanzo.ai` | KMS (Hanzo KMS) | 8080 | the cluster |
+| `platform.hanzo.ai` | Platform (Dokploy) | 3000 | the cluster |
+| `console.hanzo.ai` | Console | 3001 | the cluster |
+| `cloud.hanzo.ai` | Cloud | 3002 | the cluster |
+| `hanzo.app` | Main App | 3000 | the cluster |
 | `api.lux.network` | Lux Gateway (KrakenD) | 8080 | lux-k8s |
 | `cloud.lux.network` | Lux Cloud | 3000 | lux-k8s |
 | `markets.lux.network` | Markets | 3000 | lux-k8s |
@@ -299,8 +299,8 @@ metadata:
 spec:
   ipAllowList:
     sourceRange:
-    - "10.0.0.0/8"
-    - "172.16.0.0/12"
+    - "127.0.0.1/8"
+    - "127.0.0.1/12"
 ```
 
 ### Health Checks
@@ -359,8 +359,8 @@ Structured JSON on stdout, one line per request:
   "time": "2026-02-24T12:00:00Z",
   "level": "info",
   "msg": "",
-  "ClientAddr": "10.244.0.1:54321",
-  "ClientHost": "10.244.0.1",
+  "ClientAddr": "127.0.0.1:54321",
+  "ClientHost": "127.0.0.1",
   "Duration": 12345678,
   "DownstreamStatus": 200,
   "RequestHost": "api.hanzo.ai",
@@ -620,7 +620,7 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 ### Network Security
 
 - Ingress listens on cluster-internal interfaces. External access is via DigitalOcean LoadBalancer only.
-- Backend connections use cluster DNS (e.g., `api-gateway.hanzo.svc`). No traffic leaves the cluster for internal routing.
+- Backend connections use cluster DNS (e.g., `localhost`). No traffic leaves the cluster for internal routing.
 - The Traefik dashboard and API are disabled by default in production. When enabled for debugging, they are accessible only via `kubectl port-forward`.
 
 ### TLS Security
@@ -652,7 +652,7 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 ### Phase 1: Core Deployment (Complete)
 
 - Traefik v3.6 fork with Hanzo defaults
-- Deployment on hanzo-k8s with DigitalOcean LoadBalancer
+- Deployment on the cluster with DigitalOcean LoadBalancer
 - KubernetesIngress and KubernetesCRD providers
 - Host routing for all production domains
 - Cloudflare Flexible SSL for TLS termination

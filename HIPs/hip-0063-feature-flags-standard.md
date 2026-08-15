@@ -49,9 +49,9 @@ More critically, LaunchDarkly's evaluation model is opaque. Flags are defined in
 
 For AI inference routing, stale flags mean requests routed to the wrong model -- potentially a model that has been deprecated or a cost tier that exceeds budget. This is not acceptable for production AI infrastructure.
 
-**Unleash** is open-source (Apache 2.0) and self-hostable. It solves the data sovereignty problem. However, Unleash's evaluation engine is a Node.js/Java application backed by PostgreSQL. It does not support AI experiment types, continuous metric analysis, or integration with inference gateways. We would need to build those features on top of Unleash, effectively maintaining a fork with custom experiment logic, custom metric pipelines, and custom SDK extensions. At that point, we are building a custom system with Unleash's data model -- a worse starting point than building from first principles.
+**Unleash** is open-source (Apache 2.0) and self-hostable. It solves the data sovereignty problem. However, Unleash's evaluation engine is a Node.js/Java application backed by SQL. It does not support AI experiment types, continuous metric analysis, or integration with inference gateways. We would need to build those features on top of Unleash, effectively maintaining a fork with custom experiment logic, custom metric pipelines, and custom SDK extensions. At that point, we are building a custom system with Unleash's data model -- a worse starting point than building from first principles.
 
-**Decision**: Build Hanzo Flags as a Go service with Redis-backed evaluation, OpenFeature-compatible SDKs, and native support for AI experiment types. Total cost: infrastructure we already operate (Redis, Datastore, Kafka). Zero per-seat or per-MAU licensing.
+**Decision**: Build Hanzo Flags as a Go service with KV-backed evaluation, OpenFeature-compatible SDKs, and native support for AI experiment types. Total cost: infrastructure we already operate (KV, Datastore, Kafka). Zero per-seat or per-MAU licensing.
 
 ## Specification
 
@@ -269,7 +269,7 @@ Response:
 | Availability | 99.99% |
 | Throughput | 100K evaluations/second per node |
 
-These targets are achievable because flag evaluation is a pure in-memory operation. Flag definitions are synced from PostgreSQL to Redis, then pulled into an in-process cache in each SDK instance. The evaluation endpoint exists for server-side languages that prefer a thin client; SDKs with local evaluation never hit this endpoint at all.
+These targets are achievable because flag evaluation is a pure in-memory operation. Flag definitions are synced from SQL to KV, then pulled into an in-process cache in each SDK instance. The evaluation endpoint exists for server-side languages that prefer a thin client; SDKs with local evaluation never hit this endpoint at all.
 
 ### Admin API
 
@@ -615,13 +615,13 @@ Response:
                                                │ write
                                                v
 ┌──────────────┐                    ┌─────────────────────┐
-│  PostgreSQL   │<───── persist ────│   Flags Service      │
+│  SQL          │<───── persist ────│   Flags Service      │
 │  (flag defs,  │                   │   (Go, port 8063)    │
 │   audit log)  │                   │                      │
 └──────────────┘                    │  - Admin API          │
                                     │  - Evaluation API     │
-┌──────────────┐                    │  - Sync to Redis      │
-│  Redis        │<───── sync ──────│  - Stats engine       │
+┌──────────────┐                    │  - Sync to KV         │
+│  KV           │<───── sync ──────│  - Stats engine       │
 │  (flag state, │                   └──────────┬──────────┘
 │   cache)      │                              │
 └──────┬───────┘                               │ emit
@@ -642,13 +642,13 @@ Response:
 
 ### Flag Sync Protocol
 
-1. Flag definitions are stored in PostgreSQL (source of truth)
-2. On create/update/delete, the Flags Service writes to PostgreSQL and publishes a change event to Redis Pub/Sub channel `flags:changes`
-3. All Flags Service instances subscribe to `flags:changes` and update their Redis hash (`flags:{project_id}`)
-4. SDKs with local evaluation poll Redis every 30 seconds (configurable) or subscribe to Server-Sent Events for real-time updates
-5. The evaluation endpoint reads from the in-process cache (populated from Redis), never from PostgreSQL
+1. Flag definitions are stored in SQL (source of truth)
+2. On create/update/delete, the Flags Service writes to SQL and publishes a change event to KV Pub/Sub channel `flags:changes`
+3. All Flags Service instances subscribe to `flags:changes` and update their KV hash (`flags:{project_id}`)
+4. SDKs with local evaluation poll KV every 30 seconds (configurable) or subscribe to Server-Sent Events for real-time updates
+5. The evaluation endpoint reads from the in-process cache (populated from KV), never from SQL
 
-This architecture means PostgreSQL can go down for 30 minutes and flag evaluation continues uninterrupted from the Redis + in-process cache. SDKs with local evaluation continue working even if Redis is down, using their last-known flag state.
+This architecture means SQL can go down for 30 minutes and flag evaluation continues uninterrupted from the KV + in-process cache. SDKs with local evaluation continue working even if KV is down, using their last-known flag state.
 
 ### API Key Types
 
@@ -663,7 +663,7 @@ This architecture means PostgreSQL can go down for 30 minutes and flag evaluatio
 ### Deployment
 
 ```yaml
-# K8s Deployment on hanzo-k8s
+# K8s Deployment on the cluster
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -693,7 +693,7 @@ spec:
               name: flags-secrets
               key: redis-url
         - name: KAFKA_BROKERS
-          value: "insights-kafka.hanzo.svc:9092"
+          value: "localhost:9092"
         resources:
           requests:
             cpu: 250m
@@ -824,7 +824,7 @@ Every flag mutation (create, update, toggle, delete) is recorded with:
 - Full diff of the change (before/after JSON)
 - IP address and user agent
 
-The audit log is append-only and cannot be modified or deleted via the API. It is stored in PostgreSQL with a 2-year retention policy.
+The audit log is append-only and cannot be modified or deleted via the API. It is stored in SQL with a 2-year retention policy.
 
 ### Experiment Data Privacy
 
@@ -844,7 +844,7 @@ alerts:
     expr: (time() - flags_last_sync_timestamp_seconds) > 120
     for: 2m
     severity: critical
-    summary: "Flag state not synced from Redis in > 2 minutes"
+    summary: "Flag state not synced from KV in > 2 minutes"
 
   - name: ExperimentGuardrailBreached
     expr: flags_experiment_guardrail_breached == 1

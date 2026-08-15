@@ -52,7 +52,7 @@ This is the paradigm shift from Google-style search to AI-native search. The sea
                     │                  │
                     ▼                  ▼
              ┌──────────────┐  ┌────────────┐
-             │ Index Storage│  │ PostgreSQL │
+             │ Index Storage│  │ SQL        │
              │   (LMDB)     │  │ (Auth/Hist)│
              └──────────────┘  └────────────┘
 ```

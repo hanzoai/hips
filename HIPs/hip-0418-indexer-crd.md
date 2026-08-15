@@ -14,7 +14,7 @@ created: 2026-05-19
 
 ## Abstract
 
-The `Indexer` CRD is a Service facade for `luxfi/indexer`, the chain-data indexer that builds queryable Postgres tables from raw EVM blocks. Used in combination with `Explorer` (HIP-419) to power block-explorer UIs.
+The `Indexer` CRD is a Service facade for `luxfi/indexer`, the chain-data indexer that builds queryable SQL tables from raw EVM blocks. Used in combination with `Explorer` (HIP-419) to power block-explorer UIs.
 
 ## Specification
 
@@ -55,7 +55,7 @@ spec:
 
 ### Generated K8s resources
 
-Deployment, Service. Long-running indexer pod processes new blocks into Postgres.
+Deployment, Service. Long-running indexer pod processes new blocks into SQL.
 
 ### Operator reconciler
 

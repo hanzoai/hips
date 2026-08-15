@@ -41,8 +41,8 @@ An AI cloud's unit economics live and die on node count. Three forces
 demand one control plane for it:
 
 1. **The fabric is already plural.** The operated estate spans eight
-   Kubernetes clusters across providers this cycle — DOKS estates
-   (`do-sfo3-hanzo-k8s`, `do-sfo3-lux-k8s`, `do-sfo3-bootnode-k8s`,
+   Kubernetes clusters across providers this cycle — Kubernetes estates
+   (`do-sfo3-the cluster`, `do-sfo3-lux-k8s`, `do-sfo3-bootnode-k8s`,
    the zoo estate, and siblings) plus BYO k3s fleets such as the
    spark/evo/dbc reference cluster of HIP-0121. No single cluster's
    autoscaler can see, size, or bill that fabric as one thing.
@@ -88,7 +88,7 @@ All of the following is real code in `hanzoai/visor` at v1.108.x:
   general-purpose → CPU-optimized → memory-optimized), defaulting
   safe. Node count = max(ceil by CPU, ceil by memory). Existing pools
   of the right size grow; otherwise a new pool is created.
-- **Provider backends** — `service/{digitalocean,doks,aws,azure,gcp,
+- **Provider backends** — `service/{digitalocean,kubernetes,aws,azure,gcp,
   aliyun,hetzner,lightsail,kvm,pve,vmware}.go`: machine and cluster
   provisioning across managed clouds AND on-prem hypervisors (KVM,
   Proxmox, VMware), plus managed network/chain provisioning
@@ -155,15 +155,15 @@ Honesty section. As of v1.108.11:
   project attribution labels in the scale path, the provider
   connector set (clouds + on-prem hypervisors), per-owner sealed
   credentials, the metering reporter, and the eight-cluster operated
-  fabric. Visor runs in production (`do-sfo3-hanzo-k8s`, operator CR
+  fabric. Visor runs in production (`do-sfo3-the cluster`, operator CR
   at tag v1.108.11).
 - **Decided, staged:** the full **per-tenant per-service
   cross-provider placement policy** — i.e. pools uniformly keyed by
   the complete `(service, org, project, provider)` tuple across every
-  provider backend, and scale-execution fanned out beyond DOKS
+  provider backend, and scale-execution fanned out beyond Kubernetes
   node-pool APIs to every connector in the set. Today's watcher
-  executes pool changes through the DOKS client
-  (`DOKSClients map[clusterID]`) while reading demand fabric-wide;
+  executes pool changes through the Kubernetes client
+  (`Clients map[clusterID]`) while reading demand fabric-wide;
   generalizing the execution seam to the other shipped connectors is
   mechanical, not architectural — the sizing, attribution, and
   provider primitives it composes are all in-tree.
@@ -219,7 +219,7 @@ itself and bills honestly.
 - HIP-0400 — Service CRD (workload reconciliation above this node
   plane)
 - `hanzoai/visor` — `autoscaler/{watcher,sizing}.go`,
-  `service/{digitalocean,doks,aws,azure,gcp,aliyun,hetzner,lightsail,kvm,pve,vmware}.go`,
+  `service/{digitalocean,kubernetes,aws,azure,gcp,aliyun,hetzner,lightsail,kvm,pve,vmware}.go`,
   `billing/reporter.go`, `chain/chainmaker.go`, `authz/`
 - `universe/infra/k8s/operator/crs/visor.yaml` — the live CR
   (tag v1.108.11)

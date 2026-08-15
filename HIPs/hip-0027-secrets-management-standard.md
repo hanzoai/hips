@@ -39,7 +39,7 @@ short-lived bearer token, and fetch secrets at runtime. In Kubernetes, the
 **Repository**: [github.com/hanzoai/kms](https://github.com/hanzoai/kms)
 **Production**: https://kms.hanzo.ai
 **Docker**: `ghcr.io/hanzoai/kms:latest`
-**Cluster**: hanzo-k8s (`24.199.76.156`)
+**Cluster**: the cluster (`24.199.76.156`)
 
 ## Motivation
 
@@ -52,13 +52,13 @@ Before KMS, Hanzo secrets were managed through a patchwork of mechanisms:
    to every workflow.
 3. **Manual kubectl**: Operators ran `kubectl create secret` by hand,
    introducing drift between what was deployed and what was documented.
-4. **Duplicated across services**: The same PostgreSQL password appeared in
+4. **Duplicated across services**: The same SQL password appeared in
    IAM, Cloud, Console, and Platform deployments --- each copy managed
    independently.
 5. **No audit trail**: When a secret was accessed, changed, or leaked, there
    was no way to know who did what, when.
 
-These problems compound at scale. With 15+ services on hanzo-k8s and growing,
+These problems compound at scale. With 15+ services on the cluster and growing,
 manual secrets management became the single largest operational risk.
 
 ## Design Philosophy
@@ -98,7 +98,7 @@ The design was chosen because:
 - **Open source with BSL**: Business Source License allows self-hosting
   and modification. We fork, rebrand, and deploy without vendor lock-in.
 - **Single binary**: the server is a single Go binary with
-  PostgreSQL and Redis backends --- the same infrastructure we already
+  SQL and KV backends --- the same infrastructure we already
   operate for other services.
 
 ### Why Not AWS Secrets Manager or GCP Secret Manager
@@ -348,7 +348,7 @@ the Machine Identity credentials. This is the ONE secret that must be
 created manually:
 
 ```bash
-kubectl -n hanzo create secret generic <service>-kms-auth \
+kubectl create secret generic <service>-kms-auth \
   --from-literal=clientId=<machine-identity-client-id> \
   --from-literal=clientSecret=<machine-identity-client-secret> \
   --dry-run=client -o yaml | kubectl apply -f -
@@ -465,15 +465,15 @@ Authorization: Bearer <admin-token>
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   hanzo-k8s cluster                     │
+│                   Kubernetes cluster                    │
 │                                                         │
 │  ┌───────────┐     ┌────────────────┐                   │
-│  │ KMS (x2)  │────▶│ PostgreSQL     │                   │
+│  │ KMS (x2)  │────▶│ SQL            │                   │
 │  │ port 8080 │     │ (kms database) │                   │
 │  └─────┬─────┘     └────────────────┘                   │
 │        │                                                │
 │        │           ┌────────────────┐                   │
-│        └──────────▶│ Redis          │                   │
+│        └──────────▶│ KV             │                   │
 │                    │ (session/cache)│                   │
 │                    └────────────────┘                   │
 │                                                         │
@@ -620,14 +620,14 @@ system has one. We acknowledge it explicitly rather than hiding it.
 
 ### Encryption
 
-- **At rest**: AES-256-GCM encryption of all secret values in PostgreSQL.
+- **At rest**: AES-256-GCM encryption of all secret values in SQL.
   The `ROOT_ENCRYPTION_KEY` is a 256-bit key generated during initial
   setup and stored as a K8s Secret.
 - **In transit**: TLS 1.3 for all API communication. The KMS Ingress
   terminates TLS with a certificate from Let's Encrypt (via cert-manager).
 - **In memory**: Secret values exist in plaintext only in the KMS
   application process memory during request handling. They are not cached
-  in Redis or written to temporary files.
+  in KV or written to temporary files.
 
 ### Compliance Mapping
 
@@ -680,7 +680,7 @@ env:
 
 Before (manual, error-prone):
 ```bash
-kubectl -n hanzo create secret generic my-service-secrets \
+kubectl create secret generic my-service-secrets \
   --from-literal=DB_URL=postgresql://... \
   --from-literal=API_KEY=sk-... \
   --from-literal=REDIS_URL=redis://...
@@ -726,13 +726,13 @@ spec:
 6. Grant the identity `Viewer` role on the project.
 7. Create the bootstrap K8s secret:
    ```bash
-   kubectl -n hanzo create secret generic <service>-kms-auth \
+   kubectl create secret generic <service>-kms-auth \
      --from-literal=clientId=<id> \
      --from-literal=clientSecret=<secret> \
      --dry-run=client -o yaml | kubectl apply -f -
    ```
 8. Apply the `KMSSecret` resource (see specification above).
-9. Verify sync: `kubectl -n hanzo get secret <service>-secrets -o yaml`
+9. Verify sync: `kubectl get secret <service>-secrets -o yaml`
 
 ### Rotating a Machine Identity Secret
 
@@ -741,7 +741,7 @@ spec:
    period).
 3. Update the bootstrap K8s secret:
    ```bash
-   kubectl -n hanzo create secret generic <service>-kms-auth \
+   kubectl create secret generic <service>-kms-auth \
      --from-literal=clientId=<id> \
      --from-literal=clientSecret=<new-secret> \
      --dry-run=client -o yaml | kubectl apply -f -
@@ -759,7 +759,7 @@ If a secret is suspected compromised:
 3. **Force resync** by deleting and re-creating the `KMSSecret` resource.
 4. **Restart affected pods** to pick up the new K8s Secret values:
    ```bash
-   kubectl -n hanzo rollout restart deployment/<service>
+   kubectl rollout restart deployment/<service>
    ```
 5. **Review audit logs** to determine the scope of the breach.
 

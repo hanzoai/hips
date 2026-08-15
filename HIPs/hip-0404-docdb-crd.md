@@ -14,7 +14,7 @@ created: 2026-05-19
 
 ## Abstract
 
-The `DocDB` CRD is the facade Kind for FerretDB workloads (`hanzoai/docdb`). FerretDB exposes the MongoDB wire protocol over PostgreSQL, giving us MongoDB-compatible APIs without a MongoDB server. The reconciler delegates to the `Datastore` controller with `type: docdb`.
+The `DocDB` CRD is the facade Kind for DocumentDB workloads (`hanzoai/docdb`). DocumentDB exposes the DocumentDB wire protocol over SQL, giving us DocumentDB-compatible APIs without a DocumentDB server. The reconciler delegates to the `Datastore` controller with `type: docdb`.
 
 ## Specification
 
@@ -24,7 +24,7 @@ The `DocDB` CRD is the facade Kind for FerretDB workloads (`hanzoai/docdb`). Fer
 
 ### Spec fields
 
-Same shape as `Datastore` (HIP-401). Implicitly `type: docdb`. Typical deployment runs FerretDB as the wire-protocol front-end with a `SQL` CR as the storage backend.
+Same shape as `Datastore` (HIP-401). Implicitly `type: docdb`. Typical deployment runs DocumentDB as the wire-protocol front-end with a `SQL` CR as the storage backend.
 
 ### Example CR
 
@@ -45,13 +45,13 @@ spec:
     size: 1Gi
   env:
     - name: FERRETDB_POSTGRESQL_URL
-      value: postgres://hanzo@sql.hanzo.svc:5432/docdb
+      value: postgres://hanzo@localhost:5432/docdb
   credentialsSecret: docdb-credentials
 ```
 
 ### Generated K8s resources
 
-StatefulSet, headless + ClusterIP Services, PVC (small — FerretDB itself is stateless on its own backing Postgres).
+StatefulSet, headless + ClusterIP Services, PVC (small — DocumentDB itself is stateless on its own backing SQL).
 
 ### Operator reconciler
 
@@ -59,7 +59,7 @@ StatefulSet, headless + ClusterIP Services, PVC (small — FerretDB itself is st
 
 ### Related services
 
-- No standalone DocDB CR currently runs in `do-sfo3-hanzo-k8s` (FerretDB is invoked via library by services that need a MongoDB-compatible layer).
+- No standalone DocDB CR currently runs in `do-sfo3-the cluster` (DocumentDB is invoked via library by services that need a DocumentDB-compatible layer).
 
 ## Status
 
