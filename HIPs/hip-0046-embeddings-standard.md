@@ -20,7 +20,9 @@ This proposal defines the Embeddings Standard for the Hanzo ecosystem. It specif
 **Gateway Port**: 4000
 **Protocol**: OpenAI-compatible REST API
 
-e compatibility   |
+## Specification
+
+| `text-embedding-ada-002`   | OpenAI   | 1536       | 8191       | $0.10                    | Legacy, wide compatibility   |
 | `embed-english-v3.0`       | Cohere   | 1024       | 512        | $0.10                    | English retrieval            |
 | `embed-multilingual-v3.0`  | Cohere   | 1024       | 512        | $0.10                    | 100+ languages               |
 | `embed-english-light-v3.0` | Cohere   | 384        | 512        | $0.10                    | Lightweight English          |

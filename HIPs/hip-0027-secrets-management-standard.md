@@ -641,6 +641,7 @@ system has one. We acknowledge it explicitly rather than hiding it.
 | GDPR Art. 32 | Security of processing | AES-256-GCM, audit trail |
 | PCI DSS 3.4 | Render PAN unreadable | Encryption at rest |
 
+```yaml
 # compose.yml - DO NOT DO THIS
 environment:
   DATABASE_URL: "postgresql://user:password@host:5432/db"

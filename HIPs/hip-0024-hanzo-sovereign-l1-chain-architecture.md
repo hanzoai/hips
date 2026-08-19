@@ -193,7 +193,7 @@ slashing:
   invalidAttestation: 10%
 ```
 
- behavior
+- Slashing for malicious behavior
 
 ### AI-Specific Security
 

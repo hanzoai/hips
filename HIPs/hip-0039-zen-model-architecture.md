@@ -22,6 +22,109 @@ Zen models are served via the LLM Gateway (HIP-0004) and the dedicated Zen Gatew
 **Model Weights**: [huggingface.co/zenlm](https://huggingface.co/zenlm)
 **Documentation**: [zenlm.org](https://zenlm.org)
 
+## Specification
+
+```yaml
+Core Architecture:
+  Type: Transformer with Mixture of Diverse Experts (MoDE)
+  Attention: Grouped Query Attention (GQA)
+  Position Encoding: Rotary Position Embeddings (RoPE)
+  Activation: SwiGLU
+  Normalization: RMSNorm (pre-norm)
+  Tokenizer: Byte-level BPE (shared across all sizes)
+  Vocabulary: 152,064 tokens
+
+MoDE Configuration (zen-72b example):
+  Total Experts: 64
+  Active Experts per Token: 8
+  Router: Top-k softmax with load balancing loss
+  Expert FFN Hidden Dim: 4096
+  Shared Attention Layers: 80
+  Expert FFN Layers: 80 (interleaved)
+
+Context Window Variants:
+  Standard: 8K / 32K / 128K (per model size)
+  Extended: Up to 1M tokens (zen-480b with YaRN scaling)
+  KV Cache: Paged attention (vLLM) or continuous batching (TGI)
+```
+```yaml
+Vision Encoder:
+  Architecture: ViT-L/14 (shared across all multimodal sizes)
+  Resolution: 448x448 (dynamic resolution for larger images)
+  Patch Size: 14x14
+  Output: Projected to model hidden dimension
+
+Audio Encoder:
+  Architecture: Whisper-style encoder
+  Input: 16kHz mel-spectrogram
+  Window: 30-second chunks with overlap
+  Output: Projected to model hidden dimension
+
+Code Encoder:
+  Architecture: Shared tokenizer with code-specific tokens
+  Languages: 50+ programming languages
+  Features: AST-aware tokenization for structured understanding
+```
+```yaml
+Formats:
+  FP16:
+    Use: Training, high-accuracy inference
+    Memory: 2 bytes/param
+    Quality: Baseline (100%)
+
+  BF16:
+    Use: Training on Ampere+ GPUs, inference
+    Memory: 2 bytes/param
+    Quality: ~100% (better dynamic range than FP16)
+
+  INT8 (GPTQ):
+    Use: Production inference
+    Memory: 1 byte/param
+    Quality: ~99.5% of FP16
+
+  INT4 (AWQ):
+    Use: Memory-constrained inference, edge deployment
+    Memory: 0.5 bytes/param
+    Quality: ~98% of FP16
+
+  GGUF (llama.cpp):
+    Use: CPU inference, Ollama, local deployment
+    Variants: Q4_K_M, Q5_K_M, Q6_K, Q8_0
+    Quality: 96-99% of FP16 depending on variant
+
+Memory Requirements (zen-72b):
+  FP16:  144 GB (2x A100 80GB or 2x H100 80GB)
+  INT8:   72 GB (1x A100 80GB or 1x H100 80GB)
+  INT4:   36 GB (1x A100 40GB or consumer GPU)
+  Q4_K_M: 40 GB (CPU RAM, ~10 tok/s on Apple M3 Max)
+```
+```yaml
+Production (GPU):
+  vLLM:
+    Status: Primary serving backend
+    Features: PagedAttention, continuous batching, tensor parallelism
+    Config: See zen-gateway/configs/vllm/
+
+  TGI (Text Generation Inference):
+    Status: Supported
+    Features: Flash Attention 2, quantization, watermarking
+    Config: See zen-gateway/configs/tgi/
+
+Local / Edge:
+  Ollama:
+    Status: Supported (GGUF format)
+    Models: All sizes via ollama.com/library/zen
+
+  Candle (HIP-0019):
+    Status: Experimental
+    Features: Pure Rust inference, WASM support
+    Use: Edge deployment, browser inference (zen-600m, zen-1b)
+
+  llama.cpp:
+    Status: Supported (GGUF format)
+    Features: CPU + Metal + CUDA inference
+```
+```python
         ]}
     ]
 )
@@ -306,7 +409,7 @@ Billing Integration:
     zen-480b: $0.015  / 1K input,  $0.03   / 1K output
 ```
 
-[vLLM: Efficient Memory Management for LLM Serving](https://arxiv.org/abs/2309.06180)
+12. [vLLM: Efficient Memory Management for LLM Serving](https://arxiv.org/abs/2309.06180)
 13. [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)
 
 ## Copyright

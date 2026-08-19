@@ -25,7 +25,7 @@ The system is designed around a single invariant: **IAM is the source of truth f
 **Port**: 4242
 **Docker**: `ghcr.io/hanzoai/commerce:latest`
 
-Hanzo Pay**, the same engine white-labeled as `lux-pay` / per-brand) provides:
+The native PSP (**Hanzo Pay**, the same engine white-labeled as `lux-pay` / per-brand) provides:
 
 - **Sovereignty**: No external party can disable, freeze, or deplatform a first-party flow. The rail is ours; outages and policy changes are ours to manage.
 - **PCI offload, in-house**: Card data never touches Commerce or any app server. The **Hanzo Vault** CDE (a dedicated PCI-DSS-scoped tokenization service) holds the card-handling surface; everything else operates on opaque tokens, keeping the broad system out of PCI scope exactly as an external processor would — but under our control.

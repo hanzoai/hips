@@ -36,7 +36,87 @@ AI workflow development today suffers from three fundamental problems:
 
 Hanzo Flow solves all five by providing a visual DAG builder backed by LangChain, integrated with Hanzo infrastructure, and clearly scoped to AI pipeline construction.
 
-se=self.gateway_url,
+## Specification
+
+```yaml
+LLM:
+  - ChatModel          # Conversational LLM (chat completions)
+  - CompletionModel    # Text completion LLM
+  - ZenModelSelector   # Zen model family picker (Hanzo-specific)
+  - ModelRouter        # Route to different models based on input characteristics
+```
+```yaml
+Embeddings:
+  - OpenAIEmbeddings     # Via Gateway
+  - HuggingFaceEmbeddings
+  - CohereEmbeddings     # Via Gateway
+  - CustomEmbeddings     # User-provided embedding function
+```
+```yaml
+VectorStores:
+  - Pinecone
+  - Weaviate
+  - Chroma
+  - pgvector          # PostgreSQL with pgvector extension
+  - FAISS             # In-memory, for prototyping
+  - Qdrant
+```
+```yaml
+Agents:
+  - ReActAgent         # Reasoning + acting loop
+  - PlanAndExecute     # Planning then sequential execution
+  - OpenAIFunctions    # Function-calling agent
+  - HanzoAgent         # Agent SDK (HIP-9) integration
+  - ConversationalAgent
+```
+```yaml
+Tools:
+  - MCPTool            # Any Hanzo MCP tool (Hanzo-specific)
+  - SearchTool         # Web search
+  - CalculatorTool
+  - PythonREPL         # Sandboxed Python execution
+  - APITool            # Call external APIs
+  - SQLTool            # Query databases
+  - BrowserTool        # Web browsing
+```
+```yaml
+Chains:
+  - LLMChain           # Prompt template + LLM
+  - SequentialChain    # Ordered chain of sub-chains
+  - RouterChain        # Route input to different chains
+  - ConversationChain  # Chat with memory
+  - RetrievalQA        # RAG: retrieve then answer
+  - MapReduceChain     # Process documents in parallel then combine
+  - SummarizeChain     # Summarize long documents
+```
+```yaml
+Memory:
+  - ConversationBuffer    # Full conversation history
+  - ConversationSummary   # Summarized history
+  - ConversationWindow    # Last N messages
+  - EntityMemory          # Track entities mentioned
+  - VectorStoreMemory     # Similarity-based recall
+```
+```yaml
+OutputParsers:
+  - JSONParser           # Parse JSON from LLM output
+  - PydanticParser       # Parse into Pydantic models
+  - ListParser           # Parse comma/newline separated lists
+  - RegexParser          # Extract via regex patterns
+  - StructuredOutputParser
+```
+```yaml
+IO:
+  - TextInput            # User text input
+  - FileInput            # Upload documents
+  - ChatInput            # Conversational input
+  - TextOutput           # Display text
+  - ChatOutput           # Conversational output
+  - WebhookInput         # Receive external triggers
+  - WebhookOutput        # Send results externally
+```
+```python
+            openai_api_base=self.gateway_url,
             temperature=self.temperature,
             max_tokens=self.max_tokens,
         )
@@ -698,4 +778,4 @@ The execution engine resolves secrets by calling KMS with the user's IAM token. 
 | HIP-27 (Secrets) | All secrets in flow definitions resolved from KMS at execution time. |
 | HIP-34 (Auto) | Auto can trigger Flow executions as steps in business process automations. Flow does not replace Auto. |
 
- waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).

@@ -592,6 +592,7 @@ When serving multiple models, each model runs in an isolated memory region. A bu
 - Benchmark suite and regression testing infrastructure
 - Shared model format and quantization pipeline with Hanzo Edge (HIP-0050)
 
+```python
 # Before: OpenAI direct
 client = OpenAI(api_key="sk-openai-...")
 

@@ -422,7 +422,7 @@ const result = await orchestrator.execute({
 });
 ```
 
-(./hip-10.md)
+4. [HIP-10: MCP Integration](./hip-10.md)
 5. [Agent SDK Repository](https://github.com/hanzoai/agent)
 
 ## Copyright

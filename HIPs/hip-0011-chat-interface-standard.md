@@ -474,7 +474,8 @@ enum ErrorCode {
 }
 ```
 
-          │ File Storage │
+```
+                    │ File Storage │
                     │  (S3/Local)  │
                     └──────────────┘
 ```

@@ -28,6 +28,8 @@ Edge is optimized for small Zen models: zen3-nano (4B parameters) and zen4-mini 
 **Binary**: `hanzo-edge`
 
 
+## Specification
+
 }
 
 // Cloud fallback for complex tasks
@@ -193,7 +195,7 @@ Benchmarks with zen4-mini (8B, AFQ-4):
 | Pixel 8 Pro (Tensor G3, Vulkan) | 380ms | 9 | 5.5 GB |
 | MacBook Pro M3 (Metal) | 90ms | 32 | 5.3 GB |
 
-s verified on download. The update pipeline uses certificate pinning to prevent MITM attacks on model distribution.
+Edge binaries are signed with Hanzo's code signing keys. Model weights are distributed with SHA-256 checksums verified on download. The update pipeline uses certificate pinning to prevent MITM attacks on model distribution.
 
 ## Relationship to Other HIPs
 

@@ -23,7 +23,9 @@ following this specification.
 **Repository**: [github.com/hanzoai/postgres](https://github.com/hanzoai/postgres)
 **Image**: `ghcr.io/hanzoai/sql:latest`
 
-dev      # Development
+## Specification
+
+   npx prisma migrate dev      # Development
    npx prisma migrate deploy   # Production
    ```
 
@@ -266,7 +268,7 @@ pg_restore -h localhost -U hanzo \
 
 ### Monitoring
 
-SQL metrics are exposed via `postgres_exporter` sidecar to Prometheus:
+PostgreSQL metrics are exposed via `postgres_exporter` sidecar to Prometheus:
 
 | Metric | Alert Threshold | Description |
 |--------|----------------|-------------|

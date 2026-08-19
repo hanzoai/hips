@@ -921,6 +921,7 @@ All documentation sites MUST meet these Lighthouse scores:
 
 Documentation sites are monitored via the Hanzo status page. Target uptime: 99.9%.
 
+```bash
 # 1. Scaffold a new docs site
 npx @hanzo/docs-create-app my-docs
 

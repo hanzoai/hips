@@ -1,5 +1,5 @@
 ---
-hip: 0106
+hip: 0138
 title: Cloud — Unified Hanzo Binary
 author: Hanzo AI Team
 type: Standards Track
@@ -10,7 +10,11 @@ updated: 2026-07-08
 requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0105, HIP-0302
 ---
 
-# HIP-106: Cloud — Unified Hanzo Binary
+# HIP-0138: Cloud — Unified Hanzo Binary
+
+*This document was numbered HIP-0106. That number is the plugin contract's —
+HIP-0116 and the code both cite it that way — so this one took the next free
+number in its block.*
 
 ## Abstract
 

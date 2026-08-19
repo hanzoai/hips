@@ -248,7 +248,25 @@ contract HMMBridge {
 }
 ```
 
-ZO/month): 30% discount
+## Economic Model
+
+### Fee Structure
+
+```yaml
+Trading Fees:
+  - Taker: 0.3% of trade value
+  - Maker: 0.1% of trade value
+  - LP Rewards: 0.2% to liquidity providers
+
+Quality Incentives:
+  - Performance Bonus: +50% fees for top 10% quality
+  - Penalty: -50% fees for bottom 10% quality
+  - Slashing: Remove from pools for consistent poor performance
+
+Volume Discounts:
+  - Tier 1 (>1000 HANZO/month): 10% discount
+  - Tier 2 (>10000 HANZO/month): 20% discount
+  - Tier 3 (>100000 HANZO/month): 30% discount
 ```
 
 ### Token Utility

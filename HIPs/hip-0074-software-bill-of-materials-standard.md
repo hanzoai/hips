@@ -64,7 +64,9 @@ Hanzo operates 260+ repositories producing container images, Go binaries, Python
 
 This HIP solves all four problems.
 
-ier matching)
+## Specification
+
+- License files in source (SPDX license identifier matching)
 - SPDX license expressions for complex multi-license packages
 
 #### License Policy
@@ -334,7 +336,7 @@ The SBOM service exposes metrics at `:8074/metrics`:
 | License policy violation in build | P3 | Block build, notify legal |
 | Nightly scan database unreachable | P4 | Alert, retry next cycle |
 
-andard](./hip-0027-secrets-management-standard.md)
+11. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
 12. [HIP-0033: Container Registry Standard](./hip-0033-container-registry-standard.md)
 13. [HIP-0036: CI/CD Build System Standard](./hip-0036-ci-cd-build-system-standard.md)
 14. [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)

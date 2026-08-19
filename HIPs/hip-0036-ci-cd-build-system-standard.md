@@ -51,6 +51,34 @@ A single source of truth -- `github.com/hanzoai/build` -- that provides:
 
 This section explains the **why** behind each architectural decision. CI/CD is foundational infrastructure -- the wrong choice here multiplies across every repository and every deploy.
 
+```
+260 repos x 1 manual update = 260 manual secret rotations
+```
+
+With Hanzo KMS (at `kms.hanzo.ai`, powered by luxfi/kms MPC):
+
+```
+1 KMS update = all 260 repos pick up the new token on next build
+```
+
+The secret injection flow works as follows:
+
+```
+GitHub Actions workflow starts
+  |
+  v
+POST kms.hanzo.ai/api/v1/auth/universal-auth/login
+  - Sends KMS_CLIENT_ID + KMS_CLIENT_SECRET (these two ARE GitHub Secrets)
+  - Receives short-lived ACCESS_TOKEN
+  |
+  v
+GET kms.hanzo.ai/api/v3/secrets/raw/{SECRET_NAME}
+  - Sends ACCESS_TOKEN as Bearer token
+  - Fetches DOCKERHUB_USERNAME, DOCKERHUB_TOKEN, DIGITALOCEAN_ACCESS_TOKEN, etc.
+  |
+  v
+Secrets injected as step outputs -> consumed by subsequent steps
+```
 ### Why Multi-Arch Builds (linux/amd64 + linux/arm64)
 
 Hanzo infrastructure runs on two architectures:
@@ -77,6 +105,7 @@ The build uses `docker/setup-qemu-action` for cross-compilation and `docker/setu
 
 **Trade-off acknowledged**: Multi-arch builds take 2-3x longer than single-arch builds because each platform compiles separately. We accept this because builds are not in the critical path for developer iteration (developers build locally) and the production correctness guarantee is worth the extra CI minutes.
 
+```yaml
 # GHCR: must succeed (the build fails if this fails)
 - name: Push to GHCR
   uses: docker/build-push-action@v5
@@ -625,6 +654,11 @@ Build results are posted to Slack via webhook:
 ```
 
 Failed builds include the failure step and a link to the workflow run.
+```bash
+gh repo create hanzoai/my-new-service \
+  --template hanzoai/template \
+  --public
+```
 
 ## Future Work
 

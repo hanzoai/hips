@@ -592,7 +592,7 @@ vector-store = ["qdrant-client"]
 computer-control = ["enigo", "screenshots"]
 ```
 
-ocs/mcp)
+3. [Claude Desktop MCP](https://claude.ai/docs/mcp)
 4. [HIP-9: Agent SDK](./hip-9.md)
 5. [MCP Repository](https://github.com/hanzoai/mcp)
 

@@ -78,6 +78,7 @@ The tradeoff is reduced flexibility. If the Go SDK needs a Go-specific feature t
 | Test coverage | Varies by team | Generated from spec |
 | Maintenance burden | O(N * endpoints) | O(1 * endpoints) |
 
+```python
 # Before (OpenAI direct)
 client = OpenAI(api_key="sk-openai-...")
 

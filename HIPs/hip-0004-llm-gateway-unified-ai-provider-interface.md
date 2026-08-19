@@ -438,7 +438,7 @@ const response = await gateway.chat.completions.create({
 });
 ```
 
-M Gateway Repository](https://github.com/hanzoai/llm)
+5. [LLM Gateway Repository](https://github.com/hanzoai/llm)
 
 ## Copyright
 

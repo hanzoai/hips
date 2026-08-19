@@ -83,8 +83,14 @@ def m_st002(root):
                  read(root, SUBJECT), count=1, flags=re.M))
 
 def m_st003(root):
+    # Duplicate the heading every Standards Track HIP is REQUIRED to carry. This
+    # used to rename '## Motivation', which is advisory -- so when a corpus edit
+    # removed that heading from the subject, the replace matched nothing, the
+    # lint had no duplicate to report, and the check stopped proving anything
+    # while still being counted. Anchor a mutation on what the lint requires,
+    # never on what a document happens to have.
     s = read(root, STANDARDS_SUBJECT)
-    write(root, STANDARDS_SUBJECT, s.replace("## Motivation", "## Abstract", 1))
+    write(root, STANDARDS_SUBJECT, s + "\n## Abstract\n\nA second one, on purpose.\n")
 
 def m_st004(root):
     s = read(root, STANDARDS_SUBJECT)

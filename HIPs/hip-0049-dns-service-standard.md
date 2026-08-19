@@ -45,6 +45,8 @@ Hanzo operates 40+ domains across four organizations (hanzo.ai, lux.network, zoo
 
 A single DNS service eliminates all six problems. Platform creates DNS records automatically on deploy. Internal services resolve via `*.<namespace>.svc` without touching public DNS. DNSSEC signs every zone. Geo-routing directs users to the nearest edge. Wildcard certificates renew unattended. Engineers never log in to a registrar dashboard again.
 
+## Specification
+
  CAA | Certificate authority auth | `hanzo.ai -> 0 issue letsencrypt.org` |
 | NS | Nameserver delegation | `hanzo.ai -> ns1.hanzo.ai` |
 

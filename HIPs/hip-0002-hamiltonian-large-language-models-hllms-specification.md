@@ -167,7 +167,7 @@ class HLLMArchitecture:
 - **Constitutional AI**: Rule-based constraints
 - **Multimodal Alignment**: Cross-modal consistency checks
 
-e Repositories
+### Open Source Repositories
 - **Jin Multimodal Models**: [github.com/hanzoai/jin](https://github.com/hanzoai/jin)
 - **LLM Gateway**: [github.com/hanzoai/llm](https://github.com/hanzoai/llm)
 - **Agent Framework**: [github.com/hanzoai/agent](https://github.com/hanzoai/agent)
@@ -180,7 +180,7 @@ e Repositories
 - **HLLM-32B Base**: [huggingface.co/hanzoai/hllm-32b](https://huggingface.co/hanzoai/hllm-32b)
 - **Evaluation Suite**: [github.com/hanzoai/hllm-eval](https://github.com/hanzoai/hllm-eval)
 
-2312.11805)
+3. [Gemini: A Family of Multimodal Models](https://arxiv.org/abs/2312.11805)
 4. [HIP-0: Hanzo AI Architecture](./hip-0.md)
 5. [HIP-5: Post-Quantum Security](./hip-5.md)
 

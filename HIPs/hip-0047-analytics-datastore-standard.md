@@ -75,7 +75,7 @@ Understanding the *why* is as important as understanding the *what*.
 
 ### Why Hanzo Datastore Over SQL for Analytics
 
-SQL is the Hanzo standard for transactional data (HIP-0029). It excels
+PostgreSQL is the Hanzo standard for transactional data (HIP-0029). It excels
 at OLTP: small reads and writes, row-level locking, ACID transactions, foreign
 keys, and joins across normalized tables. IAM stores users, organizations, and
 OAuth tokens in SQL. Cloud stores projects, API keys, and configuration.

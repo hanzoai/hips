@@ -206,7 +206,7 @@ A go.mod gate would be permanently red for reasons unrelated to whether any
 Hanzo code speaks gRPC. The import gate measures the real invariant: **does
 first-party Hanzo code dial or serve gRPC? No.**
 
-urce, suitable for CI. A regression — a
+The conformance gate is a grep over source, suitable for CI. A regression — a
 new dependency that imports `google.golang.org/grpc` first-party, or a
 "convenient" gRPC client added to a service — fails the gate deterministically,
 where a human reviewer might miss it in a large diff.
@@ -258,7 +258,7 @@ enforceable: **zero first-party gRPC imports.**
 
 ## References
 
-- [HIP-0106: Cloud — Unified Hanzo Binary](./hip-0106-unified-hanzo-cloud-binary.md) — ZAP as the inter-subsystem contract; the canonical Hanzo Go stack; the "no `.capnp` in Hanzo-authored source" policy.
+- [HIP-0138: Cloud — Unified Hanzo Binary](./hip-0138-unified-hanzo-cloud-binary.md) — ZAP as the inter-subsystem contract; the canonical Hanzo Go stack; the "no `.capnp` in Hanzo-authored source" policy.
 - HIP-0112: Cloud Topology — `ingress → gateway → services`; the external edge where HTTP/WS terminate and identity headers are minted.
 - [HIP-0114: ZAP — Inter-VM Cognitive Transport for Thinking Chains](./hip-0114-zap-inter-vm-cognitive-transport.md) — ZAP as the inter-VM transport; "ZAP transports; proofs commit; receipts settle; VMs execute."
 - `github.com/zap-proto/{go,zip,http,ws,web,zapd,zap-spec}` — the ZAP transport and framework ecosystem.
