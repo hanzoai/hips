@@ -93,7 +93,7 @@ jobs:
       # the standing shared-bucket credential the grant replaced, and it could
       # overwrite every other org's site.
       - name: Publish to the Sites plane
-        uses: hanzoai/ci/.github/actions/site@v1
+        uses: https://git.hanzo.ai/hanzoai/ci/.github/actions/site@v1
         with:
           slug: hips
           dir: docs/out
