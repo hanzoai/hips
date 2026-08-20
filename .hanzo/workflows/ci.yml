@@ -37,3 +37,23 @@ jobs:
 
       - name: every HIP is structurally sound, and the index matches
         run: python3 scripts/lint-hips.py
+
+      # The capability list is an INPUT, so it is checked out rather than
+      # copied here. A snapshot committed into this repo would be a second
+      # statement of which capabilities exist, and it would drift from the one
+      # the cloud actually serves -- which is the whole thing the ratchet below
+      # exists to catch.
+      - uses: actions/checkout@v4
+        with:
+          repository: hanzoai/openapi
+          path: .capabilities
+
+      # One capability, one HIP. The ratchet (capability-coverage.txt) carries
+      # what has no spec yet and may only SHRINK, so a capability shipping
+      # without one fails here instead of going unnoticed. coverage.py refuses
+      # to report at all if it cannot resolve the list -- a coverage gate that
+      # passes when its input is missing has not been shown to work.
+      - name: every capability has a HIP
+        env:
+          HANZO_CAPABILITIES: .capabilities/capabilities.yaml
+        run: python3 scripts/coverage.py

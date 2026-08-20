@@ -8,3 +8,4 @@ node_modules/
 *.tsbuildinfo
 
 CLAUDE.md
+__pycache__/

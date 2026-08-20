@@ -1,0 +1,225 @@
+# Capabilities with no HIP. THIS FILE MAY ONLY SHRINK.
+#
+# A capability is one /v1/<name> the cloud serves, grouped into a domain by
+# hanzoai/openapi's capabilities.yaml. The rule is one capability, one HIP,
+# declared by that HIP in front matter:  capability: <name>
+#
+# Adding a line here is how a NEW capability ships before its spec is written.
+# Deleting one is how a capability gets its HIP -- and the deletion happens in
+# the SAME commit as the HIP, because scripts/coverage.py fails (CV002) on a
+# line whose capability is now declared. Neither half can rot.
+#
+# `python3 scripts/coverage.py --report` names, for each line, the HIP that
+# already talks about that route -- usually the one that should adopt it.
+#
+# Seeded 2026-08-20 from the corpus as it stood: 191 capabilities, 0 declared.
+# The number is deliberately not restated anywhere in prose; run the script.
+
+# applications
+blueprint
+bot
+bots
+company
+content
+dataroom
+embed
+esign
+framework
+functions
+git
+guide
+help
+integrations
+legal
+links
+meet
+prefs
+sbom
+settings
+share
+social
+templates
+todo
+world
+
+# chain
+chains
+rpc
+tokens
+
+# commerce
+ads
+affiliates
+authors
+billing
+books
+campaign
+captable
+cart
+commerce
+crm
+enablement
+experiments
+finance
+licensing
+marketing
+marketplace
+payments
+plans
+pricing
+referrals
+store
+x402
+
+# data
+base
+catalog
+crawl
+datastore
+docdb
+index
+indexers
+kb
+kv
+oracles
+s3
+scrape
+search
+sql
+sync
+taxonomy
+vector
+websearch
+
+# identity
+admin
+appearance
+audit
+authz
+avatar
+compliance
+csrf
+entitlements
+iam
+keys
+kms
+org
+orgs
+risk
+security
+team
+validators
+wallets
+
+# intelligence
+agent
+agents
+ai
+ask
+audio
+benchmark
+chat
+code
+coding
+completions
+dev-bridge
+docs
+documents
+download
+embeddings
+engine
+evals
+exec
+feedback
+files
+finetune
+generate-text-to-speech-audio
+generate-text-to-speech-audio-stream
+health
+images
+install-patch
+mcp
+memory
+messages
+ml
+models
+process-speech-to-text
+prompts
+query
+query_multiple
+rag
+rerank
+research
+responses
+router
+run
+runner
+sandboxes
+skills
+summary
+tools
+traffic
+translate
+upload
+videos
+wecom-bot
+
+# observability
+analytics
+commands
+errors
+insights
+logs
+metrics
+o11y
+openapi
+replay
+sentry
+traces
+usage
+
+# platform
+balancers
+builds
+cloud
+cloudflare
+clusters
+compute
+deploy
+dns
+domain
+environments
+flags
+fleet
+gateway
+gpus
+ingress
+k8s
+machines
+mesh
+networks
+platform
+plugins
+projects
+registry
+releases
+sites
+vpcs
+
+# streams
+auto
+automations
+channels
+connectors
+destinations
+event
+flow
+git-webhook
+mq
+notify
+pipelines
+pubsub
+tags
+tasks
+tel
+webhooks
