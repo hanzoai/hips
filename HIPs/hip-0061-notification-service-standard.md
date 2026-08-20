@@ -7,6 +7,7 @@ category: Interface
 status: Draft
 created: 2026-02-23
 requires: HIP-0026, HIP-0017
+capability: [notify, webhooks]
 ---
 
 

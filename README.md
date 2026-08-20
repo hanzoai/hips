@@ -116,7 +116,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | What Is Public | Process | Governance | Active |
 | [HIP-0136](./HIPs/hip-0136-one-secret-one-path.md) | One Secret, One Path | Standards Track | Infrastructure | Active |
 | [HIP-0137](./HIPs/hip-0137-one-license.md) | One License | Process | Governance | Active |
-| [HIP-0138](./HIPs/hip-0138-unified-hanzo-cloud-binary.md) | Cloud — Unified Hanzo Binary | Standards Track | Infrastructure | Final |
+| [HIP-0138](./HIPs/hip-0138-unified-hanzo-cloud-binary.md) | Cloud — Unified Hanzo Binary | Standards Track | Infrastructure | Superseded |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
@@ -127,6 +127,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0251](./HIPs/hip-0251-ai-compute-carbon-footprint.md) | AI Compute Carbon Footprint | Meta | - | Draft |
 | [HIP-0260](./HIPs/hip-0260-efficient-model-practices.md) | Efficient Model Practices | Meta | - | Draft |
 | [HIP-0270](./HIPs/hip-0270-ai-supply-chain-responsibility.md) | AI Supply Chain Responsibility | Meta | - | Draft |
+| [HIP-0300](./HIPs/hip-0300-unified-mcp.md) | Unified MCP — one door, and local servers that forwa... | Standards Track | Interface | Review |
 | [HIP-0301](./HIPs/hip-0301-python-sdk-agent-runtime-protocols.md) | Agent Runtime Protocols & Cross-Platform Parity | Standards Track | Core | Draft |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | Hanzo Replicate: Encrypted SQLite Durability for Bas... | Standards Track | Infrastructure | Active |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Hanzo adopts LP-0010: Brand Sovereignty and Federati... | Meta | Governance | Active |
@@ -161,6 +162,41 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Active |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |
+| [HIP-1000](./HIPs/hip-1000-authors-royalty.md) | Authors — A Royalty on Deployed Open Source | Standards Track | Application | Active |
+| [HIP-1001](./HIPs/hip-1001-books-double-entry-ledger.md) | Books — The Double-Entry Ledger | Standards Track | Application | Active |
+| [HIP-1002](./HIPs/hip-1002-cart.md) | Cart — The Basket a Sale Begins In | Standards Track | Application | Draft |
+| [HIP-1003](./HIPs/hip-1003-enablement.md) | Enablement — Off, Beta, GA | Standards Track | Platform | Active |
+| [HIP-1004](./HIPs/hip-1004-licensing.md) | Licensing — Signed Tokens for Paid Binaries | Standards Track | Security | Draft |
+| [HIP-1005](./HIPs/hip-1005-payments.md) | Payments — Taking a Card | Standards Track | Application | Active |
+| [HIP-1006](./HIPs/hip-1006-store.md) | Store — Storefronts, Listings and Checkout | Standards Track | Application | Active |
+| [HIP-1020](./HIPs/hip-1020-chain-registry.md) | Chain Registry | Standards Track | Interface | Draft |
+| [HIP-1021](./HIPs/hip-1021-chain-rpc-door.md) | Chain JSON-RPC Door | Standards Track | Interface | Draft |
+| [HIP-1022](./HIPs/hip-1022-native-balance-reads.md) | Native Balance Reads | Standards Track | Interface | Draft |
+| [HIP-1030](./HIPs/hip-1030-openapi-the-served-contract.md) | OpenAPI — The Served Contract | Standards Track | Interface | Active |
+| [HIP-1031](./HIPs/hip-1031-commands-the-callable-projection.md) | Commands — The Callable Projection | Standards Track | Interface | Draft |
+| [HIP-1032](./HIPs/hip-1032-errors-the-fault-lens.md) | Errors — The Fault Lens | Standards Track | Interface | Active |
+| [HIP-1040](./HIPs/hip-1040-appearance.md) | Appearance | Standards Track | Interface | Draft |
+| [HIP-1041](./HIPs/hip-1041-authz.md) | Authz | Standards Track | Security | Draft |
+| [HIP-1042](./HIPs/hip-1042-avatar.md) | Avatar | Standards Track | Interface | Draft |
+| [HIP-1043](./HIPs/hip-1043-csrf.md) | CSRF | Standards Track | Security | Draft |
+| [HIP-1044](./HIPs/hip-1044-org-settings.md) | Org Settings | Standards Track | Security | Draft |
+| [HIP-1045](./HIPs/hip-1045-orgs.md) | Orgs | Standards Track | Security | Draft |
+| [HIP-1046](./HIPs/hip-1046-risk.md) | Risk | Standards Track | Application | Draft |
+| [HIP-1047](./HIPs/hip-1047-security-scanning.md) | Security Scanning | Standards Track | Security | Draft |
+| [HIP-1048](./HIPs/hip-1048-team.md) | Team | Standards Track | Application | Draft |
+| [HIP-1049](./HIPs/hip-1049-validators.md) | Validators | Standards Track | Infrastructure | Draft |
+| [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) | Pubsub — The Tenant Door on the Bus | Standards Track | Infrastructure | Draft |
+| [HIP-1061](./HIPs/hip-1061-mq-queues-and-streams.md) | MQ — Queues and Streams | Standards Track | Infrastructure | Draft |
+| [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) | Tasks — The Durable Run | Standards Track | Infrastructure | Draft |
+| [HIP-1063](./HIPs/hip-1063-auto-flows-that-run-themselves.md) | Auto — Flows That Run Themselves | Standards Track | Interface | Draft |
+| [HIP-1064](./HIPs/hip-1064-flow-the-canvas-plane.md) | Flow — The Canvas Plane | Standards Track | Interface | Draft |
+| [HIP-1065](./HIPs/hip-1065-connectors-a-users-own-credentials.md) | Connectors — A User's Own Credentials | Standards Track | Security | Draft |
+| [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) | Channels — One Inbox | Standards Track | Interface | Draft |
+| [HIP-1067](./HIPs/hip-1067-destinations-conversions-forwarded.md) | Destinations — Conversions Forwarded | Standards Track | Interface | Draft |
+| [HIP-1068](./HIPs/hip-1068-tags-the-browser-half.md) | Tags — The Browser Half | Standards Track | Interface | Draft |
+| [HIP-1069](./HIPs/hip-1069-tel-numbers-calls-and-messages.md) | Tel — Numbers, Calls and Messages | Standards Track | Interface | Draft |
+| [HIP-1070](./HIPs/hip-1070-git-webhook-the-push-door.md) | Git Webhook — The Push Door | Standards Track | Infrastructure | Draft |
+| [HIP-1071](./HIPs/hip-1071-pipelines-a-derived-board.md) | Pipelines — A Derived Board | Standards Track | Interface | Draft |
 
 ## HIP Process
 

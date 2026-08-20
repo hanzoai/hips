@@ -7,6 +7,7 @@ category: Infrastructure
 status: Active
 created: 2026-02-23
 requires: HIP-0014, HIP-0026, HIP-0027
+capability: dns
 ---
 
 

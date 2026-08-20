@@ -7,6 +7,7 @@ category: Infrastructure
 status: Draft
 created: 2026-02-23
 requires: HIP-0030, HIP-0050
+capability: functions
 ---
 
 

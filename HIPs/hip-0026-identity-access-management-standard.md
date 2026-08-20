@@ -7,6 +7,7 @@ category: Infrastructure
 status: Active
 created: 2025-01-15
 requires: HIP-0027, HIP-0029
+capability: iam
 ---
 
 

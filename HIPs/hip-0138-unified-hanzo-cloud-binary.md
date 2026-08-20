@@ -4,9 +4,10 @@ title: Cloud — Unified Hanzo Binary
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Superseded
+superseded-by: HIP-0106
 created: 2026-05-19
-updated: 2026-07-08
+updated: 2026-08-20
 requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0105, HIP-0302
 ---
 
@@ -15,6 +16,17 @@ requires: HIP-0014, HIP-0026, HIP-0027, HIP-0029, HIP-0105, HIP-0302
 *This document was numbered HIP-0106. That number is the plugin contract's —
 HIP-0116 and the code both cite it that way — so this one took the next free
 number in its block.*
+
+> **Superseded by HIP-0106.** This document specifies a binary that imports every
+> subsystem as a package, so that "disabled subsystems contribute zero runtime
+> cost beyond the compiled code in the binary" — build-time linking. That build
+> was deleted: `cloud` is now a light host that composes per-app plugin binaries
+> at RUN time, and no `go build` links the fleet. HIP-0106 is the contract those
+> plugins satisfy and is the current architecture; HIP-0127 §1 gives the shape
+> and the counts. What survives here is history and the parts HIP-0106 restates
+> on its own terms — the ZAP-only transport boundary, brand and tenant as
+> deployment configuration, and the white-label fork target. Read the rest as a
+> record of a design that was tried, not as a specification to implement.
 
 ## Abstract
 

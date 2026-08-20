@@ -8,6 +8,7 @@ status: Draft
 created: 2025-01-09
 updated: 2026-02-23
 requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30
+capability: billing
 ---
 
 

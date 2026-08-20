@@ -7,6 +7,7 @@ category: Infrastructure
 status: Draft
 created: 2026-02-23
 requires: HIP-0027, HIP-0033, HIP-0036
+capability: sbom
 ---
 
 
