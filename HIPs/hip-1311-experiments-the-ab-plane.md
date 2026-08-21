@@ -111,9 +111,12 @@ customer's webhooks (HIP-1310) receive nothing from it — exposure reaches the
 warehouse from the surfaces that serve the traffic. It emits nothing to
 observability beyond the request span every route gets.
 
-The stage is `ga` — the manifest row declares none, and absent is `ga`
-(HIP-0139 §8). It derives from no OSS upstream: the significance test is stdlib
-arithmetic and the evaluator it composes is `flags`.
+The stage is `beta` (HIP-0139 §8): the manifest row declares it, so an org
+reaches the surface by the `experiments` flag and it is in no generated client,
+tool list or public page. `flags` itself stays `ga` — it is the mechanism
+stage-gating rides, so it cannot sit behind a flag. It derives from no OSS
+upstream: the significance test is stdlib arithmetic and the evaluator it
+composes is `flags`.
 
 ## Rationale
 
