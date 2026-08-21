@@ -77,9 +77,9 @@ still refused the platform rows unless they are also platform sudo.
 
 It is free — the surface declares `cloud.Free` (`plugin/taxonomy/main.go`). It
 publishes nothing on the bus and emits nothing beyond the request span every
-route gets. The stage is `ga`: the console's navigation and the marketing
-landing render from this store, so the self-service core does not load without
-it.
+route gets. The stage is `beta`, declared on the manifest row (`Stage: Beta`):
+per HIP-0139 §8 the prefix is flag-gated until promotion, though the console's
+navigation and the marketing landing already render from this store.
 
 ### Upstream
 

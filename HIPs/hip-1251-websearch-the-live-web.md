@@ -14,10 +14,11 @@ requires: HIP-0026, HIP-0106, HIP-0139
 
 ## Abstract
 
-Websearch is a web search and a page fetch an agent can call: a keyless
-meta-search over public engines and a fetch-and-extract that returns a page as
-markdown, both in-process Go with no search SaaS, no crawler pod and no
-third-party API key. `hanzoai/cloud` `apps/websearch` is the implementation and
+Websearch is a web search and a page fetch an agent can call: a meta-search
+over public engines — keyless by default, with paid vendor engines joining the
+blend only where the operator holds their keys — and a fetch-and-extract that
+returns a page as markdown, both in-process Go with no search SaaS and no
+crawler pod. `hanzoai/cloud` `apps/websearch` is the implementation and
 `/v1/websearch` is its address.
 
 This HIP declares the capability: what it stores (nothing), the target surface,
@@ -50,7 +51,7 @@ caller's crawl scope, in crawl's storage — never here.
 The target surface is `/v1/websearch`: the typed native door at the root, the
 SearXNG-shaped search at `/v1/websearch/search`, and the Firecrawl-shaped
 scrape at `/v1/websearch/scrape`. Today scrape answers at a second root,
-`/v1/scrape`; the pair is carried by cloud's `openapi/misfiled.txt:95` and
+`/v1/scrape`; the pair is carried by cloud's `openapi/misfiled.txt:93` and
 closes by fold — no store, so no boundary to split on, and Firecrawl is not in
 HIP-0139 §3.2's closed exemption list. The fold is a compat-wire break, not a
 client edit: Firecrawl clients compose `{base}/v1/scrape`
@@ -83,9 +84,16 @@ the key. Neither door is ever an open proxy.
 
 ### §5 Metering, events, telemetry, stage
 
-The capability is free, said in those words (`plugin/websearch/main.go:21`,
-`Price: cloud.Free`). It publishes no events on the bus. Beyond the request
-span, it logs each engine's outcome as one of three states — answered, blind,
+Metered, and the unit is one search answered by a paid engine
+(`plugin/websearch/main.go`, `cloud.Metered`): most engines scrape public
+result pages and cost nothing, but Brave and Mojeek spend a vendor's money per
+query, so a search that reaches them carries a fee —
+`WEBSEARCH_FEE_CENTS_BRAVE` / `_MOJEEK` over `WEBSEARCH_FEE_CENTS`, defaulting
+to one cent (`apps/websearch/meter.go`). A credential is what makes an engine
+paid: a keyless deployment is byte-for-byte the free tier, and an org out of
+funds loses the paid engines from the blend rather than the search — the
+failure closes on spend, never on answer. It publishes no events on the bus.
+Beyond the request span, it logs each engine's outcome as one of three states — answered, blind,
 down (`apps/websearch/outcome.go`) — because a metasearch whose engine fails
 soft is indistinguishable from calm, and blindness must be a fact an operator
 can read. Stage: `ga`.
@@ -95,8 +103,11 @@ can read. Stage: `ga`.
 The capability derives from none. It implements two wire shapes it does not
 own — SearXNG's `/search?format=json` envelope and Firecrawl's scrape
 envelope — as compatibility contracts, forking neither project. The engines it
-queries are keyless public search engines over native Go HTTP
-(`apps/websearch/search.go`); no search SaaS and no paid API key.
+queries are public search engines over native Go HTTP
+(`apps/websearch/search.go`), keyless by default; a Brave or Mojeek credential
+the operator holds adds that vendor's API to the blend
+(`apps/websearch/brave.go`, `apps/websearch/mojeek_api.go`). No search SaaS is
+embedded or forked.
 
 ## Rationale
 

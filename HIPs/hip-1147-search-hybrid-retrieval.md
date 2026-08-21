@@ -46,7 +46,7 @@ loses a door, not data.
 
 One operation: `POST /v1/search`, a typed op
 (`apps/search/search.go:162-178`). The manifest row routes the bare prefix here
-(`manifest/apps.go:400`); the deeper product prefixes — provisioning's search
+(`manifest/apps.go:407`); the deeper product prefixes — provisioning's search
 instance CRUD — still win by longest match. The request carries `query`, a
 `mode` (`auto` | `text` | `semantic` | `hybrid`, where `auto` resolves to
 whatever this deployment actually has), an optional project narrowing, and

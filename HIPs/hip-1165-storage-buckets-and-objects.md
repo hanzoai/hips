@@ -44,10 +44,10 @@ and this capability neither reads nor needs it.
 
 ### §2 The address
 
-Six operations at `/v1/s3`: list the caller's buckets, create one, delete an
+Eight operations at `/v1/s3`: list the caller's buckets, create one, delete an
 empty one, browse one level of a bucket, mint an upload URL for one object key,
-and the readiness probe. The full route set registers unconditionally, even
-where the store is unconfigured, so this capability always OWNS its route space
+mint a download URL for one, delete one object, and the readiness probe. The
+full route set registers unconditionally, even where the store is unconfigured, so this capability always OWNS its route space
 and answers 503 under its own name rather than falling through to a neighbour's
 handler with a different error.
 
@@ -65,7 +65,8 @@ each refusal is a wire this stack cannot yet describe:
    key as the rest of the path, and a rest-of-path parameter has no typed-op
    spelling: zip leaves the wildcard in the op path while the translation
    renders the route as a named parameter, so the fold finds no live route for
-   the op. Those two are served and are not in the document for that reason.
+   the op. Those two are declared like the rest, the trailing key rendered as
+   a named wildcard parameter in the document.
 3. **Two statuses, one object.** The probe answers the same object at 200 and at
    503, and a typed op declares exactly one success status.
 
@@ -102,12 +103,13 @@ drifts between allocate and operate.
 
 Metered. Object storage has no live-size source in this plane, so it is billed
 per OPERATION: the fee is `cloud.ResourceFeeCents("CLOUD_S3_FEE_CENTS", "op")`,
-an operator knob over `cloud.DefaultResourceFeeCents`. The gate runs before the
-handler — an unfunded org 402, an unreachable ledger 503 in the fail-closed
-posture, and nothing touched either way — and the debit lands after the handler
-SUCCEEDS, through the one shared `cloud.ResourceMeter` under the product label
-`s3`. A failed handler is surfaced and not billed. A fee of 0 makes the surface
-free and therefore un-gated. The readiness probe is not gated and not billed.
+an operator knob over `cloud.DefaultResourceFeeCents`, a dollar. The gate runs
+before the handler — an unfunded org 402, an unreachable ledger 503 in the
+fail-closed posture, and nothing touched either way — and the debit lands after
+the handler SUCCEEDS, through the one shared `cloud.ResourceMeter` under the
+product label `s3`. A failed handler is surfaced and not billed. A fee of 0
+makes the surface free and therefore un-gated. The readiness probe is neither
+gated nor billed.
 
 When a live-size source exists, the recurring footprint reuses that same meter
 with a usage-derived amount. There is no second metering path.

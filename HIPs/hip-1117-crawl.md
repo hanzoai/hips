@@ -79,8 +79,14 @@ crawling and keeps nothing.
 
 A request is admitted with a validated principal (HIP-0026), or with the
 service key compared in constant time — refusals are this surface's own body
-(`apps/crawl/mount.go:166-176,245-260`). Free (`plugin/crawl/main.go:21`,
-`cloud.Free`). It publishes no events on the bus and emits nothing to
+(`apps/crawl/mount.go:166-176,245-260`). Metered, and the unit is one
+rendered page (`plugin/crawl/main.go`, `cloud.Metered`): the escalation to the
+headless browser holds a pod for up to forty-five seconds, dedicated compute
+of the class the fleet already meters, so the fee — `CRAWL_FEE_CENTS_RENDER`
+over `CRAWL_FEE_CENTS`, defaulting to one cent — is gated before the browser
+is asked and debited after it answers (`apps/crawl/meter.go`). The static
+fetch is one http.Get and stays free. It publishes no events on the bus and
+emits nothing to
 observability beyond the request span. Its stage is `ga`: it is a primitive of
 the intelligence plane, beside `search_web` and `research_web`. Upstreams:
 parsing is `golang.org/x/net/html` (BSD-3-Clause); the escalation browser is

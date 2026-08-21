@@ -40,7 +40,7 @@ It owns none. Chain state belongs to the chain, and this capability keeps no
 copy, no cache and no index of it.
 
 What it holds is a declared registry, read once at mount from `WEB3_CHAINS`: a
-JSON object of id → `{name, chainId, rpc}` (`apps/web3/web3.go:105`). The
+JSON object of id → `{name, chainId, rpc}` (`apps/web3/web3.go:27-31`). The
 registry is DECLARED, never guessed. A malformed value MUST fail the mount
 rather than serve a silently empty list — an operator who wrote the variable
 meant to configure chains, and finding out at the first request is worse than
@@ -133,7 +133,9 @@ operator can read it rather than lost inside a 200.
 
 ### §7 Stage
 
-`ga`. The manifest row declares no stage, and absent is `ga` (HIP-0139 §8).
+`beta`, declared on the manifest row (`manifest/apps.go`, `Stage: Beta`): the
+surface is in no public projection and is reached by flag until promotion
+(HIP-0139 §8).
 
 ### §8 Upstream
 

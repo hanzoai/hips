@@ -40,7 +40,7 @@ as in RFC 2119.
 ### It owns no store
 
 The documents are the framework engine's, as module `kb`
-(`apps/knowledge/kb.go:41`): CRUD, permissions and tenant isolation are the
+(`apps/knowledge/kb.go:40`): CRUD, permissions and tenant isolation are the
 framework's generic surface, and this capability adds behaviour, not storage.
 The vectors are the shared vector store's, one collection per organization,
 written only through the one index path (`apps/knowledge/index.go:22-27`).
@@ -76,10 +76,17 @@ search must pass both (`apps/knowledge/index.go:31-35`, `:297`).
 
 ### Meter, events, observability, stage
 
-The capability is free, in those words (`plugin/knowledge/main.go:26`,
-`Price: cloud.Free`). The one debit it causes lands through `ai`: embeddings
-for index and query go the metered gateway path with the same model on both
-sides (`apps/knowledge/index.go:50-51`).
+Metered, and the unit is one connector piece run (`plugin/knowledge/main.go`,
+`Price: cloud.Metered`): a long-tail connector's sync executes a JavaScript
+piece on the auto engine's sandbox pods, and reaching that capacity by
+in-cluster URL does not make the pod cheaper. The fee is
+`CLOUD_KB_FEE_CENTS_PIECE` over `CLOUD_KB_FEE_CENTS`, defaulting to one cent —
+sized like the compute it buys, one bounded execution on a pod already held —
+gated before the engine is asked and debited only after it answers
+(`apps/knowledge/meter.go`). The native-Go connectors start no pod and stay
+free, as does everything else on the surface. The other debit lands through
+`ai`: embeddings for index and query go the metered gateway path with the same
+model on both sides (`apps/knowledge/index.go:50-51`).
 
 It publishes no events on the bus. Beyond the request span it registers
 nothing; its degradations are on the wire instead — indexing is fail-open (a
