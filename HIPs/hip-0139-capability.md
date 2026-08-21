@@ -146,8 +146,6 @@ been shown to work (HIP-0106 §9).
    may not fall without the commit that lowers it saying so.
 5. **`hanzoai/hips` `capability-coverage.txt`** — every capability has
    exactly one HIP declaring it (`scripts/coverage.py`).
-6. **`hanzoai/cloud` `manifest`** — a `ga` row names a capability with no
-   line in `misfiled.txt`; `TestGAIsClean` refuses the promotion otherwise.
 
 ### §6 The HIP a capability carries
 
@@ -212,9 +210,9 @@ text is settled, the stage says whether a customer is shown the thing.
 3. A customer who holds the flag sees the capability in the console and may
    call it; the document they are served is the internal one filtered to
    what they hold.
-4. Promotion to `ga` is one edit to the manifest row, and it is refused by
-   the gates in §5 until the capability conforms: no line in `misfiled.txt`,
-   no undescribed operation, an Active HIP declaring it.
+4. Promotion to `ga` is one edit to the manifest row. The ratchets in §5
+   apply at every stage; the stage decides who is shown the capability, never
+   whether it has to conform.
 
 The self-service cloud that launches is the `ga` set. What is not finished is
 not hidden by being undocumented; it is declared `beta` and reached by flag.
