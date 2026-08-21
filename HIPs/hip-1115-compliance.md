@@ -70,7 +70,14 @@ prefix is written once and composed onto every op
 
 Every handler resolves the org through `principal.Acting` (HIP-0026)
 (`apps/compliance/compliance.go:281`); no principal, no answer. The capability
-is free (`plugin/compliance/main.go:21`, `cloud.Free`). It publishes no events
+is METERED (`plugin/compliance/main.go:28`, `Price: cloud.Metered`), and the
+billed act is exactly one: starting a verification opens an inquiry at the
+provider on the deployment's own key, so the caller's ledger is charged the
+inquiry fee — `CLOUD_COMPLIANCE_FEE_CENTS[_INQUIRY]`, resolved through the
+fleet's ordinary provision default, authorized BEFORE the provider is asked
+and debited only after an inquiry actually opened
+(`apps/compliance/meter.go:29-55`). Everything else on the surface reads the
+org's own rows and is free. It publishes no events
 on the bus. Beyond the request span, compliance-relevant actions are recorded
 on the shared audit plane under the `compliance.` action prefix
 (`apps/compliance/compliance.go:31-32`), which is how `/v1/compliance/audit`

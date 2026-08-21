@@ -20,7 +20,7 @@ their profile photo, the anti-CSRF token their browser echoes on money writes,
 and the embed-entitlement probe the console's data-product modules ask. It is
 `apps/account` in `hanzoai/cloud` — the server work a statically-exported
 console cannot do itself, run as the confidential console client against the
-caller's own IAM record (`apps/account/account.go:1-8`).
+caller's own IAM record (`apps/account/account.go:1-15`).
 
 This HIP is the capability; four facets carry their own deep specifications —
 appearance (HIP-1040), avatar (HIP-1042), CSRF (HIP-1043) and org creation
@@ -56,7 +56,7 @@ Today's router still serves each at the bare root (`/v1/keys`, `/v1/orgs`,
 `/v1/appearance`, `/v1/avatar`, `/v1/csrf`, `/v1/embed`); those pairs are
 carried by `hanzoai/cloud` `openapi/misfiled.txt` and close by fold. The two
 `/v1/commerce/topup/*` prefixes on the manifest row
-(`manifest/apps.go:54`) name routes the package deleted — the crypto top-up
+(`manifest/apps.go:61`) name routes the package deleted — the crypto top-up
 credited an address no app ever registered
 (`apps/account/account.go:216-234`) — and MUST come off the row rather than
 be folded anywhere.

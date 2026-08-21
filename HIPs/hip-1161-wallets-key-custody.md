@@ -46,7 +46,7 @@ envelope, and MPC-family wallets hold no local key material at all.
 
 ### §2 The address
 
-Every route is under `/v1/wallets` (`manifest/apps.go:166`): eight operations,
+Every route is under `/v1/wallets` (`manifest/apps.go:173`): eight operations,
 all typed — accounts (create, list), wallets (create, list, get), key
 rotation, signing, and transactions. One plane op, `/wallets/payee`, publishes
 payee resolution to the process that settles (`apps/wallets/rpc.go`): the
@@ -84,15 +84,22 @@ socket for the same reason it could not in memory.
 
 ### §5 Money, events, telemetry
 
-The surface is free, said in those words: `cloud.Free`
-(`plugin/wallets/main.go`), no meter, no entry in the standing gate. The money
-it touches is other capabilities' — it is where x402's credits land, not where
-a charge originates.
+The surface is METERED (`plugin/wallets/main.go:28`, `Price: cloud.Metered`),
+and CUSTODY IS THE PREDICATE: an act under `kms` custody is an in-process
+keygen that buys nothing and stays free, while the three acts that leave for
+the ring are each one charge — a keygen at the fleet's ordinary provision fee
+(under Safe custody it also deploys a contract with real gas), a signing
+round and a proposal at one cent each by default. The knobs are
+`CLOUD_WALLETS_FEE_CENTS[_KEYGEN|_SIGN|_PROPOSE]`, zero making an act free
+and un-gated; the gate runs before the act and the debit lands only after it
+completed (`apps/wallets/meter.go`). The money it moves is other
+capabilities' — it is where x402's credits land, not where a listing's charge
+originates.
 
 It publishes nothing on the bus; a customer's webhooks receive no `wallets.*`
 events. Beyond the request span, wallet mutations append an audit record
 (resource type `wallet`, redacted after-image) through the shared recorder,
-best-effort (`apps/wallets/wallets.go:825`).
+best-effort (`apps/wallets/wallets.go:839-855`).
 
 ### §6 Upstream
 
@@ -104,9 +111,10 @@ over HTTP, not a dependency. Persistence is `github.com/hanzoai/sqlite`
 
 ### §7 Stage
 
-`ga`: the money core of the self-service cloud — settlement (HIP-1163)
-resolves its payees here, so custody ships when the money plane does. The
-manifest row declares no stage, and absent is `ga` (HIP-0139 §8).
+`beta`: the manifest row declares it (`manifest/apps.go:173`, `Stage: Beta`),
+so the surface is reached by flag until promoted (HIP-0139 §8). Settlement
+(HIP-1163) resolves its payees here, so custody promotes when the money plane
+does.
 
 ## Rationale
 

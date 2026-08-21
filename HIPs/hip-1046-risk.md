@@ -142,7 +142,7 @@ which cannot be spelled cross-tenant.
 
 Every scan of the source is admitted through ONE gate: priced at the meter,
 bounded per tenant, bounded in the process, each with its own deadline
-(`apps/dataset/spec.go:173-176`).
+(`apps/dataset/dataset.go:41-43`).
 
 ### 8. Reference sets: a version, and a refusal
 
@@ -172,7 +172,7 @@ degraded report as its body — which component failed, and the real error — a
 a typed op's error envelope would drop exactly that
 (`apps/risk/typed_wire_test.go:37-46`). The nested planes are mounted by their
 own processes — today at `/v1/risk/labels`, `/v1/risk/reference` and
-`/v1/risk/datasets` (`manifest/apps.go:223`, `:234`, `:263`); the router
+`/v1/risk/datasets` (`manifest/apps.go:230`, `:241`, `:270`); the router
 resolves nested prefixes by specificity, so the split needs no mount order.
 HIP-1261 and HIP-1262 move ground truth and lookup sets to their own
 addresses; the code follows those specs, and this HIP's invariants hold across
@@ -212,7 +212,8 @@ telemetry outage cannot fail a decision. That row, plus the request span every
 route already gets, is the whole observable surface: no extra spans, no
 metrics of its own.
 
-Its stage is `ga`. The decide and dataset planes derive from no outside
+Its stage is `beta` (`manifest/apps.go:244`, `Stage: Beta` — as are the
+nested planes'). The decide and dataset planes derive from no outside
 project — nothing forked, embedded or mirrored; the label and lookup planes
 answer for their own in HIP-1261 and HIP-1262.
 

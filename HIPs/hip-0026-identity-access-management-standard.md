@@ -125,7 +125,7 @@ Every Hanzo application uses Authorization Code Grant with PKCE (RFC 7636). Impl
    }
 ```
 
-Access tokens are JWTs signed with the application's certificate (e.g., `cert-hanzo`). Token lifetime defaults to 168 hours (7 days). Refresh token lifetime defaults to 720 hours (30 days).
+Access tokens are JWTs signed with the application's certificate (e.g., `cert-hanzo`). Lifetimes are per-application: `expireInHours` sets the access-token lifetime (1 hour when undeclared), and `refreshExpireInHours` sets the refresh lifetime, clamping to the access lifetime when unset (`iam` `pkg/schema/application.go:28`, `internal/oidc/token.go:533-548`). The example registration in *Bootstrap* below declares 168h/720h, which is what the flow example's `expires_in` reflects.
 
 ### Multi-Tenant Domain Resolution
 
@@ -135,7 +135,7 @@ When a request arrives, IAM resolves the organization context through the follow
 
 2. **Direct login via `/v1/iam/login`**: The payload includes `application` and `organization` fields. These must match the application's configured organization. Hardcoding `organization: "hanzo"` for all requests breaks scoped SSO clients (e.g., KMS has its own client ID and expects the correct org context).
 
-3. **Domain-based fallback**: If no application context is provided, IAM falls back to matching the request `Host` header against known origins. Each application configures `origin` and `originFrontend` to enable this.
+3. **The Host decides the issuer, not the org**: there is no Host-based org fallback — `get-app-login` refuses a missing `clientId` with a 400 (`iam` `internal/oidc/frontdoor.go:101`). What the request `Host` does decide is the issuer the tokens carry, derived per request so each brand domain emits its own (`internal/oidc/token.go:608-609`).
 
 ### Application Configuration
 
@@ -154,8 +154,8 @@ Each service in the ecosystem registers as an OAuth application with its own cli
 | app-adnexus | adnexus-app-client-id | adnexus | ad.nexus/callback |
 
 All applications use:
-- **Grant types**: `authorization_code`, `refresh_token`, `client_credentials`, `implicit`, `password`
-- **Response types**: `code`, `token`, `id_token`
+- **Grant types**: `authorization_code`, `refresh_token`, `client_credentials`, `password`, token exchange (RFC 8693), device code (RFC 8628)
+- **Response types**: `code` (the only one the discovery document advertises)
 - **Token format**: JWT
 - **Password hashing**: argon2id
 - **WebAuthn**: Enabled
@@ -202,18 +202,10 @@ IAM bootstraps from `init_data.json` on first startup. This file defines the ini
       "organization": "hanzo",
       "clientId": "hanzo-app-client-id",
       "clientSecret": "${IAM_APP_HANZO_CLIENT_SECRET}",
-      "grantTypes": ["authorization_code", "refresh_token", "client_credentials", "implicit", "password"],
+      "grantTypes": ["authorization_code", "refresh_token", "client_credentials", "password"],
       "tokenFormat": "JWT",
       "expireInHours": 168,
       "refreshExpireInHours": 720
-    }
-  ],
-  "users": [
-    {
-      "name": "admin",
-      "email": "admin@hanzo.ai",
-      "type": "normal-user",
-      "isAdmin": true
     }
   ],
   "certs": [
@@ -226,7 +218,7 @@ IAM bootstraps from `init_data.json` on first startup. This file defines the ini
 }
 ```
 
-The `initDataNewOnly` configuration flag controls whether init_data.json overwrites existing records (false) or only creates missing ones (true). Production uses `initDataNewOnly = false` to ensure configuration drift is corrected on restart.
+Seeding is new-only and idempotent: an entity that already exists is left untouched, and `${VAR}` references are substituted from the environment before parsing (`iam` `internal/seed/seed.go:10-13`). Users are deliberately excluded from the seed — accounts and service-account applications are provisioned through the operator-driven bootstrap endpoints (`POST /v1/iam/admin/{applications,users}/upsert`, `internal/bootstrap/bootstrap.go:4-16`), which fail closed when no service token is configured.
 
 ### API Endpoints
 
@@ -245,7 +237,7 @@ These `/v1/iam/oauth/*` paths are the only OIDC endpoints. There is no `/oauth/*
 | POST | `/v1/iam/oauth/revoke` | RFC 7009 | Token revocation |
 | GET | `/v1/iam/oauth/logout` | OIDC RP-Initiated Logout | End session endpoint |
 | GET | `/v1/iam/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
-| GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | Discovery (host-relative; `originFrontend` empty) |
+| GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | Discovery (host-relative; issuer derived from the request Host) |
 
 #### User Management
 
@@ -269,7 +261,7 @@ does not carry — see *Identity, Not Money* above.)
 | GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | OIDC discovery document (host-relative) |
 | GET | `/v1/iam/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
 
-The OIDC discovery document is host-relative and self-consistent — issuer, authorize, token, userinfo, and jwks all share one origin (`originFrontend` empty in `app.prod.conf`):
+The OIDC discovery document is host-relative and self-consistent — issuer, authorize, token, userinfo, and jwks all share one origin, because every endpoint URL is built from the same request-derived issuer (`iam` `internal/oidc/oidc.go:134-146`):
 
 ```json
 {
@@ -280,9 +272,12 @@ The OIDC discovery document is host-relative and self-consistent — issuer, aut
   "jwks_uri": "https://iam.hanzo.ai/v1/iam/.well-known/jwks",
   "end_session_endpoint": "https://iam.hanzo.ai/v1/iam/oauth/logout",
   "response_types_supported": ["code"],
-  "grant_types_supported": ["authorization_code", "refresh_token", "client_credentials"],
+  "grant_types_supported": ["authorization_code", "refresh_token",
+    "client_credentials", "password",
+    "urn:ietf:params:oauth:grant-type:token-exchange",
+    "urn:ietf:params:oauth:grant-type:device_code"],
   "code_challenge_methods_supported": ["S256"],
-  "token_endpoint_auth_methods_supported": ["client_secret_basic"]
+  "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post", "none"]
 }
 ```
 
@@ -356,11 +351,12 @@ subsystems stay up; the degrade never moves the route table
 
 ### Production Configuration
 
-Key configuration decisions:
-- **`enableErrorMask = true`**: Production never leaks internal error details to clients.
-- **`logPostOnly = true`**: GET requests are not logged (reduces log volume by ~80%).
-- **`initDataNewOnly = true`**: Only create missing entities from init_data.json. Never delete or overwrite existing users, apps, or orgs. This protects passwords, MFA settings, and all user data from being reset on pod restarts.
-- **`kmsUrl`**: Secrets are fetched from KMS (HIP-27) at startup, not stored in config files.
+Key configuration facts (the v1 config file and its knobs — `enableErrorMask`,
+`logPostOnly`, `initDataNewOnly`, `kmsUrl` — retired with that line; v2 is
+configured by flags and environment):
+- **`--db`** names the one store; grafted, cloud opens the same file under its data directory.
+- **`--init-data`** seeds on boot, new-only, with `${VAR}` substituted from the environment (`iam` `main.go:88`).
+- **Bootstrap fails closed**: the operator provisioning routes authenticate a service token from the first non-empty of `HANZO_API_KEY` / `KMS_SERVICE_TOKEN` / `IAM_SERVICE_TOKEN`; unset means no bootstrap (`internal/bootstrap/bootstrap.go:11-16`).
 
 ### The Entities
 
@@ -382,12 +378,12 @@ IAM integrates with Hanzo KMS (HIP-27) for secret resolution. Configuration file
 }
 ```
 
-At startup, IAM's `resolveSecrets()` function fetches values from KMS using:
-- **KMS URL**: `kmsUrl = https://kms.hanzo.ai`
-- **Project**: `kmsProjectSlug = hanzo-iam`
-- **Environment**: `kmsEnvironment = prod`
-
-This means client secrets, database passwords, and encryption keys never appear in Git, Docker images, or config files. KMS authentication uses Universal Auth tokens stored as Kubernetes secrets.
+The placeholders resolve from the process environment at seed time (`iam`
+`internal/seed/seed.go:54-56`); the environment itself is KMS-synced by the
+deployment, so client secrets and signing keys never appear in Git, Docker
+images, or config files. (The v1 line fetched from a `kmsUrl` at startup via
+`resolveSecrets()`; v2 carries no runtime KMS client — the sync happens outside
+the process.)
 
 ## Standards Compliance
 
@@ -433,7 +429,7 @@ What HIP-0139 §6 asks of every capability, answered for `iam`:
   protocol fixes at other roots: `/.well-known/*` (RFC 8615 — OIDC discovery,
   OAuth server metadata, JWKS) and `/login/oauth/*`, the browser authorize
   surface the `/v1/iam/oauth/authorize` 302 targets
-  (`cloud` `manifest/apps.go:63`). Every operation is typed through IAM's own
+  (`cloud` `manifest/apps.go:70`). Every operation is typed through IAM's own
   op registry, which the graft composes rather than wraps
   (`apps/iam/iam.go:19-27`).
 - **Tenancy.** IAM is the issuer, so it is the one capability whose tenant
@@ -470,22 +466,21 @@ What HIP-0139 §6 asks of every capability, answered for `iam`:
 
 ### Session Security
 
-- **Session timeout**: `inactiveTimeoutMinutes = 30` in production. Idle sessions expire after 30 minutes.
-- **Secure cookies**: Sessions use HttpOnly, Secure, SameSite=Lax cookies. The `authState` configuration pins sessions to the IAM origin.
-- **Store-backed sessions**: Sessions are rows in the one identity store, expiring on the idle timeout. (The v1 line held them in a KV side-store; there is no session cache beside `iam.db` any more.)
+- **Session lifetime**: the portal session TTL is 14 days, matching the refresh window (`iam` `internal/sessions/resolve.go:17-19`). Logout revokes the sid server-side AND expires the cookie, so a copy of the cookie taken before logout does not still resolve.
+- **Secure cookies**: sessions use HttpOnly, SameSite=Lax cookies (`internal/oidc/challenge.go:124`, `internal/sessions/cookie.go`).
+- **Store-backed sessions**: sessions are rows in the one identity store. (The v1 line held them in a KV side-store; there is no session cache beside `iam.db` any more.)
 
 ### Network Security
 
 - **TLS everywhere**: Traefik terminates TLS with Let's Encrypt certificates. HTTP is redirected to HTTPS. No plaintext traffic.
-- **CORS whitelist**: The `origin` and `originFrontend` settings restrict which origins can interact with IAM APIs. Cross-origin requests from unknown origins are rejected.
-- **Rate limiting**: Per-IP rate limiting on login endpoints prevents brute-force attacks. Failed login attempts increment a counter; after 5 failures, the IP is throttled for 15 minutes.
+- **CORS**: only a registered browser client's origin is admitted; a reverse proxy MUST NOT append CORS headers of its own beside it (`iam` `internal/cors/cors.go`).
+- **Signin throttle**: failed signins are throttled per organization or per application — `failedSigninLimit` and `failedSigninFrozenTime`, clamped to safe bounds before persistence; zero inherits the application default (`pkg/schema/organization.go:84-88`).
 - **Health endpoint isolation**: the liveness probe is unauthenticated (required for load balancer probes) but returns only a boolean status, leaking no internal state.
 
 ### Operational Security
 
-- **Error masking**: `enableErrorMask = true` in production ensures internal errors (database errors, stack traces) are never exposed to clients. Clients receive generic error messages; details are logged server-side.
-- **Admin password rotation**: The default admin password in init_data.json is `admin`. Production deployments MUST rotate this immediately. The `HANZO_INIT_USER_EMAIL` bootstrap flow creates admin users with KMS-managed passwords.
-- **Audit logging**: All authentication events (login, logout, token refresh, password change) are logged with timestamp, IP, user agent, and result. Logs are shipped to the centralized logging stack.
+- **No seeded admin**: init_data.json seeds no user at all (`iam` `internal/seed/seed.go:28-29`), so there is no default admin password to rotate. Admin accounts arrive only through the operator bootstrap upsert, under the service token.
+- **Audit logging**: authentication events are rows in IAM's own store, read back through `/v1/iam/audit-logs`.
 
 ### Authentication vs Authorization (AuthN vs AuthZ)
 
@@ -496,8 +491,7 @@ IAM handles both authentication (identity verification) and authorization (acces
 - Password login with argon2id hashing
 - Social login (GitHub, Google, etc.) via identity providers
 - WebAuthn / FIDO2 for phishing-resistant MFA
-- SAML 2.0 and CAS for enterprise SSO
-- Session management (store-backed, 30-min idle timeout)
+- Session management (store-backed; see Session Security)
 
 **Authorization (AuthZ)** — "What can you do?"
 - **OAuth scopes**: Applications request scopes (openid, profile, email, custom). IAM validates requested scopes against the application's allowed scope set and returns `invalid_scope` per RFC 6749 §4.1.2.1 if the client requests scopes not configured for its application.

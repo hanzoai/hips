@@ -52,7 +52,7 @@ Roles are exactly three — `member`, `admin`, `owner` — because IAM's members
 vocabulary is exactly three. `member` admits `read`; `admin` and `owner` admit
 both, folded because IAM assigns `owner` to whoever creates an org and a table
 matching only `admin` would refuse every founder their own org
-(`grant.go:139`). An unknown role admits nothing.
+(`grant.go:128-129`). An unknown role admits nothing.
 
 The predicate: subject may act iff some grant it holds has a scope covering the
 target and a role admitting the verb, evaluated at the current instant

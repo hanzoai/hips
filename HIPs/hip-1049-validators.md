@@ -65,13 +65,13 @@ exist without its keys.
 
 Key material MUST NOT be returned, logged or stored in the clear. It seals under an
 org-scoped coordinate, and the reader that materialises it into a node is admitted
-only for that same org (`apps/validators/validators.go:613`).
+only for that same org (`apps/validators/validators.go:621-624`).
 
 ### 3. Registration is queued, never submitted
 
 The pipeline ENQUEUES an owner-gated registration and MUST NOT submit it to any
 chain. The owner co-signs out of band, and the stake weight is set at co-sign
-time — never derived from the NFT (`apps/validators/validators.go:392-400`).
+time — never derived from the NFT (`apps/validators/validators.go:412-419`).
 
 This is the line between "provisioning a node" and "committing stake". The first
 is automatable; the second is a decision a person makes.
@@ -88,7 +88,7 @@ reserved word cannot escape the prefix (`apps/validators/validators_test.go:332`
 
 With no cluster reachable, the slot is still claimed, the keys are still sealed and
 the registration is still queued; the node is reported PENDING
-(`apps/validators/validators.go:433`). A provisioner that cannot provision MUST
+(`apps/validators/validators.go:444-448`). A provisioner that cannot provision MUST
 report that rather than fake a success.
 
 ### 6. Tenancy, and the two 404s
@@ -96,7 +96,7 @@ report that rather than fake a success.
 The org is the validated principal, never a client header, and every store query
 filters on it. A slot held by ANOTHER org is a 404 on the read path — the same
 answer as a slot nobody holds — so the surface cannot be used to probe which slots
-are taken (`apps/validators/validators.go:521`). On the WRITE path a slot held by
+are taken (`apps/validators/validators.go:531`). On the WRITE path a slot held by
 another org is a conflict, which discloses only what the on-chain ownership read
 already established for this caller.
 
@@ -127,12 +127,19 @@ challenges, tenant-isolated on the `org` column of every scoped query
 (`apps/validators/store.go:25-30`). The staking keys are NOT in it — they seal
 into the key plane, which is §2.
 
-The capability is FREE — no meter, no debit through any plane
-(`plugin/validators/main.go`, `Price: cloud.Free`); what a claim costs is the
-NFT the wallet already holds, and stake is committed only at the owner's
+The capability is METERED (`plugin/validators/main.go:27`,
+`Price: cloud.Metered`), and the billed act is the MATERIALIZATION — one
+validator node applied to the cluster — not the claim: the NFT makes a caller
+eligible, but eligibility is not settlement, and the node runs on rented
+capacity. The fee is `VALIDATORS_FEE_CENTS[_NODE]`, resolving through the
+fleet's ordinary provision default; it is authorized BEFORE the CR is applied
+and debited only after one actually was, so a claim that stays pending — and
+a reprovision of a slot the org already holds — bills nothing
+(`apps/validators/meter.go`). Stake is still committed only at the owner's
 co-sign (§3). It publishes no event, so a customer's webhooks receive nothing
 from it, and it emits nothing to observability beyond the request span every
-route already gets. Its stage is `ga`. It derives from no outside project.
+route already gets. Its stage is `beta` (`manifest/apps.go:277`,
+`Stage: Beta`). It derives from no outside project.
 
 ### 9. One parse rule per value
 

@@ -119,7 +119,9 @@ one by id), `/v1/security/rules` and `/v1/security/health`
 
 It publishes no event, so a customer's webhooks receive nothing from it; the
 record of a scan is §5's audit entry. Beyond the request span every route
-already gets it emits nothing to observability. Its stage is `ga`. The
+already gets it emits nothing to observability. Its stage is `beta`
+(`manifest/apps.go:338`, `Stage: Beta`), so it is reached by flag until
+promoted. The
 detection engine derives from no outside project — it is a dependency-free
 leaf over the standard library, no scanner binary embedded or shelled out to
 (`apps/security/detect/detect.go:1-13`).

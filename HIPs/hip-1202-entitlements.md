@@ -89,7 +89,7 @@ publishes no events on the bus and delivers nothing to customer webhooks.
 Beyond the request span, it emits its mount line and one audit-shaped log per
 mutation — org, add, remove, whether SuperAdmin, and the actor
 (`apps/entitlements/entitlements.go:306`). Its stage is `ga` — the manifest
-row (`manifest/apps.go:359`) carries no stage.
+row (`manifest/apps.go:366`) carries no stage.
 
 ### §6 Upstream
 

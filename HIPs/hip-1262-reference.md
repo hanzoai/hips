@@ -68,7 +68,7 @@ data is the same version whoever fetched it, and a decision records one string
 an auditor resolves back to a publisher, a licence and a date. A set that has
 never loaded MUST REFUSE rather than answer "not listed"
 (`apps/reference/resolve.go:157`), and a set whose source needs a licence we do
-not hold is declared as a seam that refuses (`apps/reference/set.go:117-119`).
+not hold is declared as a seam that refuses (`apps/reference/set.go:93-95`).
 
 Freshness rides every answer: the version, when its oldest contributing
 publisher was current — the oldest, because a set is exactly as fresh as its
@@ -111,7 +111,7 @@ as a seam that refuses.
 ## Rationale
 
 The alternative was to file these operations under the model-serving plane, and
-an earlier cut did exactly that (`manifest/apps.go:224-231`): lookup data in a
+an earlier cut did exactly that (`manifest/apps.go:231-238`): lookup data in a
 live product with different customers, where its growth reads as that product's
 growth. The other alternative — folding into `risk` — fails on the store rule:
 this capability owns two stores of its own, and the baseline's no-tenant-column

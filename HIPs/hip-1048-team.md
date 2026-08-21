@@ -51,7 +51,7 @@ and neither can address the other's.
 The membership rows ARE the authorization. On the identity lane nothing about a
 workspace is signed, so what a caller may touch is decided per request against
 those rows and never by a claim the caller carries
-(`apps/team/account.go:958-962`).
+(`apps/team/account.go:971-975`).
 
 ### 2. Two lanes, and one of them carries no credential out
 
@@ -136,15 +136,17 @@ door — and `/collaborator`, the live document lane, app-level because the
 front derives its WebSocket address from an origin, not from the `/v1/team`
 base (`manifest/apps.go:339-346`). Operations are typed by default; the closed
 exception list names each one that cannot be a value, with its wire fact —
-the two WebSocket upgrades, the account plane's JSON-RPC envelope, the two
+the two WebSocket upgrades, the account plane's JSON-RPC envelope, the
+cookie write whose unparseable body is ignored rather than 400'd, the two
 browser redirects, the embedded billing page's bytes, and the file plane's
 multipart-in and raw-bytes-out (`apps/team/typed_wire_test.go:152-178`).
 
 ### 9. Store, money, events, stage, upstreams
 
 The store this capability owns is the workspace store §1 describes: one
-SQLite file per org, encrypted at rest by a handle the caller opens, holding
-workspaces, memberships and the roster — plus the workspace blob store §4
+encrypted SQLite file for the deployment (`cek.Open(namespace.System(),
+"account", dir)`, `apps/team/account_store.go:83`), org isolation the column
+§1 states, holding workspaces, memberships and the roster — plus the workspace blob store §4
 bounds. It is FREE: no meter, no debit through any plane (`plugin/team/main.go`,
 `Price: cloud.Free`); §5's login check is a licence read, not a meter. It
 publishes no event, so a customer's webhooks receive nothing from it, and it
@@ -163,8 +165,8 @@ faster and needs no store lookup. It is also stale by construction: a member
 removed from a workspace keeps their claim until it expires. Rows read per request
 cost a query and revoke immediately.
 
-Holding one file per org rather than one per workspace keeps a single writer per
-deployment and lets the org column carry isolation. The store is encrypted at rest
+Holding one file for the deployment rather than one per workspace keeps a
+single writer and lets the org column carry isolation. The store is encrypted at rest
 by a handle the caller opens, rather than by the object mapper opening its own —
 the mapper's own configuration carries no master key, so letting it open the file
 would write every workspace, membership and display name as plaintext

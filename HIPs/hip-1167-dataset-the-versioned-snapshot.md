@@ -93,8 +93,8 @@ slash in the document is a trailing slash in every generated client.
    is read off the FIRST `/v1` segment of a path and off nothing else, so an
    address is a product declaration: filed anywhere else, these rows are filed
    into another product, and the operation-count ratchet reads the arrival as
-   growth because it refuses a shrink and only a shrink. `apps/dataset/
-   address_test.go` holds that as a gate rather than a recollection. The pair
+   growth because it refuses a shrink and only a shrink; `address_test.go` in
+   this package holds that as a check rather than a recollection. The pair
    `/v1/risk dataset` in cloud's `openapi/misfiled.txt` therefore closes by the
    decision this section makes — one product, four capabilities, disjoint leaves
    — and MUST NOT close by moving these seven operations to a second top-level
@@ -123,16 +123,18 @@ would either bill the wrong account or key the wrong tenant.
 
 ### §5 Money
 
-Metered, and the priced act is reading the source, not writing the register.
+Metered, and the unit is the ACT that reads the source, never the row.
 
-- Declaring a version costs nothing: it is a register write.
-- Materialising costs a flat fee for ADMISSION to a bounded job. The bound is
-  the product, so the price is for the bound and not for the rows.
-- Lineage costs less than materialising and more than nothing: it re-runs the
-  same census over the same window of the same table for the same tenant, and
-  stops there. A free re-run of the plane's most expensive statement is a free
-  warehouse scan with a verb in front of it.
-- Listing, describing, exporting and disposing cost nothing.
+- Declaring a version is free: it is a register write (`declareCost`, zero).
+- Materialising is ten cents (`materializeCost`), a flat fee for ADMISSION to a
+  bounded job. The bound is the product, so the price is for the bound and not
+  for the rows.
+- Lineage is two cents (`lineageCost`) — below a materialisation because it
+  re-runs the same census over the same window of the same table for the same
+  tenant and then stops, writing nothing; above zero because a free re-run of
+  the plane's most expensive statement is a free warehouse scan with a verb in
+  front of it.
+- Listing, describing, exporting and disposing are free.
 
 The gate runs before the act and the debit lands after it, both through the one
 shared `cloud.ResourceMeter` under the product label `dataset`. A gate refusal
@@ -163,7 +165,8 @@ could not be asked.
 
 ### §8 Stage
 
-`ga`. The manifest row declares no stage, and absent is `ga` (HIP-0139 §8).
+`beta`. The manifest row declares it (`manifest/apps.go:270`, `Stage: Beta`),
+so the plane is reached by flag until promoted (HIP-0139 §8).
 
 ### §9 Upstream
 
@@ -196,8 +199,8 @@ capabilities of their own with their own stores (HIP-1046).
 
 Against `/v1/ml`: that is the model-SERVING plane, with its own consumers. The
 rows here feed a model that learns in-process from the org's own events and is
-not served there, so these operations do not belong to it — the pull is real
-enough that a gate holds the address rather than a convention.
+not served there, so these operations do not belong to it. The pull towards that
+address is real enough that a test holds this one, rather than a convention.
 
 ## Rationale
 

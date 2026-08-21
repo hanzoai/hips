@@ -39,7 +39,7 @@ as in RFC 2119.
 
 The app opens NO store of its own. Its store is the same `*audit.Recorder` the
 request middleware writes and the operator view reads, handed through the
-composition's deps (`apps/auditlog/auditlog.go:70` — "this subsystem opens NO
+composition's deps (`apps/auditlog/auditlog.go:61` — "this subsystem opens NO
 second store"). The chain is only tamper-evident if records are appended in a
 strict, gapless total order with each record's PrevHash the preceding record's
 Hash, which demands a single serializing writer — so the primary is one embedded
