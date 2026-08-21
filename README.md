@@ -258,7 +258,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1188](./HIPs/hip-1188-bots-watched-run.md) | Bots — The Watched Run | Standards Track | Core | Draft |
 | [HIP-1189](./HIPs/hip-1189-web3-chain-access.md) | Web3 — Chain Access | Standards Track | Core | Draft |
 | [HIP-1190](./HIPs/hip-1190-analytics-product-event.md) | Analytics — The Product Event | Standards Track | Core | Draft |
-| [HIP-1197](./HIPs/hip-1197-brain-the-named-corpus.md) | Brain — The Named Corpus | Standards Track | Core | Draft |
 | [HIP-1200](./HIPs/hip-1200-account.md) | Account — The Caller's Own Surface | Standards Track | Application | Draft |
 | [HIP-1201](./HIPs/hip-1201-admission.md) | Admission — Launch Control | Standards Track | Platform | Draft |
 | [HIP-1202](./HIPs/hip-1202-entitlements.md) | Entitlements — What an Org May Run | Standards Track | Platform | Draft |
@@ -359,9 +358,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 119 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 118 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 117 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 118 | Capability |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 117 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 116 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
