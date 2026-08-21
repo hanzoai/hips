@@ -182,8 +182,11 @@ section where the template has one:
 - what an attacker gets from the wrong implementation.
 
 It does not restate §1–§5, and it names no count a gate already measures.
-One capability, one HIP: a HIP that declares two names is two specifications
-in one file and fails `coverage.py` CV005.
+One capability, one HIP: two HIPs declaring one capability fail
+`coverage.py` CV005, and one HIP declaring two capabilities is two
+specifications in one file — permitted only while the vocabulary carries
+both names for one thing (a merge in flight, §2.4); otherwise the second
+capability gets its own HIP.
 
 The HIP is also where a change to the capability is proposed. The order is
 spec first: amend the HIP, land the code that implements it, and every
