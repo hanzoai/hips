@@ -152,6 +152,10 @@ CHECKS = [
     ("PL002", "the spec depends on a repository in the private org"),
 ]
 
+# Where the projection lives. README holds more than one table of HIP links and
+# only this section is the index; see index_check.
+INDEX_HEADING = "## HIP Index"
+
 
 class Report:
     def __init__(self) -> None:
@@ -389,8 +393,23 @@ def lint() -> Report:
 
 
 def index_check(files, meta, rep: Report) -> None:
-    """README's table is a projection of HIPs/. Prove it still projects."""
+    """README's table is a projection of HIPs/. Prove it still projects.
+
+    Only the index. README carries a second table of HIP links -- the reading
+    order, the same corpus in the order it is learnable, whose columns are a
+    link, a count and a title. Reading the whole file matched those rows too and
+    compared a required-by count against a `type:`, so the projection check
+    failed on a section that is not the projection. The index starts at its own
+    heading and ends at the next one.
+    """
     src = open(README, encoding="utf-8").read()
+    start = src.find(INDEX_HEADING)
+    if start == -1:
+        rep.error("IX001", README, f"has no {INDEX_HEADING!r} section")
+        return
+    rest = src[start + len(INDEX_HEADING):]
+    nxt = re.search(r"\n## [^#]", rest)
+    src = rest[: nxt.start()] if nxt else rest
     rows = re.findall(
         r"^\|\s*\[HIP-(\d{4})\]\(\./HIPs/([^)]+)\)\s*\|([^|]*)\|([^|]*)\|([^|]*)\|([^|]*)\|",
         src, re.M)
