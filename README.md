@@ -251,7 +251,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1166](./HIPs/hip-1166-product-search-and-vector-inventory.md) | Product — Search and Vector Inventory | Standards Track | Core | Draft |
 | [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) | Dataset — The Versioned Snapshot | Standards Track | Core | Draft |
 | [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | visor — Compute You Rent | Standards Track | Infrastructure | Draft |
-| [HIP-1173](./HIPs/hip-1173-zt-the-zero-trust-overlay.md) | zt — The Zero Trust Overlay | Standards Track | Infrastructure | Draft |
+| [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) | Network — The Zero Trust Overlay | Standards Track | Infrastructure | Draft |
 | [HIP-1174](./HIPs/hip-1174-automations-workflows-that-run-themselves.md) | automations — Workflows That Run Themselves | Standards Track | Core | Draft |
 | [HIP-1180](./HIPs/hip-1180-link-account-registry.md) | Link — The Account Registry | Standards Track | Core | Draft |
 | [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) | Plan — The Tier Catalog | Standards Track | Core | Draft |
@@ -419,7 +419,7 @@ One capability, one HIP (HIP-0139). 117 of them, grouped as `capabilities.yaml` 
 
 **Platform** — the cloud fabric — deploy · provision · route · host
 
-[HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1173](./HIPs/hip-1173-zt-the-zero-trust-overlay.md) `zt` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects`
+[HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) `network` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects`
 
 **Applications** — the user-facing surfaces built on all of the above
 
