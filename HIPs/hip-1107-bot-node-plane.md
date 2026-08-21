@@ -20,7 +20,7 @@ connected nodes and invokes commands on one, authorized once at the socket. It
 is implemented in `hanzoai/cloud` at `apps/bot`. Its manifest row is three
 leaves — connect, nodes, peer/invoke — beneath a parent prefix another app still
 routes; that sharing is a ledgered defect the sibling app closes by vacating,
-never by alias (`manifest/apps.go:380` and the `bots` row's comment).
+never by alias (`manifest/apps.go:387` and the `bots` row's comment).
 
 ## Motivation
 
@@ -83,11 +83,10 @@ removing the browser category entirely is the gate.
 ### §5 Money, events, telemetry, stage, upstream
 
 Free (`plugin/bot/main.go`, `cloud.Free`). It publishes nothing to the bus.
-Beyond the request span it emits structured log lines only. Stage `beta`: an
-edge-device vertical rather than the self-service core, reached by flag while
-the command-policy surface settles — the manifest row carries no stage field
-yet, so the declaration here is what the row inherits when stage lands in
-`manifest.App`. It derives from no third-party OSS upstream; the socket wire is
+Beyond the request span it emits structured log lines only. Stage `beta`
+(`manifest/apps.go:387`, `Stage: Beta`): an edge-device vertical rather than
+the self-service core, reached by flag while the command-policy surface
+settles. It derives from no third-party OSS upstream; the socket wire is
 protocol version 3 of the `@hanzo/bot` TypeScript gateway, which Hanzo also
 maintains, implemented here frame-for-frame (`apps/bot/ws.go`).
 

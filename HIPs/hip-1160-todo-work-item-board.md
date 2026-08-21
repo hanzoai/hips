@@ -55,7 +55,7 @@ beside the old rows. The rows keep the spelling they were written under.
 
 ### §2 The address
 
-Every route is under `/v1/todo` (`manifest/apps.go:170`). Twelve operations;
+Every route is under `/v1/todo` (`manifest/apps.go:177`). Twelve operations;
 nine are typed. The three that are not — POST, PATCH and DELETE on
 `/v1/todo/projects[/{key}]` — answer a bare 405 with prose declared beside the
 route (`apps/todo/todo.go`): project lifecycle is named at the forge, and an
@@ -86,7 +86,7 @@ as PATCH. A claim on an issue someone else holds is refused, not silently won.
 ### §4 Money
 
 The surface declares `cloud.Metered` (`plugin/todo/main.go`) and is listed in
-the standing gate (`spend.go:301`, "per-project/issue fee"), so a write
+the standing gate (`spend.go:318`, "per-project/issue fee"), so a write
 requires standing before it runs; reads are never billable. The fee itself
 defaults to zero — charging per issue is the wrong product — and an operator
 prices it per deployment via `CLOUD_TODO_FEE_CENTS`, debited through the
@@ -108,9 +108,9 @@ rides `github.com/hanzoai/sqlite` (MIT / Apache-2.0 dual).
 ### §7 Stage
 
 `beta`: a vertical application (a project board), not part of the self-service
-agentic-OS core. The manifest row does not yet carry a stage field, so today
-the operations serve as `ga` does; the declaration here is what the row
-inherits when stage lands in `manifest.App` (HIP-0139 §8).
+agentic-OS core. The manifest row (`manifest/apps.go:177`) does not yet
+declare it, so today the operations serve as `ga` does; the row's
+`Stage: Beta` is the one edit that closes the drift (HIP-0139 §8).
 
 ## Rationale
 

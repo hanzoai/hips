@@ -47,8 +47,8 @@ here — it stays the commerce-configured domain of the scoped limiter.
 
 ### §2 The addresses
 
-Three typed operations, the whole surface (`apps/gateway/gateway.go:107-113`,
-`manifest/apps.go:358`): `GET /v1/gateway/config`, `PUT /v1/gateway/config`,
+Three typed operations, the whole surface (`apps/gateway/gateway.go:104-110`,
+`manifest/apps.go:365`): `GET /v1/gateway/config`, `PUT /v1/gateway/config`,
 and `GET /v1/gateway/traffic`, which reports who is calling the org's API right
 now.
 

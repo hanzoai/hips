@@ -140,7 +140,8 @@ only.
 
 ### §7 Stage
 
-`ga`. The manifest row declares no stage, and absent is `ga` (HIP-0139 §8).
+`beta`. The manifest row declares `Stage: Beta` (`manifest/apps.go:399`), so
+the capability is reached by flag until the launch operation in §2 exists.
 
 ### §8 Upstream
 

@@ -57,7 +57,7 @@ handler.
 
 ### §2 The addresses
 
-Twenty-one paths, every one under `/v1/company` (`manifest/apps.go:426`,
+Twenty-one paths, every one under `/v1/company` (`manifest/apps.go:433`,
 `plugin/company/openapi.json`): the machine's edges (`/structure`, `/founders`,
 `/kyc`, `/kyc/decision`, `/kyc/refresh`, `/payment`, `/documents`, `/esign`,
 `/esign/complete`, `/genesis`, `/advance`, `/skip`), the import pair, the
@@ -106,8 +106,9 @@ formation is never blocked on an unreachable chain.
 
 ### §5 Price, events, emission, stage, upstream
 
-The route surface is **free**, in those words: `Price: cloud.Free`
-(`plugin/company/main.go:21`). The one charge is the one-time formation fee —
+The capability is **metered**: `Price: cloud.Metered`
+(`plugin/company/main.go:27`; `spend.go:294`) — the surface moves a four-figure
+sum, so the edge requires standing. The one charge is the one-time formation fee —
 99900 cents (`formationFeeCents`, `apps/company/providers.go:146`; operator
 override `CLOUD_COMPANY_FEE_CENTS`, `apps/company/company.go:290-297`) — taken
 at `POST /v1/company/payment` through the charge seam onto the org's own ledger.
@@ -121,9 +122,8 @@ nothing from it — provider completion arrives INBOUND at `/esign/complete` and
 request span every route gets.
 
 The stage is `beta` (HIP-0139 §8): a vertical application rather than core, so
-an org reaches it by the `company` flag. The manifest row does not yet carry a
-stage field, so today the operations serve as `ga` does; this declaration is
-what the row inherits when stage lands in `manifest.App`. It derives from no OSS upstream — the
+an org reaches it by the `company` flag. The manifest row declares it
+(`manifest/apps.go:433`, `Stage: Beta`). It derives from no OSS upstream — the
 identity and filing providers are hand-written clients behind the seams
 (`apps/company/providers.go`, `apps/company/filing.go`).
 

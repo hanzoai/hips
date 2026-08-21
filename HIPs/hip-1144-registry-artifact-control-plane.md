@@ -89,7 +89,7 @@ that refuses it MUST surface 503 — a deployment fault, never a caller-auth bug
 ### Stage
 
 `ga`: the registries are developer-tools core of the self-service cloud, and
-the manifest row (`manifest/apps.go:414`) declares no stage.
+the manifest row (`manifest/apps.go:421`) declares no stage.
 
 ### Upstream
 

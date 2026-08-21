@@ -78,7 +78,9 @@ emits nothing beyond the request span every route gets.
 ### §5 Stage
 
 `beta`: a vertical application — a support product an org runs, not a core
-plane.
+plane. The manifest row (`manifest/apps.go:182`) does not yet declare it, so
+today the operations serve as `ga` does; the row's `Stage: Beta` is the one
+edit that closes the drift (HIP-0139 §8).
 
 ### §6 Upstream
 

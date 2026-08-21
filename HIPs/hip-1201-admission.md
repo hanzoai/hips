@@ -53,7 +53,7 @@ the flags capability; that pair is carried by `hanzoai/cloud`
 this is a misfiled route, never a split question.
 
 The waitlist join API (`/v1/waitlist`) is served by `base`
-(`manifest/apps.go:68`) and is not this capability's.
+(`manifest/apps.go:75`) and is not this capability's.
 
 ### §2 Store
 
@@ -89,7 +89,7 @@ The capability is free (`plugin/admission/main.go:26`, `cloud.Free`). It
 publishes no events on the bus and delivers nothing to customer webhooks.
 Beyond the request span, it emits its readiness line and warn-level
 degradation logs (`apps/admission/waitlist.go:244-248,354`). Its stage is
-`ga` — the manifest row (`manifest/apps.go:408`) carries no stage.
+`ga` — the manifest row (`manifest/apps.go:415`) carries no stage.
 
 ### §5 Upstream
 

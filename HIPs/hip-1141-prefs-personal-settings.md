@@ -82,7 +82,7 @@ request span every route gets.
 ### Stage
 
 `ga`: the personal half of the identity core — every signed-in surface reads
-it — and its manifest row (`manifest/apps.go:355`) declares no stage.
+it — and its manifest row (`manifest/apps.go:362`) declares no stage.
 
 ### Upstream
 

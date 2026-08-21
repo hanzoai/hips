@@ -47,7 +47,7 @@ id → org routing table, the single deliberately cross-tenant piece.
 
 ### §2 The addresses
 
-Every route is under `/v1/dataroom` (`manifest/apps.go:329`). Ten routes are
+Every route is under `/v1/dataroom` (`manifest/apps.go:336`). Ten routes are
 typed operations. Seven stay raw, each for a reason in the wire
 (`apps/dataroom/dataroom.go:159-163`): the upload takes the file itself as the
 raw body, the two `/file` routes answer a byte stream, and the four
@@ -75,9 +75,9 @@ every route gets.
 
 ### §5 Stage
 
-dataroom is `beta`: a vertical application, not the agentic-OS core. Its
-manifest row predates the stage field and reads `ga` by default (HIP-0139 §8);
-this HIP declares the stage the row MUST carry.
+dataroom is `beta`: a vertical application, not the agentic-OS core. The
+manifest row declares it (`manifest/apps.go:336`, `Stage: Beta`), so the
+capability is reached by flag (HIP-0139 §8).
 
 ### §6 Upstream
 

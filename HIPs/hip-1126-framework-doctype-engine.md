@@ -51,7 +51,7 @@ isolation enforced by the engine's own permission calculus.
 
 ### §2 The addresses
 
-Every route is under `/v1/framework` (`manifest/apps.go:173`). DocType
+Every route is under `/v1/framework` (`manifest/apps.go:180`). DocType
 definition, roles, modules, the summary, document reads, submit and cancel are
 typed operations; the DELETEs answer no body and carry no response schema. The
 two document writes — `POST /v1/framework/{doctype}` and
@@ -83,8 +83,11 @@ observability beyond the request span every route gets.
 
 ### §5 Stage
 
-framework is `ga`: the data core the application lanes stand on, part of the
-agentic OS rather than a vertical application.
+framework is `beta` — the manifest row declares `Stage: Beta`
+(`manifest/apps.go:180`), so it is reached by flag while the raw document
+writes in §2 wait on the registry properties that can type them. It is the
+data core the application lanes stand on, so `ga` is where it is headed; the
+promotion is the one manifest edit HIP-0139 §8.4 names.
 
 ### §6 Upstream
 

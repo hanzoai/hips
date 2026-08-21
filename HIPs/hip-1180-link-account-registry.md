@@ -179,9 +179,11 @@ history survives a log-out.
 
 ### §7 Stage
 
-`ga`. The manifest row declares no stage, and absent is `ga` (HIP-0139 §8). It is
-the self-service cloud's answer to "which AI accounts do I have", which the
-console renders on first load.
+`beta`. The manifest row declares `Stage: Beta` (`manifest/apps.go:172`), so
+the capability is reached by flag (HIP-0139 §8). It is the self-service cloud's
+answer to "which AI accounts do I have", which the console renders on first
+load, so `ga` is where it is headed; the promotion is the one manifest edit
+HIP-0139 §8.4 names.
 
 ### §8 Upstream
 

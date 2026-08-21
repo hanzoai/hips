@@ -47,29 +47,15 @@ This is table stakes for web applications. But AI systems introduce a category o
 
 3. **RAG strategy comparison**: Retrieval-augmented generation has multiple knobs -- chunk size, overlap, embedding model, reranker, top-k. Comparing strategies requires running parallel pipelines and measuring answer quality. This is a multi-armed bandit problem, not a simple on/off switch.
 
-4. **Cost optimization experiments**: Route 20% of traffic to a cheaper model. If quality metrics remain within 5% of the baseline, promote the cheaper model for that traffic segment. This saves real money -- at 10M requests/month, a $0.001/request savings is $10K/month.
+4. **Cost optimization experiments**: Route 20% of traffic to a cheaper model. If quality metrics remain within the baseline, promote the cheaper model for that traffic segment.
 
-No existing feature flag platform handles these use cases natively. LaunchDarkly, Split, Unleash, and Flagsmith all treat flags as configuration switches. They support A/B tests on UI elements ("button color", "pricing page layout"). None of them understand tokens, latency percentiles, model quality scores, or cost-per-inference.
-
-## Design Philosophy
-
-### Why Custom Over LaunchDarkly
-
-LaunchDarkly is the market leader in feature flags. It is also a SaaS product that charges per Monthly Active User (MAU). Pricing starts at $10/month per seat (Starter) and scales to enterprise contracts in the six-figure range. At Hanzo's scale -- multiple products, millions of AI inference requests, thousands of flag evaluations per second -- LaunchDarkly would cost $50K-200K/year.
-
-More critically, LaunchDarkly's evaluation model is opaque. Flags are defined in their cloud dashboard. Evaluation happens either client-side (their SDK polls their CDN for flag state) or server-side (their SDK maintains a streaming connection to their service). In both cases, **flag evaluation depends on LaunchDarkly's infrastructure**. If their CDN has an outage, your flags stop updating. If their streaming service drops connections, your server-side evaluations stale.
-
-For AI inference routing, stale flags mean requests routed to the wrong model -- potentially a model that has been deprecated or a cost tier that exceeds budget. This is not acceptable for production AI infrastructure.
-
-**Unleash** is open-source (Apache 2.0) and self-hostable. It solves the data sovereignty problem. However, Unleash's evaluation engine is a Node.js/Java application backed by SQL. It does not support AI experiment types, continuous metric analysis, or integration with inference gateways. We would need to build those features on top of Unleash, effectively maintaining a fork with custom experiment logic, custom metric pipelines, and custom SDK extensions. At that point, we are building a custom system with Unleash's data model -- a worse starting point than building from first principles.
-
-**Decision**: Build Hanzo Flags as our own engine — a stateless, PostHog-compatible evaluator compiled into the cloud binary, definitions in each org's own encrypted SQLite, native support for AI experiment types. Total cost: infrastructure we already operate. Zero per-seat or per-MAU licensing, and no evaluation tier that can go stale.
+General-purpose flag platforms treat flags as configuration switches for UI elements, and their evaluation rides a hosted tier — a CDN poll or a streaming connection — that can go stale. For AI inference routing, a stale flag is a request routed to a deprecated model or a cost tier over budget. Hence the design: a stateless, PostHog-compatible evaluator compiled into the cloud binary, definitions in each org's own encrypted SQLite, with no evaluation tier that can go stale.
 
 ## Specification
 
 ### The shipped surface
 
-**flags** (`manifest/apps.go:47`) serves seven operations under `/v1/flags`
+**flags** (`manifest/apps.go:54`) serves seven operations under `/v1/flags`
 (`apps/flags/routes.go:47-60`): `POST /v1/flags` and `POST /v1/flags/decide`
 are the SAME evaluate handler — one verdict function, two spellings for the
 PostHog-shaped clients; `GET /v1/flags/defs`, `GET|PUT|DELETE
@@ -91,7 +77,7 @@ engine (`apps/flags/flags.go:21-27`).
 
 Stated for HIP-0139 §6: the capability is **free**, said in those words
 (`plugin/flags/main.go:21` — `Price: cloud.Free`), and `/v1/flags/` is on the
-spend gate's never-refuse list (`spend.go:433`) because the kill switch must be
+spend gate's never-refuse list (`spend.go:453`) because the kill switch must be
 observable by an unpaid org. It owns the definition store above and no other.
 It publishes **no events** on the bus, so a customer's webhooks (HIP-1310)
 receive nothing from it, and it emits nothing to observability beyond the
@@ -390,9 +376,8 @@ capability-local exporter.
 4. [OpenFeature Specification](https://openfeature.dev/specification/)
 5. [OpenFeature Go SDK](https://github.com/open-feature/go-sdk)
 6. [Thompson Sampling for Multi-Armed Bandits](https://arxiv.org/abs/1707.02038)
-7. [Bayesian A/B Testing at VWO](https://vwo.com/downloads/VWO_SmartStats_technical_whitepaper.pdf)
-8. [Hanzo Flags Repository](https://github.com/hanzoai/flags)
-9. [HIP-1311: Experiments — The A/B Plane](./hip-1311-experiments-the-ab-plane.md)
+7. [Hanzo Flags Repository](https://github.com/hanzoai/flags)
+8. [HIP-1311: Experiments — The A/B Plane](./hip-1311-experiments-the-ab-plane.md)
 
 ## Copyright
 

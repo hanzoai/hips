@@ -47,7 +47,7 @@ cluster it reads, and nothing needs to.
 ### §2 The addresses
 
 Every route is under `/v1/deploy`, enumerated as explicit prefixes in the
-manifest row (`manifest/apps.go:168`). The fleet reads — applications, detail,
+manifest row (`manifest/apps.go:175`). The fleet reads — applications, detail,
 resource tree, revisions, clusters, projects, settings, gitops, version — are
 typed. The raw routes are raw because their answers cannot be values:
 `stream/applications` and the streamed resource tree are event streams;

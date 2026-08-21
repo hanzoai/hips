@@ -81,9 +81,9 @@ emits nothing to observability beyond the request span every route gets.
 
 ### §6 Stage
 
-esign is `beta`: a vertical application, not the agentic-OS core. Its manifest
-row predates the stage field and reads `ga` by default (HIP-0139 §8); this HIP
-declares the stage the row MUST carry.
+esign is `beta`: a vertical application, not the agentic-OS core. The manifest
+row declares it (`manifest/apps.go:402`, `Stage: Beta`), so the capability is
+reached by flag (HIP-0139 §8).
 
 ### §7 Upstream
 

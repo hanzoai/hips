@@ -23,7 +23,7 @@ The registry accepts six runtimes today — `node`, `python`, `go`, `deno`, `bas
 
 AI-specific triggers connect functions to the broader Hanzo infrastructure: model inference events from the LLM Gateway (HIP-0004), webhook delivery, scheduled retraining cycles, data pipeline stages from Hanzo Stream (HIP-0030), and async task invocation from Hanzo MQ (HIP-0055). Functions can also be deployed to the Edge (HIP-0050) for latency-sensitive invocation without GPU requirements.
 
-**Serving**: `apps/functions` in `hanzoai/cloud`, at `/v1/functions` (`manifest/apps.go:169`) — the registry and invoke door ship inside the cloud binary (`plugin/functions`), not as a standalone service with its own ports, image or `hanzo-fn` binary; the CLI is the generated `hanzo functions` command group (HIP-1030)
+**Serving**: `apps/functions` in `hanzoai/cloud`, at `/v1/functions` (`manifest/apps.go:176`) — the registry and invoke door ship inside the cloud binary (`plugin/functions`), not as a standalone service with its own ports, image or `hanzo-fn` binary; the CLI is the generated `hanzo functions` command group (HIP-1030)
 
 ## Motivation
 
@@ -195,7 +195,7 @@ org column is enforced on every query, and the billing subject is
 
 **Meter.** Functions is **metered** — the plugin declares `Price:
 cloud.Metered` (`plugin/functions/main.go:21`), so a write to this surface
-requires commercial standing before it runs (`spend.go:290`). Two debits land
+requires commercial standing before it runs (`spend.go:302`). Two debits land
 on the caller's org ledger through the ONE shared `cloud.ResourceMeter`, and
 either is independently free at a zero rate:
 

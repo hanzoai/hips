@@ -48,7 +48,7 @@ read (`apps/world/fetch.go`).
 
 ### §2 The address
 
-Every route is under `/v1/world` (`manifest/apps.go:375`): six operations,
+Every route is under `/v1/world` (`manifest/apps.go:382`): six operations,
 five typed. `GET /v1/world/stream` is the one declared route — an SSE stream
 is not a value, so it carries prose beside the wire fact
 (`apps/world/stream.go:120`). Two reads are public by design and carry no
@@ -95,9 +95,9 @@ frontend's list (`apps/world/allowlist.go`). Persistence is
 ### §7 Stage
 
 `beta`: a vertical application (an intelligence monitor), not part of the
-self-service agentic-OS core. The manifest row does not yet carry a stage
-field, so today the operations serve as `ga` does; the declaration here is
-what the row inherits when stage lands in `manifest.App` (HIP-0139 §8).
+self-service agentic-OS core. The manifest row declares it
+(`manifest/apps.go:382`, `Stage: Beta`), so the capability is reached by flag
+(HIP-0139 §8).
 
 ## Rationale
 

@@ -78,7 +78,7 @@ cents cannot hold. A failed call the vendor billed for is still debited, because
 that money has already left; a refusal that cost nothing debits nothing. A margin
 MUST NOT be added here — margin belongs in the plan a customer buys, not in the
 proxy that spends. `seo` is in the standing list the balance gate reads
-(`spend.go:298`).
+(`spend.go:314`).
 
 ### Events, observability, stage
 

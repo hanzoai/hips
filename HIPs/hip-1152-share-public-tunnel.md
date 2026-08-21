@@ -68,10 +68,19 @@ fabricates a share or a token. An unreachable controller is 502.
 
 ### Money, events, observability, stage
 
-It is free — the surface declares `cloud.Free` (`plugin/share/main.go`). It
-publishes nothing on the bus and emits nothing beyond the request span every
-route gets. The stage is `ga`: it is developer tooling in the core loop, the
-server half of the `hanzo share` command.
+It is metered (`plugin/share/main.go:28`, `Price: cloud.Metered`;
+`spend.go:313`), and the billed act is the provision: `enable` creates one
+tunnel account on the fabric using the platform's credential, authorized
+before the fabric is asked and debited once at `SHARE_FEE_CENTS`
+(`apps/share/meter.go`). The unit is the account, once per org — enable is
+idempotent, so a repeat call hands back the same credential unbilled, and
+reading shares back is free whatever the balance. The bytes themselves never
+cross this process, so there is no traffic here to meter. It publishes
+nothing on the bus and emits nothing beyond the request span every route
+gets. The stage is `beta`: the manifest row declares it
+(`manifest/apps.go:335`, `Stage: Beta`); it is developer tooling in the core
+loop, the server half of the `hanzo share` command, reached by flag while
+the fabric deployment settles.
 
 ### Upstream
 

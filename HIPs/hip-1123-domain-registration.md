@@ -46,7 +46,7 @@ projection, never the registration.
 
 ### §2 The addresses
 
-Every route is under `/v1/domain` (`manifest/apps.go:155`) and every operation
+Every route is under `/v1/domain` (`manifest/apps.go:162`) and every operation
 is typed: health, search, availability, the org's holdings, register, renew,
 transfer (`apps/domain/mount.go:24-32`).
 
@@ -61,9 +61,9 @@ registrar is touched — and Capture debits after the registrar succeeds. The
 Biller is cloud's ResourceMeter (`apps/domain/mount.go:56`, `mount.go:159-186`):
 Gate is the authorization, `MeterUsage` under the `domain.register` meter is the
 capture, so the debit lands on the org's ledger through the same money plane as
-every other charge. The plugin declares `cloud.Free`
-(`plugin/domain/main.go:22`) because the door itself charges nothing; the
-purchase inside it is the billed act, in integer cents.
+every other charge. The plugin declares `cloud.Metered`
+(`plugin/domain/main.go:29`) and the capability is in `spend.go`'s metered
+list (`spend.go:299`): every purchase moves money, in integer cents.
 
 ### §4 Tenancy
 

@@ -85,12 +85,18 @@ while the caller gets an unadorned "not configured".
 
 ### §5 Metering, events, telemetry, stage
 
-The capability is free, said in those words (`plugin/meet/main.go:21`,
-`Price: cloud.Free`). It publishes no events on the bus and emits nothing to
-observability beyond the request span every route gets. Stage: `beta` — a
-virtual-office vertical, not part of the agentic-OS `ga` set. Per HIP-0139 §8
-the prefix answers 404 to orgs without the `meet` flag, so the orgs using the
-office MUST hold the flag before the stage lands in the manifest.
+The capability is metered (`plugin/meet/main.go:28`, `Price: cloud.Metered`;
+`spend.go:305`), and the one billed act is the seat: minting a join token
+admits a participant to the media server, gated before the token exists and
+debited per seat at `MEET_FEE_CENTS` (`apps/meet/meter.go`). The unit is the
+seat, not the minute, because media rides browser-to-SFU directly and no
+duration ever reaches this binary — pricing a minute would invent a number
+nobody measured. The lobby, the health probe and the SPA stay free: they are
+reads. It publishes no events on the bus and emits nothing to observability
+beyond the request span every route gets. Stage: `beta` — a virtual-office
+vertical, not part of the agentic-OS `ga` set; the manifest row declares it
+(`manifest/apps.go:360`, `Stage: Beta`), so per HIP-0139 §8 the prefix
+answers 404 to orgs without the `meet` flag.
 
 ### §6 Upstream
 
