@@ -117,6 +117,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0136](./HIPs/hip-0136-one-secret-one-path.md) | One Secret, One Path | Standards Track | Infrastructure | Active |
 | [HIP-0137](./HIPs/hip-0137-one-license.md) | One License | Process | Governance | Active |
 | [HIP-0138](./HIPs/hip-0138-unified-hanzo-cloud-binary.md) | Cloud — Unified Hanzo Binary | Standards Track | Infrastructure | Superseded |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | Capability | Standards Track | Infrastructure | Active |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Draft |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Draft |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Draft |
