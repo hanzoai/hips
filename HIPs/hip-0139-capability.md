@@ -57,8 +57,11 @@ as in RFC 2119.
 ### §1 The object and its projections
 
 A capability is a Go package under `apps/` in `hanzoai/cloud` that returns a
-`*zip.App` (HIP-0106 §2). Its name is the package's directory name. The
-following MUST all equal that name:
+`*zip.App` (HIP-0106 §2). Its name is the package's directory name. One
+capability is the host's own: `openapi` — the document, its projections and
+the agent door are served by the host process (`cmd/cloud`), which mounts no
+subsystem, so it has no `apps/` package and no plugin; every other rule below
+applies to it unchanged. The following MUST all equal the name:
 
 | projection | where |
 |---|---|
@@ -109,6 +112,10 @@ the defect HIP-0106 §4.2 names.
      `<name>`. Its audience is the operator (HIP-0135), and the public
      projection drops it by address; the capability it belongs to is the
      second segment.
+   - `/v1/openapi.json` and `/v1/mcp` — the document and the agent door.
+     Every SDK generator, IDE and MCP client is pointed at these two
+     spellings, so they are the wire the ecosystem hard-codes, and they
+     belong to `openapi` — the host — and to no other capability.
 3. Nothing is served outside `/v1` except the families in rule 2 (HIP-0119 §2).
 4. A path segment names a thing and the method says the verb (HIP-0128 §1).
 
