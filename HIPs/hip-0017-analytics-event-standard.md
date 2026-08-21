@@ -4,13 +4,20 @@ title: Analytics Event Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Superseded
+superseded-by: HIP-1190, HIP-0063, HIP-1311
 created: 2025-01-09
 requires: HIP-0030
 ---
 
 
 # HIP-0017: Analytics Event Standard
+
+> **Superseded by HIP-1190, HIP-0063 and HIP-1311.** The product event and the
+> lenses over it are `event` at `/v1/event`; the flags this document decided
+> from are `flags`; the A/B half is `experiments`. One door takes every wire,
+> dispatched by the shape of the body — so the `/e`, `/batch`, `/capture` and
+> `/decide` doors here are not addresses the cloud serves.
 
 ## Abstract
 

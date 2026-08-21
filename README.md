@@ -32,12 +32,12 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0008](./HIPs/hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md) | HMM (Hanzo Market Maker) - Native DEX for AI Compute... | Standards Track | Core | Draft |
 | [HIP-0009](./HIPs/hip-0009-agent-sdk-multi-agent-orchestration-framework.md) | Agent SDK - Multi-Agent Orchestration Framework | Standards Track | Core | Draft |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | Model Context Protocol (MCP) Integration Standards | Standards Track | Interface | Active |
-| [HIP-0011](./HIPs/hip-0011-chat-interface-standard.md) | Chat Interface Standard | Standards Track | Interface | Draft |
-| [HIP-0012](./HIPs/hip-0012-search-interface-standard.md) | Search Interface Standard | Standards Track | Interface | Draft |
-| [HIP-0013](./HIPs/hip-0013-workflow-execution-standard.md) | Workflow Execution Standard | Standards Track | Core | Draft |
+| [HIP-0011](./HIPs/hip-0011-chat-interface-standard.md) | Chat Interface Standard | Standards Track | Interface | Superseded |
+| [HIP-0012](./HIPs/hip-0012-search-interface-standard.md) | Search Interface Standard | Standards Track | Interface | Superseded |
+| [HIP-0013](./HIPs/hip-0013-workflow-execution-standard.md) | Workflow Execution Standard | Standards Track | Core | Superseded |
 | [HIP-0014](./HIPs/hip-0014-application-deployment-standard.md) | Application Deployment Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0015](./HIPs/hip-0015-computer-control-standard.md) | Computer Control Standard | Standards Track | Interface | Draft |
-| [HIP-0017](./HIPs/hip-0017-analytics-event-standard.md) | Analytics Event Standard | Standards Track | Interface | Draft |
+| [HIP-0017](./HIPs/hip-0017-analytics-event-standard.md) | Analytics Event Standard | Standards Track | Interface | Superseded |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | Payment Processing Standard | Standards Track | Interface | Draft |
 | [HIP-0019](./HIPs/hip-0019-tensor-operations-standard.md) | Tensor Operations Standard | Standards Track | Core | Draft |
 | [HIP-0020](./HIPs/hip-0020-blockchain-node-standard.md) | Blockchain Node Standard | Standards Track | Core | Draft |
@@ -45,20 +45,20 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0025](./HIPs/hip-0025-bot-agent-wallet-rpc-billing-protocol.md) | Bot Agent Wallet & RPC Billing Protocol | Standards Track | Core | Draft |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | Identity & Access Management Standard | Standards Track | Infrastructure | Active |
 | [HIP-0027](./HIPs/hip-0027-secrets-management-standard.md) | Secrets Management Standard | Standards Track | Infrastructure | Active |
-| [HIP-0028](./HIPs/hip-0028-key-value-store-standard.md) | Key-Value Store Standard | Standards Track | Infrastructure | Active |
-| [HIP-0029](./HIPs/hip-0029-relational-database-standard.md) | Relational Database Standard | Standards Track | Infrastructure | Active |
-| [HIP-0030](./HIPs/hip-0030-event-streaming-standard.md) | Event Streaming Standard | Standards Track | Infrastructure | Draft |
+| [HIP-0028](./HIPs/hip-0028-key-value-store-standard.md) | Key-Value Store Standard | Standards Track | Infrastructure | Superseded |
+| [HIP-0029](./HIPs/hip-0029-relational-database-standard.md) | Relational Database Standard | Standards Track | Infrastructure | Superseded |
+| [HIP-0030](./HIPs/hip-0030-event-streaming-standard.md) | Event Streaming Standard | Standards Track | Infrastructure | Superseded |
 | [HIP-0033](./HIPs/hip-0033-container-registry-standard.md) | Container Registry Standard | Standards Track | Infrastructure | Active |
-| [HIP-0035](./HIPs/hip-0035-image-video-generation-standard.md) | Image & Video Generation Standard | Standards Track | Interface | Draft |
+| [HIP-0035](./HIPs/hip-0035-image-video-generation-standard.md) | Image & Video Generation Standard | Standards Track | Interface | Superseded |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | CI/CD Build System Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0039](./HIPs/hip-0039-zen-model-architecture.md) | Zen Model Architecture | Standards Track | Core | Draft |
 | [HIP-0040](./HIPs/hip-0040-multi-language-sdk-standard.md) | Multi-Language SDK Standard | Standards Track | Interface | Draft |
 | [HIP-0041](./HIPs/hip-0041-cli-standard.md) | The Hanzo CLI — a Projection of the Served API | Standards Track | Interface | Draft |
-| [HIP-0042](./HIPs/hip-0042-vector-search-standard.md) | Vector Search Standard | Standards Track | Infrastructure | Active |
+| [HIP-0042](./HIPs/hip-0042-vector-search-standard.md) | Vector Search Standard | Standards Track | Infrastructure | Superseded |
 | [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | Hanzo Engine — LLM Inference Engine Standard | Standards Track | Core | Active |
 | [HIP-0045](./HIPs/hip-0045-documentation-framework-standard.md) | Documentation Framework Standard | Standards Track | Interface | Draft |
-| [HIP-0046](./HIPs/hip-0046-embeddings-standard.md) | Embeddings Standard | Standards Track | Interface | Draft |
-| [HIP-0047](./HIPs/hip-0047-analytics-datastore-standard.md) | Analytics Datastore Standard | Standards Track | Infrastructure | Active |
+| [HIP-0046](./HIPs/hip-0046-embeddings-standard.md) | Embeddings Standard | Standards Track | Interface | Superseded |
+| [HIP-0047](./HIPs/hip-0047-analytics-datastore-standard.md) | Analytics Datastore Standard | Standards Track | Infrastructure | Superseded |
 | [HIP-0049](./HIPs/hip-0049-dns-service-standard.md) | DNS Service Standard | Standards Track | Infrastructure | Active |
 | [HIP-0050](./HIPs/hip-0050-edge-computing-standard.md) | Hanzo Edge — Edge AI Runtime Standard | Standards Track | Infrastructure | Draft |
 | [HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) | Serverless Functions (FaaS) Standard | Standards Track | Infrastructure | Draft |
@@ -167,10 +167,10 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |
 | [HIP-1000](./HIPs/hip-1000-authors-royalty.md) | Authors — A Royalty on Deployed Open Source | Standards Track | Application | Active |
 | [HIP-1001](./HIPs/hip-1001-books-double-entry-ledger.md) | Books — The Double-Entry Ledger | Standards Track | Application | Active |
-| [HIP-1002](./HIPs/hip-1002-cart.md) | Cart — The Basket a Sale Begins In | Standards Track | Application | Draft |
+| [HIP-1002](./HIPs/hip-1002-cart.md) | Cart — The Basket a Sale Begins In | Standards Track | Application | Superseded |
 | [HIP-1004](./HIPs/hip-1004-licensing.md) | Licensing — Signed Tokens for Paid Binaries | Standards Track | Security | Draft |
-| [HIP-1005](./HIPs/hip-1005-payments.md) | Payments — Taking a Card | Standards Track | Application | Active |
-| [HIP-1006](./HIPs/hip-1006-store.md) | Store — Storefronts, Listings and Checkout | Standards Track | Application | Active |
+| [HIP-1005](./HIPs/hip-1005-payments.md) | Payments — Taking a Card | Standards Track | Application | Superseded |
+| [HIP-1006](./HIPs/hip-1006-store.md) | Store — Storefronts, Listings and Checkout | Standards Track | Application | Superseded |
 | [HIP-1020](./HIPs/hip-1020-chain-registry.md) | Chain Registry | Standards Track | Interface | Draft |
 | [HIP-1021](./HIPs/hip-1021-chain-rpc-door.md) | Chain JSON-RPC Door | Standards Track | Interface | Draft |
 | [HIP-1022](./HIPs/hip-1022-native-balance-reads.md) | Native Balance Reads | Standards Track | Interface | Draft |

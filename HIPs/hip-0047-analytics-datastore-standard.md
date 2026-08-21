@@ -4,13 +4,20 @@ title: Analytics Datastore Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Superseded
+superseded-by: HIP-1164, HIP-1241
 created: 2026-02-23
 requires: HIP-0017, HIP-0029
 ---
 
 
 # HIP-0047: Analytics Datastore Standard
+
+> **Superseded by HIP-1164 and HIP-1241.** A columnar instance is something an
+> org is handed — `provisioning`, kind `datastore` — and the deployment's own
+> logs, metrics and traces live in the native store `metrics` specifies. The
+> product-event lenses over the warehouse are `event`'s (HIP-1190), which owns
+> no schema there and says so.
 
 ## Abstract
 

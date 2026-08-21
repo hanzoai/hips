@@ -4,11 +4,17 @@ title: Store — Storefronts, Listings and Checkout
 author: Hanzo AI
 type: Standards Track
 category: Application
-status: Active
+status: Superseded
+superseded-by: HIP-1220
 created: 2026-08-20
 ---
 
 # HIP-1006: Store — Storefronts, Listings and Checkout
+
+> **Superseded by HIP-1220.** Storefronts, listings and checkout answer under
+> `/v1/commerce/store`. Splitting the merchant half into cart, store, payments
+> and catalog is four apps on one store, which HIP-0139 §7.2 permits only along
+> a store boundary there is none of.
 
 ## Abstract
 

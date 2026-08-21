@@ -4,12 +4,21 @@ title: Key-Value Store Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Superseded
+superseded-by: HIP-1164, HIP-1060
 created: 2025-01-15
 ---
 
 
 # HIP-0028: Key-Value Store Standard
+
+> **Superseded by HIP-1164 and HIP-1060.** A KV instance is something an org is
+> handed — `provisioning`, kind `kv` — and reached over the engine's own wire at
+> the host, port and credential the create returned. There is no HTTP data plane
+> for it under any capability of ours. The pub/sub and stream duties this
+> document gave the store are the bus's: `pubsub` publishes, and `mq` (HIP-1061)
+> holds the durable log. What the fork itself is stays upstream's; this HIP is
+> not where it is specified.
 
 ## Abstract
 

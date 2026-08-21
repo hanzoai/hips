@@ -4,11 +4,17 @@ title: Cart — The Basket a Sale Begins In
 author: Hanzo AI
 type: Standards Track
 category: Application
-status: Draft
+status: Superseded
+superseded-by: HIP-1220
 created: 2026-08-20
 ---
 
 # HIP-1002: Cart — The Basket a Sale Begins In
+
+> **Superseded by HIP-1220.** The basket answers at `/v1/commerce/cart`. Cart,
+> store, payments and catalog were four apps on one merchant store, which
+> HIP-0139 §7.2 refuses by name: a split is permitted only along a store
+> boundary, and there is one store here. They are one capability, `commerce`.
 
 ## Abstract
 

@@ -4,7 +4,8 @@ title: Search Interface Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Superseded
+superseded-by: HIP-1147, HIP-1132, HIP-1102
 created: 2025-01-09
 updated: 2026-02-23
 requires: HIP-4
@@ -12,6 +13,12 @@ requires: HIP-4
 
 
 # HIP-0012: Search Interface Standard
+
+> **Superseded by HIP-1147, HIP-1132 and HIP-1102.** The one ranked answer over
+> an org's corpora is `search` at `POST /v1/search`; the in-binary index that
+> speaks the Meilisearch dialect is `index` at `/v1/index`; the generative answer
+> with citations is `ask` at `/v1/ask`. Three capabilities, three addresses,
+> where this document had one product with two layers stacked in it.
 
 ## Abstract
 

@@ -4,13 +4,19 @@ title: Relational Database Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Superseded
+superseded-by: HIP-1164, HIP-1104
 created: 2025-01-15
 requires: HIP-0, HIP-14
 ---
 
 
 # HIP-0029: Relational Database Standard
+
+> **Superseded by HIP-1164 and HIP-1104.** A SQL instance is something an org is
+> handed — `provisioning`, kind `sql` — reached over the engine's own wire, and
+> the app-facing hosted backend is `base` at `/v1/base`. The cluster-local
+> StatefulSet model here is not how a store reaches a tenant now.
 
 ## Abstract
 

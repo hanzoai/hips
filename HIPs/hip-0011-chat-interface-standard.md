@@ -4,13 +4,21 @@ title: Chat Interface Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Superseded
+superseded-by: HIP-1211
 created: 2025-01-09
 requires: HIP-4
 ---
 
 
 # HIP-0011: Chat Interface Standard
+
+> **Superseded by HIP-1211.** The chat surface is the model API's:
+> `/v1/chat/completions`, `/v1/messages` and `/v1/responses` are addresses every
+> vendor SDK hard-codes, and they belong to `ai` and to no other capability
+> (HIP-0139 §3.2). There is no `chat` capability, and the product face this
+> document specified is a client of that wire rather than a second surface over
+> it. Read the rest as a record of the fork it described.
 
 ## Abstract
 

@@ -4,13 +4,20 @@ title: Workflow Execution Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Superseded
+superseded-by: HIP-1064, HIP-1063
 created: 2025-01-09
 requires: HIP-9
 ---
 
 
 # HIP-0013: Workflow Execution Standard
+
+> **Superseded by HIP-1064 and HIP-1063.** The visual builder this specified is
+> `flow` at `/v1/flow` — a graph a person composes, runs and reads. The
+> trigger→action tree that fires with nobody there is `auto` at `/v1/auto`. The
+> split is who presses go, and the `/v1/flows`, `/v1/run` and `/v1/jobs` roots
+> here are not addresses the cloud serves.
 
 ## Abstract
 

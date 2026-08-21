@@ -4,13 +4,21 @@ title: Vector Search Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Superseded
+superseded-by: HIP-1164, HIP-1147
 created: 2026-02-23
 requires: HIP-0004
 ---
 
 
 # HIP-0042: Vector Search Standard
+
+> **Superseded by HIP-1164 and HIP-1147.** A vector collection is something an
+> org is handed — `provisioning`, kind `vector` — and the ranked answer that
+> reads it is `search`. The per-org namespace a knowledge base keeps in that
+> store is `knowledge`'s (HIP-1260), and the operator's view of the shared store
+> is provisioning's own at `/v1/admin/provisioning/vector/*`. The engine's gRPC
+> and HTTP ports are upstream's.
 
 ## Abstract
 

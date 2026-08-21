@@ -4,13 +4,19 @@ title: Image & Video Generation Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Superseded
+superseded-by: HIP-1211
 created: 2025-01-15
 requires: HIP-0004, HIP-0019
 ---
 
 
 # HIP-0035: Image & Video Generation Standard
+
+> **Superseded by HIP-1211.** `/v1/images/*` and `/v1/videos/*` are part of the
+> vendor-compatible wire and belong to `ai` (HIP-0139 §3.2); the self-hosted GPU
+> serving behind them is `ml` at `/v1/ml`. The `/api/prompt`, `/api/queue` and
+> `/ws` addresses in this document are the fork's own, not the cloud's.
 
 ## Abstract
 

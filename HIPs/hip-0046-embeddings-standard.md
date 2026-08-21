@@ -4,13 +4,19 @@ title: Embeddings Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Superseded
+superseded-by: HIP-1211
 created: 2026-02-23
 requires: HIP-0004, HIP-0042
 ---
 
 
 # HIP-0046: Embeddings Standard
+
+> **Superseded by HIP-1211.** `POST /v1/embeddings` is the vendor-compatible
+> wire, which belongs to `ai` and to no other capability (HIP-0139 §3.2). That
+> one address is the whole of this surface; the batch and management spellings
+> here are not served.
 
 ## Abstract
 

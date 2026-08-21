@@ -4,13 +4,20 @@ title: Event Streaming Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Superseded
+superseded-by: HIP-1061, HIP-1060
 created: 2025-01-15
 requires: HIP-0028
 ---
 
 
 # HIP-0030: Event Streaming Standard
+
+> **Superseded by HIP-1061 and HIP-1060.** Durable streams, reads by sequence,
+> pull consumers and purge are `mq` at `/v1/mq` on the embedded broker; the
+> publish side of the same bus is `pubsub`. The ingest this existed to buffer is
+> `event` (HIP-1190), which commits a fact synchronously and treats the publish
+> as the commit point.
 
 ## Abstract
 

@@ -4,11 +4,17 @@ title: Payments — Taking a Card
 author: Hanzo AI
 type: Standards Track
 category: Application
-status: Active
+status: Superseded
+superseded-by: HIP-1220
 created: 2026-08-20
 ---
 
 # HIP-1005: Payments — Taking a Card
+
+> **Superseded by HIP-1220.** The card door answers at `/v1/commerce/payments`.
+> It shares the merchant store with the cart and the storefront, so it is one
+> capability with them (HIP-0139 §7.2). The customer's own money questions —
+> balance, ledger, invoices — are `billing`'s address, not this one.
 
 ## Abstract
 
