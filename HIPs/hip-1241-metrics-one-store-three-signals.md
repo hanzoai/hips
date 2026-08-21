@@ -18,7 +18,7 @@ requires: HIP-0026, HIP-0106, HIP-0139
 written and queried per tenant against one WAL-durable store under the
 deployment's data dir. The routes are registered by the `hanzoai/metrics`
 module and mounted by `hanzoai/cloud` (`build.go:1162`, `MountMetrics`); the
-capability's row is `manifest/apps.go:52`. This HIP replaces HIP-0064, which
+capability's row is `manifest/apps.go:59`. This HIP replaces HIP-0064, which
 specified a log stack — a collector fleet, a shared warehouse database and a
 search service — that this codebase does not run.
 
@@ -69,10 +69,10 @@ It shares nothing with the `event.*` warehouse plane.
 
 The org is handed down, never read here: `MountMetrics` passes
 `Org: principal.Org` — the identity boundary's one tenant decision (HIP-0026)
-— into the module's own Deps (`build.go:1173-1177`). The module MUST NOT
+— into the module's own Deps (`build.go:1167-1169`). The module MUST NOT
 resolve its own tenant from a request header. It once did, reading `X-Org-Id`
 directly, and a header a caller sends meant an anonymous request could read
-and write any org's telemetry (`build.go:1165-1169`); the rule lives once, at
+and write any org's telemetry (`build.go:1141-1146`); the rule lives once, at
 the boundary that authenticates.
 
 ### Price, events, emission, stage

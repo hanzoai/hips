@@ -44,7 +44,7 @@ as in RFC 2119.
 
 ### §1 The addresses
 
-Every route is under `/v1/usage` (`manifest/apps.go:264`, package doc
+Every route is under `/v1/usage` (`manifest/apps.go:271`, package doc
 `apps/usage/usage.go`), all typed, none declared:
 
 - `POST /v1/usage` — record account-usage samples, the collector's write path

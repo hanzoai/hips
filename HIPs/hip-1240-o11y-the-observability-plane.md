@@ -27,7 +27,7 @@ This plane was five separately registered subsystems whose names leaked five
 public concepts; they collapsed to one registration of the name `o11y`
 (`apps/o11y/o11y.go:23-31`). The addresses have not finished following: the
 manifest row still carries three roots outside the capability's own
-(`manifest/apps.go:77`). This HIP states the surface the name rule settles.
+(`manifest/apps.go:84`). This HIP states the surface the name rule settles.
 
 ## Specification
 
@@ -38,7 +38,7 @@ as in RFC 2119.
 
 Every route this capability serves MUST be under `/v1/o11y`. Three families
 still answer at other roots — `/v1/sentinel`, `/v1/summary` and
-`/ws/query_progress` (`manifest/apps.go:77`); each pair is ledgered in cloud's
+`/ws/query_progress` (`manifest/apps.go:84`); each pair is ledgered in cloud's
 `openapi/misfiled.txt` and closes by fold, never by alias:
 
 - The Sentry-compatible face — projects, issues, stats, traces, the reads a
@@ -54,7 +54,7 @@ still answer at other roots — `/v1/sentinel`, `/v1/summary` and
   (`apps/o11y/o11y.go:132,141`), so the fold is one address, two protocols.
 
 The beacon door is NOT this capability's address: `/v1/event` belongs to
-`analytics` (`manifest/apps.go:303`), which forwards the Sentry wire through
+`analytics` (`manifest/apps.go:310`), which forwards the Sentry wire through
 the plane ops to this capability's sink (`apps/o11y/o11y.go:651`,
 `apps/o11y/obs_rpc.go`). A minted DSN keeps addressing `/v1/event` unchanged.
 
@@ -97,7 +97,7 @@ module's own alert egress, which reports delivery as delivery, never arrival
 land in `event.span` (`apps/o11y/LLM.md:494`) and the fleet probes write
 `hanzo_service_up` into `event.metric` every 30 seconds (`apps/o11y/probes.go`)
 — the signal `/v1/o11y/availability` and the summary project. The stage is
-`ga`, and the row is Eager (`manifest/apps.go:77`): a status document read
+`ga`, and the row is Eager (`manifest/apps.go:84`): a status document read
 during an outage must not pay a cold start.
 
 ### Upstream

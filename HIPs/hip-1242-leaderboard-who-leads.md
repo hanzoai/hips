@@ -24,7 +24,7 @@ implementation is `hanzoai/cloud` `apps/leaderboard`.
 
 The capability today serves under `/v1/usage/*`, a prefix it co-owns with the
 `usage` capability — and its own doc calls two packages under one prefix "one
-prefix with no owner" (`apps/leaderboard/leaderboard.go:25-26`). The two stay
+prefix with no owner" (`apps/leaderboard/leaderboard.go:24-25`). The two stay
 two capabilities, because a store boundary already exists: leaderboard owns an
 opt-in store and usage owns none. Leaderboard therefore vacates the shared
 prefix; this HIP states the surface it moves to.
@@ -53,7 +53,7 @@ which is the operator's view (HIP-0139 §3.2):
 All six operations are typed (`plugin/leaderboard/openapi.json`); none is
 declared. The standing `/v1/usage` pair is ledgered in cloud's
 `openapi/misfiled.txt` and closes by this move. The `usage` capability keeps
-`/v1/usage` untouched (`manifest/apps.go:264`).
+`/v1/usage` untouched (`manifest/apps.go:271`).
 
 ### The store, and the rollup that is not one
 
@@ -95,9 +95,9 @@ from it, and it emits nothing to observability beyond the request span every
 route gets.
 
 The stage is `beta` (HIP-0139 §8): a gamification surface reaches orgs by the
-`leaderboard` flag and answers 404 without it. The manifest row does not yet
-carry a stage field, so today the operations serve as `ga` does; the
-declaration here is what the row inherits when stage lands in `manifest.App`.
+`leaderboard` flag and answers 404 without it. The manifest row declares no
+stage today (`manifest/apps.go:272`), so the operations serve as `ga` does;
+adopting the declaration here is one edit to that row's `Stage` field.
 
 ### Upstream
 

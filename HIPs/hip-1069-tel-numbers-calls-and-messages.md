@@ -42,7 +42,7 @@ in RFC 2119.
 ### The carrier is an interface, and nothing above it names a network
 
 Three verbs — numbers, calls, messages — are the whole contract
-(`apps/tel/carrier.go:15`). Everything else in the package is tenancy, records and
+(`apps/tel/carrier.go:16`). Everything else in the package is tenancy, records and
 policy on top of them.
 
 No code above that interface may name a carrier or a brand. The concrete carrier
@@ -112,10 +112,19 @@ apps/tel/store.go:21) with three tables — numbers, calls, messages — each
 leading its primary key with the org, so isolation is a physical property of the
 row rather than a WHERE clause somebody has to remember.
 
-It is free, in those words: the plugin declares `Price: cloud.Free`
-(plugin/tel/main.go:19). A number, a call and a message cost money at the
-carrier; no meter runs here today, and a deployment that resells them prices
-them outside this surface.
+It is metered: the plugin declares `Price: cloud.Metered`
+(plugin/tel/main.go:24) and the meter is `apps/tel/meter.go`. Three acts are
+billed — a number order at the platform's flat provision fee (100 cents,
+`cloud.DefaultResourceFeeCents`), a message at 1 cent, a call placement at
+1 cent — each movable by the `TEL_FEE_CENTS` knobs, with 0 making an act free
+and un-gated again. A call is priced per placement, not per minute: the
+completion callback goes to the customer's own webhook, so the duration never
+reaches this process and a minute is not a unit this binary observes. The
+debit lands through the metering plane (`cloud.Charge.Debit` with a
+`metering.Usage` row): authorized before the carrier is asked, debited only
+after the carrier confirms, so failed work is not billed. A deployment on the
+stub holds no carrier credential, buys nothing, and is neither gated nor
+billed.
 
 It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it, and it emits nothing to observability beyond the

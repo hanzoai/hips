@@ -114,12 +114,11 @@ must agree.
 
 ### Addresses, and the one that is legacy
 
-Everything the door serves is under `/v1/tasks`: the bare noun's redirect and the
-one wildcard route that carries the engine's operation set, on every method
-(plugin/tasks/openapi.json). The manifest row also still carries the bare
-`/tasks` prefix (manifest/apps.go:409), the address the studio shipped with; that
-pair is ledgered in `openapi/misfiled.txt` and closes by fold under `/v1/tasks`,
-never by alias.
+The door serves two shapes — the bare noun's redirect and the one wildcard route
+that carries the engine's operation set, on every method — under two prefixes:
+`/v1/tasks`, the canonical address, and the bare `/tasks` the studio shipped with
+(plugin/tasks/openapi.json, manifest/apps.go:409). That bare pair is ledgered in
+`openapi/misfiled.txt` and closes by fold under `/v1/tasks`, never by alias.
 
 ### What it owns, charges and emits
 

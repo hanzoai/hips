@@ -41,7 +41,7 @@ as in RFC 2119.
 
 The store is one SQLite file — the system namespace's `automations`, opened
 through the one opener — holding four tables: flows, their versions, their runs,
-and the metered claim §5 turns on. Tenant isolation is the `org` column and it is
+and their triggers; the metered claim §5 turns on is a column of the run row. Tenant isolation is the `org` column and it is
 physical: every uniqueness and lookup index leads with `org`, so the predicate is
 the access path rather than a filter applied to a scan. One connection serializes
 writes against the single-writer log.
