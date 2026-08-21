@@ -44,14 +44,27 @@ loses a door, not data.
 
 ### The address
 
-One operation: `POST /v1/search`, a typed op
-(`apps/search/search.go:162-178`). The manifest row routes the bare prefix here
-(`manifest/apps.go:407`); the deeper product prefixes — provisioning's search
-instance CRUD — still win by longest match. The request carries `query`, a
+Three typed operations, all under the one prefix the manifest row routes
+(`manifest/apps.go`).
+
+`POST /v1/search` is the ranked answer (`apps/search/search.go`). The request
+carries `query`, a
 `mode` (`auto` | `text` | `semantic` | `hybrid`, where `auto` resolves to
 whatever this deployment actually has), an optional project narrowing, and
 paging bounded at 50. There is deliberately no `org` field on the request
 (`apps/search/search.go:88-90`).
+
+`GET /v1/search/indexes` and `GET /v1/search/stats` are the fleet inventory of
+the shared lexical store — the index names with their document counts and
+timestamps, and the totals across them (`apps/search/inventory.go`). They resolve
+no org, and that is the fact worth stating: the answer is fleet-wide, so the
+credential is the surface's own bearer carried as a typed input FIELD rather than
+middleware — declared on the input, it appears in the document, the command flag
+and the tool schema instead of being smuggled past every projection, and a key
+check hung on the subtree would gate the ranked read beside it. They live here
+because the store is the one this capability's lexical leg queries; the operator's
+view of the vector store is `provisioning`'s, at `/v1/admin/provisioning/vector/*`
+(HIP-1164).
 
 A second, in-process door exists for callers that established their tenant by
 other means: `ForOrg(ctx, org, in)` — the Team transactor's path — returns the

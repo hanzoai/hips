@@ -248,7 +248,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1163](./HIPs/hip-1163-x402-pay-per-request.md) | x402 — Pay Per Request | Standards Track | Core | Draft |
 | [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) | Provisioning — Stores on Demand | Standards Track | Core | Draft |
 | [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) | S3 — Buckets and Objects | Standards Track | Core | Draft |
-| [HIP-1166](./HIPs/hip-1166-product-search-and-vector-inventory.md) | Product — Search and Vector Inventory | Standards Track | Core | Draft |
 | [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) | Dataset — The Versioned Snapshot | Standards Track | Core | Draft |
 | [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | visor — Compute You Rent | Standards Track | Infrastructure | Draft |
 | [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) | Network — The Zero Trust Overlay | Standards Track | Infrastructure | Draft |
@@ -358,9 +357,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 119 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 117 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 116 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 118 | Capability |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 116 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 115 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -370,8 +369,8 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 15 | Hanzo Service Conventions |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 15 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
-| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 9 | Hanzo IAM Authentication Standard |
+| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 9 | What Is Public |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 9 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
@@ -389,7 +388,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 115 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -401,7 +400,7 @@ One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` 
 
 **Data** — the stores every capability writes to and reads from
 
-[HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) `base` · [HIP-1112](./HIPs/hip-1112-catalog.md) `catalog` · [HIP-1117](./HIPs/hip-1117-crawl.md) `crawl` · [HIP-1132](./HIPs/hip-1132-index-search.md) `index` · [HIP-1147](./HIPs/hip-1147-search-hybrid-retrieval.md) `search` · [HIP-1154](./HIPs/hip-1154-sync-endpoint-reconciliation.md) `sync` · [HIP-1155](./HIPs/hip-1155-taxonomy-catalogue-shape.md) `taxonomy` · [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) `provisioning` · [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) `s3` · [HIP-1166](./HIPs/hip-1166-product-search-and-vector-inventory.md) `product` · [HIP-1251](./HIPs/hip-1251-websearch-the-live-web.md) `websearch` · [HIP-1260](./HIPs/hip-1260-knowledge.md) `knowledge`
+[HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) `base` · [HIP-1112](./HIPs/hip-1112-catalog.md) `catalog` · [HIP-1117](./HIPs/hip-1117-crawl.md) `crawl` · [HIP-1132](./HIPs/hip-1132-index-search.md) `index` · [HIP-1147](./HIPs/hip-1147-search-hybrid-retrieval.md) `search` · [HIP-1154](./HIPs/hip-1154-sync-endpoint-reconciliation.md) `sync` · [HIP-1155](./HIPs/hip-1155-taxonomy-catalogue-shape.md) `taxonomy` · [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) `provisioning` · [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) `s3` · [HIP-1251](./HIPs/hip-1251-websearch-the-live-web.md) `websearch` · [HIP-1260](./HIPs/hip-1260-knowledge.md) `knowledge`
 
 **Streams** — messaging · durable tasks · async orchestration
 

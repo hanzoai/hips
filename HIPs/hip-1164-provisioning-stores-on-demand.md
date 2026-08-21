@@ -177,10 +177,13 @@ three ways, and each side is somebody else's:
   identically or the tenant boundary drifts between allocate and operate, which
   is worse than either side being wrong alone.
 - `search`, `vector` — the allocated index or collection is reached at the
-  endpoint the create returned. What the document publishes at those two
-  addresses belongs to others: the inventory of the two shared stores is
-  `product` (HIP-1166), and a ranked answer over an org's own corpora is
-  `search` at `POST /v1/search` (HIP-1147).
+  endpoint the create returned. The operator's view of the shared vector store
+  is this capability's own, at `GET /v1/admin/provisioning/vector/collections`
+  and `/stats` — the collections with their size and geometry, and the totals —
+  because this is what allocates into that backend, and the gate there is
+  `principal.IsSuperAdmin`, the predicate every other `/v1/admin` route asks,
+  rather than a vector master key of its own. The lexical store's inventory is
+  `search`'s, beside the ranked answer it serves (HIP-1147).
 - `kv`, `sql`, `docdb`, `datastore` — reached only over the engine's own wire
   protocol, at the host, port and credential the create returned. There is no
   HTTP data plane for them, and there MUST NOT be one under this capability: a
@@ -250,7 +253,6 @@ plaintext copy at the cost of a caller that must keep what it asked for.
 - HIP-1134 — KMS — Secret Custody
 - HIP-1147 — Search — Hybrid Retrieval
 - HIP-1165 — S3 — Buckets and Objects
-- HIP-1166 — Product — Search and Vector Inventory
 
 ## Copyright
 
