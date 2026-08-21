@@ -99,9 +99,10 @@ themselves — its own data plane, not telemetry a customer reads back under
 
 ### Stage
 
-`beta`: a vertical application whose durability contract is still rolling out —
-the roll-up is best-effort and reconciliation is unbuilt, so the record is
-versioned-append-only today and no more is claimed.
+`beta`: the manifest row declares `Stage: Beta` (`manifest/apps.go:410`). The
+durability contract is still rolling out — the roll-up is best-effort and
+reconciliation is unbuilt, so the record is versioned-append-only today and no
+more is claimed.
 
 ### Upstream
 

@@ -38,7 +38,7 @@ as in RFC 2119.
 
 ### §1 The address
 
-Every route is under `/v1/translate` (`manifest/apps.go:430`): three
+Every route is under `/v1/translate` (`manifest/apps.go:437`): three
 operations. `GET` and `PUT /v1/translate/memory` — the review lane — are
 typed. `POST /v1/translate` itself is a raw handler with prose declared beside
 the route (`apps/translate/translate.go:59`): its input is a union (`text` or
@@ -96,7 +96,7 @@ caller's own org's.
 ### §5 Money
 
 The surface declares `cloud.Metered` (`plugin/translate/main.go`) and is
-listed in the standing gate (`spend.go:302`, "per-character fee"). The two
+listed in the standing gate (`spend.go:319`, "per-character fee"). The two
 tiers bill through two planes, deliberately: quality is debited by the model
 plane's own token meter — a second charge here would double-bill — while bulk
 carries its own per-org gate and meter on the source characters that actually
@@ -119,10 +119,9 @@ Nothing is forked.
 
 ### §8 Stage
 
-`beta`: a vertical application, not the agentic-OS core. The manifest row does
-not yet carry a stage field, so today the operations serve as `ga` does; the
-declaration here is what the row inherits when stage lands in `manifest.App`
-(HIP-0139 §8).
+`beta`: the manifest row declares `Stage: Beta` (`manifest/apps.go:437`), so
+per HIP-0139 §8 the capability is dropped from the public projection and its
+prefix answers 404 unless the caller's org holds the `translate` flag.
 
 ### §9 Dogfooding
 

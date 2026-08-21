@@ -33,13 +33,14 @@ not the argument — an acyclic dependency graph is.
 
 The plane exists today as a cloud subsystem, not yet as its own repo:
 `apps/eval` in `hanzoai/cloud` serves `/v1/evals/*` (the manifest row is
-`manifest/apps.go:401`, the group `apps/eval/eval.go:207`); o11y serves a
-**write** endpoint, `POST /api/annotation`, inside a
-read plane; `cloud/clients/o11y` serves a *second*, unrelated annotation-queue
-entity at `/v1/o11y/annotation-queues` on its own SQLite file. One resource, three
-owners, so none of them kept it in sight of the others — which is why the console
-calls `/v1/o11y/annotation-queues` against a server that also registers
-`/api/annotation`, and neither side is wrong. This HIP does not patch that
+`manifest/apps.go:408`, the group `apps/eval/eval.go:207`); o11y serves a
+**write** endpoint, `POST /v1/o11y/llm/annotation`
+(`pkg/apiserver/o11yapiserver/llmobs.go`), inside a read plane; `apps/o11y`
+serves a *second*, unrelated annotation-queue entity at `/v1/o11y/reviews` on
+its own SQLite file (`annotation_store.go`, pool `o11y_annotations`). One
+resource, three owners, so none of them kept it in sight of the others —
+which is why the console's queue module and the span plane's annotation write
+name the same idea at two addresses, and neither side is wrong. This HIP does not patch that
 mismatch. It moves the resource to the plane that owns it, after which the mismatch
 is not expressible.
 
@@ -118,7 +119,7 @@ datasets/{name}/items, evaluators, rubrics, runs, scores, traces, metrics}` —
 nine paths, in `plugin/evals/openapi.json`, with the resource still named
 `evaluators` rather than `judge` and no queue routes at all. The table below
 is the target grammar this HIP proposes; until the migration lands, the
-capability's name and address are `evals` (`manifest/apps.go:401`).
+capability's name and address are `evals` (`manifest/apps.go:408`).
 
 Every eval endpoint MUST live under `/v1/eval` and MUST follow the resource-name
 grammar (HIP-0119 §2): the resource is named **once**, in the singular, and the HTTP
@@ -158,7 +159,7 @@ rule replaces, and MUST NOT appear.
 A score MUST NOT be updated or deleted. A verdict is the record of a judgment that
 was made; a retraction is a **new score**, not an edit of the old one. The OLAP
 engine enforces this by construction, and no route may work around it — which is
-precisely why `DELETE /api/score/{id}` does not survive the move.
+precisely why `DELETE /v1/o11y/llm/score/{id}` does not survive the move.
 
 Static sub-routes MUST be registered before their `{param}` siblings, so a real
 dataset name can never shadow a collection route.
@@ -167,18 +168,20 @@ dataset name can never shadow a collection route.
 
 The following are **removed**, not aliased:
 
-- o11y: `GET /api/annotation`, `POST /api/annotation`
+- o11y: `GET`/`POST /v1/o11y/llm/annotation`
   (`pkg/apiserver/o11yapiserver/llmobs.go`) and the `llm_annotations` table.
-- o11y: `GET`/`POST /api/scores`, `GET`/`DELETE /api/score/{id}` and `llm_scores`.
+- o11y: `GET`/`POST /v1/o11y/llm/scores`, `GET`/`DELETE /v1/o11y/llm/score/{id}`
+  and `llm_scores`.
   Score is a verdict; verdicts live on one plane, and it is not the read plane.
-- cloud: `cloud/clients/o11y/annotation_queues.go`, its eight
-  `/v1/o11y/annotation-queues*` routes and its `o11y_annotations.db` metastore.
+- cloud: `apps/o11y/annotation_queues.go`, its eight
+  `/v1/o11y/reviews*` routes and its `o11y_annotations` metastore
+  (`apps/o11y/annotation_store.go`).
 
 o11y keeps exactly what it is: the passive span, log and metric views
 (`/v1/o11y/observations`, `/traces`, `/sessions`, `/users`), which read and never
 write. A `POST` in a read plane is the defect; deleting it is the fix. Because the
 queue and the verdict now have one owner under one prefix, the console's
-`/v1/o11y/annotation-queues` call against a server registering `/api/annotation`
+`/v1/o11y/reviews` call against a server registering `/v1/o11y/llm/annotation`
 cannot be written at all — there is no second spelling left to disagree with. A
 correct boundary does not need two sides kept in sync; it makes the disagreement
 unrepresentable.
@@ -263,7 +266,7 @@ is unset, so every eval resource costs nothing in those words. The only money
 on this plane is the judge's inference, metered by ai on the caller's
 identity as above. The capability publishes **no events** on the bus, so a
 customer's webhooks receive nothing from it. Its stage is **ga** (HIP-0139
-§8): judgment is part of the agentic-OS core. It forks, embeds or mirrors
+§8): the manifest row declares no stage. It forks, embeds or mirrors
 **no OSS upstream** — its OLAP tables ride the shared datastore client
 another capability owns (`apps/eval/telemetry.go`), which is that
 capability's upstream to declare, not this one's.
@@ -328,7 +331,7 @@ zero is worse than a recorded failure. Untrusted content (the item, the model's
 output) MUST be delimiter-fenced and never concatenated into the instruction.
 `ai/object/eval_judge.go` (`JudgeRubric`, `RunJudge`, `parseVerdict`) is the
 implementation of record; eval MUST NOT ship a second, weaker judge parser beside
-it, which is what `cloud/clients/eval/runner.go` is today.
+it, which is what `apps/eval/runner.go` is today.
 
 A **code** judge is a deterministic function of `(input, output, expected)` returning
 a value admissible under its rubric. Where it executes is an open question.
@@ -361,13 +364,14 @@ One release; the old spellings are removed, not aliased — two ways to say one 
 is the defect this HIP exists to remove.
 
 1. Stand up `hanzoai/eval` with `Mount`/`Shutdown` over `eval.Deps` (no `cloud`
-   import), porting `cloud/clients/eval` and its ~40 tests, which are the real
+   import), porting `apps/eval` and its ~40 tests, which are the real
    specification of the current behavior.
 2. Add the adapter and the one `apps.Wire()` line **with `Shutdown` wired**; delete
-   `cloud/clients/eval`.
+   `apps/eval`.
 3. Move the annotation queue to `/v1/eval/queue`; delete
-   `cloud/clients/o11y/annotation_queues.go`, `o11y_annotations.db`, o11y's
-   `/api/annotation` and `/api/score*` routes, `llm_annotations` and `llm_scores`.
+   `apps/o11y/annotation_queues.go`, the `o11y_annotations` store, o11y's
+   `/v1/o11y/llm/annotation` and `/v1/o11y/llm/score*` routes, `llm_annotations`
+   and `llm_scores`.
 4. Move the metrics board to o11y; `/v1/eval/metrics` is never created.
 5. Repoint the console: `evals/*` → `eval/*` in its API modules, its proxy allow
    list, and the tests that pin the literal paths.
@@ -461,3 +465,8 @@ closed.
 - HIP-0031 Observability & Metrics · HIP-0106 Unified Cloud Binary · HIP-0111 IAM
 - HIP-0114 ZAP Transport · HIP-0119 Service Conventions · HIP-0120 gRPC Elimination
 - HIP-0122 zip — ZAP-Native Application Server · HIP-0105/0116 Extension Runtime
+- HIP-0139 Capability
+
+## Copyright
+
+Released under CC0 1.0 Universal Public Domain Dedication.

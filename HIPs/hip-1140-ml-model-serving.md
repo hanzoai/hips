@@ -82,7 +82,7 @@ org-less caller is refused unless SuperAdmin, who lands in the literal
 ### Money
 
 Metered (`plugin/ml/main.go` declares `cloud.Metered`; `ml` is in the
-`meteredApps` standing list, `spend.go:292`). One create is gated and debited
+`meteredApps` standing list, `spend.go:306`). One create is gated and debited
 through the shared `cloud.ResourceMeter` under the commerce product label
 `compute`, not `ml` (`apps/ml/ml.go:145-171`): the balance gate runs BEFORE the
 namespace or CR exists and fails closed, the fee
@@ -100,9 +100,9 @@ mount report and per-operation Kubernetes errors with the missing RBAC named
 
 ### Stage
 
-`ga`: model serving is the intelligence core of the self-service cloud, and its
-manifest row (`manifest/apps.go:179`) declares no stage, which is `ga` per
-HIP-0139 §8.
+`beta`: the manifest row (`manifest/apps.go:186`) declares `Stage: Beta`, so
+per HIP-0139 §8 the capability is dropped from the public projection and its
+prefix answers 404 unless the caller's org holds the `ml` flag.
 
 ### Upstream
 

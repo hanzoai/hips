@@ -47,9 +47,10 @@ own — 0-based lines, UTF-16 character units — passed through untouched, beca
 the callers are agents and editors that already speak the protocol and a
 silent re-basing corrupts every multi-byte line (`apps/lsp/lsp.go:33-41`).
 
-Today's router serves this surface at `/v1/code/lsp` (`manifest/apps.go:318`),
-under the code capability's root; that pair is a line in `hanzoai/cloud`
-`openapi/misfiled.txt` until the fold lands. `code` and `lsp` are two reads of
+Today's router serves this surface at `/v1/code/lsp` (`manifest/apps.go:325`,
+`apps/lsp/mount.go:71`), under the code capability's root — nested rather than
+top-level, so it is not a line `openapi/misfiled.txt` can carry; `/v1/lsp` is
+the target this HIP declares, not yet served. `code` and `lsp` are two reads of
 one repository — lexical search and a live language server — and stay
 cross-referenced siblings, each at its own root, per §3.1.
 

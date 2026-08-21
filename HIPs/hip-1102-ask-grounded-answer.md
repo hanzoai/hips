@@ -61,7 +61,7 @@ nothing else, leaving the fleet's research loop invisible to every agent in it
 A validated principal is required — 401 without one — and the gather runs AS THE
 CALLER: `cloud.As(c, "")` carries this request's principal onto the peer call
 with no widening, so a question is only ever asked about the asker
-(`apps/ask/ask.go:180,222`). The git domain reads the forge inventory as the
+(`apps/ask/ask.go:180,223`). The git domain reads the forge inventory as the
 caller too, because a machine read would count private repositories the member
 may not open (`apps/ask/git.go`).
 
@@ -69,7 +69,7 @@ may not open (`apps/ask/git.go`).
 
 The capability is metered (`plugin/ask/main.go`, `cloud.Metered`; the
 `meteredApps` row reads "the answer engine's per-question fee",
-`spend.go:284`). The web modes debit a flat per-answer fee in cents through the
+`spend.go:291`). The web modes debit a flat per-answer fee in cents through the
 per-org ResourceMeter — `Bill.Gate` before the loop, `MeterUsage` after
 (`apps/answer/answer.go:135,365-372`) — at the mode's default (search and news
 2¢, research 25¢, `apps/answer/mode.go:56-68`), overridable per deployment via
@@ -90,8 +90,8 @@ so.
 ### §6 Events, telemetry, stage, upstream
 
 It publishes nothing to the bus. Beyond the request span it emits structured log
-lines only. Stage `ga`: it is the intelligence plane's grounded-answer surface,
-part of the self-service core. It derives from no OSS upstream.
+lines only. Stage `ga`: the manifest row (`manifest/apps.go:436`) declares no
+stage, and absent means `ga`. It derives from no OSS upstream.
 
 ## Rationale
 

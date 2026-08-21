@@ -48,8 +48,8 @@ exactly when it is the spoken word, and this one is.
 Every address is under `/v1/exec`: the run itself, the file writes and reads
 beside it, and one refusal. `POST /v1/exec` is the one typed operation — lease
 the session's sandbox, write the program, run it, report what it printed and
-what it wrote (`apps/exec/exec.go:734`). Four operations are untyped by design,
-each declaring in prose why it cannot be a value (`apps/exec/exec.go:771-800`):
+what it wrote (`apps/exec/exec.go:751`). Four operations are untyped by design,
+each declaring in prose why it cannot be a value (`apps/exec/exec.go:788-817`):
 `/v1/exec/upload` takes multipart/form-data, and a typed body is decoded as
 JSON; `/v1/exec/download/{session_id}/{fileId}` answers bytes, and a typed
 operation always marshals a Go value; `/v1/exec/files/{sid}` answers a bare
@@ -58,11 +58,12 @@ JSON array because that is the wire the callers match on; and
 suspend-and-resume protocol this capability does not implement.
 
 Today's router serves upload, download and files at the root
-(`manifest/apps.go:360`); each pair is a line in `hanzoai/cloud`
+(`manifest/apps.go:367`); each pair is a line in `hanzoai/cloud`
 `openapi/misfiled.txt` until the fold lands. The wire is not ours — the shapes
-are measured from the LibreChat code-interpreter clients, which compose these
-paths off a configurable base URL, so the fold ships as one base-URL change in
-lockstep with the route move (`apps/exec/exec.go:34-43`).
+are measured from the hanzo.chat code-interpreter clients (`@hanzochat/agents`'
+CodeExecutor and its Files/Code client), which compose these paths off a
+configurable base URL, so the fold ships as one base-URL change in lockstep
+with the route move (`apps/exec/exec.go:34-43`).
 
 ### Session lifetime is the sandbox's
 
@@ -76,7 +77,7 @@ racing the real reaper (`apps/exec/exec.go:98-104`).
 ### Tenancy
 
 One function decides the tenant, and it never reads a header
-(`apps/exec/exec.go:446-471`). A validated IAM bearer scopes the session to
+(`apps/exec/exec.go:460-482`). A validated IAM bearer scopes the session to
 that org. The service-key credential — an opaque key on `X-API-Key`, compared
 in constant time against `CODE_EXEC_API_KEY`, failing closed when none is
 configured (`apps/exec/exec.go:45-49`) — carries no tenant, so it scopes to
@@ -86,11 +87,17 @@ refused.
 
 ### Money, events, observability
 
-Exec is free, in those words: the plugin declares `Price: cloud.Free`
-(`plugin/exec/main.go:27`). The compute it consumes is the sandboxes
-capability's account. It publishes no events on the bus, so a customer's
-webhooks receive nothing from it, and it emits nothing to observability beyond
-the request span every route already gets.
+One run is the billed act: the plugin declares `Price: cloud.Metered`
+(`plugin/exec/main.go:33`) and `exec` is in the `meteredApps` standing list
+(`spend.go:300`). The fee — one cent per run by default, set by
+`CODE_EXEC_FEE_CENTS[_RUN]`, zero making runs free — is gated and debited on
+this subsystem's own door (`apps/exec/meter.go`), deliberately not inside the
+exported interpreter, because `apps/functions` composes the same call and
+already charges its own invoke fee for it. The sandbox lease underneath is the
+sandboxes capability's own metered act, not folded in here. It publishes no
+events on the bus, so a customer's webhooks receive nothing from it, and it
+emits nothing to observability beyond the request span every route already
+gets.
 
 ### Stage
 
@@ -101,9 +108,9 @@ without hiding the door.
 
 ### Upstreams
 
-It derives from none. The wire contract is measured from LibreChat's
-code-interpreter clients (MIT) — a wire fact, not embedded code — including the
-closed language set the tool schema advertises (`apps/exec/exec.go:112-119`).
+It derives from none. The wire contract is measured from the hanzo.chat
+code-interpreter clients — a wire fact, not embedded code — including the
+closed language set the tool schema advertises (`apps/exec/exec.go:111-119`).
 
 ## Rationale
 
@@ -117,11 +124,11 @@ state means every answer is about a sandbox that verifiably exists.
 This is an arbitrary-code-execution surface; the sandbox boundary is the
 product. The two implementation wrongs that history has already shown: running
 code with no key at all when the key was unset — the check now fails closed
-(`apps/exec/exec.go:423`) — and trusting a caller-supplied org header, which
+(`apps/exec/exec.go:689-699`) — and trusting a caller-supplied org header, which
 `tenantOf` now structurally refuses by reading only the admission marker on the
 context (`apps/exec/exec.go:475-482`). The prefix list that routes admission is
 fail-closed on drift: a stale entry is a 403 on a route that should work, never
-a route that works without a credential (`apps/exec/exec.go:746-757`).
+a route that works without a credential (`apps/exec/exec.go:763-773`).
 
 ## References
 

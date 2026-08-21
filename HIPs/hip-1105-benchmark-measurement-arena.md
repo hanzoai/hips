@@ -80,10 +80,10 @@ board shows the latest run per model rather than a blend of every run ever made.
 Free (`plugin/benchmark/main.go`, `cloud.Free`) — the spend a run causes is
 model inference, priced where inference is priced, and the append-only cache
 exists to avoid repeating it. It publishes nothing to the bus. Beyond the
-request span it emits structured log lines only. Stage `beta`: a measurement
-arena is a vertical application, not the self-service core — the manifest row
-carries no stage field yet, so the declaration here is what the row inherits
-when stage lands in `manifest.App`. It derives from no OSS upstream; each
+request span it emits structured log lines only. Stage `beta`: the manifest row declares
+`Stage: Beta` (`manifest/apps.go:409`), so per HIP-0139 §8 the capability is
+dropped from the public projection and its prefix answers 404 unless the
+caller's org holds the `benchmark` flag. It derives from no OSS upstream; each
 catalog row names the public dataset its items come from as data, and the
 Python research prototype it supersedes is Hanzo's own.
 

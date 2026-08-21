@@ -41,8 +41,8 @@ Every address is under `/v1/agents`. The definition-and-run collection is typed:
 list/create at the root, get/update/delete at `/:ref`, `POST /:ref/run`,
 `GET /:ref/runs` (`apps/agents/agents.go:17-27`), beside the typed session
 surface (`apps/agents/sessions.go`). The conversation group — one tool-calling
-round, its presets, its threads — answers at `/v1/agents`, `/agents/presets`
-and `/agents/conversations[/:id]`; its four operations stay untyped until the
+round, its presets, its threads — answers at `/v1/agents`, `/v1/agents/presets`
+and `/v1/agents/conversations[/:id]`; its four operations stay untyped until the
 upstream seams they name land, and each declares its contract in prose beside
 the wire (`apps/agents/conversation.go:72-116`). `POST /v1/agents/coding`
 starts one autonomous coding run, typed, answering 202 with the run's handle
@@ -96,7 +96,7 @@ gets, it emits the per-run trace: an `agent.run` root span with nested
 
 The conversation orchestrator embeds `github.com/hanzoai/agent` v1.0.5 (MIT;
 its LICENSE carries OpenAI's copyright — the agents-SDK lineage the module
-forks), which registers the typed conversation ops and owns their per-org
+forks), which registers the conversation routes and owns their per-org
 history (`apps/agents/conversation.go:3-5,28`). Nothing else here derives from
 an OSS upstream.
 

@@ -78,8 +78,8 @@ It emits nothing beyond the request span every route gets.
 
 ### Stage
 
-`ga`: the prompt store is intelligence-core plumbing every AI surface reads,
-and its manifest row (`manifest/apps.go:156`) declares no stage.
+`ga`: the manifest row (`manifest/apps.go:163`) declares no stage, and absent
+means `ga`.
 
 ### Upstream
 

@@ -63,14 +63,14 @@ to look at.
 There MUST be exactly one way into a sandbox — the Kubernetes exec subresource;
 fs read/list/write are `cat`, `ls` and `tee` over that channel, never a second
 one. Nothing runs in this package: no `os/exec`, ever
-(`apps/sandbox/sandbox.go:50-54`).
+(`apps/sandbox/sandbox.go:47-50`).
 
 ### Addressing and lifetime
 
 A sandbox is addressed by POD NAME through the apiserver, NEVER by IP: a pod
 that dies on its own never runs a release path, and a row holding a stale IP is
 served by whichever stranger the CNI handed that address to
-(`apps/sandbox/sandbox.go:40-48`). Names are minted per sandbox and never
+(`apps/sandbox/sandbox.go:38-46`). Names are minted per sandbox and never
 reused. There is no pool: a sandbox is created for a lease and deleted at its
 end; the reaper (every minute) ends expired leases and sleeps sandboxes idle
 past an hour, and its orphan sweep deletes by name+UID precondition only what
@@ -90,22 +90,21 @@ carries no ServiceAccount token at all.
 
 ### Money
 
-Free at the edge, said in those words: `plugin/sandboxes/main.go` declares
-`cloud.Free` and the app is in no metered list. The meter EXISTS — a lease is
-gated and debited through the shared `cloud.ResourceMeter` under kind `sandbox`
-— but every class fee defaults to 0 (`SANDBOX_FEE_CENTS[_EXEC|_DEV|_DESKTOP]`),
-deliberately not to the platform's $1.00 default: shipping the meter must not
-also ship a price, and turning one on is a values change
-(`apps/sandbox/api.go:128-135`). Bursts are bounded independently of price: an
+Metered at a price of zero: `plugin/sandboxes/main.go` declares
+`Price: cloud.Metered` and `sandboxes` is in the `meteredApps` standing list
+(`spend.go:311`). A lease is gated and debited through the shared
+`cloud.ResourceMeter` under kind `sandbox`, but every class fee defaults to 0
+(`SANDBOX_FEE_CENTS[_EXEC|_DEV|_DESKTOP]`), deliberately not to the platform's
+$1.00 default: shipping the meter must not also ship a price, and turning one
+on is a values change (`apps/sandbox/api.go:128-135`). Bursts are bounded independently of price: an
 org's live exec-class sandboxes are capped, refused with 429 because the
 correct caller response is to wait.
 
 ### Events, telemetry, stage, upstream
 
 It publishes nothing to the bus, so a customer's webhooks receive nothing from
-it; beyond the request span it emits log lines only. Stage `ga`: this is the
-platform compute core every agentic surface leases from, and the manifest row
-(`manifest/apps.go:361`) declares no stage. Upstream: `k8s.io/client-go`
+it; beyond the request span it emits log lines only. Stage `ga`: the manifest
+row (`manifest/apps.go:368`) declares no stage, and absent means `ga`. Upstream: `k8s.io/client-go`
 (Apache-2.0) is the imported client; gVisor's `runsc` and the Kata runtimes
 (Apache-2.0) are the isolation boundaries the pod spec selects by RuntimeClass,
 run by the cluster, embedded by nothing here.

@@ -65,7 +65,7 @@ bundle), `ask` (a cited RAG answer), `index` (incremental, with prune), `file`
 and `tree`. All operations are typed
 (`apps/code/typed_wire_test.go`). `/v1/code/lsp` is NOT this capability: the
 live language server is its own capability routed by prefix specificity
-(`manifest/apps.go:308-318`), folded under this address because static index
+(`manifest/apps.go:315,325`), folded under this address because static index
 and live server are two reads of one repository.
 
 ### §4 Tenancy and money
@@ -82,8 +82,8 @@ before any op runs.
 ### §5 Events, telemetry, stage, upstreams
 
 It publishes no events on the bus and emits nothing to observability beyond the
-request span. Its stage is `ga`: code intelligence is developer-tools core of
-the self-service platform. It embeds no third-party engine: parsing is the Go
+request span. Its stage is `ga`: the manifest row (`manifest/apps.go:315`)
+declares no stage, and absent means `ga`. It embeds no third-party engine: parsing is the Go
 standard library plus this package's own extractors, storage is the
 `hanzoai/sqlite` facade, and the lexical design follows the trigram model Zoekt
 demonstrated without importing it.

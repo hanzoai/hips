@@ -52,7 +52,7 @@ way an org gains a server, by `url` or by picked `listing`, both writing the
 same row (`apps/tools/external_mcp.go`). Every other operation is typed.
 
 Today's router serves the three views at `/v1/skills`, `/v1/plugins` and
-`/v1/mcp/servers` (`manifest/apps.go:422`); each pair is a line in
+`/v1/mcp/servers` (`manifest/apps.go:429`); each pair is a line in
 `hanzoai/cloud` `openapi/misfiled.txt` until the fold lands, and the last fold
 vacates `/v1/mcp` entirely to the host's agent door. The `skills` app keeps
 only `/.well-known/agent-skills` discovery and the `plugins` app only

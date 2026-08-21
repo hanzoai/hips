@@ -85,7 +85,7 @@ beyond the request span every route gets.
 
 ### §6 Stage
 
-engine is `ga`: the intelligence core's runtime lens, part of the agentic OS.
+engine is `ga` — its manifest row declares no stage, and absent means `ga`.
 
 ### §7 Upstream
 
