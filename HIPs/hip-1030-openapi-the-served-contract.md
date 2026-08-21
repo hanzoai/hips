@@ -160,9 +160,61 @@ project's code.
   a declaration renders only on a route the router carries.
 - Hand-authoring an operation into a published subset. One was, by copying a
   neighbouring block, and two paths then claimed one `operationId`.
-- Filtering the document by caller. See HIP-1031 §3 — permission is a fact about
+- Filtering the document by caller. See §8 — permission is a fact about
   a decoded input, not about an operation.
 - A `v2` of this address.
+
+### §8 The command projection
+
+`/v1/commands` serves every operation the API answers reduced to what running
+it BY NAME needs — a service and command token, a method and path, the prose
+lifted from the handler, path parameters as positional arguments and the rest
+as typed flags. Surfaces that let a person run an operation by name — a `⌘K`
+palette, a CLI, a chat command — each need the same list, and each
+historically built its own, wrong in the direction that hides working
+functionality. It derives nothing new: it hands the rendered document to the
+same function the `hanzo` CLI's command tree is built from, over the same
+bytes every published SDK is generated from (`openapi/command.go`). It exists
+for ONE measured reason — the fleet document is megabytes and a browser
+palette cannot load it to find a single command; the measurement is recorded
+beside the code that makes it.
+
+- The projection MUST be taken from the document's OWN renderer: whichever of
+  the two addresses is asked for first renders the document and the other is
+  a projection of exactly those bytes (`openapi/command.go:152`). A second
+  build that could differ is the whole defect this avoids.
+- The address is `/v1/commands` (`openapi/command.go:81`), unauthenticated for
+  §1's reason: a client reads the contract before it holds a credential, and
+  a list of names grants nothing. Both the document and this projection are
+  operations with no owning subsystem, so each declares itself
+  (`openapi/command.go:96`).
+- The payload MUST be the registry's `Command` value, unedited. A hand-picked
+  subset would be the second shape this design exists to avoid; if the weight
+  must come down, it comes down in the registry or in compression, never by
+  forking the type.
+- The list is TOTAL and MUST NOT be filtered by caller — not by method, not by
+  product, not by who is asking. The registry states what exists, the
+  authorizer states what you may do, and the surface renders the refusal
+  honestly. A filtered list is a second, static permission claim the
+  authorizer is free to contradict; a command that 403s when run is strictly
+  better than one that silently does not exist. Method rides along because it
+  is already in the registry and is what lets a bar be safe without a second
+  list: `GET` is safe to browse fuzzily, everything else is named exactly.
+- The list MUST be put in a TOTAL order before serialising — service, name,
+  then method and path (`openapi/command.go:132`) — so two replicas weaving
+  the same document answer identical bytes. The response MUST carry a strong
+  `ETag` over the rendered bytes and answer `304` to a matching
+  `If-None-Match`. An empty result MUST serialize as `[]`, never `null`.
+- The projection is rendered lazily, never eagerly at boot — which keeps the
+  weave off the host's start path and lets the document contain the route
+  being registered.
+
+The refused alternative is a field on the document itself — one address, one
+fetch — turned down for weight alone; the win is modest and measured beside
+the code, and the whole difference is the schema material a palette does not
+need. The other alternative, a curated command catalogue, is the list that
+goes stale — and staleness here means a person is told the product cannot do
+something it does.
 
 ## Rationale
 
@@ -197,7 +249,6 @@ skip probes, or trust an address the front door never delivers.
 - HIP-0122 — zip/zap Native Application Server
 - HIP-0128 — Resource Surface Standard
 - HIP-0135 — What Is Public
-- HIP-1031 — Commands — The Callable Projection
 
 ## Copyright
 

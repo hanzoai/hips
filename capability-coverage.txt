@@ -17,105 +17,31 @@
 # restated in prose; run the script.
 
 # applications
-blueprint
-bot
 bots
-content
-dataroom
-esign
-framework
-git
-guide
-help
-legal
 link
-meet
-prefs
-seo
-settings
-share
-social
-templates
-todo
-world
 
 # chain
-explorer
 web3
 
 # commerce
-ads
-affiliates
-allowance
-campaign
-captable
-crm
-marketing
-marketplace
 plan
-referrals
-x402
 
 # data
-base
-catalog
-crawl
-index
-knowledge
 product
 provisioning
-search
 storage
-sync
-taxonomy
-websearch
 
 # identity
-account
-audit
-compliance
 dataset
-entitlements
-kms
-label
-reference
-wallets
 
 # intelligence
-agents
-ai
-ask
-benchmark
-code
-engine
-exec
-lsp
-ml
-prompts
-research
-sandboxes
-tools
-translate
 
 # observability
 analytics
-leaderboard
-metrics
-o11y
 
 # platform
-admission
-cloudflare
-deploy
-domain
-gateway
-ingress
-platform
-projects
-registry
 visor
 zt
 
 # streams
 automations
-integrations

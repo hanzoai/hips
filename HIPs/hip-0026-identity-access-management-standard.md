@@ -25,6 +25,8 @@ IAM is the source of truth for identity. It is NOT the source of truth for spend
 **Port**: 8000
 **Docker**: `ghcr.io/hanzoai/iam:latest`
 
+## Motivation
+
 Keycloak is the most popular open-source IAM. It is also a 500MB+ Java application that requires a JVM, takes 30+ seconds to start, and consumes 512MB of heap at idle. In the Hanzo ecosystem, where the blockchain node, CLI tools, SDK, and wallet are all written in Go, introducing a Java dependency for IAM is a poor fit.
 
 Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and idles at ~50MB RSS. It ships a React frontend (easy to customize for branding) and serves OAuth 2.0, OIDC, WebAuthn and TOTP MFA. The tradeoff is a smaller community and fewer enterprise features (no fine-grained RBAC policies, no UMA). For our use case -- OAuth SSO across a handful of first-party services -- the Hanzo IAM feature set is sufficient, and the operational simplicity is decisive.
@@ -211,8 +213,7 @@ IAM bootstraps from `init_data.json` on first startup. This file defines the ini
       "name": "admin",
       "email": "admin@hanzo.ai",
       "type": "normal-user",
-      "isAdmin": true,
-      "balance": 10000
+      "isAdmin": true
     }
   ],
   "certs": [
@@ -340,66 +341,20 @@ Framework providers (`@hanzo/iam/betterauth`, `@hanzo/iam/nextauth`), the React 
 
 ## Implementation
 
-### Production Deployment
+### Deployment Shapes
 
-IAM runs on the **the cluster** Kubernetes cluster at `24.199.76.156`. The deployment uses Docker Compose with Traefik for TLS termination and automatic certificate provisioning via Let's Encrypt.
-
-```yaml
-# compose.production.yml (simplified)
-services:
-  iam:
-    image: ghcr.io/hanzoai/iam:latest
-    ports:
-      - "8000:8000"
-    environment:
-      IAM_DB_HOST: ${IAM_DB_HOST:-postgres}
-      IAM_DB_PASSWORD: ${IAM_DB_PASSWORD}
-      IAM_REDIS_HOST: ${IAM_REDIS_HOST:-redis}
-    volumes:
-      - ./conf/app.prod.conf:/app/conf/app.conf:ro
-      - ./init_data.json:/app/init_data.json:ro
-    labels:
-      - "traefik.http.routers.iam-hanzo.rule=Host(`hanzo.id`)"
-      - "traefik.http.routers.iam-lux.rule=Host(`lux.id`)"
-      - "traefik.http.routers.iam-zoo.rule=Host(`zoo.id`)"
-      - "traefik.http.routers.iam-pars.rule=Host(`pars.id`)"
-      - "traefik.http.routers.iam-adnexus.rule=Host(`id.ad.nexus`)"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 30s
-
-  postgres:
-    image: ghcr.io/hanzoai/sql:16-alpine
-    environment:
-      POSTGRES_USER: hanzo
-      POSTGRES_DB: hanzo_iam
-
-  redis:
-    image: ghcr.io/hanzoai/kv:latest
-    command: kv-server --appendonly yes
-```
+IAM ships two ways, one store either way. Standalone, the binary serves the
+brand identity domains behind the platform ingress, opening `iam.db` at the
+path `--db` names. Grafted, `hanzoai/cloud` composes the whole IAM surface
+in-process — `host.Use(iamserver.NewApp(db))`, so cloud's router learns IAM's
+route patterns AND its op registry while IAM's own router keeps IAM's
+behaviour — and opens the same file under its data directory
+(`cloud` `apps/iam/iam.go:13-18`, `:36-48`). A store that will not open is
+handed to IAM as nil and every identity request answers 503 while co-resident
+subsystems stay up; the degrade never moves the route table
+(`apps/iam/iam.go:56-69`).
 
 ### Production Configuration
-
-```ini
-# conf/app.prod.conf
-appname = hanzo-iam
-httpport = 8000
-runmode = prod
-driverName = postgres
-origin = https://hanzo.id
-originFrontend = https://hanzo.id
-staticBaseUrl = "https://cdn.hanzo.ai"
-enableGzip = true
-enableErrorMask = true
-inactiveTimeoutMinutes = 30
-logPostOnly = true
-initDataFile = "./init_data.json"
-initDataNewOnly = true
-kmsUrl = https://kms.hanzo.ai
-kmsProjectSlug = hanzo-iam
-kmsEnvironment = prod
-```
 
 Key configuration decisions:
 - **`enableErrorMask = true`**: Production never leaks internal error details to clients.
@@ -407,85 +362,15 @@ Key configuration decisions:
 - **`initDataNewOnly = true`**: Only create missing entities from init_data.json. Never delete or overwrite existing users, apps, or orgs. This protects passwords, MFA settings, and all user data from being reset on pod restarts.
 - **`kmsUrl`**: Secrets are fetched from KMS (HIP-27) at startup, not stored in config files.
 
-### Database Schema
+### The Entities
 
-IAM uses SQL (HIP-29) in production and supports MySQL for local development. The schema is managed by XORM auto-migration. Key tables:
-
-| Table | Description | Primary Key |
-|-------|-------------|-------------|
-| `organization` | Tenant orgs (hanzo, lux, zoo, pars, adnexus) | owner + name |
-| `user` | User accounts with balance, score, properties | owner + name |
-| `application` | OAuth applications with client credentials | owner + name |
-| `token` | Active access/refresh tokens | owner + name |
-| `session` | Active user sessions | owner + name |
-| `transaction` | Balance-affecting events (credits/debits) | owner + name |
-| `cert` | RSA/ECDSA certificates for JWT signing | owner + name |
-| `provider` | OAuth/SAML identity providers (GitHub, Google) | owner + name |
-| `permission` | RBAC permissions | owner + name |
-| `role` | RBAC roles | owner + name |
-
-### CI/CD Pipeline
-
-```
-Push to main
-    │
-    ├─ Go tests (with SQL        service)
-    ├─ Frontend build (yarn build)
-    ├─ Backend build (go build -race)
-    ├─ Linter (gofumpt)
-    └─ E2E tests (Cypress + Chrome)
-          │
-          ▼
-    Semantic Version Tag
-          │
-          ▼
-    Docker Multi-Arch Build (amd64 + arm64)
-          │
-          ├─ Push to ghcr.io/hanzoai/iam:latest
-          └─ Push to Docker Hub (continue-on-error)
-                │
-                ▼
-          SSH Deploy to the cluster
-                │
-                ├─ docker compose pull
-                ├─ docker compose up -d
-                └─ Health check: curl https://hanzo.id/api/health
-```
-
-### Local Development
-
-#### MySQL (recommended for fast iteration)
-
-```bash
-# Start MySQL + KV
-docker compose -f compose.mysql.yml up -d
-
-# Build Go binary
-go build -o server .
-
-# Copy local config
-cp conf/app.mysql.conf conf/app.conf
-
-# Run
-./server
-```
-
-MySQL config note: `dataSourceName` must end with `/` (no database name). The `dbName` field is appended automatically by XORM.
-
-```ini
-# conf/app.mysql.conf
-driverName = mysql
-dataSourceName = hanzo:password@tcp(localhost:3306)/
-dbName = hanzo_iam
-```
-
-#### SQL (matches production)
-
-```bash
-docker compose -f compose.dev.yml up -d
-cp conf/app.dev.conf conf/app.conf
-go build -o server . && ./server
-```
+Every entity is addressed `(owner, name)` — the owner is the organization, and
+that pair is the tenancy key on every row: organizations, users, applications,
+tokens, sessions, signing certs, identity providers, roles and permissions.
+(Earlier revisions described the schema as XORM auto-migration over SQL/MySQL
+and listed a `transaction` table; all three belonged to the retired v1 line —
+the store is `hanzoai/orm` over the one SQLite file above, and there is no
+transaction entity.)
 
 ### Secrets Management
 
@@ -540,6 +425,40 @@ The client contract is **HIP-0111**. JS/TS uses `@hanzo/iam`; Go uses `iamsdk`. 
 
 There are no legacy paths. `/oauth/*`, `/api/login/oauth/*`, and `/api/`-prefixed auth paths are not served and not supported. The OIDC discovery document returns only the canonical `/v1/iam/oauth/*` endpoints.
 
+### The Capability Contract
+
+What HIP-0139 §6 asks of every capability, answered for `iam`:
+
+- **Addresses.** Everything is under `/v1/iam`, plus the two families a
+  protocol fixes at other roots: `/.well-known/*` (RFC 8615 — OIDC discovery,
+  OAuth server metadata, JWKS) and `/login/oauth/*`, the browser authorize
+  surface the `/v1/iam/oauth/authorize` 302 targets
+  (`cloud` `manifest/apps.go:63`). Every operation is typed through IAM's own
+  op registry, which the graft composes rather than wraps
+  (`apps/iam/iam.go:19-27`).
+- **Tenancy.** IAM is the issuer, so it is the one capability whose tenant
+  does not arrive as another service's claim: the organization is the `owner`
+  half of every entity key, resolved from the application the client
+  authenticates as (or, for a direct login, the payload's `application` +
+  `organization`, which must match), and each brand emits its own issuer from
+  the request Host. A request that resolves no organization is refused, not
+  defaulted.
+- **Meter.** It is free, said in those words: no meter, no debit through any
+  plane (`cloud` `plugin/iam/main.go`, `Price: cloud.Free`). Identity is what
+  the paid planes charge AGAINST, not a thing charged for.
+- **Events.** It publishes none — a customer's webhooks receive nothing from
+  `iam`. Authentication events go to the audit log (below), not the bus.
+- **Observability.** Nothing beyond the request span every route already
+  gets; the audit trail of authentication events is IAM's own store, read
+  through `/v1/iam/audit-logs`.
+- **Stage.** `ga`.
+- **Upstreams.** None survive in HEAD. The v1 line was a fork (Beego/xorm
+  lineage, retired to `hanzoai/iam-v1`); v2 is the clean-room rewrite this
+  HIP's opening paragraph describes, and `cloud`'s graph carries no v1 module
+  (`apps/iam/iam.go:8-13`).
+- **Attacker.** The Security Considerations below are that analysis: the
+  wrong implementation here is an estate-wide credential mint.
+
 ## Security Considerations
 
 ### Authentication Security
@@ -553,14 +472,14 @@ There are no legacy paths. `/oauth/*`, `/api/login/oauth/*`, and `/api/`-prefixe
 
 - **Session timeout**: `inactiveTimeoutMinutes = 30` in production. Idle sessions expire after 30 minutes.
 - **Secure cookies**: Sessions use HttpOnly, Secure, SameSite=Lax cookies. The `authState` configuration pins sessions to the IAM origin.
-- **KV-backed sessions**: Sessions are stored in KV with TTL. If the KV instance is restarted, all sessions are invalidated (fail-secure).
+- **Store-backed sessions**: Sessions are rows in the one identity store, expiring on the idle timeout. (The v1 line held them in a KV side-store; there is no session cache beside `iam.db` any more.)
 
 ### Network Security
 
 - **TLS everywhere**: Traefik terminates TLS with Let's Encrypt certificates. HTTP is redirected to HTTPS. No plaintext traffic.
 - **CORS whitelist**: The `origin` and `originFrontend` settings restrict which origins can interact with IAM APIs. Cross-origin requests from unknown origins are rejected.
 - **Rate limiting**: Per-IP rate limiting on login endpoints prevents brute-force attacks. Failed login attempts increment a counter; after 5 failures, the IP is throttled for 15 minutes.
-- **Health endpoint isolation**: `/api/health` is unauthenticated (required for load balancer probes) but returns only a boolean status, leaking no internal state.
+- **Health endpoint isolation**: the liveness probe is unauthenticated (required for load balancer probes) but returns only a boolean status, leaking no internal state.
 
 ### Operational Security
 
@@ -578,7 +497,7 @@ IAM handles both authentication (identity verification) and authorization (acces
 - Social login (GitHub, Google, etc.) via identity providers
 - WebAuthn / FIDO2 for phishing-resistant MFA
 - SAML 2.0 and CAS for enterprise SSO
-- Session management (KV-backed, 30-min idle timeout)
+- Session management (store-backed, 30-min idle timeout)
 
 **Authorization (AuthZ)** — "What can you do?"
 - **OAuth scopes**: Applications request scopes (openid, profile, email, custom). IAM validates requested scopes against the application's allowed scope set and returns `invalid_scope` per RFC 6749 §4.1.2.1 if the client requests scopes not configured for its application.
@@ -586,7 +505,7 @@ IAM handles both authentication (identity verification) and authorization (acces
 - **Organization isolation**: Users can be members of multiple organizations (hanzo, lux, zoo, pars, adnexus) but each session is scoped to one organization context. Cross-org access requires switching context.
 - **Application-level isolation**: Each OAuth application has its own client credentials, redirect URIs, grant types, and scopes. A token issued for `app-console` cannot be used at `app-commerce` (different `aud` claim).
 - **Admin vs normal user**: The `isAdmin` flag on the user entity grants full API access within the organization. Non-admin users are restricted to self-service operations.
-- **Balance-gated access**: Services can check `balance > 0` from the JWT claims or userinfo endpoint to gate access to paid features (AI inference, compute).
+- **Spend is not a claim**: whether a caller may spend is the finance ledger's answer, computed by the one predicate in `hanzoai/cloud` (`spend.go`) — never a balance field read off a token IAM signed.
 
 The key design principle: **IAM authenticates users and issues scoped tokens. Services authorize requests by validating token claims.** IAM does not make fine-grained authorization decisions for downstream services — it provides the identity and claims that services use to make their own authorization decisions.
 
@@ -607,7 +526,7 @@ The key design principle: **IAM authenticates users and issues scoped tokens. Se
 7. [HIP-18: Payment Processing Standard](./hip-0018-payment-processing-standard.md) - Commerce billing (feeds credits into IAM)
 8. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) - Agent identity (built on IAM)
 9. [HIP-27: KMS for Secrets Management](./hip-0027-secrets-management-standard.md) - Secret resolution at startup
-10. [HIP-29: SQL Storage Standard](./hip-0029-relational-database-standard.md) - Database layer
+10. [HIP-139: Capability](./hip-0139-capability.md) - The contract every capability HIP meets
 11. [Hanzo IAM Repository](https://github.com/hanzoai/iam)
 
 ## Copyright

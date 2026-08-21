@@ -7,7 +7,7 @@ category: Infrastructure
 status: Active
 created: 2026-05-19
 updated: 2026-08-04
-requires: HIP-0026, HIP-0027, HIP-0036, HIP-0105, HIP-0111, HIP-0119, HIP-0132, HIP-0134, HIP-0302, HIP-0400
+requires: HIP-0026, HIP-0027, HIP-0036, HIP-0105, HIP-0111, HIP-0119, HIP-0132, HIP-0134, HIP-0139, HIP-0302, HIP-0400
 capability: usage
 ---
 
@@ -1183,69 +1183,48 @@ request is denied rather than served unpriced. Fail-open is a
 deliberate per-deployment choice, never the consequence of an outage.
 Free routes declare a price of zero and skip both calls.
 
-A usage event says who spent, what served it, what it consumed and how
-it went. It carries no prompt content and no PII.
+A usage event says who spent and what it cost, exactly. The wire type
+the recorder carries is deliberately narrow — subject, namespace, an
+EXACT decimal USD (never a rounded cent), currency, model and provider
+(`hanzoai/cloud` `ai.go:23-30`) — and it carries no idempotency ref, an
+absence that is load-bearing: the ref this struct once carried was
+derived from client-posted fields and handed the ledger's dedup key to
+the payer. It carries no prompt content and no PII. The per-request
+detail (tokens, latency, per-model breakdowns) lives in the
+`hanzo.cloud_usage` warehouse ledger the ai plane writes; the money
+lands on the org's commerce ledger.
 
-```go
-type UsageEvent struct {
-    ID        string
-    Timestamp time.Time
-
-    // Who spent
-    OrgID     string
-    ProjectID string
-    UserID    string
-    KeyID     string
-
-    // What served it
-    Service  ServiceScope
-    Model    string
-    Provider string // the upstream that actually answered
-
-    // What it consumed
-    PromptTokens     int
-    CompletionTokens int
-    TotalTokens      int
-    Cost             int64 // USD cents
-
-    // How it went
-    LatencyMs int64
-    TTFTMs    int64 // time to first token, streaming
-    Status    UsageStatus
-
-    // Agent runs attribute each tool call separately
-    AgentID    string
-    AgentRunID string
-    ToolCalls  []ToolCall
-
-    Metadata map[string]string
-}
-
-type ToolCall struct {
-    Name       string // tool
-    Provider   string // MCP server that served it
-    DurationMs int64
-    Status     UsageStatus
-}
-```
-
-Events are written to the calling tenant's own store, so a usage read
-is org-scoped by construction rather than by a `WHERE` clause, and
-`commerce` aggregates them for invoicing and reseller revenue share.
+The `usage` capability is the categorized read over all of that, plus
+the account-usage collection plane, at `/v1/usage`
+(`manifest/apps.go:264`, package doc `apps/usage/usage.go`):
 
 ```
-GET /v1/usage/summary       # current billing period
-GET /v1/usage/timeseries    # hourly, daily or monthly buckets
-GET /v1/usage/by-model
-GET /v1/usage/by-user
-GET /v1/usage/by-key
-GET /v1/usage/events        # paginated raw events
+POST /v1/usage                  record account-usage samples (the collector's write path,
+                                onto the hanzo.account_usage warehouse series)
+GET  /v1/usage/samples          one provider account's own lane time series
+GET  /v1/usage/summary          the org's footprint roll-up: spend by category off the
+                                commerce ledger + LLM totals off hanzo.cloud_usage + the
+                                linked-account board, each source degrading independently
+                                to honest zeros with a marker saying which answered
+GET  /v1/usage/analytics        the entitlement-gated rich per-org read
+GET  /v1/usage/analytics/access
 ```
 
-All six accept `start`, `end`, `granularity` and `filter`. An alert is
-the same data read against a threshold — spend, request count or error
-count, over a daily, weekly or monthly period — delivered to a
-webhook, an email address or a Slack hook when it is crossed.
+The `timeseries`/`by-model`/`by-user`/`by-key`/`events` reads an
+earlier revision listed here are not served at this address — the
+per-model and timeseries detail is `/v1/analytics/*`, and the wallet's
+own raw drain is billing's `/v1/billing/usage`. The capability owns ONE
+store, the `hanzo.account_usage` series (`apps/usage/datastore.go`);
+everything else it answers is a read over ledgers other capabilities
+own, reached over the plane. The tenant is the validated principal,
+fail-closed — no principal, 401 — with the commerce subject pinned
+server-side to that org and every warehouse query binding the org
+positionally. Reading it is free (`plugin/usage/main.go:21`,
+`Price: cloud.Free`); it publishes no events on the bus; it emits
+nothing to observability beyond the request span; its stage is `ga`;
+it derives from no OSS upstream. What an attacker gets from the wrong
+implementation is another org's spend and activity profile — which
+models, how much, when — from a single unbound query.
 
 ### OpenAI-compatible surface
 

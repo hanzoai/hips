@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-02-23
-requires: HIP-0030, HIP-0050
+requires: HIP-0030, HIP-0050, HIP-0139
 capability: functions
 ---
 
@@ -15,18 +15,15 @@ capability: functions
 
 ## Abstract
 
-This proposal defines the Serverless Functions standard for the Hanzo ecosystem. **Hanzo Functions** is a Function-as-a-Service platform for event-driven AI workloads, built on Knative Serving with a custom AI runtime that supports GPU-attached execution and sub-second cold starts.
+This proposal defines the Serverless Functions standard for the Hanzo ecosystem. **Hanzo Functions** is a Function-as-a-Service platform for event-driven AI workloads. What ships today is a per-org function registry plus sandboxed invocation; the Knative execution plane, GPU pools and snapshotting specified further down are the design for where that execution grows, and each such section says so where it diverges from the code.
 
 Functions are the smallest deployable unit of compute in the Hanzo platform. Where the Inference Engine (HIP-0043) runs persistent model-serving processes and the Edge layer (HIP-0050) runs V8 isolates for lightweight request processing, Functions occupy the middle ground: containerized, stateless units of work that spin up on demand, execute, and disappear. They are the correct abstraction for bursty, event-driven AI workloads that do not justify a long-running service.
 
-The platform supports four function runtimes: **Python**, **Go**, **Rust**, and **TypeScript**. Each runtime ships as a pre-built base image with AI-specific dependencies (PyTorch, ONNX Runtime, Candle, transformers.js) pre-installed and pre-warmed, eliminating the dependency installation tax that plagues cold starts on generic FaaS platforms.
+The registry accepts six runtimes today — `node`, `python`, `go`, `deno`, `bash` and `container` (BYO image) — the closed set in `apps/functions/functions.go:52-55`, mapped to the sandbox executor's language table. The pre-warmed AI base images this paragraph used to promise (PyTorch/ONNX/Candle pre-installed) are design, not shipped artifacts.
 
 AI-specific triggers connect functions to the broader Hanzo infrastructure: model inference events from the LLM Gateway (HIP-0004), webhook delivery, scheduled retraining cycles, data pipeline stages from Hanzo Stream (HIP-0030), and async task invocation from Hanzo MQ (HIP-0055). Functions can also be deployed to the Edge (HIP-0050) for latency-sensitive invocation without GPU requirements.
 
-**Repository**: [github.com/hanzoai/functions](https://github.com/hanzoai/functions)
-**Port**: 8060 (API), 8061 (function invocation proxy)
-**Docker**: `ghcr.io/hanzoai/functions:latest`
-**Binary**: `hanzo-fn`
+**Serving**: `apps/functions` in `hanzoai/cloud`, at `/v1/functions` (`manifest/apps.go:169`) — the registry and invoke door ship inside the cloud binary (`plugin/functions`), not as a standalone service with its own ports, image or `hanzo-fn` binary; the CLI is the generated `hanzo functions` command group (HIP-1030)
 
 ## Motivation
 
@@ -160,6 +157,70 @@ Training/fine-tuning   │ ML Pipeline (HIP-57) │ Minutes     │ Yes │ Hour
 ```
 
 ## Specification
+
+### The shipped surface
+
+Every address is under `/v1/functions` — nine paths, published in
+`plugin/functions/openapi.json` and documented route-by-route in the package
+doc (`apps/functions/functions.go:11-27`):
+
+```
+GET    /v1/functions                    list
+POST   /v1/functions                    create / redeploy
+GET    /v1/functions/metrics            invocation chart + cost (derived from real rows)
+GET    /v1/functions/triggers           all triggers (HTTP)
+GET    /v1/functions/deployments        current deployments
+GET    /v1/functions/secrets            mounted secret NAMES (values live in KMS)
+GET    /v1/functions/{name}             detail
+DELETE /v1/functions/{name}             delete, with its invocations
+GET    /v1/functions/{name}/invocations recent invocations
+GET    /v1/functions/{name}/logs        last invocation output
+POST   /v1/functions/{name}/invoke      run it
+```
+
+**Store.** The per-org function registry: runtime, source (≤256 KiB), resource
+limits, and the NAMES of mounted secrets — never a secret value
+(`apps/functions/store.go`, `apps/functions/functions.go:4-9`). Invocation
+rows live beside it, and every metric shown is derived from them; nothing is
+interpolated.
+
+**Execution.** Invoke delegates to a sandbox through `apps/exec` — the binary
+NEVER runs org code in-process, and an unconfigured sandbox fails closed with
+503 rather than fabricating a result (`apps/functions/functions.go:26-29`,
+`apps/functions/invoke.go:20-38`).
+
+**Tenancy.** The org is the validated principal (HIP-0026); the registry's
+org column is enforced on every query, and the billing subject is
+`principal.Ledger`, never a caller-supplied field.
+
+**Meter.** Functions is **metered** — the plugin declares `Price:
+cloud.Metered` (`plugin/functions/main.go:21`), so a write to this surface
+requires commercial standing before it runs (`spend.go:290`). Two debits land
+on the caller's org ledger through the ONE shared `cloud.ResourceMeter`, and
+either is independently free at a zero rate:
+
+- the flat per-invocation fee, `CLOUD_FUNCTION_FEE_CENTS`
+  (`apps/functions/functions.go:61-69`), gated BEFORE the sandbox runs — an
+  org that cannot cover it gets 402 and no work happens
+  (`apps/functions/invoke.go:169-171`);
+- the compute fee in GB-seconds — (memory GB) × (wall-clock s), the unit the
+  industry bills serverless on — at `CLOUD_FUNCTION_GBSEC_CENTS`, default
+  $1.00/GB-s, integer-exact with half-up rounding
+  (`apps/functions/gbseconds.go`).
+
+**Events.** None: the capability publishes nothing on the bus, so a
+customer's webhooks receive nothing from it.
+
+**Observability.** Nothing beyond the request span every route gets;
+`GET /v1/functions/metrics` is a read over the org's own invocation rows,
+not a telemetry exporter.
+
+**Stage.** **ga** (HIP-0139 §8): functions is agentic-OS core — the unit of
+compute agents deploy to.
+
+**Upstreams.** None: no OSS project is forked, embedded or mirrored in
+`apps/functions`; Knative, CRIU and the runtime images named in this document
+are referenced designs, not vendored code.
 
 ### Architecture
 
@@ -557,26 +618,13 @@ hanzo_fn_model_load_duration_seconds{model}
 
 ### Control Plane API
 
-The control plane runs on port 8060 and manages function lifecycle.
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/functions` | GET | List all functions (paginated, filterable by runtime/trigger type) |
-| `/v1/functions` | POST | Create a new function (accepts function.yaml + source archive) |
-| `/v1/functions/{name}` | GET | Function detail: revisions, triggers, scaling config |
-| `/v1/functions/{name}` | PUT | Update function (creates new revision) |
-| `/v1/functions/{name}` | DELETE | Delete function and all revisions |
-| `/v1/functions/{name}/revisions` | GET | List revisions with traffic allocation |
-| `/v1/functions/{name}/revisions/{rev}` | GET | Revision detail: instances, metrics |
-| `/v1/functions/{name}/invoke` | POST | Synchronous invocation (waits for response) |
-| `/v1/functions/{name}/invoke-async` | POST | Asynchronous invocation (returns task ID) |
-| `/v1/functions/{name}/logs` | GET | Function execution logs (streaming SSE) |
-| `/v1/functions/{name}/metrics` | GET | Per-function metrics (invocations, latency, errors) |
-| `/v1/functions/{name}/traffic` | PUT | Update traffic split between revisions |
-| `/v1/triggers` | GET | List all active triggers |
-| `/v1/triggers/{id}` | GET | Trigger detail: source, function, status |
-| `/v1/gpu-pool` | GET | GPU pool status: warm pods, cache utilization |
-| `/health` | GET | Control plane health |
+The management surface this section used to table — ports 8060/8061,
+revisions, traffic splits, async invocation, a GPU-pool read — is design the
+shipped registry does not serve. The served control surface is exactly the
+eleven operations of "The shipped surface" above, and the served document
+(HIP-1030) is its enumeration; an operation absent there is not callable and
+MUST NOT be assumed by a client. Revision management and traffic splitting
+arrive, if they arrive, with the Knative execution plane.
 
 ### Invocation Protocol
 
@@ -640,31 +688,25 @@ traffic:
     percent: 10
 ```
 
-### Prometheus Metrics
+### Metrics
 
-Metrics are exported on port 9060 with namespace `hanzo_fn`:
-
-| Metric | Type | Description |
-|--------|------|-------------|
-| `hanzo_fn_invocations_total` | Counter | Total invocations by function, trigger type, status |
-| `hanzo_fn_duration_seconds` | Histogram | End-to-end execution time (includes cold start) |
-| `hanzo_fn_cold_start_duration_seconds` | Histogram | Cold start time by function, runtime |
-| `hanzo_fn_cold_starts_total` | Counter | Cold starts by function (vs. warm invocations) |
-| `hanzo_fn_errors_total` | Counter | Errors by function, error type |
-| `hanzo_fn_concurrent_executions` | Gauge | Currently executing instances per function |
-| `hanzo_fn_gpu_utilization` | Gauge | GPU utilization per function (GPU functions only) |
-| `hanzo_fn_gpu_memory_bytes` | Gauge | GPU memory usage per function |
-| `hanzo_fn_gpu_pool_available` | Gauge | Available warm GPU pods in pool |
-| `hanzo_fn_gpu_pool_in_use` | Gauge | GPU pods currently executing functions |
-| `hanzo_fn_model_cache_hit_rate` | Gauge | Model cache hit ratio per node |
-| `hanzo_fn_trigger_lag` | Gauge | Lag between event arrival and function invocation |
-| `hanzo_fn_snapshot_restore_seconds` | Histogram | CRIU snapshot restore time |
+There is no `hanzo_fn_*` Prometheus family: the shipped metrics surface is
+`GET /v1/functions/metrics`, a windowed series of REAL invocation counts,
+statuses and cost derived from the org's own invocation rows
+(`apps/functions/metrics.go`) — nothing interpolated, nothing invented. A
+node-level exporter for pools, caches and snapshot restore times belongs to
+the execution plane that would own those mechanisms.
 
 ## Implementation
 
 ### CLI
 
-The `hanzo-fn` CLI is the primary developer interface:
+There is no `hanzo-fn` binary: the developer interface is the generated
+`hanzo functions` command group, projected from the served document like
+every other capability's CLI (HIP-1030). The verbs below are the intended
+ergonomics for that group; the deployment and compose manifests that follow
+describe the standalone service this HIP no longer ships and are retained
+only as the execution-plane design.
 
 ```bash
 # Initialize a new function project
@@ -887,7 +929,16 @@ observability:
   metrics_namespace: hanzo_fn
 ```
 
-ods.
+## Security Considerations
+
+What an attacker gets from the wrong implementation: an invoke path that runs
+org code in-process is arbitrary code execution inside the binary that holds
+every tenant's stores — which is why execution is delegated to the sandbox
+and fails closed when the sandbox is absent; a registry that stored secret
+VALUES would turn a function listing into credential disclosure — it stores
+names, and values stay in KMS; and an invoke gated after the work instead of
+before it is free compute for an unfunded org — the gate runs first and 402s
+(`apps/functions/invoke.go:169-171`).
 
 ### Authentication and Authorization
 
