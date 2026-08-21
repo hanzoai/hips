@@ -7,7 +7,7 @@ category: Interface
 capability: channels
 status: Draft
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0126
+requires: HIP-0026, HIP-0106, HIP-0126, HIP-0139
 ---
 
 # HIP-1066: Channels — One Inbox
@@ -122,6 +122,32 @@ both pinned by `TestSendKeepsItsCapAndItsStrictness`:
 
 The closed ledger of untyped routes has one entry, and a second one added without
 a stated wire fact fails.
+
+### What it owns, charges and emits
+
+The store is one SQL database (`sqlpool.Open("channels", …)`,
+apps/channels/store.go:43): policy, pairing, allowlist, access-group and owner
+rows beside the inbox and the send record. The four transports in the closed
+registry are discord, slack, teams and telegram (apps/channels/registry.go).
+
+The addresses are the operations at `/v1/channels`
+(plugin/channels/openapi.json): the transport listing, the inbox read, the
+allowlist (read, replace), pairing (list, approve), and the per-channel send —
+the send being the one declared route, per the section above.
+
+It is free, in those words: the plugin declares `Price: cloud.Free`
+(plugin/channels/main.go:21). The model completion a turn spends is metered
+where inference is metered, behind the AI door, not here.
+
+It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+receive nothing from it. Beyond the request span every route gets, the turn's
+span comes from this package's own tracer, `hanzo.channels`
+(apps/channels/turn.go:35).
+
+The stage is `ga` — the manifest row declares none, and absent is `ga`
+(HIP-0139 §8). The capability derives from no OSS upstream: transport wire
+shapes are normalized in this package, and delivery rides integrations' own
+doors.
 
 ## Rationale
 

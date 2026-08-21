@@ -7,7 +7,7 @@ category: Application
 status: Draft
 created: 2026-08-20
 capability: risk
-requires: HIP-0106, HIP-0519
+requires: HIP-0106, HIP-0139, HIP-0519
 ---
 
 # HIP-1046: Risk
@@ -20,11 +20,11 @@ under, the ground truth that arrives late and settles what actually happened, th
 immutable datasets a model can cite, and the lookup sets a decision needs but
 cannot derive.
 
-It is ONE product at ONE address served by FOUR processes in `hanzoai/cloud` —
-`apps/risk` (decide and learn), `apps/label` (ground truth), `apps/dataset`
-(versioned snapshots) and `apps/reference` (lookup sets). The address is the
-product membership, so the split is an implementation fact and not a second
-product (`apps/dataset/dataset.go:6-18`).
+It is ONE product served by FOUR processes in `hanzoai/cloud` — `apps/risk`
+(decide and learn), `apps/label` (ground truth), `apps/dataset` (versioned
+snapshots) and `apps/reference` (lookup sets). Ground truth and lookup sets are
+capabilities of their own, each with its own store and its own address —
+HIP-1261 (`/v1/label`) and HIP-1262 (`/v1/reference`) specify them.
 
 This HIP states the invariants that hold across all four. It is not the model,
 the feature list or the rule set.
@@ -119,24 +119,11 @@ model contributes an allow and cannot lower anything.
 
 ### 6. Ground truth: late, contested, and traceable
 
-Every assertion carries three instants: when the judged event happened, when the
-filer says it became knowable, and the DERIVED instant at which this plane could
-first have answered with it (`apps/label/fact.go:215`). Resolution takes an
-observation instant and shows only what was knowable then, so a training set built
-for an event can never contain a label that did not exist when a model would have
-had to act. The guard MUST read the derived instant: a guard whose only input is a
-value the caller chose is exactly as strong as the caller's honesty.
-
-Conflicting assertions BOTH stay. A total order over adjudication weight picks the
-one in force and returns the losers beside it, so a contested label is visible as
-contested rather than resolved into silence (`apps/label/resolve.go:146`). There
-is no UPDATE statement in that plane.
-
-Every assertion MUST name its source, the evidence behind it, and the identity
-that filed it — the last stamped server-side from the validated principal, never
-from the body. A label with no evidence is refused at the door, because a label
-that cannot be traced cannot be defended when the adverse action it fed is
-challenged.
+The ground-truth plane is its own capability, specified by HIP-1261. What this
+HIP keeps is the cross-plane consequence: resolution shows only what was
+knowable at the observation instant, so a training set built for an event can
+never contain a label that did not exist when a model would have had to act,
+and the guard reads the DERIVED instant, never a value the caller chose.
 
 ### 7. A dataset is bytes, not a query
 
@@ -159,27 +146,11 @@ bounded per tenant, bounded in the process, each with its own deadline
 
 ### 8. Reference sets: a version, and a refusal
 
-Every lookup set is a VERSION, and every answer names it. A version is the content
-digest of what was taken, so the same data is the same version whoever fetched it,
-and a decision records one string an auditor resolves back to a publisher, a
-licence and a date.
-
-A set that has NEVER LOADED MUST REFUSE rather than answer "not listed"
-(`apps/reference/reference.go`). A designation list that answers "not listed"
-because it was never loaded is indistinguishable from a clean world, and only one
-of those is a decision.
-
-Freshness is itself a signal, so it is on the wire: the version, when its oldest
-contributing publisher was current, how old that is, and whether it is past
-bound. A stale set still answers — yesterday's list beats none — and says that it
-did.
-
-The baseline plane's tables have NO tenant column; a tenant's own allow and deny
-entries live in that organization's own store, and resolution is override first,
-then baseline. Nothing derived from one organization's rows may enter the
-baseline, ever. Where a wanted source needs a licence we do not hold, it is
-declared as a seam that REFUSES — an unlicensed set and an absent one look
-identical from outside, and only one of them is a decision.
+The lookup plane is its own capability, specified by HIP-1262. What this HIP
+keeps is the cross-plane consequence: a decision names the exact version of
+every set it consulted, a set that has never loaded refuses rather than
+answering "not listed", and nothing derived from one organization's rows may
+enter the shared baseline, ever.
 
 ### 9. Failure is closed and loud
 
@@ -190,6 +161,60 @@ cannot act on a process that is not there.
 
 Configuration that changes what a decision means MUST be resolved at mount and
 announced then, not discovered by the first decision that needed it.
+
+### 10. Addresses, and what each operation is
+
+The decide-and-learn plane answers under the bare prefix: `features`, `health`,
+`learn`, `policy` (GET/PUT), `score`, `search` (POST, and GET of a run by id),
+`state` and `state/model` (POST/PUT) (`plugin/risk/openapi.json`). Every one is
+typed except `GET /v1/risk/health`, declared because its 503 carries the
+degraded report as its body — which component failed, and the real error — and
+a typed op's error envelope would drop exactly that
+(`apps/risk/typed_wire_test.go:37-46`). The nested planes are mounted by their
+own processes — today at `/v1/risk/labels`, `/v1/risk/reference` and
+`/v1/risk/datasets` (`manifest/apps.go:223`, `:234`, `:263`); the router
+resolves nested prefixes by specificity, so the split needs no mount order.
+HIP-1261 and HIP-1262 move ground truth and lookup sets to their own
+addresses; the code follows those specs, and this HIP's invariants hold across
+the move.
+
+### 11. The stores
+
+The decide plane owns the per-tenant model shelf under its own data directory —
+observation records, stated regimes, per-tenant rings bounded per tenant
+(`apps/risk/ring.go`) — and it is the single writer of that state. The dataset
+plane owns its store (§7); ground truth and lookup sets own theirs under their
+own HIPs (§6, §8). The feature surface is READ from the analytics warehouse
+this product does not own; every such read passes the tenant key of §1.
+
+### 12. The money
+
+THE BILLABLE UNIT IS A SCREEN: one event judged against an organisation's own
+model. Scoring one event is one screen, learning from a batch is one per event,
+and a search is priced from its measured size, in two halves each gated before
+the half it prices — the surface by the stated window, the grid by the measured
+history (`apps/risk/typed.go:1282-1293`, `apps/risk/learn.go:1772-1795`). The price of a
+screen is an operator-set policy value, `CLOUD_RISK_PRICE_UUSD_PER_SCREEN` in
+micro-USD, defaulting to 100 — never a number this subsystem invents — and zero
+makes screens free and un-gated (`apps/risk/typed.go:1294-1300`). Every priced
+op GATES on the upper bound before the work and METERS what was actually done
+after it, on the caller's OWN ledger, through the fleet's one resource meter
+(`apps/risk/typed.go:1353-1392`). A caller that is refused pays nothing; a
+cancelled run pays for the part that ran.
+
+### 13. Events, observability, stage, upstreams
+
+The capability publishes NOTHING a customer's webhooks receive. Each decision
+is also stated as one `risk_decided` row on the analytics event plane the
+organisation already reads (`apps/risk/emit.go:64`) — server-minted or bounded
+attributes only, the amount as a bracket and never the value, detached so a
+telemetry outage cannot fail a decision. That row, plus the request span every
+route already gets, is the whole observable surface: no extra spans, no
+metrics of its own.
+
+Its stage is `ga`. The decide and dataset planes derive from no outside
+project — nothing forked, embedded or mirrored; the label and lookup planes
+answer for their own in HIP-1261 and HIP-1262.
 
 ## Rationale
 
@@ -231,6 +256,8 @@ MUST be server-derived where a caller-supplied value would be self-serving.
 - HIP-0106 — The Hanzo Plugin Contract
 - HIP-0519 — One Identity Boundary
 - HIP-0201 — Model Risk Management
+- HIP-1261 — Label — Ground Truth
+- HIP-1262 — Reference — Lookup Sets
 
 ## Copyright
 

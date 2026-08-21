@@ -7,7 +7,7 @@ category: Infrastructure
 capability: mq
 status: Draft
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0119
+requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 ---
 
 # HIP-1061: MQ — Queues and Streams
@@ -99,6 +99,29 @@ Mount never requires a live broker: the connection retries, so the surface mount
 and can describe itself with nothing running. Until the plane is reachable, every
 operation answers 503 and the health operation reports degraded. It MUST NOT
 report healthy on a connection it does not have.
+
+### What it owns, charges and emits
+
+The capability owns no store: the durable log it administers is the broker's one
+file store, owned by the pubsub capability that runs the node (HIP-1060). This
+surface reaches it as a client over the one bus knob (`apps/mq/mq.go:93`) and
+forks nothing of its own; the client library is `nats.go` (Apache 2.0).
+
+The addresses are the operations at `/v1/mq` (plugin/mq/openapi.json): health
+and info; stream list, create, get, update, delete and purge; stored-message
+read and delete by sequence; consumer list, create, get and delete; and the
+pull. All typed, none declared.
+
+It is free, in those words: the plugin declares `Price: cloud.Free`
+(plugin/mq/main.go:23), and no meter runs behind any route.
+
+It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+receive nothing from it. It emits nothing to observability beyond the request
+span every route gets; the degraded state is answered on the health operation,
+not exported.
+
+The stage is `ga` — the manifest row declares none, and absent is `ga`
+(HIP-0139 §8).
 
 ## Rationale
 

@@ -7,7 +7,7 @@ category: Infrastructure
 capability: tasks
 status: Draft
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0119
+requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 ---
 
 # HIP-1062: Tasks — The Durable Run
@@ -111,6 +111,40 @@ free to drift from the one that actually answers.
 Platform cron mounts no routes. It registers durable schedules on this same
 engine, and is folded in here so there is one tasks subsystem rather than two that
 must agree.
+
+### Addresses, and the one that is legacy
+
+Everything the door serves is under `/v1/tasks`: the bare noun's redirect and the
+one wildcard route that carries the engine's operation set, on every method
+(plugin/tasks/openapi.json). The manifest row also still carries the bare
+`/tasks` prefix (manifest/apps.go:409), the address the studio shipped with; that
+pair is ledgered in `openapi/misfiled.txt` and closes by fold under `/v1/tasks`,
+never by alias.
+
+### What it owns, charges and emits
+
+The capability owns no store. The durable state is the embedded engine's — one
+SQLite with one writer under cloud's data dir (durable.go) — and this door fronts
+it; a second store here would be the second copy of the engine's model this HIP
+refuses everywhere else.
+
+It is free, in those words: the plugin declares `Price: cloud.Free`
+(plugin/tasks/main.go:25), and no meter runs behind any route.
+
+It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+receive nothing from it. It emits nothing to observability beyond the request
+span every route gets: the run history is read through this door from the
+engine's own record, not from exported spans.
+
+### Stage and upstream
+
+The stage is `ga` — the manifest row declares none, and absent is `ga`
+(HIP-0139 §8).
+
+The engine is `hanzoai/tasks` (pinned v1.52.9 in cloud's go.mod), a fork of
+Temporal (MIT). What survives in HEAD is the event-sourced core — workflows,
+activities, schedules, task queues, workers — embedded in-process
+(`tasksengine.Embed`), with the gRPC surface removed.
 
 ## Rationale
 

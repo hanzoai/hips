@@ -7,7 +7,7 @@ category: Security
 status: Draft
 created: 2026-08-20
 capability: authz
-requires: HIP-0026, HIP-0519
+requires: HIP-0026, HIP-0139, HIP-0519
 ---
 
 # HIP-1041: Authz
@@ -96,7 +96,24 @@ report a property of THIS PROCESS, and a probe that needed a tenant would fail f
 reasons that have nothing to do with the process being alive
 (`plugin/authz/main.go`, the `Describe` prose).
 
-### 5. The registry predicate is a different question
+### 5. The surface, whole
+
+Three routes, and no others: `POST /v1/authz/check`, `GET /v1/authz/health`,
+`GET /v1/authz/readyz` (`serve/mount.go:31-44`). None is a typed operation, and
+none can be: authz is a leaf module that must never import cloud, so both seams
+a subsystem normally types through are closed to it, and each operation is
+instead DECLARED — prose registered beside the route
+(`plugin/authz/main.go:28-49`). §3 records that the check's declared prose is
+currently wrong; the defect is in the prose, not the contract.
+
+The capability owns no store (§3 is why). It is FREE — no meter, no debit
+through any plane (`plugin/authz/main.go`, `Price: cloud.Free`). It publishes
+no event, so a customer's webhooks receive nothing from it. It emits nothing to
+observability beyond the request span every route already gets. Its stage is
+`ga`. It derives from no outside project: `github.com/hanzoai/authz` is our own
+leaf, and nothing in it forks, embeds or mirrors an upstream.
+
+### 6. The registry predicate is a different question
 
 Authority over IAM's own identity rows — who may mint a credential, who may
 administer a user — is a SECOND predicate over entities addressed by

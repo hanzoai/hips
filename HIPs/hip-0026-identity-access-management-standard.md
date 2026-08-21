@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Active
 created: 2025-01-15
-requires: HIP-0027, HIP-0029
+requires: HIP-0027, HIP-0139
 capability: iam
 ---
 
@@ -17,9 +17,9 @@ capability: iam
 
 Hanzo IAM is the unified identity and access management provider for the Hanzo ecosystem, serving production traffic at **hanzo.id**. It is a clean-room native rewrite on the Hanzo stack -- `zip` over `hanzoai/orm` -- and carries no Beego and no xorm. (This paragraph asserted a Go/Beego platform until 2026-08-13; the Casdoor-derived Beego/xorm tree is the retired v1 line at `hanzoai/iam-v1`. `iam/go.mod` requires no beego module and no Go file imports one -- the only occurrences in the tree are comments describing what v1 did.)
 
-Hanzo IAM implements OAuth 2.0, OpenID Connect (OIDC), SAML 2.0, and CAS protocols. It provides multi-tenant authentication with per-organization white-label identity domains — any organization registered in IAM can get its own branded login page and identity domain. The default deployment ships with hanzo.id, lux.id, zoo.id, pars.id, and id.ad.nexus, but the system supports arbitrary additional tenants via configuration.
+Hanzo IAM implements OAuth 2.0 and OpenID Connect (OIDC) — authorization code with PKCE, client credentials, the device grant, introspection and revocation — plus WebAuthn and TOTP MFA. (Earlier revisions also claimed SAML 2.0 and CAS; no SAML or CAS route exists in the served surface, `plugin/iam/openapi.json`, and the claim is withdrawn until one does.) It provides multi-tenant authentication with per-organization white-label identity domains — any organization registered in IAM can get its own branded login page and identity domain. The default deployment ships with hanzo.id, lux.id, zoo.id, pars.id, and id.ad.nexus, but the system supports arbitrary additional tenants via configuration.
 
-The system also tracks per-user credit balances for AI usage billing, making IAM the source of truth for user identity *and* user spend across all Hanzo services.
+IAM is the source of truth for identity. It is NOT the source of truth for spend: prepaid credit is the finance ledger's, read at the caller's own wallet address by the one spend predicate in `hanzoai/cloud` (`spend.go`), and IAM serves no balance or transaction route.
 
 **Repository**: [github.com/hanzoai/iam](https://github.com/hanzoai/iam)
 **Port**: 8000
@@ -27,7 +27,7 @@ The system also tracks per-user credit balances for AI usage billing, making IAM
 
 Keycloak is the most popular open-source IAM. It is also a 500MB+ Java application that requires a JVM, takes 30+ seconds to start, and consumes 512MB of heap at idle. In the Hanzo ecosystem, where the blockchain node, CLI tools, SDK, and wallet are all written in Go, introducing a Java dependency for IAM is a poor fit.
 
-Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and idles at ~50MB RSS. It ships a React frontend (easy to customize for branding) and supports the same protocol set as Keycloak (OAuth 2.0, OIDC, SAML, CAS, LDAP, RADIUS). The tradeoff is a smaller community and fewer enterprise features (no fine-grained RBAC policies, no UMA). For our use case -- OAuth SSO across a handful of first-party services -- the Hanzo IAM feature set is sufficient, and the operational simplicity is decisive.
+Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and idles at ~50MB RSS. It ships a React frontend (easy to customize for branding) and serves OAuth 2.0, OIDC, WebAuthn and TOTP MFA. The tradeoff is a smaller community and fewer enterprise features (no fine-grained RBAC policies, no UMA). For our use case -- OAuth SSO across a handful of first-party services -- the Hanzo IAM feature set is sufficient, and the operational simplicity is decisive.
 
 | Factor | Hanzo IAM | Keycloak |
 |--------|---------|----------|
@@ -36,7 +36,7 @@ Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and
 | Idle memory | ~50 MB RSS | ~512 MB heap |
 | Startup time | < 2s | 30-60s |
 | Frontend | React (customizable) | Freemarker (limited) |
-| Protocol support | OAuth2, OIDC, SAML, CAS, LDAP | OAuth2, OIDC, SAML, UMA |
+| Protocol support | OAuth2, OIDC, WebAuthn | OAuth2, OIDC, SAML, UMA |
 | Stack alignment | Same as Lux node, CLI, SDK | Requires JVM |
 
 ## Specification
@@ -62,14 +62,22 @@ Hanzo IAM compiles to a single Go binary (~50MB), starts in under 2 seconds, and
                     │    Hanzo IAM       │
                     │   (zip + orm)      │
                     │     :8000          │
-                    └────┬─────────┬────┘
-                         │         │
-                ┌────────┴──┐  ┌───┴────────┐
-                │ SQL │  │   KV               │
-                │   :5432    │  │   :6379     │
-                │ hanzo_iam  │  │  (sessions) │
-                └────────────┘  └────────────┘
+                    └─────────┬─────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │      iam.db        │
+                    │ (SQLite, encrypted │
+                    │     at rest)       │
+                    └───────────────────┘
 ```
+
+One store: `{DataDir}/iam/iam.db`, an encrypted-at-rest SQLite file opened by
+IAM's own `orm.DB`, converted in place if it arrived plaintext — the same file
+the standalone binary is pointed at with `--db`, so the graft in
+`hanzoai/cloud` and the standalone process serve the same identities
+(`cloud` `apps/iam/iam.go:36-48`). There is no external database and no
+session cache beside it. (Earlier revisions drew SQL on :5432 and a KV
+session store on :6379; both belonged to the retired v1 line.)
 
 ### OAuth 2.0 Flow: Authorization Code Grant with PKCE
 
@@ -121,9 +129,9 @@ Access tokens are JWTs signed with the application's certificate (e.g., `cert-ha
 
 When a request arrives, IAM resolves the organization context through the following chain:
 
-1. **Application lookup via `/api/get-app-login`**: The login UI (hosted at hanzo.id, served by the `hanzo.id-worker` Cloudflare Worker) calls this endpoint with the `clientId` from the OAuth authorize URL. IAM returns the application name and organization name. This is the source of truth.
+1. **Application lookup via `/v1/iam/get-app-login`**: The login UI (hosted at hanzo.id, served by the `hanzo.id-worker` Cloudflare Worker) calls this endpoint with the `clientId` from the OAuth authorize URL. IAM returns the application name and organization name. This is the source of truth.
 
-2. **Direct login via `/api/login`**: The payload includes `application` and `organization` fields. These must match the application's configured organization. Hardcoding `organization: "hanzo"` for all requests breaks scoped SSO clients (e.g., KMS has its own client ID and expects the correct org context).
+2. **Direct login via `/v1/iam/login`**: The payload includes `application` and `organization` fields. These must match the application's configured organization. Hardcoding `organization: "hanzo"` for all requests breaks scoped SSO clients (e.g., KMS has its own client ID and expects the correct org context).
 
 3. **Domain-based fallback**: If no application context is provided, IAM falls back to matching the request `Host` header against known origins. Each application configures `origin` and `originFrontend` to enable this.
 
@@ -152,44 +160,16 @@ All applications use:
 
 Client secrets use KMS-managed placeholders (`${IAM_APP_HANZO_CLIENT_SECRET}`) resolved at startup via the `resolveSecrets()` function. Plaintext secrets never appear in configuration files or init_data.json.
 
-### User Balance and Credit System
+### Identity, Not Money
 
-Every user has a `balance` field (float64, USD-denominated). The flow:
-
-```
-Commerce (payment)              IAM (balance)              Cloud (AI usage)
-       │                            │                            │
-       │  POST /api/add-balance     │                            │
-       │  { user: "z", amount: 50 } │                            │
-       ├───────────────────────────►│                            │
-       │                            │  balance: 50 → 100        │
-       │                            │                            │
-       │                            │  POST /api/add-transaction │
-       │                            │◄────────────────────────────┤
-       │                            │  { category: "Purchase",   │
-       │                            │    amount: -0.02,          │
-       │                            │    subtype: "llm-tokens" } │
-       │                            │                            │
-       │                            │  balance: 100 → 99.98     │
-```
-
-The `Transaction` model records every balance-affecting event:
-
-```go
-type Transaction struct {
-    Owner       string              // Organization (e.g., "hanzo")
-    Name        string              // Transaction ID
-    CreatedTime string              // ISO 8601 timestamp
-    Application string              // Which app triggered it
-    Category    TransactionCategory // "Purchase" or "Recharge"
-    User        string              // User being charged/credited
-    Amount      float64             // Positive for credit, negative for debit
-    Currency    string              // "USD"
-    State       string              // "Completed", "Pending", "Failed"
-}
-```
-
-Services check balance before executing expensive operations. The LLM Gateway (HIP-4) reads the user's balance from the JWT claims or via `/api/get-account` and rejects requests when balance is insufficient.
+IAM serves no balance and no transaction route (`plugin/iam/openapi.json`
+carries neither noun), and earlier revisions of this section — a per-user
+`balance` field, `/api/add-balance`, `/api/add-transaction`, a `Transaction`
+model — described the retired v1 line. Prepaid credit is the finance ledger's:
+the one spend predicate reads the caller's own wallet address, exact to the
+atto-USD, and composes it with the subscription answer commerce resolves
+(`hanzoai/cloud` `spend.go`). IAM's contribution to that decision is the
+identity the wallet is derived from, nothing more.
 
 ### Bootstrap: init_data.json
 
@@ -255,11 +235,13 @@ These `/v1/iam/oauth/*` paths are the only OIDC endpoints. There is no `/oauth/*
 
 | Method | Endpoint | RFC | Description |
 |--------|----------|-----|-------------|
-| GET | `/api/get-app-login` | — | Resolve application and org from client ID |
-| POST | `/api/login` | — | Password login (returns session or redirects) |
+| GET | `/v1/iam/get-app-login` | — | Resolve application and org from client ID |
+| POST | `/v1/iam/login` | — | Password login (returns session or redirects) |
 | GET | `/v1/iam/oauth/authorize` | RFC 6749 §3.1 | Authorization endpoint (PKCE `S256` required) |
 | POST | `/v1/iam/oauth/token` | RFC 6749 §3.2 | Token exchange (`client_secret_basic` for confidential clients) |
 | GET | `/v1/iam/oauth/userinfo` | OIDC Core §5.3 | UserInfo endpoint |
+| POST | `/v1/iam/oauth/introspect` | RFC 7662 | Token introspection |
+| POST | `/v1/iam/oauth/revoke` | RFC 7009 | Token revocation |
 | GET | `/v1/iam/oauth/logout` | OIDC RP-Initiated Logout | End session endpoint |
 | GET | `/v1/iam/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
 | GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | Discovery (host-relative; `originFrontend` empty) |
@@ -268,21 +250,16 @@ These `/v1/iam/oauth/*` paths are the only OIDC endpoints. There is no `/oauth/*
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/get-account` | Get current user (from session/token) |
-| GET | `/api/userinfo` | OIDC UserInfo endpoint |
-| GET | `/api/get-user` | Get user by ID |
-| POST | `/api/update-user` | Update user profile |
-| POST | `/api/add-user` | Create new user (admin) |
-| POST | `/api/delete-user` | Delete user (admin) |
+| GET | `/v1/iam/get-account` | Get current user (from session/token) |
+| GET | `/v1/iam/oauth/userinfo` | OIDC UserInfo endpoint |
+| GET | `/v1/iam/get-user` | Get user by ID |
+| POST | `/v1/iam/update-user` | Update user profile |
+| POST | `/v1/iam/add-user` | Create new user (admin) |
+| POST | `/v1/iam/delete-user` | Delete user (admin) |
 
-#### Billing
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/add-transaction` | Record a balance-affecting event |
-| GET | `/api/get-transactions` | List transactions for org |
-| GET | `/api/get-user-transactions` | List transactions for user |
-| POST | `/api/add-balance` | Add credits to user balance |
+(There is no billing table any more: earlier revisions listed
+`/api/add-transaction` and `/api/add-balance` here, routes the served surface
+does not carry — see *Identity, Not Money* above.)
 
 #### Discovery
 
@@ -290,7 +267,6 @@ These `/v1/iam/oauth/*` paths are the only OIDC endpoints. There is no `/oauth/*
 |--------|----------|-----|-------------|
 | GET | `/.well-known/openid-configuration` | OIDC Discovery 1.0 | OIDC discovery document (host-relative) |
 | GET | `/v1/iam/.well-known/jwks` | RFC 7517 | JSON Web Key Set |
-| GET | `/api/health` | — | Health check |
 
 The OIDC discovery document is host-relative and self-consistent — issuer, authorize, token, userinfo, and jwks all share one origin (`originFrontend` empty in `app.prod.conf`):
 

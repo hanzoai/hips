@@ -7,7 +7,7 @@ category: Infrastructure
 capability: evals
 status: Draft
 created: 2026-07-27
-requires: HIP-0106, HIP-0111, HIP-0114, HIP-0119, HIP-0120, HIP-0122
+requires: HIP-0106, HIP-0111, HIP-0114, HIP-0119, HIP-0120, HIP-0122, HIP-0139
 ---
 
 
@@ -31,8 +31,10 @@ different concern from observation and from inference, so it is a different plan
 with its own repo, its own store, its own routes, and its own name. Repo hygiene is
 not the argument — an acyclic dependency graph is.
 
-The plane exists today, dissolved into two others. `cloud/clients/eval` serves
-`/v1/evals/*`; o11y serves a **write** endpoint, `POST /api/annotation`, inside a
+The plane exists today as a cloud subsystem, not yet as its own repo:
+`apps/eval` in `hanzoai/cloud` serves `/v1/evals/*` (the manifest row is
+`manifest/apps.go:401`, the group `apps/eval/eval.go:207`); o11y serves a
+**write** endpoint, `POST /api/annotation`, inside a
 read plane; `cloud/clients/o11y` serves a *second*, unrelated annotation-queue
 entity at `/v1/o11y/annotation-queues` on its own SQLite file. One resource, three
 owners, so none of them kept it in sight of the others — which is why the console
@@ -76,6 +78,8 @@ Consequences, stated so they are not re-argued:
   judgment, and MUST NOT live on this plane. `GET /v1/evals/metrics` — which reads
   `hanzo.cloud_usage` and the o11y span index and writes nothing — is an o11y board
   mis-homed on eval; it moves to o11y and does not reappear under `/v1/eval`.
+  It is still served today (`apps/eval/metrics.go`, in the published subset),
+  so the move is owed, not done.
 - eval is the only plane that stores verdicts. There is exactly one score store.
 
 ### §2 What eval owns
@@ -107,6 +111,14 @@ work to the human; the score is what the human produces. Deleting the noun is wh
 makes the three-way seam unrepresentable rather than merely fixed.
 
 ### §3 Route surface — one prefix, `/v1/eval`, singular throughout
+
+What is served today is the **plural** surface, and any reader of the table
+below should know the distance: `/v1/evals/{datasets, datasets/{name},
+datasets/{name}/items, evaluators, rubrics, runs, scores, traces, metrics}` —
+nine paths, in `plugin/evals/openapi.json`, with the resource still named
+`evaluators` rather than `judge` and no queue routes at all. The table below
+is the target grammar this HIP proposes; until the migration lands, the
+capability's name and address are `evals` (`manifest/apps.go:401`).
 
 Every eval endpoint MUST live under `/v1/eval` and MUST follow the resource-name
 grammar (HIP-0119 §2): the resource is named **once**, in the singular, and the HTTP
@@ -245,11 +257,27 @@ bill.Meter(principal.HomeOrg(c), project, kind, fee, c.RequestID(), cloud.Client
 with provider `eval`. A run MUST be gated **before** the first judge call and MUST
 NOT write a score when the gate denies.
 
+What is priced today: the surface itself is **free** — the plugin declares
+`Price: cloud.Free` (`plugin/evals/main.go:21`) and `ResourceFeeCents("EVAL", …)`
+is unset, so every eval resource costs nothing in those words. The only money
+on this plane is the judge's inference, metered by ai on the caller's
+identity as above. The capability publishes **no events** on the bus, so a
+customer's webhooks receive nothing from it. Its stage is **ga** (HIP-0139
+§8): judgment is part of the agentic-OS core. It forks, embeds or mirrors
+**no OSS upstream** — its OLAP tables ride the shared datastore client
+another capability owns (`apps/eval/telemetry.go`), which is that
+capability's upstream to declare, not this one's.
+
 **Observable by the plane it observes.** eval MUST emit spans from the **global**
 tracer provider (`otel.Tracer("hanzo-eval")`), parented from `c.Context()` — cloud
 installs the one provider before mounting subsystems and calls
 `aiobject.AdoptHostTracerProvider()` so ai's `gen_ai` spans share it. eval MUST NOT
 construct a provider or an exporter of its own.
+
+Today `apps/eval` constructs no tracer and emits no span of its own (there is
+no otel import in the package), so what a customer can read back under
+`/v1/o11y` from this capability is the request span every route already gets
+and nothing more. The mandate below is the unimplemented half of this section.
 
 Run, item and judge spans MUST carry `gen_ai.hanzo.org_id` set to the caller's org —
 o11y's llmobs views hard-filter on it, and a span without it is invisible. eval adds
@@ -266,7 +294,10 @@ Two stores, one seam each.
 `cloud.OrgDB` / `cloud.NewOrgStore` with `cloud.WithDurable` so it survives a rolling
 deploy on the HA plane (HIP-0107). It holds dataset, item, judge, rubric,
 experiment, run rollup, queue, queue item and assignment. Natural keys are unique
-**within an org** (`(org, name)`), never globally.
+**within an org** (`(org, name)`), never globally. Today's implementation is
+one shared file with a NOT NULL `org` column as the trust boundary
+(`apps/eval/store.go`), not a file per org — the per-org-file question is
+named in Open questions and this paragraph is its target state.
 
 **OLAP** — scores and per-item run results, over the **shared** datastore client
 (`aiobject.DatastoreEnabled`, `DatastoreExec`, `DatastoreQuery`). eval MUST NOT open
@@ -412,6 +443,18 @@ Named, not hidden. Each needs a human call before the corresponding code is writ
   but the judge's inference is free today. Whether a run, a stored dataset or a queue
   seat is billable — and whether eval gets its own spend-cap service axis or inherits
   ai's — is a pricing decision, not an engineering one.
+
+## Security Considerations
+
+What an attacker gets from the wrong implementation: a score store that can be
+edited is the ability to rewrite verdicts after the fact — an agent judged
+dangerous re-judged safe with no record — which is why a score is append-only
+and a retraction is a new row (§3). A judge that concatenates untrusted item
+content into its instruction is a prompt-injection path from evaluated data
+into the evaluator (§8). A tenancy defect here discloses another org's
+datasets and verdicts and, worse, lets one org's runs bill another's wallet —
+the acceptance tests (1), (2) and (4) are the checks that hold those three
+closed.
 
 ## References
 

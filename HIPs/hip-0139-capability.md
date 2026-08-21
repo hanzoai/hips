@@ -82,13 +82,16 @@ the defect HIP-0106 §4.2 names.
 
 1. One word, lowercase ASCII, the noun people say for the thing. `books`, not
    `accounting-ledger`; `tel`, not `telephony-gateway`.
-2. Plural when `/v1/<name>` is a collection and `/v1/<name>/{id}` is one of
-   them (`agents`, `keys`, `wallets`). Singular when it is a faculty
-   (`ai`, `search`, `billing`).
+2. Singular, as a rule: the capability is the faculty (`ai`, `plan`,
+   `link`, `web3`, `dataset`, `visor`), and the plural belongs to resource
+   paths under it. An EXISTING plural name stands where it already is the
+   word (`agents`, `books`, `tasks`); a capability is never renamed for
+   number alone, in either direction. The OpenAI- and Anthropic-compatible
+   wire keeps its own plurals — those addresses are §3.2's, not this rule's.
 3. No compound words. A hyphen or an underscore in a name is a refusal at
    the gate.
 4. No two capabilities whose names differ only in number. `bot` and `bots`
-   are one capability; which word it keeps is decided by rule 2.
+   are one capability, and rule 2 keeps the singular.
 5. An abbreviation is a word only when it is the word people say: `ai`,
    `iam`, `kms`, `dns`, `crm`, `seo`, `mq`, `o11y`, `rpc`, `s3`, `kv`, `sql`,
    `sbom`, `lsp`, `x402`. A new one MUST be argued for in the capability's HIP.

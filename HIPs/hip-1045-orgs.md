@@ -13,10 +13,12 @@ requires: HIP-0118, HIP-0519, HIP-0521
 
 ## Abstract
 
-`/v1/orgs` is where a tenant is born. One call creates the caller's organization,
-and — on a first run — moves them into it as its admin and mints its first
-credential. It is served by `apps/account` in `hanzoai/cloud`
-(`apps/account/account.go:716`, `apps/account/onboarding.go`).
+`/v1/account/orgs` is where a tenant is born. One call creates the caller's
+organization, and — on a first run — moves them into it as its admin and mints
+its first credential. It is a facet of the `account` capability (HIP-1200),
+served by `apps/account` in `hanzoai/cloud` (`apps/account/account.go:716`,
+`apps/account/onboarding.go`); the router still serves it at the bare
+`/v1/orgs` today, a pair `hanzoai/cloud` `openapi/misfiled.txt` carries.
 
 The org is the tenancy boundary the whole estate is isolated on (HIP-0118), so
 this is the one call that creates a boundary rather than acting inside one. Two
@@ -119,9 +121,10 @@ be silently suffixed, because the name they typed is the one they will look for.
 
 ### 7. What else lives under this address
 
-Sub-resources under an org's own path — an org's entitlements, for instance — are
-served by the subsystems that own them, authorized against the org in the path
-being the caller's own. Creation is the only thing this capability itself owns.
+Nothing. Creation is the only operation this facet owns; a sub-resource about
+an org — its entitlements, for instance — is served by the capability that owns
+it, under that capability's own address (`/v1/entitlements/orgs/{org}`,
+HIP-1202), authorized against the org in the path being the caller's own.
 
 ## Rationale
 
@@ -155,6 +158,8 @@ once, never persisted in the clear, and never re-derivable from a replay.
 - HIP-0519 — One Identity Boundary
 - HIP-0521 — Org Hierarchy
 - HIP-0026 — Identity & Access Management Standard
+- HIP-1200 — Account — The Caller's Own Surface
+- HIP-1202 — Entitlements — What an Org May Run
 
 ## Copyright
 

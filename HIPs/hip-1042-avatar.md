@@ -13,10 +13,12 @@ requires: HIP-0026
 
 ## Abstract
 
-`/v1/avatar` is a person's profile photo: one upload that stores the bytes and
-records their address on the user's IAM row, and one credential-free read that
-streams them back. It is served by `apps/account` in `hanzoai/cloud`
-(`apps/account/avatar.go`).
+`/v1/account/avatar` is a person's profile photo: one upload that stores the
+bytes and records their address on the user's IAM row, and one credential-free
+read that streams them back. It is a facet of the `account` capability
+(HIP-1200), served by `apps/account` in `hanzoai/cloud`
+(`apps/account/avatar.go`); the router still serves it at the bare root today,
+a pair `hanzoai/cloud` `openapi/misfiled.txt` carries.
 
 The photo is CONTENT-ADDRESSED — the key ends in the SHA-256 of the bytes — and
 the read takes no credentials, because the address IS the capability. Both are
@@ -142,6 +144,7 @@ its rule: refuse to write a row you could not read.
 - HIP-0026 — Identity & Access Management Standard
 - HIP-1040 — Appearance
 - HIP-0106 — The Hanzo Plugin Contract
+- HIP-1200 — Account — The Caller's Own Surface
 
 ## Copyright
 

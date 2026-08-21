@@ -7,7 +7,7 @@ category: Meta
 status: Draft
 created: 2026-07-26
 capability: company
-requires: HIP-0902
+requires: HIP-0139, HIP-0902
 ---
 
 
@@ -104,9 +104,59 @@ them, record the equity genesis, and terminate as an incorporated company.
 cap table and documents (`/import/captable`, `/import/documents`) and skips
 straight to terminal. Companies that already exist are not second-class.
 
-The endpoints are the machine's edges: `/genesis`, `/founders`, `/kyc`,
-`/kyc/decision`, `/kyc/refresh`, `/payment`, `/documents`, `/esign`,
-`/esign/complete`, `/advance`, `/skip`.
+The endpoints are the machine's edges: `PUT /structure`, `/genesis`,
+`/founders`, `/kyc`, `/kyc/decision`, `/kyc/refresh`, `/payment`,
+`/documents`, `/esign`, `/esign/complete`, `/advance`, `/skip`, plus the
+import pair (`/import/captable`, `/import/documents`), the fundraise trio
+(`/fundraise/safe`, `/fundraise/round`, `/fundraise/deck`, section 6), the
+platform register (`/register`, `/register/summary`, `/review`) and the
+`GET|POST /v1/company` root — twenty-one paths, every one under `/v1/company`
+(`manifest/apps.go:426`), published in `plugin/company/openapi.json`.
+
+### The capability contract
+
+The facts HIP-0139 §6 asks of every capability, stated once:
+
+- **Store.** One SQLite file in the system namespace — `company` — holds every
+  org's formation as a single row keyed by the org, at most one formation per
+  org (`apps/company/store.go:22-28`). Documents, cap-table rows and secrets
+  are NOT here: they live with dataroom, captable and KMS through the provider
+  seams (`apps/company/providers.go`).
+- **Typed, and the two that are not.** Twenty operations are typed; two are
+  untyped by design, held in `apps/company/typed_wire_test.go`: the deck
+  upload (`POST /fundraise/deck` takes the PDF as the raw body) and
+  `POST /payment` (its 402/503 denial carries the fleet's nested error body a
+  typed op cannot emit). Both still declare their bodies through
+  `openapi.Register`.
+- **Tenancy.** The org is `principal.Org` — the validated IAM owner claim —
+  on every read and write; a caller with no validated principal is refused.
+  The one cross-tenant surface is the platform register and the KYC decision,
+  SuperAdmin-only, argued below.
+- **Meter.** The route surface is **free** at the edge — the plugin declares
+  `Price: cloud.Free` (`plugin/company/main.go:21`). The one charge is the
+  one-time formation fee: **$999** (`formationFeeCents = 99900`,
+  `apps/company/providers.go:146`; operator override `CLOUD_COMPANY_FEE_CENTS`,
+  `apps/company/company.go:290-297`), taken at `POST /v1/company/payment`
+  through the Charger seam onto the org's own ledger, with denial answered
+  402 (insufficient balance) or 503 (balance unavailable), never a silent
+  advance — `guardPaid` (`apps/company/machine.go:332-335`) is what reads the
+  receipt.
+- **Events.** None. The capability publishes nothing on the bus; a customer's
+  webhooks receive nothing from it. Provider completion (e-sign, KYC) arrives
+  INBOUND via `/esign/complete` and `/kyc/decision`, it is not emitted.
+- **Observability.** Nothing beyond the request span every route gets.
+- **Stage.** **beta** (HIP-0139 §8): a vertical application, not the
+  agentic-OS core. The manifest row does not yet carry a stage field; this
+  declaration is what it inherits when `manifest.App.Stage` lands.
+- **Upstreams.** None — no OSS project is forked, embedded or mirrored here;
+  the KYC and filing providers are honest stubs or hand-written clients
+  (`apps/company/providers.go`, `apps/company/filing.go`).
+- **The wrong implementation** hands an attacker one of three things: another
+  org's formation row is founders' KYC PII; a reviewer decision reachable by
+  a non-SuperAdmin is laundered KYC approval (the orthogonality argued in
+  "Two surfaces, one machine"); and a guard table with an extra edge is a
+  company formed without payment or identity — which is why the transitions
+  are a closed table rather than permissions.
 
 ### The genesis anchor
 

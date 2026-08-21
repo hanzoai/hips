@@ -7,7 +7,7 @@ category: Application
 status: Draft
 created: 2026-08-20
 capability: team
-requires: HIP-0026, HIP-0106
+requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
 # HIP-1048: Team
@@ -127,6 +127,34 @@ The live document transport carries one message per frame in the platform's own
 envelope, negotiates a text encoding, and pins the model version it reports. It is
 a data plane over an already-resolved caller, and it MUST NOT re-derive identity of
 its own.
+
+### 8. Addresses, and which operations cannot be values
+
+The capability answers at two prefixes, and the second is deliberate:
+`/v1/team` — the control plane, bots, files, billing reads and the transactor
+door — and `/collaborator`, the live document lane, app-level because the
+front derives its WebSocket address from an origin, not from the `/v1/team`
+base (`manifest/apps.go:339-346`). Operations are typed by default; the closed
+exception list names each one that cannot be a value, with its wire fact —
+the two WebSocket upgrades, the account plane's JSON-RPC envelope, the two
+browser redirects, the embedded billing page's bytes, and the file plane's
+multipart-in and raw-bytes-out (`apps/team/typed_wire_test.go:152-178`).
+
+### 9. Store, money, events, stage, upstreams
+
+The store this capability owns is the workspace store §1 describes: one
+SQLite file per org, encrypted at rest by a handle the caller opens, holding
+workspaces, memberships and the roster — plus the workspace blob store §4
+bounds. It is FREE: no meter, no debit through any plane (`plugin/team/main.go`,
+`Price: cloud.Free`); §5's login check is a licence read, not a meter. It
+publishes no event, so a customer's webhooks receive nothing from it, and it
+emits nothing to observability beyond the request span every route already
+gets. Its stage is `ga`.
+
+It derives from no forked upstream. The live lane SPEAKS the Y.js sync
+protocol — the server is a relay and update log, not an embedded CRDT engine
+(`apps/team/collabws.go:13`) — and the document contract is the one the Team
+front's own collaborator client states (`apps/team/collab.go:3-7`).
 
 ## Rationale
 

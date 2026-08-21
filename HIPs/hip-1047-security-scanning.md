@@ -7,7 +7,7 @@ category: Security
 status: Draft
 created: 2026-08-20
 capability: security
-requires: HIP-0106
+requires: HIP-0106, HIP-0139
 ---
 
 # HIP-1047: Security Scanning
@@ -62,12 +62,17 @@ process nor wedge the engine.
 
 ### 4. Prepaid, at a resolved fee
 
-A scan is one metered unit. The caller's balance MUST cover it BEFORE the engine
-runs (`apps/security/security.go:373`): a check downstream of the work is a bill
-for compute already spent.
+A scan is one metered unit, billed under the meter kind `security.scan`
+(`apps/security/security.go:26`). The caller's balance MUST cover it BEFORE the
+engine runs (`apps/security/security.go:375`): a check downstream of the work
+is a bill for compute already spent. The debit lands through the fleet's one
+resource meter on the caller's own commerce ledger
+(`apps/security/security.go:413`).
 
-The fee resolves through the platform's own policy default, never a number
-invented by this subsystem. This is stated because the failure is quiet: the
+The fee resolves through the platform's own policy default —
+`CLOUD_SECURITY_FEE_CENTS`, defaulting to the fleet-wide $1.00 provision fee,
+zero making scanning free and un-gated (`apps/security/security.go:28-31`) —
+never a number invented by this subsystem. This is stated because the failure is quiet: the
 surface declared itself metered from the start and passed a literal zero as the
 amount, and a zero debit posts no ledger entry — so the platform required standing
 to scan and then charged for none of them.
@@ -101,6 +106,23 @@ deliberate edit with a reason.
 
 A filter value outside its vocabulary is REFUSED rather than ignored, so a typo in
 a severity filter cannot read as "no findings".
+
+### 8. Store, addresses, events, stage, upstreams
+
+The one store this capability owns is its findings database: an org-scoped
+SQLite file holding scans and their redacted findings and nothing else,
+encrypted at rest where the build carries the cipher
+(`apps/security/store.go:13-27`). The addresses are `/v1/security/scans`
+(POST and GET, and GET of one by id), `/v1/security/findings` (GET, and GET of
+one by id), `/v1/security/rules` and `/v1/security/health`
+(`plugin/security/openapi.json`) — nothing else answers under the prefix.
+
+It publishes no event, so a customer's webhooks receive nothing from it; the
+record of a scan is §5's audit entry. Beyond the request span every route
+already gets it emits nothing to observability. Its stage is `ga`. The
+detection engine derives from no outside project — it is a dependency-free
+leaf over the standard library, no scanner binary embedded or shelled out to
+(`apps/security/detect/detect.go:1-13`).
 
 ## Rationale
 

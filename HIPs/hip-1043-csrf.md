@@ -13,10 +13,12 @@ requires: HIP-0519
 
 ## Abstract
 
-`/v1/csrf` mints the token a browser echoes on a state-changing write. It exists
-for exactly one caller shape — a request authenticated by an AMBIENT cookie — and
-it is inert for every other. Served by `apps/account` in `hanzoai/cloud`
-(`apps/account/csrf.go`).
+`/v1/account/csrf` mints the token a browser echoes on a state-changing write.
+It exists for exactly one caller shape — a request authenticated by an AMBIENT
+cookie — and it is inert for every other. A facet of the `account` capability
+(HIP-1200), served by `apps/account` in `hanzoai/cloud`
+(`apps/account/csrf.go`); the router still serves it at the bare root today, a
+pair `hanzoai/cloud` `openapi/misfiled.txt` carries.
 
 The token is a keyed MAC over the caller's validated identity and a timestamp, so
 it authorizes writes as that identity and as nobody else, and it expires.
@@ -130,6 +132,7 @@ gate.
 - HIP-0519 — One Identity Boundary
 - HIP-0027 — Secrets Management Standard
 - HIP-0106 — The Hanzo Plugin Contract
+- HIP-1200 — Account — The Caller's Own Surface
 
 ## Copyright
 

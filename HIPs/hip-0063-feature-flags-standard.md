@@ -6,7 +6,7 @@ type: Standards Track
 category: Interface
 status: Draft
 created: 2026-02-23
-requires: HIP-0017
+requires: HIP-0017, HIP-0139
 capability: [experiments, flags]
 ---
 
@@ -19,10 +19,8 @@ This proposal defines the feature flag and experimentation platform for the Hanz
 
 The platform implements the [OpenFeature](https://openfeature.dev) specification for flag evaluation, ensuring SDK interoperability across languages and preventing vendor lock-in. It integrates with Hanzo Analytics (HIP-0017) for experiment metric collection and with the API Gateway (HIP-0044) for traffic splitting at the infrastructure layer.
 
-**Repository**: [github.com/hanzoai/flags](https://github.com/hanzoai/flags)
-**Port**: 8063 (API)
-**Docker**: `ghcr.io/hanzoai/flags:latest`
-**SDKs**: `@hanzoai/flags-js`, `hanzoai-flags` (Python), `github.com/hanzoai/flags-go`
+**Evaluator**: [github.com/hanzoai/flags](https://github.com/hanzoai/flags) — the stateless Go engine (`flags/go`) compiled into the cloud binary
+**Serving**: `apps/flags` and `apps/experiments` in `hanzoai/cloud`, at `/v1/flags` and `/v1/experiments` — there is no standalone flags service, port or image; SDK access is the generated cloud SDKs (HIP-1030)
 
 ## Motivation
 
@@ -55,6 +53,52 @@ For AI inference routing, stale flags mean requests routed to the wrong model --
 **Decision**: Build Hanzo Flags as a Go service with KV-backed evaluation, OpenFeature-compatible SDKs, and native support for AI experiment types. Total cost: infrastructure we already operate (KV, Datastore, Kafka). Zero per-seat or per-MAU licensing.
 
 ## Specification
+
+### The shipped surface — two capabilities, two prefixes
+
+**flags** (`manifest/apps.go:47`) serves seven operations under `/v1/flags`
+(`apps/flags/routes.go:47-60`): `POST /v1/flags` and `POST /v1/flags/decide`
+are the SAME evaluate handler — one verdict function, two spellings for the
+PostHog-shaped clients; `GET /v1/flags/defs`, `GET|PUT|DELETE
+/v1/flags/defs/{key}` manage definitions; `GET /v1/flags/activity` reads the
+audit log; `GET /v1/flags/health` probes. Definitions live in per-(org,
+project) encrypted SQLite — `{DataDir}/orgs/{org}/projects/{project}/flags.db`
+via `cloud.OrgDB` (`apps/flags/store.go:3-6`) — and evaluation runs in-process
+through the embedded evaluator `github.com/hanzoai/flags/go`, a pure function
+of (definitions JSON, context JSON) answering in microseconds
+(`apps/flags/engine.go:1-13`). **No KV, no sync protocol, no network hop**:
+every pod evaluates from its own hot copy, which is what makes the p99 targets
+below ordinary rather than aspirational.
+
+**experiments** (`manifest/apps.go:404`) serves six operations under
+`/v1/experiments`: `GET|POST /v1/experiments`, `GET /{id}`,
+`GET /{id}/assign`, `POST /{id}/analyze`, `POST /{id}/decide`, plus
+`/health`. It is a composition, not a fourth engine: it owns only the
+experiment registry — one per-org SQLite file,
+`{DataDir}/orgs/{slug}/experiments.db` (`apps/experiments/store.go:3-9`) —
+and composes assignment from flags (a deterministic rollout hash, so there is
+no assignment store), outcomes from the analytics warehouse, and evidence
+from research's immutable sample rows.
+
+The credential on both is the org's ordinary bearer per HIP-0026 — there is
+no `hf_*` key family. The admin plane is not a second prefix: definition
+writes are org-scoped on the same surface, and the platform's own switches
+are the reserved platform store the SuperAdmin flips from the cockpit through
+the same engine (`apps/flags/flags.go:21-27`).
+
+Stated for HIP-0139 §6: both capabilities are **free**, said in those words
+(`plugin/flags/main.go:21`, `plugin/experiments/main.go:22` — `Price:
+cloud.Free`), and `/v1/flags/` is on the spend gate's never-refuse list
+(`spend.go:433`) because the kill switch must be observable by an unpaid org.
+Both publish **no events** on the bus — exposure lands as analytics events
+from the surfaces that serve traffic, not from here — and emit nothing to
+observability beyond the request span. Both are **ga** (HIP-0139 §8): flags
+is the mechanism stage-gating itself rides, so it cannot sit behind a flag.
+Upstream: flags embeds `github.com/hanzoai/flags/go`, our own implementation
+of PostHog-compatible evaluation semantics, pinned to the prior
+implementation's answers by a 621-case parity table
+(`apps/flags/engine.go:11-13`); experiments derives from none — its
+significance test is stdlib math.
 
 ### Flag Types
 
@@ -170,25 +214,27 @@ The seed is configurable per flag. Changing the seed reshuffles the assignment -
 
 ### Evaluation API
 
-#### POST /v1/evaluate
+#### POST /v1/flags/decide
 
-Evaluate a single flag for a given context. This is the primary hot-path endpoint.
+Evaluate flags for an identity. This is the primary hot-path endpoint —
+served as both `POST /v1/flags` and `POST /v1/flags/decide`, one handler
+(`apps/flags/routes.go:52-55`). It answers for EVERY flag in the caller's
+definitions at once (the PostHog `/decide` shape), so there is no separate
+batch endpoint to keep in step with it.
 
 ```http
-POST /v1/evaluate HTTP/1.1
-Host: flags.hanzo.ai
-Authorization: Bearer hf_project_key_abc123
+POST /v1/flags/decide HTTP/1.1
+Host: api.hanzo.ai
+Authorization: Bearer <the org's ordinary key, HIP-0026>
 Content-Type: application/json
 
 {
-  "flag_key": "inference-model-experiment",
-  "context": {
-    "user_id": "user_789",
+  "distinct_id": "user_789",
+  "properties": {
     "org": "hanzo",
     "plan": "pro",
     "country": "US"
-  },
-  "default_value": "zen-72b"
+  }
 }
 ```
 
@@ -206,59 +252,11 @@ Response:
 }
 ```
 
-Evaluation reasons follow the OpenFeature specification:
-
-| Reason | Meaning |
-|--------|---------|
-| `STATIC` | Flag has no targeting rules; default value returned |
-| `TARGETING_MATCH` | A targeting rule matched |
-| `SPLIT` | Percentage rollout assignment |
-| `DEFAULT` | No rules matched; fallthrough value returned |
-| `DISABLED` | Flag is disabled; default value returned |
-| `ERROR` | Evaluation error; default value returned |
-
-#### POST /v1/evaluate/batch
-
-Evaluate multiple flags in a single request. SDKs SHOULD use this to reduce round-trips on page load or request initialization.
-
-```http
-POST /v1/evaluate/batch HTTP/1.1
-Host: flags.hanzo.ai
-Authorization: Bearer hf_project_key_abc123
-Content-Type: application/json
-
-{
-  "flags": ["inference-model-experiment", "new-dashboard", "rag-strategy"],
-  "context": {
-    "user_id": "user_789",
-    "org": "hanzo",
-    "plan": "pro"
-  }
-}
-```
-
-Response:
-```json
-{
-  "flags": {
-    "inference-model-experiment": {
-      "value": "zen-120b",
-      "variant": "zen-120b",
-      "reason": "TARGETING_MATCH"
-    },
-    "new-dashboard": {
-      "value": true,
-      "variant": "on",
-      "reason": "SPLIT"
-    },
-    "rag-strategy": {
-      "value": {"chunk_size": 512, "top_k": 5, "reranker": "cross-encoder"},
-      "variant": "strategy-b",
-      "reason": "SPLIT"
-    }
-  }
-}
-```
+The response and reason vocabulary is the embedded evaluator's —
+PostHog-compatible, pinned by its parity table — and the JSON above is
+illustrative of the verdict's shape (state, variant, payload per flag), not a
+schema this HIP owns: the definitive shape is what the evaluator answers and
+the served document publishes (HIP-1030).
 
 #### Performance Requirements
 

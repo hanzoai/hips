@@ -13,10 +13,12 @@ requires: HIP-0026
 
 ## Abstract
 
-`/v1/appearance` is one person's reading of the design system — text size,
-spacing density, one accent hue — held on their IAM account rather than in a
-browser. It is served by `apps/account` in `hanzoai/cloud`
-(`apps/account/appearance.go`).
+`/v1/account/appearance` is one person's reading of the design system — text
+size, spacing density, one accent hue — held on their IAM account rather than
+in a browser. It is a facet of the `account` capability (HIP-1200), served by
+`apps/account` in `hanzoai/cloud` (`apps/account/appearance.go`); the router
+still serves it at the bare root today, a pair `hanzoai/cloud`
+`openapi/misfiled.txt` carries.
 
 The whole claim is *where the value lives*. A preference kept in local storage is
 a fact about a device; kept on the identity it is a fact about the person, so it
@@ -114,6 +116,7 @@ a row they could not read.
 - HIP-0026 — Identity & Access Management Standard
 - HIP-0106 — The Hanzo Plugin Contract
 - HIP-1042 — Avatar
+- HIP-1200 — Account — The Caller's Own Surface
 
 ## Copyright
 

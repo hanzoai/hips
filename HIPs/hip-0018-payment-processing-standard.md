@@ -7,7 +7,7 @@ category: Interface
 status: Draft
 created: 2025-01-09
 updated: 2026-02-23
-requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30
+requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30, HIP-0139
 capability: billing
 ---
 
@@ -20,7 +20,7 @@ This proposal defines the payment processing standard for the Hanzo ecosystem. H
 
 > **No external-processor dependency.** First-party Hanzo/Lux/Zoo/Zen surfaces process payments through the native PSP, never through a third-party processor that can deplatform us. Commerce keeps a *pluggable* provider-adapter interface so a brand MAY add a regional rail, but no first-party flow depends on one.
 
-The system is designed around a single invariant: **IAM is the source of truth for user balances**. Commerce writes credits in; Cloud and Gateway write credits out. No service other than IAM may directly mutate a user's balance. All mutations flow through IAM's transaction API.
+The system is designed around a single invariant: **one ledger holds the balance, and every reader and writer addresses the same wallet.** As shipped, that ledger is commerce's native finance ledger — 18-decimal exact money over `big.Int`, no float anywhere on the path (`hanzoai/cloud` `spend.go:43-45`) — keyed per org by `principal.WalletOf`, the address the debit writes and the gate reads. An earlier revision of this HIP named IAM as the balance's home; the code refutes that — IAM holds identity, and the balance read the customer sees goes over the internal plane to commerce (`apps/billing/balance.go:75-76`).
 
 **Repository**: [github.com/hanzoai/commerce](https://github.com/hanzoai/commerce)
 **Port**: 4242
@@ -54,6 +54,41 @@ The Hanzo ecosystem includes $AI token (HIP-1) and on-chain settlement (HIP-25).
 The correct approach is **both**: the native PSP for fiat, blockchain for crypto. Commerce accepts both and normalizes them into credits. The user does not need to know or care which payment rail was used.
 
 ## Specification
+
+### The billing capability — what `/v1/billing` the customer reads actually is
+
+The capability named `billing` (HIP-0139) is the customer's own money door in
+`hanzoai/cloud`: **nine read operations, all GET, all free** — `/v1/billing/
+{balance, usage, usage/accounts}` and `/v1/finance/{balance, credits, usage,
+invoices, payment-methods, ledger}` (`manifest/apps.go:130`, package doc
+`apps/billing/billing.go`). It owns **no store**: balance and usage are read
+from the co-resident commerce ledger over the internal plane
+(`apps/billing/balance.go:75-76`), falling back to a verbatim S2S proxy only
+on a split deploy, so the wire is commerce's either way. The tenant is
+`principal.Org`, the validated IAM owner claim; the commerce subject is
+pinned server-side to that org and no client-supplied subject or org is ever
+forwarded.
+
+The rest of this document — checkout, subscriptions, webhooks, refunds,
+payouts — is the money surface **commerce** serves under the same
+`/v1/billing` product prefix; two capabilities share the product and the
+address split is the manifest's, not this table's. The whole `/v1/billing/`
+tree, both halves, is on the spend gate's never-refuse list (`spend.go:424`):
+the path to payment is never gated, because gating it deadlocks every unpaid
+and lapsed customer at once.
+
+Stated for HIP-0139 §6: the billing capability meters nothing and is **free**
+in those words (`plugin/billing/main.go:21` declares `Price: cloud.Free`);
+it publishes **no events** on the bus, so a customer's webhooks receive
+nothing from it (the webhooks in this document are INBOUND, from the PSP to
+commerce); it emits nothing to observability beyond the request span; its
+stage is **ga** — the money read is agentic-OS core; and it forks, embeds or
+mirrors **no OSS upstream**. What an attacker gets from the wrong
+implementation: a balance read keyed on a caller-supplied subject is a
+cross-tenant ledger read, and a reader addressing a different wallet than the
+debit writes is the class of bug that has shipped here three times
+(`spend.go:35-41`) — an org admitted on the platform's own pool for as long
+as the platform stays funded.
 
 ### Architecture
 
@@ -105,9 +140,9 @@ The correct approach is **both**: the native PSP for fiat, blockchain for crypto
 | Minimum purchase | 1,000 credits ($1.00) |
 | Maximum single purchase | 10,000,000 credits ($10,000) |
 | Precision | Integer (no fractional credits) |
-| Storage | `float64` in IAM user `balance` field (USD-denominated) |
+| Storage | exact 18-decimal atto-USD over `big.Int` on the commerce finance ledger — never a float (`spend.go:43-45`) |
 
-Credits are stored as a USD-denominated float in IAM (1,000 credits = $1.00 balance). The "credit" is a user-facing abstraction; the IAM balance field stores the dollar equivalent. This means 20,000 credits = $20.00 balance.
+Credits are stored USD-denominated on the finance ledger (1,000 credits = $1.00 balance). The "credit" is a user-facing abstraction; the ledger stores the exact dollar equivalent. This means 20,000 credits = $20.00 balance, and one atto-dollar is enough to be admitted — there is no cent-flooring on the gate.
 
 #### Credit Pricing Tiers
 
@@ -248,7 +283,7 @@ Commerce also accepts $AI token (HIP-1) payments on Hanzo Network (chain ID 3696
 | GET | `/v1/billing/invoices/:id` | Download invoice PDF | Bearer token |
 | GET | `/v1/billing/usage` | Usage breakdown by period | Bearer token |
 | POST | `/v1/billing/portal` | Create PSP customer portal session | Bearer token |
-| POST | `/webhooks/psp` | PSP webhook receiver | PSP signature |
+| POST | `/v1/billing/webhooks/:provider` | inbound PSP webhook receiver (commerce; under `/v1` like everything else, and never behind the spend gate — `spend.go:369`) | PSP signature |
 
 #### Response Examples
 

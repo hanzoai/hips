@@ -6,7 +6,7 @@ type: Standards Track
 category: Interface
 status: Active
 created: 2026-08-20
-requires: HIP-0119, HIP-0122, HIP-0128, HIP-0135
+requires: HIP-0119, HIP-0122, HIP-0128, HIP-0135, HIP-0139
 capability: openapi
 ---
 
@@ -20,7 +20,7 @@ emitted by the `openapi` package in `hanzoai/cloud` and served by the host that
 owns the front door.
 
 Everything a client touches is downstream of it — the published SDKs, the `hanzo`
-CLI, the MCP tool list, the command projection (HIP-1031) and the docs site. This
+CLI, the MCP tool list, the command projection (§7) and the docs site. This
 HIP fixes what the document is allowed to claim, who may read it, and which
 inconsistencies are refused rather than published.
 
@@ -128,7 +128,33 @@ other check compares two derived artifacts that can agree while both are wrong:
 Counts per product rather than in total, because totals net out: a run that lost
 one product's entire surface added enough elsewhere to keep the total rising.
 
-### §6 Refused
+### §6 What the capability owns, meters and emits
+
+This capability **owns no store**. The document is a render of the routers;
+what is committed — `openapi.yaml`, `public.yaml`, each `plugin/<app>/openapi.json`
+subset, the two ratchet files of §5 — is artifact, not state, regenerated from
+source and verified byte-for-byte. There is nothing to migrate and nothing a
+backup could lose that a rebuild does not produce.
+
+A request never becomes a tenant here: the document is served without a
+credential and does not vary by caller (§1), so there is no claim to read and
+nothing to refuse but a write — and there are no writes.
+
+Reading the document is **free**, said in those words: the serving code is the
+`openapi` package linked into the host, and no meter sits on the path. The
+capability publishes **no events** on the bus — a regeneration is a commit,
+not a runtime fact — and emits nothing to observability beyond the request
+span the route already gets.
+
+Stage is **ga**: the document is the mechanism by which every other
+capability's stage is projected (HIP-0139 §8.1 — the weave stamps `x-stage`
+and the public rule reads it), so it cannot itself be behind a flag.
+
+It derives from **no OSS upstream**: it implements the OpenAPI 3.x
+specification, which is a document format, and forks, embeds or mirrors no
+project's code.
+
+### §7 Refused
 
 - A second route registry. Bodies and prose are registered; paths never are, and
   a declaration renders only on a route the router carries.

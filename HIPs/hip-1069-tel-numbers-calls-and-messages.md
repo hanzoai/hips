@@ -7,7 +7,7 @@ category: Interface
 capability: tel
 status: Draft
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0119
+requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 ---
 
 # HIP-1069: Tel — Numbers, Calls and Messages
@@ -66,6 +66,12 @@ succeeded. A carrier that returns "sent" synchronously is telling you it accepte
 the request, and recording that as delivery is how a message that never arrived
 becomes a message the record says arrived.
 
+The door that would receive those events does not exist yet: this package mounts
+no carrier callback route and consumes no stream, so today a record's status is
+what the carrier answered synchronously plus the transitions this surface itself
+makes — a hangup, a release (apps/tel/store.go:163). The rule above is the
+contract the inbound half lands against, not a description of code that runs.
+
 ### Assistants are ours
 
 A call handed to an agent is answered by a Hanzo assistant on Hanzo inference: the
@@ -94,6 +100,33 @@ There is no untyped-by-design ledger, because nothing on this surface refuses: n
 raw bytes, no multi-status answer, no verbatim relay. The day one appears it is
 named with its wire fact and the set still has to match.
 
+The addresses are the operations at `/v1/tel` (plugin/tel/openapi.json): number
+search (`/numbers/available`), the org's numbers (list, buy, release), calls
+(list, place, hang up), messages (list, send), and the per-org `/summary`
+roll-up.
+
+### What it owns, charges and emits
+
+The store is one SQL database opened at mount (`sqlpool.Open("tel", …)`,
+apps/tel/store.go:21) with three tables — numbers, calls, messages — each
+leading its primary key with the org, so isolation is a physical property of the
+row rather than a WHERE clause somebody has to remember.
+
+It is free, in those words: the plugin declares `Price: cloud.Free`
+(plugin/tel/main.go:19). A number, a call and a message cost money at the
+carrier; no meter runs here today, and a deployment that resells them prices
+them outside this surface.
+
+It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+receive nothing from it, and it emits nothing to observability beyond the
+request span every route gets.
+
+The stage is `ga` — the manifest row declares none, and absent is `ga`
+(HIP-0139 §8). The capability derives from no OSS upstream: the carrier is
+reached over its HTTP API behind the interface (`apps/tel/rest.go`), configured
+by `TEL_CARRIER_BASE` and `TEL_CARRIER_KEY`, and the fallback carrier is this
+package's own stub.
+
 ## Rationale
 
 The alternative is to build against one carrier's API and generalize later.
@@ -110,9 +143,9 @@ billable and externally visible: a number bought under another tenant's org is a
 charge and a phone line.
 
 Carrier credentials live in configuration sourced from the key store and never
-appear in a response. Records carry what the carrier reported; a delivery status
-is written only when the event arrives, so the record cannot claim an outcome
-nobody observed.
+appear in a response. Records carry what the carrier reported: with no event
+door yet, a status stays at what the carrier acknowledged, so the record cannot
+claim an outcome nobody observed.
 
 ## References
 

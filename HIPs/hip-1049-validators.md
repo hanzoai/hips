@@ -7,7 +7,7 @@ category: Infrastructure
 status: Draft
 created: 2026-08-20
 capability: validators
-requires: HIP-0027, HIP-0106
+requires: HIP-0027, HIP-0106, HIP-0139
 ---
 
 # HIP-1049: Validators
@@ -113,7 +113,28 @@ also malformed — telling them the shape of a surface they may not use. This is
 pinned by a test, because it is a property of where the check sits and not of what
 it says.
 
-### 8. One parse rule per value
+### 8. The surface, whole
+
+Four operations, every one typed with no exception
+(`apps/validators/typed_wire_test.go:23`): `GET /v1/validators` lists the
+caller's own claims, `GET /v1/validators/challenge` issues §1's nonce,
+`POST /v1/validators` is the claim, and `GET /v1/validators/{tokenId}` reads
+one slot (`plugin/validators/openapi.json`).
+
+The one store it owns is a single SQLite file holding every org's
+entitlements, the owner-gated registration queue and the short-lived
+challenges, tenant-isolated on the `org` column of every scoped query
+(`apps/validators/store.go:25-30`). The staking keys are NOT in it — they seal
+into the key plane, which is §2.
+
+The capability is FREE — no meter, no debit through any plane
+(`plugin/validators/main.go`, `Price: cloud.Free`); what a claim costs is the
+NFT the wallet already holds, and stake is committed only at the owner's
+co-sign (§3). It publishes no event, so a customer's webhooks receive nothing
+from it, and it emits nothing to observability beyond the request span every
+route already gets. Its stage is `ga`. It derives from no outside project.
+
+### 9. One parse rule per value
 
 The slot id and the page limit each have exactly ONE parse rule, and the typed
 inputs carry them as strings for that reason: the rule that has always served

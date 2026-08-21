@@ -7,7 +7,7 @@ category: Interface
 capability: destinations
 status: Draft
 created: 2026-08-20
-requires: HIP-0026, HIP-0027, HIP-0106
+requires: HIP-0026, HIP-0027, HIP-0106, HIP-0139
 ---
 
 # HIP-1067: Destinations — Conversions Forwarded
@@ -111,6 +111,10 @@ sealed credential. It invents no second secret, no second store, and no second
 definition of who an org is. Without it a campaign's conversions sit in the
 warehouse with no cost beside them.
 
+It has no route of its own: a reporter self-registers per platform
+(apps/destinations/report.go) and its rows land in the warehouse cloud already
+owns, as `hanzo.ad_report`, one row per (org, platform, campaign, day).
+
 ### One route is not a typed operation
 
 Connecting a destination stays untyped, with the wire fact stated
@@ -132,6 +136,35 @@ wherever two apps meet. Publishing a type puts it in that namespace, so a type
 whose obvious name is already taken by another app MUST be qualified before it is
 published. That qualification is part of publishing, not cosmetics — a generated
 client would otherwise bind whichever shape it read last.
+
+### What it owns, charges and emits
+
+The store is one SQL database (`sqlpool.Open("destinations", …)`,
+apps/destinations/store.go:30) holding the (org, platform) rows and their
+non-secret configuration; the secret half lives in the key store under the
+per-org path, as specified above. The closed adapter registry is ga4,
+googleads, linkedin, meta, pinterest, posthog, reddit, tiktok, umami and x,
+each a file that registers itself from init()
+(apps/destinations/destination.go:170).
+
+The addresses are the operations at `/v1/destinations`
+(plugin/destinations/openapi.json): the listing, and per platform the connect,
+read, disconnect and test — the connect being the one declared route, per the
+section above.
+
+It is free, in those words: the plugin declares `Price: cloud.Free`
+(plugin/destinations/main.go:21); what a platform charges for the conversions
+it is sent is that platform's bill, read back through the reporting half.
+
+It publishes no events on the platform bus — it is a sink, and the one-way rule
+above is why — so a customer's webhooks (HIP-0061) receive nothing from it. It
+emits nothing to observability beyond the request span every route gets; a
+saturated fan-out logs the drop with a warning (apps/destinations/fanout.go:41),
+which is the visibility the lossy trade above promises.
+
+The stage is `ga` — the manifest row declares none, and absent is `ga`
+(HIP-0139 §8). The capability derives from no OSS upstream: each adapter speaks
+its platform's public conversion API directly over HTTP.
 
 ## Rationale
 

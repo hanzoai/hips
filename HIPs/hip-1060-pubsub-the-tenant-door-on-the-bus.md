@@ -7,7 +7,7 @@ category: Infrastructure
 capability: pubsub
 status: Draft
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0119
+requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 ---
 
 # HIP-1060: Pubsub — The Tenant Door on the Bus
@@ -102,6 +102,32 @@ Every app in the process reaches the bus through one resolver, which defaults to
 the loopback address of the server this same binary bound. There is deliberately
 no per-app address variable and no way to run with the bus off: mount fails
 closed, so a cloud that is up has a bus.
+
+### What it owns, charges and emits
+
+The store this capability owns is the bus's: the embedded node and its durable
+file store under cloud's data dir are run by this same package
+(`apps/pubsub/pubsub.go`), and every other plane — the event plane, the queue
+surface (HIP-1061), the wire facades — rides it. The door adds no second one.
+
+The addresses are the operations at `/v1/pubsub` (plugin/pubsub/openapi.json):
+publish, request, and the keyed surface — bucket create and delete, value get,
+put and delete, and a key's history. All typed, none declared.
+
+It is free, in those words: the plugin declares `Price: cloud.Free`
+(plugin/pubsub/main.go:21), and no meter runs behind any route.
+
+It publishes no events of its own — it is what events ride — so a customer's
+webhooks (HIP-0061) receive nothing from it, and it emits nothing to
+observability beyond the request span every route gets.
+
+The stage is `ga` — the manifest row declares none, and absent is `ga`
+(HIP-0139 §8).
+
+The node is `hanzoai/pubsub` (pinned v1.4.6 in cloud's go.mod), a derivative of
+NATS Server (Apache 2.0); the broker core, the stream layer and the key-value
+layer survive in HEAD. In-process callers reach it over the `nats.go` client
+(Apache 2.0).
 
 ## Rationale
 

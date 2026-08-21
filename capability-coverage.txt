@@ -49,14 +49,11 @@ affiliates
 allowance
 campaign
 captable
-commerce
 crm
 marketing
 marketplace
 plan
-pricing
 referrals
-treasury
 x402
 
 # data

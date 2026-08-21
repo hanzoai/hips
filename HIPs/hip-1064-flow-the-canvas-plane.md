@@ -7,7 +7,7 @@ category: Interface
 capability: flow
 status: Draft
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0119
+requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 ---
 
 # HIP-1064: Flow — The Canvas Plane
@@ -106,6 +106,40 @@ remedies differ:
 Every route on this surface is a typed operation and the count of untyped routes
 is held at zero, so a raw handler added later fails rather than shipping without a
 schema.
+
+The addresses are the operations at `/v1/flow` (plugin/flow/openapi.json):
+workflows (list, create, get, patch, delete), runs (start, list), and the
+`/status` reachability lens.
+
+### What it owns, and what a run costs
+
+The capability owns no store: workflows and runs live in the product's own
+database upstream, and the honest slice reads them back verbatim.
+
+It is metered. The plugin declares `Price: cloud.Metered`
+(plugin/flow/main.go:23), and the unit is one **run**. Running a workflow
+executes its whole component graph upstream, and those components call model
+providers, so the meter sits on `POST /v1/flow/runs` and nowhere else —
+everything else is bookkeeping against rows already held (apps/flow/billing.go).
+The price per run is the deployment's `CLOUD_FLOW_FEE_CENTS_RUN` (then
+`CLOUD_FLOW_FEE_CENTS`, then the platform default
+`cloud.DefaultResourceFeeCents`, 100 cents). The gate authorizes exactly the
+amount the meter debits — one fee read serves both, so the number a caller is
+refused for and the number they are charged cannot drift — and the debit lands
+through the resource meter after the upstream returned: work that never ran is
+work nobody owes for.
+
+It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+receive nothing from it, and it emits nothing to observability beyond the
+request span every route gets.
+
+The stage is `ga` — the manifest row declares none, and absent is `ga`
+(HIP-0139 §8).
+
+The product is a fork: `hanzoai/flow` derives from Langflow (MIT), rebranded,
+and the canvas, the graph engine and the component library all survive in HEAD.
+The cloud side forks none of it — every operation is the typed passthrough this
+HIP already requires.
 
 ## Rationale
 
