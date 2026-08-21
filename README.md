@@ -161,7 +161,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | One Identity Boundary | Standards Track | Infrastructure | Active |
 | [HIP-0520](./HIPs/hip-0520-serving-topology.md) | Serving Topology — Three Tiers, Horizontally Scalabl... | Standards Track | Infrastructure | Draft |
 | [HIP-0521](./HIPs/hip-0521-org-hierarchy.md) | Org Hierarchy | Standards Track | Security | Draft |
-| [HIP-0522](./HIPs/hip-0522-the-context-graph.md) | The Context Graph — Edges, Decisions and Derivation a... | Standards Track | Core | Draft |
+| [HIP-0522](./HIPs/hip-0522-the-context-graph.md) | The Context Graph — Edges, Decisions and Derivation ... | Standards Track | Core | Draft |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Active |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |
@@ -258,6 +258,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1188](./HIPs/hip-1188-bots-watched-run.md) | Bots — The Watched Run | Standards Track | Core | Draft |
 | [HIP-1189](./HIPs/hip-1189-web3-chain-access.md) | Web3 — Chain Access | Standards Track | Core | Draft |
 | [HIP-1190](./HIPs/hip-1190-analytics-product-event.md) | Analytics — The Product Event | Standards Track | Core | Draft |
+| [HIP-1197](./HIPs/hip-1197-brain-the-named-corpus.md) | Brain — The Named Corpus | Standards Track | Core | Draft |
 | [HIP-1200](./HIPs/hip-1200-account.md) | Account — The Caller's Own Surface | Standards Track | Application | Draft |
 | [HIP-1201](./HIPs/hip-1201-admission.md) | Admission — Launch Control | Standards Track | Platform | Draft |
 | [HIP-1202](./HIPs/hip-1202-entitlements.md) | Entitlements — What an Org May Run | Standards Track | Platform | Draft |
@@ -358,9 +359,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 117 | Identity & Access Management Standard |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 116 | Capability |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 115 | The Hanzo Plugin Contract |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 118 | Identity & Access Management Standard |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 117 | Capability |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 117 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -389,7 +390,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 117 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -426,3 +427,7 @@ One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` 
 **Chain** — the networks the cloud speaks to — enumerate · call · read balances
 
 [HIP-1189](./HIPs/hip-1189-web3-chain-access.md) `web3` · [HIP-1253](./HIPs/hip-1253-explorer-chain-data.md) `explorer`
+
+**Not yet grouped**
+
+[HIP-1197](./HIPs/hip-1197-brain-the-named-corpus.md) `brain`

@@ -17,17 +17,17 @@ requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139
 Product is the read-only inventory of the search and vector stores:
 `/v1/search/indexes` and `/v1/search/stats` read from Meilisearch,
 `/v1/vector/collections` and `/v1/vector/stats` from Qdrant, each reshaped into
-the rows the console renders. It reimplements no search or vector logic, holds no index or collection
-state, and resolves no tenant. It is implemented in `hanzoai/cloud` at
-`apps/product` (HIP-0106).
+the rows the console renders. It reimplements no search or vector logic, holds
+no index or collection state, and resolves no tenant. It is implemented in
+`hanzoai/cloud` at `apps/product` (HIP-0106).
 
 ## Motivation
 
 A console panel that shows what exists in the two shared retrieval stores needs
 one answer with one shape. The alternative is the console reaching two services
-directly, which puts two credentials in a browser-facing tier and makes the
-panel's shape a function of whichever version each service happens to run.
-Translating the shape once, server-side, is the whole job.
+directly, which puts two credentials in the browser and makes the panel's shape
+a function of whichever version each service happens to run. Translating the
+shape once, on the server, is the whole job.
 
 ## Specification
 
@@ -89,9 +89,10 @@ answer for the fleet, they authenticate with a deployment credential rather than
 an IAM claim, and the panel they feed is the operator console's.
 
 HIP-0139 §3.2 fixes where an operator view lives — an address family served by
-the capability itself and dropped from the public projection by address — and HIP-0139's own Security Considerations name this exact shape as the concrete
-defect: an operator surface offered as a customer method because the address
-said the product's name before it said whose view it was. So the two misfiled
+the capability itself and dropped from the public projection by address — and
+its own Security Considerations name this exact shape as the concrete defect:
+an operator surface offered as a customer method because the address said the
+product's name before it said whose view it was. So the two misfiled
 pairs MUST close by moving these reads to that depth, never by alias, and until
 they do the surface MUST hold the fleet-wide answers behind the deployment
 credential and MUST NOT grow a fifth route on the customer side of the line.
@@ -152,9 +153,19 @@ a validated claim, which is precisely what this capability does not do.
 A capability that cannot say which verb it owns has not earned a prefix. This
 one owns "count", and only that.
 
-### §11 What a wrong implementation gives an attacker
+## Rationale
 
-The shape of every tenant's corpus from one unauthenticated GET: how many
+A shape-translating read with no state is a small thing to specify and an easy
+thing to file wrong, which is exactly what happened to its address. The honest
+description — a fleet-wide operator read behind a deployment credential — is
+what settles both questions at once: what it is, and which side of the public
+line it belongs on. Writing that down is worth more than the four handlers it
+describes.
+
+## Security Considerations
+
+A wrong implementation here gives an attacker the shape of every tenant's
+corpus from one unauthenticated GET: how many
 indexes exist, what they are named, how many documents each holds, how many
 vectors and of what geometry. Names on a shared store are derived from an org,
 so a listing is also a census of who is on the platform and how much they have
@@ -168,17 +179,6 @@ the failure a "no key configured means no check" reading would produce.
 The degrade rule must stay one-directional: an unreachable upstream answers
 empty. It must never answer with a cached, partial or substituted body, because
 the only thing worse than an empty inventory is one that is somebody else's.
-
-## Rationale
-
-A shape-translating read with no state is a small thing to specify and an easy
-thing to file wrong, which is exactly what happened to its address. The honest
-description — a fleet-wide operator read behind a deployment credential — is
-what settles both questions at once: what it is, and which side of the public
-line it belongs on. Writing that down is worth more than the four handlers it
-describes.
-
-## Security Considerations
 
 The credential is the entire boundary; there is no second check behind it, and
 no tenant scope to fall back on. That is acceptable only for an operator surface

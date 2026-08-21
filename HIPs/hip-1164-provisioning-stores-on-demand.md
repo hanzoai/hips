@@ -51,9 +51,9 @@ that two logical resources can never map onto one backend resource
 ### §2 The address, and the seven kinds
 
 `/v1/instances/{kind}` for seven kinds — `kv`, `sql`, `docdb`, `datastore`,
-`s3`, `search`, `vector` — each answering the same four operations: list, create,
-describe, drop. The kind is a path segment because it is a value from a closed
-set, not a capability: `/v1/kv`, `/v1/sql`, `/v1/docdb` and `/v1/datastore`
+`s3`, `search`, `vector` — each answering the same four operations: list,
+create, describe, drop. The kind is a path segment because it is a value from a
+closed set, not a capability: `/v1/kv`, `/v1/sql`, `/v1/docdb` and `/v1/datastore`
 carry no operation, and an engine MUST NOT take a top-level prefix for its
 allocation surface. Allocation is one act with one store, so it has one address.
 
@@ -187,25 +187,6 @@ The credential is returned exactly once, in the create response, and nowhere
 else. Every read beside it carries no password. A caller that does not keep it
 re-provisions.
 
-### §10 What a wrong implementation gives an attacker
-
-Three things, each closed structurally.
-
-**Another tenant's store.** A folded name is a credential takeover, not a leak:
-two orgs resolving to one physical resource share its password. The fixed-width
-org hash makes the fold unspellable and the global `UNIQUE(physical_name)` makes
-any residual one fail 409 rather than succeed quietly.
-
-**A store in someone else's name.** Without the validated-principal check, a
-caller inside the network could name an org and receive its connection string,
-drop its data, or enumerate it. The check refuses exactly the anonymous path and
-nothing else: every real caller arrives with a validated principal.
-
-**A password at rest.** When custody is unavailable the create returns the
-generated password once and persists only metadata, `secret_ref` empty. It
-never writes a plaintext password anywhere durable, and a degraded custody plane
-MUST NOT be resolved by writing one.
-
 ## Rationale
 
 The alternative is an allocation surface per engine. Each would need the same
@@ -223,6 +204,24 @@ mechanism that refuses an unscopable kind stays even though nothing is refused
 today, because the next kind is the one that needs it.
 
 ## Security Considerations
+
+A wrong implementation gives an attacker three things, each closed here
+structurally.
+
+**Another tenant's store.** A folded name is a credential takeover, not a leak:
+two orgs resolving to one physical resource share its password. The fixed-width
+org hash makes the fold unspellable and the global `UNIQUE(physical_name)` makes
+any residual one fail 409 rather than succeed quietly.
+
+**A store in someone else's name.** Without the validated-principal check, a
+caller inside the network could name an org and receive its connection string,
+drop its data, or enumerate it. The check refuses exactly the anonymous path and
+nothing else: every real caller arrives with a validated principal.
+
+**A password at rest.** When custody is unavailable the create returns the
+generated password once and persists only metadata, `secret_ref` empty. It
+never writes a plaintext password anywhere durable, and a degraded custody plane
+MUST NOT be resolved by writing one.
 
 The tenant boundary is the naming derivation plus the validated principal, and
 both are server-side with no caller input. The name regex is the injection

@@ -152,29 +152,6 @@ admin client, and none of them is this capability's address. `/v1/s3` is the
 customer's own file surface. A capability that stores blobs as an implementation
 detail MUST NOT publish a second object door — objects are `/v1/s3` (HIP-1060).
 
-### §10 What a wrong implementation gives an attacker
-
-Every tenant's files, from one request.
-
-The object layer does not enforce the boundary: the gateway holds ONE admin
-identity for the binary, so isolation is entirely the org-derived naming plus
-the member gate. That is stated rather than assumed, and it is why the
-derivation lives below the handlers where none of them can skip it, and why
-listing filters by the caller's prefix instead of by a flag a handler sets.
-Defence in depth is a per-request session policy scoped to the org's prefix, so
-the store independently refuses what the naming already refuses; until that
-lands, this plane's two facts are the whole boundary.
-
-A presigned URL has no server-side revocation, so its lifetime IS the revocation
-window: five minutes, short enough that a minted capability barely outlives a
-revoked session and long enough for a browser to finish an ordinary transfer. A
-caller who needs a fresh window re-mints. Minting is not rate-limited, which is a
-platform-wide gap rather than one this capability can close, and it is why the
-TTL is set where it is.
-
-The object key is path-cleaned before it is signed, so a relative traversal
-cannot escape the bucket the caller was scoped to.
-
 ## Rationale
 
 The alternative to presigning is proxying the bytes, which puts every upload
@@ -188,6 +165,30 @@ Registering the routes even when the store is unconfigured looks like waste and
 is the opposite: an unregistered route falls through to whatever matches next,
 and a neighbour's 404 for a store that is merely unconfigured is a worse answer
 than an honest 503 under this capability's own name.
+
+## Security Considerations
+
+What a wrong implementation here gives an attacker is every tenant's files,
+from one request.
+
+The object layer does not enforce the boundary: the gateway holds ONE admin
+identity for the binary, so isolation is entirely the org-derived naming plus
+the member gate. That is stated rather than assumed, and it is why the
+derivation lives below the handlers where none of them can skip it, and why
+listing filters by the caller's prefix instead of by a flag a handler sets.
+Defence in depth is a per-request session policy scoped to the org's prefix, so
+the store independently refuses what the naming already refuses; until that
+lands, this plane's two facts are the whole boundary.
+
+A presigned URL has no server-side revocation, so its lifetime IS the revocation
+window: five minutes, short enough that a minted capability barely outlives a
+revoked session and long enough for a browser to finish an ordinary transfer. A
+caller who needs a fresh window re-mints. Minting is not rate-limited, which is
+a platform gap rather than one this capability can close, and it is why the TTL
+is set where it is.
+
+The object key is path-cleaned before it is signed, so a relative traversal
+cannot escape the bucket the caller was scoped to.
 
 ## References
 

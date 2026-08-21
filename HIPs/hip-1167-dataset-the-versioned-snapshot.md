@@ -199,7 +199,25 @@ rows here feed a model that learns in-process from the org's own events and is
 not served there, so these operations do not belong to it — the pull is real
 enough that a gate holds the address rather than a convention.
 
-### §12 What a wrong implementation gives an attacker
+## Rationale
+
+The alternative to storing bytes is storing a spec and re-running it, which is
+cheaper by one table and wrong by construction for the one question a dataset
+exists to answer. The alternative to a per-tenant partition is a retention
+policy on the table, which takes the retention decision away from the tenant it
+belongs to.
+
+The plane is its own app because it shares no state with a scorer: no model in
+memory, no ring, no single-writer file. Every answer it gives is a function of
+the store, so it restarts empty and a restart loses nothing but the jobs in
+flight — which is exactly what a plane holding the record of what a model
+trained on must do, and exactly what a process pinned to one replica for its
+in-memory state cannot promise.
+
+## Security Considerations
+
+Four things a wrong implementation would give an attacker, and where each is
+refused.
 
 **Another tenant's training data.** The defence is that the wrong statement is
 not expressible: every statement opens with a bound tenant predicate, the
@@ -228,30 +246,6 @@ is not enough: a thousand tenants each holding their own single slot is still a
 thousand concurrent scans of one stateful store, which is a fleet resource no
 tenant owns. An unbounded, unpriced read wearing a GET is what both halves of
 that gate exist to refuse.
-
-## Rationale
-
-The alternative to storing bytes is storing a spec and re-running it, which is
-cheaper by one table and wrong by construction for the one question a dataset
-exists to answer. The alternative to a per-tenant partition is a retention
-policy on the table, which takes the retention decision away from the tenant it
-belongs to.
-
-The plane is its own app because it shares no state with a scorer: no model in
-memory, no ring, no single-writer file. Every answer it gives is a function of
-the store, so it restarts empty and a restart loses nothing but the jobs in
-flight — which is exactly what a plane holding the record of what a model
-trained on must do, and exactly what a process pinned to one replica for its
-in-memory state cannot promise.
-
-## Security Considerations
-
-The three properties this plane sells are the three an attacker would attack:
-the rows are one tenant's, they cannot change after publication, and asking for
-them cannot cost the fleet more than the price paid. §12 states where each is
-enforced. Two are structural — a tenant that cannot be omitted, and a
-publication only its owner can outrank — and one is a bound plus a gate, which
-is the only shape a resource limit can take.
 
 The record itself is a compliance artefact: a dataset a model cited may have to
 be produced years later against an adverse decision. That is why disposal marks
