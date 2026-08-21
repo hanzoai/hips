@@ -119,7 +119,8 @@ the defect HIP-0106 §4.2 names.
    address axis and is read by the public rule (`openapi/public.go`) and by
    the gate in §5; it is not the tag.
 2. An operation is public by the rule HIP-0135 and `openapi/public.go` state:
-   under `/v1`, not the operator's, not a relay door, not a legacy spelling.
+   under `/v1`, not the operator's, not a relay door, not a legacy spelling,
+   and `ga` (§8).
 3. Every operation a capability serves MUST be typed (HIP-0106 §4) or, where
    the response cannot be a value, declared with prose beside the route. An
    operation that is neither publishes an address nobody can explain, and the
@@ -145,6 +146,8 @@ been shown to work (HIP-0106 §9).
    may not fall without the commit that lowers it saying so.
 5. **`hanzoai/hips` `capability-coverage.txt`** — every capability has
    exactly one HIP declaring it (`scripts/coverage.py`).
+6. **`hanzoai/cloud` `manifest`** — a `ga` row names a capability with no
+   line in `misfiled.txt`; `TestGAIsClean` refuses the promotion otherwise.
 
 ### §6 The HIP a capability carries
 
@@ -156,7 +159,15 @@ section where the template has one:
 - every address it answers, with the operations typed and the ones declared
   and why each declared one cannot be a value;
 - how a request becomes a tenant — which claim, what is refused (HIP-0026);
-- what it meters and through which plane, or that it is free;
+- what it meters, the unit and the price, and through which plane the debit
+  lands — or that it is free, said in those words;
+- the events it publishes on the bus and so delivers to a customer's
+  webhooks (`/v1/webhooks`), each named `<name>.<noun>.<verb>`, or that it
+  publishes none;
+- what it emits to observability — the spans, the metrics and the log lines
+  a customer can read back under `/v1/o11y` — beyond the request span every
+  route already gets;
+- its stage (§8);
 - what an attacker gets from the wrong implementation.
 
 It does not restate §1–§5, and it names no count a gate already measures.
@@ -182,6 +193,31 @@ which:
 An address served by two apps is closed by fold into the one that owns the
 root — or, where neither does, by the capability HIP deciding which one the
 address belongs to. There is no fourth way and no alias.
+
+### §8 Stage
+
+A capability is `ga`, `beta` or `alpha`, declared once, in its manifest row
+(`manifest.App.Stage`; absent means `ga`). The stage is a fact about the
+product, not about the specification — a HIP's `status:` says whether the
+text is settled, the stage says whether a customer is shown the thing.
+
+1. Only `ga` operations are public. The weave stamps `x-stage` on every
+   operation and the public rule (§4.2) drops anything that is not `ga`, so
+   a `beta` capability is in no generated client, no tool list, no command
+   group and no public page. It is still in the internal document.
+2. The host answers **404** for a `beta` or `alpha` prefix unless the caller's
+   org holds the flag named for the capability (`flags`, key `<name>`). Not
+   403: a capability a customer has not been let into does not exist for
+   them, and an existence oracle is what 403 would be.
+3. A customer who holds the flag sees the capability in the console and may
+   call it; the document they are served is the internal one filtered to
+   what they hold.
+4. Promotion to `ga` is one edit to the manifest row, and it is refused by
+   the gates in §5 until the capability conforms: no line in `misfiled.txt`,
+   no undescribed operation, an Active HIP declaring it.
+
+The self-service cloud that launches is the `ga` set. What is not finished is
+not hidden by being undocumented; it is declared `beta` and reached by flag.
 
 ## Rationale
 
