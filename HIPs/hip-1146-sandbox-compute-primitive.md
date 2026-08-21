@@ -1,27 +1,27 @@
 ---
 hip: 1146
-title: Sandboxes — The Compute Primitive
+title: Sandbox — A Lease on Isolated Compute
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: sandboxes
+capability: sandbox
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1146: Sandboxes — The Compute Primitive
+# HIP-1146: Sandbox — A Lease on Isolated Compute
 
 ## Abstract
 
-`/v1/sandboxes` is the ONE compute primitive: a sandbox is a gVisor pod that
+`/v1/sandbox` is the ONE compute primitive: a sandbox is a gVisor pod that
 runs somebody else's code, and every lifetime is the same object — a function
 invoke is a sandbox with a seconds-long lease, a code-exec call one with a
 session lease, an agentic coding run one with a project volume and a long
 lease. Not three subsystems, not three schedulers: one record, one pod spec,
 one way in (`apps/sandbox/sandbox.go:1-10`). The implementation is
 `hanzoai/cloud` `apps/sandbox` (the manifest and plugin name the capability
-`sandboxes`; the package keeps the singular noun).
+`sandbox`; the package keeps the singular noun).
 
 ## Motivation
 
@@ -49,7 +49,7 @@ by the `Bound` namespace+label pair whose constructor refuses `kube-system`,
 
 ### Addresses
 
-Nineteen operations under `/v1/sandboxes`
+Nineteen operations under `/v1/sandbox`
 (`apps/sandbox/sandbox.go:241-296`). Thirteen are raw routes with prose
 declared beside each (`openapi.Describe`): the collection and member CRUD,
 `POST /{id}/exec`, `GET|POST /{id}/fs`, and the ticketed terminal and screen
@@ -90,8 +90,8 @@ carries no ServiceAccount token at all.
 
 ### Money
 
-Metered at a price of zero: `plugin/sandboxes/main.go` declares
-`Price: cloud.Metered` and `sandboxes` is in the `meteredApps` standing list
+Metered at a price of zero: `plugin/sandbox/main.go` declares
+`Price: cloud.Metered` and `sandbox` is in the `meteredApps` standing list
 (`spend.go:311`). A lease is gated and debited through the shared
 `cloud.ResourceMeter` under kind `sandbox`, but every class fee defaults to 0
 (`SANDBOX_FEE_CENTS[_EXEC|_DEV|_DESKTOP]`), deliberately not to the platform's

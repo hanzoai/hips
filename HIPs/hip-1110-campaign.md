@@ -1,23 +1,23 @@
 ---
 hip: 1110
-title: Campaigns — One Go-To-Market Push
+title: Campaign — One Push Across Channels
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: campaigns
+capability: campaign
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0126, HIP-0139
 ---
 
-# HIP-1110: Campaigns — One Go-To-Market Push
+# HIP-1110: Campaign — One Push Across Channels
 
 ## Abstract
 
 A campaign is one go-to-market push across paid, organic and email at once: a
 value — {name, audience, content[], schedule, budget, channels[], status} — that
 launches to every channel and reads back as one funnel with each channel's
-spend. `/v1/campaigns` is that value's surface, implemented in `hanzoai/cloud`
+spend. `/v1/campaign` is that value's surface, implemented in `hanzoai/cloud`
 `apps/campaign`. This HIP states what the capability owns (the campaign record,
 nothing else), what it composes (the connector plane, the channel executors, the
 analytics plane), and what it refuses to be (a second credential path, a second
@@ -26,7 +26,7 @@ metrics store).
 ## Motivation
 
 "Campaign" used to be braided across three packages — an ad campaign in
-`apps/ads`, an email campaign in `apps/marketing`, social posts in `apps/social`
+`apps/ad`, an email campaign in `apps/marketing`, social posts in `apps/social`
 (`apps/campaign/campaign.go:16-19`). Three packages meant three campaign shapes
 that could not be launched together or read back as one funnel. This plane lifts
 the campaign to the one value it is and makes the channels orthogonal executors
@@ -39,7 +39,7 @@ as in RFC 2119.
 
 ### §1 The store
 
-The capability owns one store: the system namespace's `campaigns` SQLite file,
+The capability owns one store: the system namespace's `campaign` SQLite file,
 opened once for every org (`apps/campaign/store.go:151`). Tenant isolation is
 the `org` column, enforced on every query, and the table leads its lookup
 indexes with `org` so isolation is a physical property of the index, not only a
@@ -49,7 +49,7 @@ row atomically.
 
 ### §2 The addresses
 
-Every route is under `/v1/campaigns`: the collection (list, create), the record
+Every route is under `/v1/campaign`: the collection (list, create), the record
 (get, update, delete), `summary`, and the verbs `launch`, `pause`, `metrics`,
 and channel add/remove (`apps/campaign/campaign.go:45-57`). All operations are
 typed through the registry (`apps/campaign/typed.go`); the wire test
@@ -69,7 +69,7 @@ request with no validated principal is refused.
   resolves the org's connector token itself through `integrations.TokenFor`
   (HIP-0126); this plane is a consumer of connectors, never a second custody
   path.
-- **Executors.** paid → `apps/ads` (registered), organic → `apps/social`, email
+- **Executors.** paid → `apps/ad` (registered), organic → `apps/social`, email
   → `apps/marketing`. Only the paid executor is wired today
   (`plugin/campaign/seams.go`); a campaign carrying an unwired channel launches
   its paid channels and records the others "unavailable" — honest, never a

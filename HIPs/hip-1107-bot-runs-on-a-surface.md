@@ -1,25 +1,25 @@
 ---
 hip: 1107
-title: Bots — Runs on a Surface
+title: Bot — A Run on a Surface
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: bots
+capability: bot
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139
 ---
 
-# HIP-1107: Bots — Runs on a Surface
+# HIP-1107: Bot — A Run on a Surface
 
 ## Abstract
 
-`/v1/bots` is a bot doing your work on a surface this platform operates — a task
+`/v1/bot` is a bot doing your work on a surface this platform operates — a task
 executing on a desktop or terminal sandbox, with a live session a person can
 open to watch or take over — together with the door to the service that executes
-it. It is implemented in `hanzoai/cloud` at `apps/bots` (HIP-0106).
+it. It is implemented in `hanzoai/cloud` at `apps/bot` (HIP-0106).
 
-A bot is not a machine. The org's own connected machines are `nodes`
+A bot is not a machine. The org's own connected machines are `node`
 (HIP-1325): a node dials in and holds a socket, and what runs on it is a
 command it declared it can run. A bot MACHINE is a third thing again — a box you
 RENT, at `/v1/visor/compute/bots` (HIP-1172). Three values, three names, three
@@ -48,26 +48,26 @@ The run registry is the executor's, keyed under the tenant that started the run,
 and the id space is the executor's too: cloud does not mint a run id, does not
 persist one, and could not resolve one it invented. That is exactly why the list
 and the stop agree — both speak the only id space that has ever held a real run
-(`apps/bots/wire.go`).
+(`apps/bot/wire.go`).
 
 The one value derived here is the session address. It is built from the run id
 against a browser-facing gateway base, so the executor never has to know its own
 public origin, and that base is a separate knob from the in-cluster address the
 control plane calls: a session a browser embeds must be publicly reachable, and
-a pod-internal name is not (`apps/bots/run.go`).
+a pod-internal name is not (`apps/bot/run.go`).
 
 ### §2 The addresses
 
 Two route families under one prefix, which is what makes one router safe here.
 
-**The run plane.** `GET /v1/bots/runs` answers `{bots:[{runId, task, surface,
+**The run plane.** `GET /v1/bot/runs` answers `{bots:[{runId, task, surface,
 status, sessionUrl, startedAt}]}`. The array is always present, so an org with
 no runs serializes as `{"bots":[]}` and never as null; `status` is the
-executor's word, and `running` when it names none. `POST /v1/bots/runs/{runId}/stop`
+executor's word, and `running` when it names none. `POST /v1/bot/runs/{runId}/stop`
 answers `{runId, status}` with the run's terminal state, and the run id is
 URL-borne only — it has never been accepted in a body. Both are typed.
 
-`POST /v1/bots/runs` is declared with prose beside the route and answers 501 to
+`POST /v1/bot/runs` is declared with prose beside the route and answers 501 to
 every call. It cannot be a value because it has no success to publish: a typed
 operation declares a 200 body, and typing this one would declare a body it can
 never send, then mint a tool in the agent list and a command in the CLI for an
@@ -84,15 +84,15 @@ acknowledged, MUST NOT hand back a session address for a session that does not
 exist, and MUST NOT charge for either. It gets typed in the change that can
 prove a bot boots, and not before.
 
-**The executor's ops face.** `/v1/bots/runtime/*` relays `@hanzo/bot`'s own
+**The executor's ops face.** `/v1/bot/runtime/*` relays `@hanzo/bot`'s own
 operational paths verbatim, the prefix stripped on the way out
-(`apps/bots/relay.go`). A liveness probe is not a tenant-scoped resource, so it
+(`apps/bot/relay.go`). A liveness probe is not a tenant-scoped resource, so it
 stays a relay rather than being reimplemented in Go, and it is not a public
 address: the public rule drops a relay door (HIP-0135), so it reaches no
 generated client and no tool list. The segment is load-bearing. The relay was
-once `All("/v1/bots/*")` in a second app, a greedy wildcard over the whole of a
+once `All("/v1/bot/*")` in a second app, a greedy wildcard over the whole of a
 sibling's subtree held apart only by two manifest rows and specificity; from
-`/v1/bots/runtime` it cannot reach a sibling at all, and since the machine plane
+`/v1/bot/runtime` it cannot reach a sibling at all, and since the machine plane
 left for its own binary (HIP-1325) there is no sibling here for it to reach.
 
 ### §3 The boundary
@@ -101,12 +101,12 @@ left for its own binary (HIP-1325) there is no sibling here for it to reach.
 **visor** (HIP-1172) owns the bot MACHINE — a box you rent, at
 `/v1/visor/compute/bots`. This capability owns the bot RUN. Three values, three
 names, and the schema namespace is flat, which is why the row type here is
-qualified rather than called `bots`.
+qualified rather than called `bot`.
 
 **coding** dispatches its own tasks to the same executor over the same
 transport. That is a shared road, not a shared surface: each caller owns its own
 wire contract, and the transport is forbidden to learn what a run is. The moment
-it does, it has stopped being a transport (`apps/bots/transport.go`).
+it does, it has stopped being a transport (`apps/bot/transport.go`).
 
 ### §4 Tenancy
 
@@ -129,12 +129,12 @@ array says "your org has no runs", and "we could not ask" is a different fact.
 Absence is honoured on a stop only when the executor ANSWERS absent; an executor
 that does not serve the operation at all has reported nothing about the run, and
 reporting `stopped` on that basis would be a stop that cannot fail
-(`apps/bots/transport.go`).
+(`apps/bot/transport.go`).
 
 ### §5 Money
 
 Free, and said in those words: the surface declares `cloud.Free`
-(`plugin/bots/main.go`). Nothing on it debits any plane, and no per-run fee is
+(`plugin/bot/main.go`). Nothing on it debits any plane, and no per-run fee is
 taken anywhere. A price belongs in the same change that can prove a bot boots.
 
 ### §6 Events and observability

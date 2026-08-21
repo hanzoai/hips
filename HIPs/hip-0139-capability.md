@@ -89,9 +89,9 @@ the defect HIP-0106 §4.2 names.
    the CLI word, the docs page and the HATEOAS self-description.
 
    The OTHER spelling of its number is accepted by the ROUTER and published
-   by nothing. A request to `/v1/sandboxes` is rewritten to `/v1/sandbox`
+   by nothing. A request to `/v1/sandbox` is rewritten to `/v1/sandbox`
    before anything reads the path, so an OpenAI- or Anthropic-shaped client
-   that says `/v1/models`, `/v1/agents` or `/v1/campaigns` works unchanged
+   that says `/v1/models`, `/v1/agents` or `/v1/campaign` works unchanged
    while the canonical surface stays singular. The rewrite is bidirectional:
    whichever spelling the row carries, the other one resolves, so a caller
    never has to know which form we chose.
@@ -128,7 +128,7 @@ the defect HIP-0106 §4.2 names.
    nobody ever does another plural sweep.
 3. No compound words. A hyphen or an underscore in a name is a refusal at
    the gate.
-4. No two capabilities whose names differ only in number. `bot` and `bots`
+4. No two capabilities whose names differ only in number. `bot` and `bot`
    are one capability — under rule 2 the singular `bot` is its name, and the
    plural reaches it anyway. Two rows differing only in number is refused at
    the gate, because each would derive the other's address and the router
@@ -221,7 +221,7 @@ section where the template has one:
 - what it meters, the unit and the price, and through which plane the debit
   lands — or that it is free, said in those words;
 - the events it publishes on the bus and so delivers to a customer's
-  webhooks (`/v1/webhooks`), each named `<name>.<noun>.<verb>`, or that it
+  webhooks (`/v1/webhook`), each named `<name>.<noun>.<verb>`, or that it
   publishes none;
 - what it emits to observability — the spans, the metrics and the log lines
   a customer can read back under `/v1/o11y` — beyond the request span every
@@ -257,7 +257,7 @@ which:
    address. Permitted only along a store boundary — two apps sharing one
    store is the defect HIP-0106 names, and a split that creates it is refused.
 3. **Rename.** The app takes the address's name when the address is the word
-   people say and the package name is not (`link` → `links`, `plan` →
+   people say and the package name is not (`link` → `link`, `plan` →
    `plans`). A rename is one commit, and the commit is not the router's alone:
 
    - `hanzoai/cloud` — the directory, the plugin, the manifest row, the
@@ -268,7 +268,7 @@ which:
      address.
 
    All three, or the rename is not done. This list was the router's half alone
-   and four renames shipped green against it: `storage`→`s3`, `zt`→`networks`,
+   and four renames shipped green against it: `storage`→`s3`, `zt`→`network`,
    `automations`→`auto`, `analytics`→`event` each landed in the manifest while
    the vocabulary and the corpus went on naming the old word. Nothing caught
    them, and the reason is §5: `coverage.py` measures the corpus against

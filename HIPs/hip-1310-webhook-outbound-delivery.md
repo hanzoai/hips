@@ -1,22 +1,22 @@
 ---
 hip: 1310
-title: Webhooks — Outbound Delivery
+title: Webhook — Delivery to an Endpoint You Own
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: webhooks
+capability: webhook
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139, HIP-1060
 ---
 
-# HIP-1310: Webhooks — Outbound Delivery
+# HIP-1310: Webhook — Delivery to an Endpoint You Own
 
 ## Abstract
 
-`/v1/webhooks` is how a customer's own software hears about what happens in
+`/v1/webhook` is how a customer's own software hears about what happens in
 their tenant: register an HTTPS endpoint, receive every event that names the
-org, signed. The implementation is `hanzoai/cloud` `apps/webhooks`.
+org, signed. The implementation is `hanzoai/cloud` `apps/webhook`.
 
 Two orthogonal halves: a **registry** the customer writes — endpoints, secrets,
 delivery log — and a **dispatcher** that consumes the platform bus and POSTs. It
@@ -26,12 +26,12 @@ is a consumer only, owning no stream, because the producer lives with the data.
 
 Before the platform-global layer, each subsystem that wanted to tell a customer
 something grew its own delivery loop — commerce had one, billing-scoped
-(`apps/webhooks/webhooks.go`). N loops is N retry ladders, N signature schemes
+(`apps/webhook/webhooks.go`). N loops is N retry ladders, N signature schemes
 and N answers to "did it arrive", each implemented separately by every receiver.
 
 It also shared HIP-0061 with `notify`: two specifications in one file, which
 HIP-0139 §6 allows only for a merge in flight. Nothing is merging — `notify`
-sends to a person through the org's provider credential, `webhooks` delivers to
+sends to a person through the org's provider credential, `webhook` delivers to
 a machine at an address the customer registered.
 
 ## Specification
@@ -41,18 +41,18 @@ as in RFC 2119.
 
 ### §1 The registry
 
-CRUD under `/v1/webhooks` (`plugin/webhooks/openapi.json`): list, create, get,
+CRUD under `/v1/webhook` (`plugin/webhook/openapi.json`): list, create, get,
 replace and delete an endpoint; `GET /{id}/deliveries` reads the attempt log;
 `POST /{id}/secret` rotates the signing secret; `POST /{id}/test` sends one
 delivery on demand. Every operation is typed; none is declared. An endpoint URL
-MUST be `https://` (`apps/webhooks/api.go:490`), refused at create, because the
+MUST be `https://` (`apps/webhook/api.go:490`), refused at create, because the
 signature protects integrity and nothing protects a payload sent in the clear.
 
 ### §2 The dispatcher
 
 A durable consumer on the platform bus (HIP-1060) over streams it does not own —
 the commerce plane (`commerce.>`, owned by `hanzoai/commerce`) and the canonical
-event plane (`event.>`, owned and published by analytics), `apps/webhooks/dispatch.go`.
+event plane (`event.>`, owned and published by analytics), `apps/webhook/dispatch.go`.
 
 It MUST resolve each event's org from the envelope's own tenant field and match
 ONLY that org's active subscriptions, with subject-wildcard semantics so
@@ -64,25 +64,25 @@ It MUST NOT publish — it once held the publish half too, making two subsystems
 owners of one subject space, and the broker settles that by refusing the second
 owner permanently. The registry always mounts; the dispatcher is best-effort, so
 a down bus means background reconnect-retry and a messaging fault MUST NOT take
-`/v1/webhooks` down with it.
+`/v1/webhook` down with it.
 
 ### §3 The delivery contract
 
 Every delivery is signed fresh: `X-Webhook-Signature: t=<unix>,v1=<hex>`, where
 `v1` is HMAC-SHA256 of `"<t>.<body>"` under the endpoint's secret, beside
 `X-Webhook-Event` (the subject) and `X-Webhook-Delivery` (a UUID stable across
-the attempt group) — `apps/webhooks/dispatch.go:415`. A receiver MUST validate
+the attempt group) — `apps/webhook/dispatch.go:415`. A receiver MUST validate
 the signature before processing; the timestamp is inside the signed string, so a
 captured body cannot be replayed under a fresh one.
 
 Delivery is at-most-once per attempt group with a bounded ladder: three
 attempts, 1s then 5s between them, each POST bounded by a 10-second timeout
-(`apps/webhooks/dispatch.go:68`). A non-2xx answer or a timeout is a failed
+(`apps/webhook/dispatch.go:68`). A non-2xx answer or a timeout is a failed
 attempt. There is no auto-disable and no dead-letter queue; each outcome is a
 row in the endpoint's delivery log, which `GET /{id}/deliveries` reads back.
 
 The signing secret is minted server-side — 256 random bits, `whsec_`-prefixed so
-a leaked value is greppable (`apps/webhooks/api.go:559`) — and leaves the server
+a leaked value is greppable (`apps/webhook/api.go:559`) — and leaves the server
 exactly twice, on create and on rotate; every other response redacts it, and
 rotation is immediate.
 
@@ -92,10 +92,10 @@ The org is the validated principal's (HIP-0026), never a client-supplied header;
 an unauthenticated caller gets 401. The store it owns is the per-org registry
 and delivery log — `endpoint` and `delivery` tables in
 `{DataDir}/orgs/{slug}/webhooks.db` via `cloud.OrgStore`
-(`apps/webhooks/store.go:59`) — one file per org, physically separate, which is
+(`apps/webhook/store.go:59`) — one file per org, physically separate, which is
 the fact §2's isolation rests on.
 
-It is free, in those words: `Price: cloud.Free` (`plugin/webhooks/main.go:21`).
+It is free, in those words: `Price: cloud.Free` (`plugin/webhook/main.go:21`).
 It publishes no events on the bus: what a customer's webhooks receive is the
 whole point of the capability — every event on the consumed planes that names
 their org — and none of it originates here. It emits nothing to observability

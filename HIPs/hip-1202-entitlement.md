@@ -1,25 +1,25 @@
 ---
 hip: 1202
-title: Entitlements — What an Org May Run
+title: Entitlement — What an Org May Run
 author: Hanzo AI
 type: Standards Track
 category: Platform
-capability: entitlements
+capability: entitlement
 status: Draft
 created: 2026-08-20
 requires: HIP-0106, HIP-0118, HIP-0139
 ---
 
-# HIP-1202: Entitlements — What an Org May Run
+# HIP-1202: Entitlement — What an Org May Run
 
 ## Abstract
 
-`entitlements` answers what your org may run: which products the plan grants,
-and which of those the org has switched on. It is `apps/entitlements` in
+`entitlement` answers what your org may run: which products the plan grants,
+and which of those the org has switched on. It is `apps/entitlement` in
 `hanzoai/cloud`, and its whole discipline is that those are two authorities,
 never braided — ENTITLEMENT is the billing truth, read from commerce at
 decision time; ENABLEMENT is the org's intent, the one store this capability
-owns (`apps/entitlements/entitlements.go:1-33`).
+owns (`apps/entitlement/entitlements.go:1-33`).
 
 ## Motivation
 
@@ -38,9 +38,9 @@ as in RFC 2119.
 
 | operation | what |
 |---|---|
-| `GET /v1/entitlements` | the caller's plan projection: `{ tier, apps: {…} }`, the per-app booleans the console shell renders (`apps/entitlements/projection.go`) |
-| `GET /v1/entitlements/orgs/{org}` | `{ "enabled": [...] }` — the org's toggled-on products |
-| `POST /v1/entitlements/orgs/{org}` | `{ "add": [...], "remove": [...] }` → `{ "enabled": [...] }`, bounded at 64 products per batch (`apps/entitlements/entitlements.go:59-61`) |
+| `GET /v1/entitlement` | the caller's plan projection: `{ tier, apps: {…} }`, the per-app booleans the console shell renders (`apps/entitlement/projection.go`) |
+| `GET /v1/entitlement/orgs/{org}` | `{ "enabled": [...] }` — the org's toggled-on products |
+| `POST /v1/entitlement/orgs/{org}` | `{ "add": [...], "remove": [...] }` → `{ "enabled": [...] }`, bounded at 64 products per batch (`apps/entitlement/entitlements.go:59-61`) |
 
 All three are typed operations. Today's router serves the org pair at
 `/v1/orgs/{org}/entitlements`, under a root this capability does not own; that
@@ -49,11 +49,11 @@ mirroring the `/v1/kms/orgs/{org}` shape the key service already serves.
 
 ### §2 Store
 
-One encrypted SQLite database, the deployment's own `entitlements`, opened
+One encrypted SQLite database, the deployment's own `entitlement`, opened
 through the one opener (`sqlpool.Open("entitlements", dir)`,
-`apps/entitlements/store.go:47`) and keyed `(org, product)`. Product ids and
+`apps/entitlement/store.go:47`) and keyed `(org, product)`. Product ids and
 org labels are validated at the edge against the one product-id and org-label
-shapes (`apps/entitlements/entitlements.go:63-72`).
+shapes (`apps/entitlement/entitlements.go:63-72`).
 
 ### §3 Tenancy
 
@@ -61,7 +61,7 @@ shapes (`apps/entitlements/entitlements.go:63-72`).
 is a SuperAdmin — `c.IsAdmin()`, minted only for `owner == "admin"` and never
 client-forgeable — who may target any org (HIP-0118). A bearer-less request
 with a restored `X-Org-Id` and no verified user fails the `principal.Validated`
-gate and is refused 403 (`apps/entitlements/entitlements.go:26-32`). There is
+gate and is refused 403 (`apps/entitlement/entitlements.go:26-32`). There is
 no path by which one org reads or writes another's entitlements.
 
 ### §4 The gate, and its two fail directions
@@ -70,25 +70,25 @@ A product may only be ENABLED if it is ENTITLED: the write reads
 `commerce.CheckEntitlement` and a non-SuperAdmin can only switch on what the
 org already pays for; a SuperAdmin bypasses the gate — the operator can comp
 any product to any org. With commerce unreachable, a non-SuperAdmin enable
-fails closed, 503, never open (`apps/entitlements/entitlements.go:74-77`).
+fails closed, 503, never open (`apps/entitlement/entitlements.go:74-77`).
 DISABLING is always allowed.
 
 The two read paths fail in deliberately opposite directions
-(`apps/entitlements/projection.go:9-17`): the UI projection fails
+(`apps/entitlement/projection.go:9-17`): the UI projection fails
 safe-to-locked — commerce down means an app reports `false` at 200, never a
 5xx — while the enforcement leg (`RequireProduct`,
-`apps/entitlements/require.go`) fails open, so functionality is preserved
+`apps/entitlement/require.go`) fails open, so functionality is preserved
 during a billing outage even as the UI conservatively shows locked. The plan →
 product policy itself lives once, in the catalog commerce resolves; it is
 never restated here.
 
 ### §5 Metering, events, observability, stage
 
-The capability is free (`plugin/entitlements/main.go:22`, `cloud.Free`). It
+The capability is free (`plugin/entitlement/main.go:22`, `cloud.Free`). It
 publishes no events on the bus and delivers nothing to customer webhooks.
 Beyond the request span, it emits its mount line and one audit-shaped log per
 mutation — org, add, remove, whether SuperAdmin, and the actor
-(`apps/entitlements/entitlements.go:306`). Its stage is `ga` — the manifest
+(`apps/entitlement/entitlements.go:306`). Its stage is `ga` — the manifest
 row (`manifest/apps.go:366`) carries no stage.
 
 ### §6 Upstream

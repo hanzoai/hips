@@ -123,7 +123,7 @@ be silently suffixed, because the name they typed is the one they will look for.
 
 Nothing. Creation is the only operation this facet owns; a sub-resource about
 an org — its entitlements, for instance — is served by the capability that owns
-it, under that capability's own address (`/v1/entitlements/orgs/{org}`,
+it, under that capability's own address (`/v1/entitlement/orgs/{org}`,
 HIP-1202), authorized against the org in the path being the caller's own.
 
 ## Rationale

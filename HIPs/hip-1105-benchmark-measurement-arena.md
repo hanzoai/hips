@@ -18,7 +18,7 @@ requires: HIP-0106, HIP-0139
 everyone quotes: a fixed catalog of benchmarks run under one standardized
 harness, a leaderboard that layers what our harness measured beside what a
 vendor reports, and the gap between the two as the signal. It is implemented in
-`hanzoai/cloud` at `apps/benchmark`. Its sibling is `/v1/evals` — evals is your
+`hanzoai/cloud` at `apps/benchmark`. Its sibling is `/v1/eval` — evals is your
 data and your judge; benchmark is the shared public tests.
 
 ## Motivation

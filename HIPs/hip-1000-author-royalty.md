@@ -1,23 +1,23 @@
 ---
 hip: 1000
-title: Authors — A Royalty on Deployed Open Source
+title: Author — A Royalty Bound to a Repository
 author: Hanzo AI
 type: Standards Track
 category: Application
 status: Active
 created: 2026-08-20
 requires: HIP-0139
-capability: authors
+capability: author
 ---
 
-# HIP-1000: Authors — A Royalty on Deployed Open Source
+# HIP-1000: Author — A Royalty Bound to a Repository
 
 ## Abstract
 
-`/v1/authors` is a royalty program: an author proves control of a repository, and
+`/v1/author` is a royalty program: an author proves control of a repository, and
 every org that deploys a project built from that repository generates a royalty
 against its own metered spend. It is implemented in `hanzoai/cloud` at
-`apps/authors`. This HIP states the contract the program must hold to — how
+`apps/author`. This HIP states the contract the program must hold to — how
 attribution is proven, how a royalty amount comes to be, and the line between
 recording money and moving it.
 
@@ -25,7 +25,7 @@ recording money and moving it.
 
 Open-source work already runs on the platform and already generates spend. There
 was no edge connecting the two, so the spend had no author and the author had no
-claim. `apps/authors` supplies that edge; this HIP supplies the rules it must not
+claim. `apps/author` supplies that edge; this HIP supplies the rules it must not
 break, because every one of them is about somebody else's money.
 
 ## Specification
@@ -37,13 +37,13 @@ in RFC 2119.
 
 A repository earns only after a verification that demonstrates control over it:
 either a forge token showing admin or push permission, or a file on the default
-branch carrying the author's minted verify code (`apps/authors/authors.go:20-23`).
+branch carrying the author's minted verify code (`apps/author/authors.go:20-23`).
 Both prove the same fact — that the claimant can change what that repository
 deploys. Neither is a claim about who the claimant is, and the program MUST NOT
 treat it as one.
 
 A deploy edge is recorded per `(repo, project, deploying org)` and is idempotent
-(`apps/authors/authors.go:24-26`). Without that edge nothing accrues, so an
+(`apps/author/authors.go:24-26`). Without that edge nothing accrues, so an
 unattributable deploy earns nothing rather than earning by default.
 
 ### The royalty is a latch, not a computation over history
@@ -51,13 +51,13 @@ unattributable deploy earns nothing rather than earning by default.
 Accrual is at most once per `(author, deploying org, period)`. The amount is that
 org's metered spend for the period times the share stored on the author at that
 moment: `earningCents = spendCents * shareBps / 10000`
-(`apps/authors/basis.go:48`), evaluated in `accrueOne`
-(`apps/authors/authors.go:336`).
+(`apps/author/basis.go:48`), evaluated in `accrueOne`
+(`apps/author/authors.go:336`).
 
 The row written by the latch captures `share_bps`, `spend_cents` and
 `earning_cents` in the same transaction as the balance increment. That row is a
 **value**, and it MUST be served verbatim and never recomputed
-(`apps/authors/basis.go:15-30`). A later rate change, a share renegotiation or a
+(`apps/author/basis.go:15-30`). A later rate change, a share renegotiation or a
 restated spend figure therefore cannot rewrite what an author was already told
 they earned.
 
@@ -66,20 +66,20 @@ and labelled with its `asOf`. Stamping a card onto a historical row would be a
 fabrication by construction: one row's spend can span several cards' pricing
 windows, and some of its components were never priced by a card at all.
 
-An author's own org is excluded from the fold (`apps/authors/authors.go:311-313`),
+An author's own org is excluded from the fold (`apps/author/authors.go:311-313`),
 so the program cannot pay a royalty on self-dealing.
 
 A per-org spend read that fails is skipped and picked up on the next sweep
-(`apps/authors/authors.go:320-323`). A partial answer that is correct beats a
+(`apps/author/authors.go:320-323`). A partial answer that is correct beats a
 whole answer that is wrong.
 
 ### Accrual records what is owed; payout records a disbursement; neither moves money
 
 `accrued` only rises. `paid` rises only when a payout is recorded, and a payout
 MUST NOT exceed `pending = accrued − paid`, reserved atomically before anything
-else happens (`apps/authors/store.go:1058-1064`, refusal text at
-`apps/authors/typed.go:113-117`). A recorded payout that the treasury cannot back
-is voided rather than left standing (`apps/authors/store.go:1100`).
+else happens (`apps/author/store.go:1058-1064`, refusal text at
+`apps/author/typed.go:113-117`). A recorded payout that the treasury cannot back
+is voided rather than left standing (`apps/author/store.go:1100`).
 
 No route in this capability settles money. A human does that out of band. The
 program is a ledger of obligation.
@@ -89,20 +89,20 @@ program is a ledger of obligation.
 The earning org is read from the validated principal, never from a request field.
 The platform-wide operations are admitted only by a SuperAdmin bit that the
 identity boundary mints and that the ordinary principal does not carry
-(`apps/authors/typed.go:84`).
+(`apps/author/typed.go:84`).
 
 The support view of an author's basis MUST be produced by the same builder as the
-author's own read (`apps/authors/typed.go:845`), so support and author can
+author's own read (`apps/author/typed.go:845`), so support and author can
 never be looking at two numbers.
 
 ### Store, price, events, telemetry, stage, upstream
 
-The capability owns one encrypted SQLite database, `authors`, opened through the
-one opener (`sqlpool.Open("authors", dir)`, `apps/authors/store.go:177`). It is
-free, in those words: `Price: cloud.Free` (`plugin/authors/main.go:21`) — it
+The capability owns one encrypted SQLite database, `author`, opened through the
+one opener (`sqlpool.Open("authors", dir)`, `apps/author/store.go:177`). It is
+free, in those words: `Price: cloud.Free` (`plugin/author/main.go:21`) — it
 records obligations and meters nothing. It publishes no events on the bus, so a
 customer's webhooks receive nothing from it; money actions land best-effort
-records on cloud's audit trail (`apps/authors/authors.go:133`, `:475-479`).
+records on cloud's audit trail (`apps/author/authors.go:133`, `:475-479`).
 Beyond that and the request span it emits log lines only. Its stage is `beta` —
 the manifest row declares it (`manifest/apps.go:388`, `Stage: Beta`; HIP-0139
 §8). It derives from no forked, embedded or mirrored OSS project.
@@ -115,7 +115,7 @@ the manifest row declares it (`manifest/apps.go:388`, `Stage: Beta`; HIP-0139
 - **No per-row rate card.** The card is current or it is absent.
 - **No 404 on "not enrolled".** A caller who has never enrolled gets an honest
   short answer, because 404 on that address answers "is this org an author" to
-  anyone who asks (`apps/authors/typed.go:208-210`).
+  anyone who asks (`apps/author/typed.go:208-210`).
 
 ## Rationale
 

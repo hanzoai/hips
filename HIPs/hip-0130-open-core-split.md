@@ -221,9 +221,9 @@ which was derived independently from "what does a dev's app need on line one".
 Two derivations, one answer, again.
 
 **Hanzo's own business applications are NOT developer primitives.** `crm`,
-`marketing`, `social`, `ads`, `campaigns`, `books`, `esign`, `dataroom`,
+`marketing`, `social`, `ad`, `campaign`, `books`, `esign`, `dataroom`,
 `captable`, `company`, `legal`, `help`, `content`, `tracker`, `team`,
-`leaderboard`, `benchmark`, `research`, `experiments`, `guide`, `product`,
+`leaderboard`, `benchmark`, `research`, `experiment`, `guide`, `product`,
 `sbom`, `do` — publishing these hands a competitor our entire product suite and
 gives a developer nothing they need to build their own app. Under the revised
 rule they are **private**, and none of them was a close call once the question
@@ -280,7 +280,7 @@ silently 404s" already true rather than aspirational.
 | `deploy` | SuperAdmin sees the whole fleet; a normal org gets a read-only reflection and **all writes are SuperAdmin-only, unconditionally** — it cannot act even on its own app. | private |
 | `paas` | `discoverNamespaces` LISTs **every namespace in the cluster**. | private |
 | `ml` | Namespace per `org[+project]`, plus a **live balance gate before every create** ("so an unfunded org cannot run free GPU compute"). | private |
-| `validators` | **All orgs' CRs share one fixed namespace** (`lux-validators`), disambiguated by name, not isolated by namespace. | private |
+| `validator` | **All orgs' CRs share one fixed namespace** (`lux-validators`), disambiguated by name, not isolated by namespace. | private |
 | `venue`, `admin` | Per-org billing meter; `admin/infra` scans every Kubernetes cluster under one account token, spanning many customer orgs. | private |
 
 #### 2.4 The rule sharpens: money is wiring, tenancy is structure
@@ -384,7 +384,7 @@ interface is `gateway.PlatformPolicy`.
 **Structurally multi-tenant, unchanged:** `provisioning` (its own doc: "TRUE
 multitenancy by isolation-by-instance", co-tenanted backends with
 `"o"+hash(org)` name-spacing), `deploy` (all writes SuperAdmin-only,
-unconditionally), `paas` (LISTs every namespace in the cluster), `validators`
+unconditionally), `paas` (LISTs every namespace in the cluster), `validator`
 (all orgs' CRs in one shared fixed namespace), `admin` (cross-tenant by
 definition). None of these is a money case and none moves.
 
@@ -582,8 +582,8 @@ extension braided in.
 | — | mount order | The ordered name list | which names resolve | `apps.Order` (§4) |
 
 The recurring shape: **the OSS side records a fact, the private side prices
-it.** `usage` records tokens; `metering` rates them. `ads` launches a campaign;
-`campaigns` meters it. That is one interface repeated, not seventeen designs —
+it.** `usage` records tokens; `metering` rates them. `ad` launches a campaign;
+`campaign` meters it. That is one interface repeated, not seventeen designs —
 and it is the right seam because recording and pricing are genuinely different
 concerns that were braided together for convenience.
 
@@ -750,7 +750,7 @@ This corrects three of my own OSS classifications. **`marketing`, `company`, and
 `translate` move to BOTH** — each is a legitimate single-tenant capability
 carrying a live price constant. The seam is the same one already used
 everywhere else: the OSS half does the work, the private half supplies the rate.
-`clients/treasury`, `affiliates`, `referrals`, and `admin` were already private.
+`clients/treasury`, `affiliate`, `referral`, and `admin` were already private.
 
 The house style to follow already exists and is documented at `deps.go:97` —
 "each is an interface with both in-process and ZAP-RPC implementations."

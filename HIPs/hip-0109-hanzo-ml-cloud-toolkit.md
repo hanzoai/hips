@@ -66,7 +66,7 @@ The operator owns these Kinds:
 | Kind | Plural | Short | What it owns |
 |---|---|---|---|
 | `TrainingJob` | `trainingjobs` | `mlj` | Distributed training pods. One unified type with `spec.framework: tensorflow | pytorch | mpi | xgboost | jax | candle | hanzo-ml`. Backs all training-job variants from the open-source operator family. |
-| `Experiment` | `experiments` | `mlx` | Tracking experiment. Status surfaces metric streams from `hanzoai/datastore`; artifacts via `hanzoai/vfs`; run config in per-tenant `hanzoai/base`. |
+| `Experiment` | `experiment` | `mlx` | Tracking experiment. Status surfaces metric streams from `hanzoai/datastore`; artifacts via `hanzoai/vfs`; run config in per-tenant `hanzoai/base`. |
 | `Sweep` | `sweeps` | `mls` | Hyperparameter sweep. Owns N child `TrainingJob`s with parameter assignments; runs Bayesian / grid / random search per `spec.algorithm`. |
 | `Pipeline` | `pipelines` | `mlp` | DAG of steps. Each step is a `TrainingJob`, `Inference`, or generic container task. Durable execution by delegating to `hanzoai/tasks` (HIP-0108). |
 | `Notebook` | `notebooks` | `mln` | Per-tenant JupyterLab pod with IAM SSO sidecar. Storage is a PVC backed by `hanzoai/vfs`. Idle eviction per HIP-0108 tier-2 supervisor. |

@@ -34,31 +34,32 @@
 # through it. If that address is ever opened to an org, this line comes out and
 # a HIP goes in.
 #
-# The four below became VISIBLE on 2026-08-21, when coverage.py took cloud's
-# manifest/apps.go as a second capability source. They ship, and no gate could
-# report they had no spec: capabilities.yaml is curation over the EMITTED
-# DOCUMENT, so an app serving no HTTP operation can never appear in it, and this
-# gate read only that file. They are not new; the ability to see them is.
-# kafka was in the same position and now has HIP-1323.
+# The last two became VISIBLE on 2026-08-21, when the capability list stopped
+# being curation over the emitted document. `capabilities.yaml` now carries a
+# `fleet:` DERIVED from cloud's manifest/apps.go, so an app that serves no HTTP
+# operation is in the universe this gate reads instead of invisible to it. They
+# are not new; the ability to see them is. kafka was in the same position and
+# now has HIP-1323.
 #
-# `bots` was here too, briefly, as a name this repo could not settle: cloud had
-# renamed bot -> bots for number alone, which HIP-0139 §2 forbade. The rule was
-# the thing that was wrong. §2.2 now decides number by the CONTRACT -- plural
-# when a caller can address one member by id under the root -- and by that rule
-# bots, links, datasets, campaigns and networks are all collections. HIP-1107
-# declares `bots`, so the line is gone rather than resolved in its favour.
-
-# Consumes the commerce stream and calls content.EnsureCatalogAsset once per
-# created product. An in-process consumer with no address and no store of its
-# own; the mapping and idempotency live in the content lane, which its HIP
-# covers. Nothing a customer configures or calls.
-catalogsync
-
-# Installs the ai gate's rolling-window spend cap. Composes three co-resident
-# globals and owns no state. The cap a customer actually reasons about is a plan
-# limit, specified with commerce and allowance; this is where it is enforced,
-# not a surface of its own.
-rollingcap
+# There were four, and being able to SEE two of them is what settled them.
+# `catalogsync` and `rollingcap` were never capabilities: neither opened a
+# store, neither answered a path, and each claimed a /v1/<name> with nothing
+# registered behind it. They held rows because a row is how cloud's host starts
+# a process, and a process is exactly where neither could do its work --
+# rollingcap wrote a package global the `ai` child reads and never runs in, and
+# catalogsync called a content function that refuses outside content's own
+# process, against an event its publisher was never wired to emit. The spend
+# ceiling moved into apps/ai beside the gate that reads it; the catalog loop was
+# deleted. So the answer was never a spec, and two lines leave this file because
+# the rows left cloud's manifest -- which is the outcome a ratchet is for.
+#
+# `bot` was here too, briefly, as a name this repo could not settle: cloud had
+# renamed bot -> bots for number alone. The rule was the thing that was wrong,
+# and HIP-0139 §2.2 settled it the other way round -- the SINGULAR is canonical,
+# the plural is a rewrite the router performs at the door and nothing publishes,
+# and a capability is NEVER renamed for number again. 21 HIPs took their
+# singular in one commit to follow it. HIP-1107 declares `bot`, so the line is
+# gone rather than resolved in its favour.
 
 # Coresident: it wires the hanzoai/zen serving layer into the cloud binary
 # rather than serving an address. `ai` (HIP-1211) is the door every caller
@@ -67,3 +68,4 @@ zen
 
 
 plugins
+

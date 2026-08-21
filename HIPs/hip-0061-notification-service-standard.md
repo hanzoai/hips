@@ -19,7 +19,7 @@ capability: notify
 caller org's own provider credential. The implementation is `hanzoai/cloud`
 `apps/notify`.
 
-Outbound delivery to a customer's own endpoint is the separate `webhooks`
+Outbound delivery to a customer's own endpoint is the separate `webhook`
 capability — HIP-1310.
 
 ## Motivation

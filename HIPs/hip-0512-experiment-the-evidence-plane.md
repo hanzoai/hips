@@ -149,7 +149,7 @@ basket. `method` names the discipline actually being applied, and it is the disc
 not the domain — that generalizes from a kernel A/B to an ad test.
 
 Paths under it are singular per HIP-0119 §2: `/v1/experiment`, `/v1/experiment/{id}`.
-The plural sub-resources this HIP documented (`experiments`, `grants`, `artifacts`) move
+The plural sub-resources this HIP documented (`experiment`, `grants`, `artifacts`) move
 with the rename, in one pass, across the four producers.
 
 ## References

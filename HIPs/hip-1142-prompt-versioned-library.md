@@ -1,23 +1,23 @@
 ---
 hip: 1142
-title: Prompts — The Versioned Library
+title: Prompt — A Named, Versioned Value
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: prompts
+capability: prompt
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1142: Prompts — The Versioned Library
+# HIP-1142: Prompt — A Named, Versioned Value
 
 ## Abstract
 
-`/v1/prompts` is an org's prompt library, versioned, so nothing changes
+`/v1/prompt` is an org's prompt library, versioned, so nothing changes
 silently: creating a prompt whose name already exists appends a new version and
 the prior one is retained — real, inspectable history, never a fabricated
-rollup. It is implemented in `hanzoai/cloud` at `apps/prompts`, plus an
+rollup. It is implemented in `hanzoai/cloud` at `apps/prompt`, plus an
 embedded read-only starter catalog.
 
 ## Motivation
@@ -26,7 +26,7 @@ A prompt is production configuration that happens to be prose. Kept in source
 or in a chat scroll, it changes without a record, and the question "which
 prompt produced last week's answers" has no answer. A named, versioned,
 org-owned record is the smallest thing that makes that question answerable
-(`apps/prompts/prompts.go:1-8`).
+(`apps/prompt/prompts.go:1-8`).
 
 ## Specification
 
@@ -36,31 +36,31 @@ The key words MUST, MUST NOT and SHOULD are to be interpreted as in RFC 2119.
 
 One system-namespace SQLite file, `prompts.db`, opened through `sqlpool.Open`
 (cek-encrypted, single-connection); tenancy is the `org` column, enforced on
-every query (`apps/prompts/store.go`). It holds template text plus taxonomy and
+every query (`apps/prompt/store.go`). It holds template text plus taxonomy and
 MUST never hold a secret. The starter catalog is a separate embedded
 `catalog.json` — read-only, with no write route, so nothing a customer does can
 put a row in it.
 
 ### Addresses
 
-Six operations, all typed ops (`apps/prompts/prompts.go:216-229`):
+Six operations, all typed ops (`apps/prompt/prompts.go:216-229`):
 
-- `GET /v1/prompts` — the org's library, one row per prompt with version
+- `GET /v1/prompt` — the org's library, one row per prompt with version
   numbers and taxonomy, never the bodies.
-- `POST /v1/prompts` — create, or append a version to an existing name; 201.
-- `GET /v1/prompts/metrics` — real per-prompt statistics, every number counted
+- `POST /v1/prompt` — create, or append a version to an existing name; 201.
+- `GET /v1/prompt/metrics` — real per-prompt statistics, every number counted
   in the store, nothing estimated.
-- `GET /v1/prompts/catalog` — the embedded starter set, each entry importable
+- `GET /v1/prompt/catalog` — the embedded starter set, each entry importable
   as-is.
-- `GET /v1/prompts/{name}` — current body plus version-history METADATA,
+- `GET /v1/prompt/{name}` — current body plus version-history METADATA,
   capped at 100 entries and carrying no per-version bodies, so a long history
   cannot inflate the response.
-- `DELETE /v1/prompts/{name}` — the prompt and its whole history; 204.
+- `DELETE /v1/prompt/{name}` — the prompt and its whole history; 204.
 
 The name is both the org-unique handle and the URL segment, so it MUST match
 `^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$` — the injection and traversal guard at the
 boundary — and `metrics`, `new` and `catalog` are reserved so a prompt can
-never shadow a static route (`apps/prompts/prompts.go:36-42`). A version body
+never shadow a static route (`apps/prompt/prompts.go:36-42`). A version body
 is capped at 64 KiB: a prompt is a template, not a blob.
 
 ### Tenancy
@@ -72,7 +72,7 @@ does — existence is not disclosed across the boundary.
 
 ### Money, events, telemetry
 
-Free, said in those words: `plugin/prompts/main.go` declares `cloud.Free`. It
+Free, said in those words: `plugin/prompt/main.go` declares `cloud.Free`. It
 publishes nothing to the bus, so a customer's webhooks receive nothing from it.
 It emits nothing beyond the request span every route gets.
 

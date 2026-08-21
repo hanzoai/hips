@@ -1,23 +1,23 @@
 ---
 hip: 1325
-title: Nodes — Your Machines on a Socket
+title: Node — A Machine an Org Owns
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: nodes
+capability: node
 status: Draft
 created: 2026-08-21
 requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139, HIP-1107
 ---
 
-# HIP-1325: Nodes — Your Machines on a Socket
+# HIP-1325: Node — A Machine an Org Owns
 
 ## Abstract
 
-`/v1/nodes` is an org's own machines. An agent on someone's machine dials in and
+`/v1/node` is an org's own machines. An agent on someone's machine dials in and
 holds a socket; the org lists what is connected and asks one of them to run a
 command, authorized once at the socket against the deployment's own allowlist.
-It is implemented in `hanzoai/cloud` at `apps/nodes` (HIP-0106).
+It is implemented in `hanzoai/cloud` at `apps/node` (HIP-0106).
 
 A node is not a bot. A bot is an agent bound to a machine and a bot RUN is a task
 the executor drives on a surface this platform operates (HIP-1107); a bot MACHINE
@@ -27,8 +27,8 @@ Three values, three names, three addresses.
 ## Motivation
 
 The machine half answered under the bot's name. It was `/v1/bot/nodes` while one
-package served both planes, then `/v1/nodes` while the package was still called
-`bots` — an address not named for the app that answered it, which is the one line
+package served both planes, then `/v1/node` while the package was still called
+`bot` — an address not named for the app that answered it, which is the one line
 cloud's `openapi/misfiled.txt` carried for it (HIP-0139 §5.1). The name has
 followed the address, and the two planes are two capabilities.
 
@@ -62,18 +62,18 @@ split.
 
 ### §2 The addresses
 
-Four route families under `/v1/nodes`. `GET /v1/nodes` is typed. Three are
+Four route families under `/v1/node`. `GET /v1/node` is typed. Three are
 declared with prose beside their wire facts, held closed by this capability's own
 projection gate — one gate per capability, because a ledger that spans two cannot
 say which of them a route belongs to:
 
-`GET /v1/nodes/connect` is a WebSocket upgrade — 101 and then a duplex frame
+`GET /v1/node/connect` is a WebSocket upgrade — 101 and then a duplex frame
 stream for the life of the node, which no typed operation can declare.
-`POST /v1/nodes/{id}/invoke` refuses with a domain body a client switches on,
+`POST /v1/node/{id}/invoke` refuses with a domain body a client switches on,
 identical for a pre-flight refusal and for the node's own denial, and reads the
 caller's device header, which no `In` field may carry: a caller that could name
 its own device could pre-approve its own privileged command.
-`POST /v1/nodes/peer/invoke` is the replica-to-replica forward — plain-text
+`POST /v1/node/peer/invoke` is the replica-to-replica forward — plain-text
 refusals, and a body bound a typed operation cannot see.
 
 The peer hop is a machine call and not a public address: the public rule drops
@@ -135,14 +135,14 @@ from has no loop and now declares none.
 
 ### §9 The name owes the singular sweep
 
-The row is `nodes`, and under the rule that now governs (HIP-0139) the canonical
+The row is `node`, and under the rule that now governs (HIP-0139) the canonical
 name is the singular: this capability's row, package, plugin, floor key and tag
 become `node`. It is written plural here because that is what the manifest
 carries at the moment of writing, and a HIP whose `capability:` disagrees with
 the row describes a fleet nobody runs.
 
-It is deliberately NOT renamed ahead of the sweep. Four siblings — `bots`,
-`campaigns`, `links`, `networks` — are in the identical state, and moving one of
+It is deliberately NOT renamed ahead of the sweep. Four siblings — `bot`,
+`campaign`, `link`, `network` — are in the identical state, and moving one of
 five leaves a mixed estate plus a collision with the slice that moves the rest.
 Nothing is broken while it waits: the derivation accepts `/v1/node` already, so
 both spellings answer and only the published spelling is pending.
@@ -162,7 +162,7 @@ timeout, where a direct peer forward fails fast and visibly.
 
 The alternative to the split is the arrangement it replaces — one package, two
 planes, one address not named for its app and a line in the ratchet explaining
-it. Folding the other way, to `/v1/bots/nodes`, was the cheaper edit and the
+it. Folding the other way, to `/v1/bot/nodes`, was the cheaper edit and the
 wrong one: it would file a machine under an agent's name permanently, in nine
 projections, on the argument that they once shipped in the same binary.
 
@@ -183,7 +183,7 @@ that took an org from a body would be a cross-tenant invoke primitive — which 
 why, absent the token, it serves nothing.
 
 The split itself removes one hazard and creates none. The run plane's relay is a
-greedy wildcard over `/v1/bots/runtime/*`; while both planes registered on one
+greedy wildcard over `/v1/bot/runtime/*`; while both planes registered on one
 router, that wildcard and this capability's static leaves were held apart by
 specificity alone. They are now in different binaries behind different prefixes,
 where neither can reach the other at all.

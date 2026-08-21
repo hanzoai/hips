@@ -1,27 +1,27 @@
 ---
 hip: 1067
-title: Destinations — Conversions Forwarded
+title: Destination — An Event Translated to a Sink
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: destinations
+capability: destination
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0027, HIP-0106, HIP-0139
 ---
 
-# HIP-1067: Destinations — Conversions Forwarded
+# HIP-1067: Destination — An Event Translated to a Sink
 
 ## Abstract
 
 An org connects the analytics and advertising platforms it uses, and every event
 the platform already captures is translated into each destination's own conversion
-schema and delivered from the server. `/v1/destinations` is the registry for those
+schema and delivered from the server. `/v1/destination` is the registry for those
 connections and the one place their credentials are held.
 
 This HIP specifies the interlingua that makes one translation serve every
 destination, the delivery guarantees of the fan-out, and the custody rules. The
-implementation is `hanzoai/cloud` `apps/destinations`.
+implementation is `hanzoai/cloud` `apps/destination`.
 
 ## Motivation
 
@@ -47,7 +47,7 @@ accepted.
 ### One interlingua, translated once
 
 The canonical event vocabulary maps onto a normalized conversion taxonomy exactly
-once (`apps/destinations/translate.go`). Each adapter renders the normalized value
+once (`apps/destination/translate.go`). Each adapter renders the normalized value
 into its own platform's name.
 
 - The map is **pure** — no input or output — so it is driven directly by tests.
@@ -66,7 +66,7 @@ to the fan-out.
 
 A conversion carries a deduplication id, taken from the browser tag's own id when
 one was stamped and falling back to the event's message id
-(`apps/destinations/translate.go:55`). That is what lets a platform reconcile the
+(`apps/destination/translate.go:55`). That is what lets a platform reconcile the
 browser-side pixel and the server-side delivery of one act as one conversion
 rather than two. The browser half is HIP-1068.
 
@@ -100,7 +100,7 @@ field. Every row is keyed by (org, platform). Mutations require an org admin;
 reads do not.
 
 Personally identifying match fields are hashed before they leave
-(`apps/destinations/destination.go:95`). The platform receives match keys, not
+(`apps/destination/destination.go:95`). The platform receives match keys, not
 identities.
 
 ### The inbound half shares the outbound half's custody
@@ -112,13 +112,13 @@ definition of who an org is. Without it a campaign's conversions sit in the
 warehouse with no cost beside them.
 
 It has no route of its own: a reporter self-registers per platform
-(apps/destinations/report.go) and its rows land in the warehouse cloud already
+(apps/destination/report.go) and its rows land in the warehouse cloud already
 owns, as `hanzo.ad_report`, one row per (org, platform, campaign, day).
 
 ### One route is not a typed operation
 
 Connecting a destination stays untyped, with the wire fact stated
-(`apps/destinations/typed_wire_test.go:27`): the request body's property **names**
+(`apps/destination/typed_wire_test.go:27`): the request body's property **names**
 are chosen at request time by the addressed platform's own specification, and no
 static type describes an object whose keys the URL picks. It also accepts a
 configuration value as a string, a number or a boolean and coerces it to text,
@@ -140,26 +140,26 @@ client would otherwise bind whichever shape it read last.
 ### What it owns, charges and emits
 
 The store is one SQL database (`sqlpool.Open("destinations", …)`,
-apps/destinations/store.go:30) holding the (org, platform) rows and their
+apps/destination/store.go:30) holding the (org, platform) rows and their
 non-secret configuration; the secret half lives in the key store under the
 per-org path, as specified above. The closed adapter registry is ga4,
 googleads, linkedin, meta, pinterest, posthog, reddit, tiktok, umami and x,
 each a file that registers itself from init()
-(apps/destinations/destination.go:170).
+(apps/destination/destination.go:170).
 
-The addresses are the operations at `/v1/destinations`
-(plugin/destinations/openapi.json): the listing, and per platform the connect,
+The addresses are the operations at `/v1/destination`
+(plugin/destination/openapi.json): the listing, and per platform the connect,
 read, disconnect and test — the connect being the one declared route, per the
 section above.
 
 It is free, in those words: the plugin declares `Price: cloud.Free`
-(plugin/destinations/main.go:21); what a platform charges for the conversions
+(plugin/destination/main.go:21); what a platform charges for the conversions
 it is sent is that platform's bill, read back through the reporting half.
 
 It publishes no events on the platform bus — it is a sink, and the one-way rule
 above is why — so a customer's webhooks (HIP-1310) receive nothing from it. It
 emits nothing to observability beyond the request span every route gets; a
-saturated fan-out logs the drop with a warning (apps/destinations/fanout.go:41),
+saturated fan-out logs the drop with a warning (apps/destination/fanout.go:41),
 which is the visibility the lossy trade above promises.
 
 The stage is `ga` — the manifest row declares none, and absent is `ga`

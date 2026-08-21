@@ -207,7 +207,7 @@ An accepted batch is committed as FACTS under `event.<signal>`, where signal is
 a closed set naming the sort of occurrence. That is the internal hand-off the
 warehouse drains. Separately, one ENVELOPE per event is published under
 `event.<folded event name>` — the grammar an org subscribes to through
-`/v1/webhooks`, so `signup_completed` reaches a customer as
+`/v1/webhook`, so `signup_completed` reaches a customer as
 `event.signup_completed`. A name is folded to a subject token and bounded, so a
 hostile name cannot mint unbounded subject cardinality; the fold is a PUBLISHED
 contract and MAY gain cases but MUST NOT change an existing mapping.

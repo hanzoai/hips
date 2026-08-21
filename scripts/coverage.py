@@ -11,15 +11,23 @@ than a skip. A coverage check that quietly passes when it cannot find the list i
 the shape this estate keeps deleting: a gate that has only ever been seen to pass
 has not been shown to work.
 
-There are TWO inputs, because one of them cannot answer for every capability.
-`capabilities.yaml` is curation over the EMITTED DOCUMENT, so an app that serves
-no HTTP operation is absent from it by construction -- `kafka` speaks its
-protocol on :9092 and emits nothing, and this gate could not report that it had
-no spec. cloud's hand-authored `manifest/apps.go` answers for those, and the
-capability universe is the UNION of the two. The manifest is optional (that repo
-is private); when it does not resolve the run SAYS the cross-check did not run,
-and the two checks that depend on it warn instead of failing, because a gate
-must not assert what it was unable to ask.
+There is ONE input, and it took a day of churn to get there. It was two: this
+gate read hanzoai/openapi's `capabilities.yaml` AND cloud's `manifest/apps.go`,
+and took the UNION, because the first could not answer for an app that serves no
+HTTP operation. But the two were separately hand-maintained, so they could hold
+different words for one thing -- and on 2026-08-21 they did. cloud said `bot`,
+`campaign`, `dataset`, `link`, `network`, `node`; the taxonomy said the plurals.
+A union of two spellings is TWELVE capabilities where there are six, so six came
+back uncovered whichever spelling the HIPs carried. Editing the HIPs flipped the
+same six errors to the other spelling and back. The gate could not reach zero
+because the question it asked had two answers.
+
+`capabilities.yaml` now carries a `fleet:` list DERIVED from `manifest/apps.go`
+by hanzoai/openapi's `capabilities.py`, which gates it. So the union is gone:
+this reads one list, cloud decides every name in it, and no second copy is left
+to disagree. That list is also complete where the old one could not be -- `kafka`
+speaks its protocol on :9092 and emits no operation, and it is IN the manifest,
+so it is in `fleet:` and this gate can finally report that it has no spec.
 
     python3 scripts/coverage.py            # exits 1 on any ERROR
     python3 scripts/coverage.py --list     # the checks, by code
@@ -67,37 +75,17 @@ RATCHET = "capability-coverage.txt"
 # version is cut -- so this gate measures the release it is run against rather
 # than a snapshot somebody committed here. A second copy inside this repo would
 # be exactly the drift the ratchet exists to prevent.
+#
+# This repo's CI checks out hanzoai/openapi and nothing else, which is why the
+# list has to live there rather than in cloud: cloud is private, and a gate that
+# needs a credential is a gate that does not run. What makes reading a public
+# projection safe is that it is a PROJECTION -- `fleet:` is generated from
+# cloud's manifest and `capabilities.py --check` fails when the two part company,
+# so a name here is a name cloud decided.
 CAPABILITY_SOURCES = (
     os.environ.get("HANZO_CAPABILITIES"),
     "../openapi/capabilities.yaml",
     "../../openapi/capabilities.yaml",
-)
-
-# The SECOND source, and it answers a question the first one cannot.
-#
-# `capabilities.yaml` is curation over the EMITTED DOCUMENT: publish.py refuses
-# a name the document does not carry, so an app that serves no HTTP operation
-# can never appear there. `kafka` speaks the Kafka binary protocol on :9092 and
-# emits nothing into the document; so do `catalogsync` and `rollingcap`, and
-# `zen` is coresident. Four apps with hand-authored rows in cloud's manifest,
-# invisible to this gate by construction rather than by oversight -- and a
-# capability a gate cannot see is one that can ship with no spec forever.
-#
-# cloud's `manifest/apps.go` says of itself: "This file is HAND-AUTHORED. It is
-# the SOURCE OF TRUTH for the fleet." So the capability universe is the UNION --
-# what the fleet ships, plus the host's own doors (`openapi` serves /v1,
-# /v1/{name}, /v1/openapi.json and /v1/commands and has no manifest row, because
-# the manifest lists plugin binaries and those doors belong to no app).
-#
-# It is OPTIONAL because hanzoai/cloud is private and this repo's CI checks out
-# only hanzoai/openapi. Optional is not the same as silent: when it does not
-# resolve, the run SAYS the cross-check did not run rather than reporting a
-# coverage number as though it had. A gate that cannot say which questions it
-# skipped is a gate nobody can read.
-MANIFEST_SOURCES = (
-    os.environ.get("HANZO_MANIFEST"),
-    "../cloud/manifest/apps.go",
-    "../../cloud/manifest/apps.go",
 )
 
 CHECKS = [
@@ -106,7 +94,7 @@ CHECKS = [
     ("CV003", "the ratchet names a capability that no longer exists"),
     ("CV004", "the capability list could not be resolved"),
     ("CV005", "two HIPs declare one capability"),
-    ("CV006", "a HIP declares a capability nothing serves"),
+    ("CV006", "a HIP declares a capability nothing ships"),
 ]
 
 
@@ -123,17 +111,30 @@ class Report:
 
 
 def capabilities(path: str) -> tuple[list[str], dict[str, str]]:
-    """The declared capabilities, and the domain each one sits in.
+    """The capabilities that exist, and the domain each one is filed under.
+
+    TWO KEYS, TWO QUESTIONS, and only the first one decides who owes a HIP:
+
+      `fleet:`  every capability cloud ships, DERIVED from its manifest. This is
+                the universe -- complete, current, and one name per capability.
+      `domains:` which domain a capability is shown under. Curation over the
+                PUBLISHED document, which lags cloud's main by design, so it is
+                read for LABELS and never for existence. A capability renamed
+                since the last publish is filed here under its old spelling;
+                that is the pin being honest, not a second opinion about what
+                exists, and reading it as a universe is what broke this gate.
 
     Parsed without PyYAML: this runs in CI images that carry a bare Python, and
     a lint that needs a pip install is a lint that gets skipped. The shape is
-    fixed and shallow -- `domains:`, each with a `name:` and a list of leaf
-    strings -- so a reader can check this against the file by eye.
+    fixed and shallow -- flow sequences that wrap across lines -- so a reader can
+    check this against the file by eye. hanzoai/openapi's test_publish.py holds
+    this reader and a real YAML load to the same answer.
     """
     caps: list[str] = []
     domain: dict[str, str] = {}
     current = ""
-    buf = ""          # an open `tags: [` flow sequence, which wraps across lines
+    key = ""
+    buf = ""          # an open `[` flow sequence, which wraps across lines
     for raw in open(path, encoding="utf-8").read().splitlines():
         line = raw.split("#", 1)[0].rstrip() if not buf else raw.rstrip()
         if not line.strip():
@@ -145,29 +146,19 @@ def capabilities(path: str) -> tuple[list[str], dict[str, str]]:
             if m:
                 current = m.group(1)
                 continue
-            m = re.match(r"^\s*tags:\s*\[(.*)$", line)
+            m = re.match(r"^\s*(fleet|tags):\s*\[(.*)$", line)
             if not m:
                 continue
-            buf = m.group(1)
+            key, buf = m.group(1), m.group(2)
         if "]" not in buf:
             continue
         for cap in re.findall(r"[A-Za-z0-9_.-]+", buf[:buf.index("]")]):
-            caps.append(cap)
-            domain.setdefault(cap, current)
+            if key == "fleet":
+                caps.append(cap)
+            else:
+                domain.setdefault(cap, current)
         buf = ""
     return sorted(set(caps)), domain
-
-
-def fleet(path: str) -> list[str]:
-    """The app names cloud's manifest hand-authors, from `{Name: "<app>"`.
-
-    Read with a regex rather than a Go parser for the same reason the taxonomy
-    is read without PyYAML: this runs on a bare Python, and a lint that needs a
-    toolchain is a lint that gets skipped. The shape it matches is the only one
-    the file uses, and manifest/manifest_test.go is what keeps it that way.
-    """
-    src = open(path, encoding="utf-8", errors="replace").read()
-    return sorted(set(re.findall(r'\{Name:\s*"([A-Za-z0-9_.-]+)"', src)))
 
 
 def declares(text: str) -> list[str]:
@@ -231,17 +222,12 @@ def measure() -> tuple[Report, dict]:
 
     caps, domain = capabilities(path)
     if not caps:
-        rep.error("CV004", path, "resolved but named no capabilities")
+        rep.error("CV004", path,
+                  "resolved but carries no `fleet:` -- that list is generated by "
+                  "hanzoai/openapi's capabilities.py from cloud's manifest, and "
+                  "this gate will not report coverage against a universe it does "
+                  "not have")
         return rep, {}
-
-    manifest = next((p for p in MANIFEST_SOURCES if p and os.path.exists(p)), None)
-    fleet_caps = fleet(manifest) if manifest else []
-    for c in fleet_caps:
-        if c not in domain:
-            # It ships, so it needs a spec or a reason. It has no domain because
-            # the taxonomy groups the document and this one is not in it.
-            domain[c] = "fleet"
-    caps = sorted(set(caps) | set(fleet_caps))
 
     bodies = {}
     for name in sorted(os.listdir(HIP_DIR)):
@@ -254,19 +240,13 @@ def measure() -> tuple[Report, dict]:
         for cap in declares(text):
             if cap in hits:
                 hits[cap].append(name)
-            elif manifest:
-                rep.error("CV006", name,
-                          f"declares capability {cap!r}, which nothing serves")
             else:
-                # Undecidable here. A capability serving no HTTP operation is
-                # absent from the taxonomy BY CONSTRUCTION, so without the
-                # manifest this is indistinguishable from a name nothing
-                # serves. Reporting it as an error would fail the build for the
-                # one thing this run is known not to be able to see.
-                rep.warn("CV006", name,
-                         f"declares capability {cap!r}, which the taxonomy does "
-                         f"not carry -- undecided, the manifest cross-check did "
-                         f"not run")
+                # Decidable now, and it was not before. `fleet:` is every app
+                # cloud ships, so a name absent from it is absent because
+                # nothing ships it -- not because this gate was looking at a
+                # list that could not see it.
+                rep.error("CV006", name,
+                          f"declares capability {cap!r}, which nothing ships")
 
     have = {c for c, v in hits.items() if v}
     missing = [c for c in caps if c not in have]
@@ -277,7 +257,7 @@ def measure() -> tuple[Report, dict]:
         where = f" -- {hint[0]} already names the route" if hint else ""
         if c not in known:
             rep.error("CV001", c,
-                      f"({domain.get(c, '?')}) no HIP declares it{where}. Write "
+                      f"({domain.get(c, 'unfiled')}) no HIP declares it{where}. Write "
                       f"one, or add {c} to {RATCHET} with the reason.")
     for c in known:
         if c in have:
@@ -285,13 +265,8 @@ def measure() -> tuple[Report, dict]:
                       f"is in {RATCHET} but {hits[c][0]} declares it -- "
                       "delete the line in the same commit")
         elif c not in caps:
-            if manifest:
-                rep.error("CV003", c,
-                          f"is in {RATCHET} but is not a capability any more")
-            else:
-                rep.warn("CV003", c,
-                         f"is in {RATCHET} and the taxonomy does not carry it -- "
-                         f"undecided, the manifest cross-check did not run")
+            rep.error("CV003", c,
+                      f"is in {RATCHET} but is not a capability any more")
 
     for c in sorted(have):
         if len(hits[c]) > 1:
@@ -300,7 +275,7 @@ def measure() -> tuple[Report, dict]:
                       "One capability, one HIP.")
 
     return rep, {
-        "source": path, "caps": caps, "domain": domain, "manifest": manifest,
+        "source": path, "caps": caps, "domain": domain,
         "hits": hits, "have": have, "missing": missing, "known": known,
     }
 
@@ -323,17 +298,16 @@ def main() -> int:
         caps, have, missing = m["caps"], m["have"], m["missing"]
         by_domain: dict[str, list[int]] = {}
         for c in caps:
-            d = m["domain"].get(c, "?")
+            # No domain means the PUBLISHED document does not carry this name
+            # yet -- a capability cloud has added or renamed since the last
+            # publish. It exists, so it owes a HIP; it is just not filed on a
+            # page yet, and it files itself when the pin moves.
+            d = m["domain"].get(c, "unfiled")
             row = by_domain.setdefault(d, [0, 0])
             row[1] += 1
             if c in have:
                 row[0] += 1
-        print(f"capabilities {len(caps)} from {m['source']}")
-        print(f"  + fleet        {m['manifest']}" if m["manifest"] else
-              "  + fleet        NOT RESOLVED -- the manifest cross-check did "
-              "not run. An app serving no HTTP operation cannot appear in the "
-              "taxonomy, so this run cannot see one. Set HANZO_MANIFEST to "
-              "hanzoai/cloud's manifest/apps.go to ask.")
+        print(f"capabilities {len(caps)} from {m['source']} `fleet:`")
         for d, (h, n) in sorted(by_domain.items()):
             print(f"  {d:16s} {h:3d}/{n:3d}")
         print(f"covered {len(have)}  uncovered {len(missing)}  "

@@ -1,25 +1,25 @@
 ---
 hip: 1143
-title: Referrals — Attribution
+title: Referral — An Edge From Referrer to Referee
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: referrals
+capability: referral
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1143: Referrals — Attribution
+# HIP-1143: Referral — An Edge From Referrer to Referee
 
 ## Abstract
 
-`/v1/referrals` is referral ATTRIBUTION: who referred whom, and whether that
+`/v1/referral` is referral ATTRIBUTION: who referred whom, and whether that
 referee ever became a real customer. Every org has a stable code and share
 link, a new org claims it at signup, and an admin sweep advances signup →
 qualified once the referee makes metered spend. That attribution record is the
 whole product — the capability, implemented in `hanzoai/cloud` at
-`apps/referrals`, MOVES NO MONEY, and this HIP states why that absence is the
+`apps/referral`, MOVES NO MONEY, and this HIP states why that absence is the
 design.
 
 ## Motivation
@@ -27,7 +27,7 @@ design.
 A referral program needs two facts nobody else records: the edge (referrer ↔
 referee, first-touch, once ever) and whether the referee genuinely used the
 product. Signup alone is a vanity signal; metered spend is the honest one
-(`apps/referrals/referrals.go:23-26`). What is owed for a qualified referral is
+(`apps/referral/referrals.go:23-26`). What is owed for a qualified referral is
 an affiliate PAYABLE, tracked in `hanzoai/commerce` and settled by wire or to a
 connected wallet — never minted as platform credit.
 
@@ -40,18 +40,18 @@ The key words MUST, MUST NOT and SHOULD are to be interpreted as in RFC 2119.
 One system-namespace SQLite file, `referrals.db` (`sqlpool.Open`,
 cek-encrypted, single-connection): the referral edges plus a code directory.
 The code itself is a deterministic base32 hash of the org id
-(`apps/referrals/referrals.go:17-18`), so it never changes and never has to be
+(`apps/referral/referrals.go:17-18`), so it never changes and never has to be
 stored to be reproduced; the directory row only materializes the O(1) reverse
 lookup.
 
 ### Addresses
 
 Four operations, all typed ops, across two audiences
-(`apps/referrals/referrals.go:117-146`):
+(`apps/referral/referrals.go:117-146`):
 
-- `GET /v1/referrals` — the caller's code, share link and referrals. A pure
+- `GET /v1/referral` — the caller's code, share link and referrals. A pure
   read: it advances nothing.
-- `POST /v1/referrals/claim` — record a referral from a `?ref` code. Idempotent
+- `POST /v1/referral/claim` — record a referral from a `?ref` code. Idempotent
   and first-touch: 201 on the first claim, 200 with `created:false` on replay.
 - `GET /v1/admin/referrals/bonuses` — SuperAdmin: every edge plus a summary.
 - `POST /v1/admin/referrals/sweep` — SuperAdmin: the cron path, and the ONLY
@@ -60,9 +60,9 @@ Four operations, all typed ops, across two audiences
 
 The two admin leaves sit under a prefix another app also serves —
 `GET /v1/admin/referrals` is the affiliates analytics board — so the plugin
-declares its prefixes from the manifest row (`plugin/referrals/main.go`) rather
+declares its prefixes from the manifest row (`plugin/referral/main.go`) rather
 than the `/v1/<name>` default, and each gate is bound to the exact path it
-covers, never a subtree (`apps/referrals/referrals.go:121-135`).
+covers, never a subtree (`apps/referral/referrals.go:121-135`).
 
 ### Tenancy
 
@@ -74,10 +74,10 @@ Writes with no validated principal are refused ahead of the body decode
 
 ### Money
 
-Free, said in those words: `plugin/referrals/main.go` declares `cloud.Free`,
+Free, said in those words: `plugin/referral/main.go` declares `cloud.Free`,
 and nothing here meters, gates or debits. The one money-plane touch is a READ —
 "has this referee spent?" — asked through the payout plane client
-(`apps/referrals/commerce.go`), and the seam is deliberately read-only:
+(`apps/referral/commerce.go`), and the seam is deliberately read-only:
 `TestCommerceSeamIsReadOnly` fails if it ever grows a write method, because a
 `deposit` on this interface is exactly how a GET once came to mint platform
 credit.
@@ -87,7 +87,7 @@ credit.
 It publishes nothing to the bus, so a customer's webhooks receive nothing from
 it. Beyond the request span, a qualification appends one `referral.qualified`
 record to cloud's tamper-evident audit trail, best-effort
-(`apps/referrals/referrals.go:531-548`) — an attestation that a referee became
+(`apps/referral/referrals.go:531-548`) — an attestation that a referee became
 a customer, carrying no amount because this package issues none.
 
 ### Stage

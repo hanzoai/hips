@@ -1,20 +1,20 @@
 ---
 hip: 1173
-title: Networks — The Zero Trust Overlay
+title: Network — An Org-Scoped Overlay
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: networks
+capability: network
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1173: Networks — The Zero Trust Overlay
+# HIP-1173: Network — An Org-Scoped Overlay
 
 ## Abstract
 
-`/v1/networks` is the tenant's Hanzo Zero Trust footprint: the overlay, its
+`/v1/network` is the tenant's Hanzo Zero Trust footprint: the overlay, its
 routers and its mesh services, org-scoped, off the unified cloud binary. It fronts the Hanzo
 Zero Trust controller (`hanzoai/zt`, an OpenZiti-based fabric) and translates it
 into the shape a tenant reads. It is implemented in `hanzoai/cloud` at
@@ -71,19 +71,19 @@ HIP-0139 §7 refuses.
 
 ### §3 The addresses
 
-One prefix, and every operation on it is typed: `GET /v1/networks`,
-`GET /v1/networks/routers`, `GET /v1/networks/{id}` and
-`GET /v1/networks/services`. No route here is declared with prose, because every
+One prefix, and every operation on it is typed: `GET /v1/network`,
+`GET /v1/network/routers`, `GET /v1/network/{id}` and
+`GET /v1/network/services`. No route here is declared with prose, because every
 answer is a value.
 
-It was two — `/v1/networks` and `/v1/mesh` — and both were lines in the misfiled
+It was two — `/v1/network` and `/v1/mesh` — and both were lines in the misfiled
 ratchet (HIP-0139 §5.1). They closed together by fold (HIP-0139 §7.1), which §1
 permits because there is no store to split along: a mesh service is an edge
 service OF the overlay exactly as an edge-router is one of its nodes.
 
 The routers hang off the network they belong to and MUST stay there. An
 edge-router is a node of an overlay, so it is addressed as one at
-`/v1/networks/routers` and is never a top-level noun. `routers` is a literal
+`/v1/network/routers` and is never a top-level noun. `routers` is a literal
 beside `{id}` on one subtree; the router registers first by convention, and this
 router resolves the static segment over its parameter sibling in either order,
 so nothing has to be frozen to keep the address reachable.
@@ -99,7 +99,7 @@ The org is never a parameter. There is no query on this surface in which an org
 appears, so there is no query that can be written with somebody else's. A
 service or router tagged for another org, or tagged for none, is invisible.
 
-The single network's id is derived from the org, so `GET /v1/networks/{id}` for
+The single network's id is derived from the org, so `GET /v1/network/{id}` for
 any other id is 404 — including one that exists for another tenant. An
 id-guessing loop learns nothing it did not already know.
 
@@ -111,14 +111,14 @@ and one gate answers 503 before any handler touches the controller. The
 customer-facing body names no internal configuration; what is missing is
 recorded in the mount's own log, for the operator who can act on it.
 
-The two projections of the router inventory — `/v1/networks` and
-`/v1/networks/routers` — degrade instead: an unconfigured deployment and an
+The two projections of the router inventory — `/v1/network` and
+`/v1/network/routers` — degrade instead: an unconfigured deployment and an
 unreachable controller both answer 200 with an empty list, and the failure is a
 log line. This is deliberate and it is bounded to those two reads, because the
 network they project does not exist until a router is on it, so "none yet" is
 the same true statement either way.
 
-`/v1/networks/services` MUST NOT degrade. A configured service exists whether or not
+`/v1/network/services` MUST NOT degrade. A configured service exists whether or not
 the controller can be reached, so an empty list there would assert something
 false: that the tenant has no services. It answers 503 when unconfigured and
 surfaces the upstream's status when unreachable.

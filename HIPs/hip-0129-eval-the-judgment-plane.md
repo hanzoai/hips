@@ -1,10 +1,10 @@
 ---
 hip: 0129
-title: Eval — The Judgment Plane
+title: Eval — A Score Over Model Output
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-capability: evals
+capability: eval
 status: Draft
 created: 2026-07-27
 requires: HIP-0106, HIP-0111, HIP-0114, HIP-0119, HIP-0120, HIP-0122, HIP-0139
@@ -12,7 +12,7 @@ requires: HIP-0106, HIP-0111, HIP-0114, HIP-0119, HIP-0120, HIP-0122, HIP-0139
 
 
 
-# HIP-0129: Eval — The Judgment Plane
+# HIP-0129: Eval — A Score Over Model Output
 
 ## Abstract
 
@@ -32,7 +32,7 @@ with its own repo, its own store, its own routes, and its own name. Repo hygiene
 not the argument — an acyclic dependency graph is.
 
 The plane exists today as a cloud subsystem, not yet as its own repo:
-`apps/eval` in `hanzoai/cloud` serves `/v1/evals/*` (the manifest row is
+`apps/eval` in `hanzoai/cloud` serves `/v1/eval/*` (the manifest row is
 `manifest/apps.go:408`, the group `apps/eval/eval.go:207`); o11y serves a
 **write** endpoint, `POST /v1/o11y/llm/annotation`
 (`pkg/apiserver/o11yapiserver/llmobs.go`), inside a read plane; `apps/o11y`
@@ -76,7 +76,7 @@ Consequences, stated so they are not re-argued:
   another plane owns — in particular `hanzo.cloud_usage`, which is ai's metering
   warehouse (HIP-0106) and never a second observation store.
 - Anything that only *aggregates* what already happened is observability, not
-  judgment, and MUST NOT live on this plane. `GET /v1/evals/metrics` — which reads
+  judgment, and MUST NOT live on this plane. `GET /v1/eval/metrics` — which reads
   `hanzo.cloud_usage` and the o11y span index and writes nothing — is an o11y board
   mis-homed on eval; it moves to o11y and does not reappear under `/v1/eval`.
   It is still served today (`apps/eval/metrics.go`, in the published subset),
@@ -114,12 +114,12 @@ makes the three-way seam unrepresentable rather than merely fixed.
 ### §3 Route surface — one prefix, `/v1/eval`, singular throughout
 
 What is served today is the **plural** surface, and any reader of the table
-below should know the distance: `/v1/evals/{datasets, datasets/{name},
+below should know the distance: `/v1/eval/{datasets, datasets/{name},
 datasets/{name}/items, evaluators, rubrics, runs, scores, traces, metrics}` —
-nine paths, in `plugin/evals/openapi.json`, with the resource still named
+nine paths, in `plugin/eval/openapi.json`, with the resource still named
 `evaluators` rather than `judge` and no queue routes at all. The table below
 is the target grammar this HIP proposes; until the migration lands, the
-capability's name and address are `evals` (`manifest/apps.go:408`).
+capability's name and address are `eval` (`manifest/apps.go:408`).
 
 Every eval endpoint MUST live under `/v1/eval` and MUST follow the resource-name
 grammar (HIP-0119 §2): the resource is named **once**, in the singular, and the HTTP
@@ -261,7 +261,7 @@ with provider `eval`. A run MUST be gated **before** the first judge call and MU
 NOT write a score when the gate denies.
 
 What is priced today: the surface itself is **free** — the plugin declares
-`Price: cloud.Free` (`plugin/evals/main.go:21`) and `ResourceFeeCents("EVAL", …)`
+`Price: cloud.Free` (`plugin/eval/main.go:21`) and `ResourceFeeCents("EVAL", …)`
 is unset, so every eval resource costs nothing in those words. The only money
 on this plane is the judge's inference, metered by ai on the caller's
 identity as above. The capability publishes **no events** on the bus, so a

@@ -668,7 +668,7 @@ adaptor and passing its loader**:
 import "github.com/zap-proto/zip/js"
 
 app := zip.New(zip.Config{AppName: "webhooks", Loader: js.Loader()})
-app.Module("POST /v1/webhooks/transform", "goja", "./ext/transform")
+app.Module("POST /v1/webhook/transform", "goja", "./ext/transform")
 ```
 
 The import IS the declaration. There is no runtime flag, no manifest field and no

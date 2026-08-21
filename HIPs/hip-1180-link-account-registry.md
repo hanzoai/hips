@@ -1,23 +1,23 @@
 ---
 hip: 1180
-title: Links — The Account Registry
+title: Link — A Record of Provider Accounts
 author: Hanzo AI
 type: Standards Track
 category: Core
-capability: links
+capability: link
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1180: Links — The Account Registry
+# HIP-1180: Link — A Record of Provider Accounts
 
 ## Abstract
 
-`links` is the unified AI login manager's registry: the org+user-scoped record of
+`link` is the unified AI login manager's registry: the org+user-scoped record of
 WHICH provider accounts — Claude Max, ChatGPT Plus, a Hanzo API key, a raw
 provider key — a developer has signed into, ON WHICH MACHINES, with each
-account's latest usage snapshot. It answers at `/v1/links`. It holds no
+account's latest usage snapshot. It answers at `/v1/link`. It holds no
 credential: the secret stays sealed where the connections plane put it, and this
 capability holds the binding and the numbers. It is implemented in
 `hanzoai/cloud` at `apps/link` (HIP-0106).
@@ -44,10 +44,10 @@ kind, status, last-seen and latest usage snapshot. A device is the
 of its own — so there is no device-to-link join and no orphan device to collect
 (`apps/link/link.go:1-12`).
 
-The durable store is ONE encrypted SQLite file, the deployment's own `links`,
+The durable store is ONE encrypted SQLite file, the deployment's own `link`,
 opened through the one opener so it is born encrypted and comes back with the
 single-connection cap already applied (`apps/link/store.go:39-42`). It carries
-two tables whose meanings never mix. `links` holds one row per binding under the
+two tables whose meanings never mix. `link` holds one row per binding under the
 natural key `(org, subject, machine, provider, account)`, so a re-registration
 UPSERTs the row that already exists and reads back the id it was first given
 (`apps/link/store.go:113-135`). `routed_usage` is an additive counter keyed on
@@ -72,7 +72,7 @@ its usage with the SAME IAM bearer it already carries — never a provider secre
 
 ### §2 The addresses
 
-Eleven operations under `/v1/links`, every one typed: each is a `zip` typed op
+Eleven operations under `/v1/link`, every one typed: each is a `zip` typed op
 with a named In and Out, so the REST route, the served document, the MCP tool,
 the CLI command and every generated client project from one registration
 (`apps/link/http.go:125-142`). None is declared-and-untyped — this capability
@@ -80,17 +80,17 @@ holds no route whose shape it cannot name.
 
 | operation | what it answers |
 |---|---|
-| `POST /v1/links` | registers a signed-in provider account on a machine → the Link (201) |
-| `GET /v1/links` | the caller's linked accounts and the devices they sit on |
-| `GET /v1/links/{id}` | one linked account |
-| `DELETE /v1/links/{id}` | logs out one account and stops the sessions it was running |
-| `GET /v1/links/devices/{machine}` | one machine: its accounts, usage and live sessions |
-| `POST /v1/links/devices/{machine}/revoke` | logs out every account on one machine and stops its sessions |
-| `GET /v1/links/route` | the failover order across the caller's accounts (§4) |
-| `POST /v1/links/usage` | usage samples from the device collector (202) |
-| `GET /v1/links/usage` | one provider account's own usage dashboard |
-| `GET /v1/links/usage/accounts` | what the gateway routed through each account |
-| `GET /v1/links/usage/summary` | plan consumption and Hanzo spend, side by side |
+| `POST /v1/link` | registers a signed-in provider account on a machine → the Link (201) |
+| `GET /v1/link` | the caller's linked accounts and the devices they sit on |
+| `GET /v1/link/{id}` | one linked account |
+| `DELETE /v1/link/{id}` | logs out one account and stops the sessions it was running |
+| `GET /v1/link/devices/{machine}` | one machine: its accounts, usage and live sessions |
+| `POST /v1/link/devices/{machine}/revoke` | logs out every account on one machine and stops its sessions |
+| `GET /v1/link/route` | the failover order across the caller's accounts (§4) |
+| `POST /v1/link/usage` | usage samples from the device collector (202) |
+| `GET /v1/link/usage` | one provider account's own usage dashboard |
+| `GET /v1/link/usage/accounts` | what the gateway routed through each account |
+| `GET /v1/link/usage/summary` | plan consumption and Hanzo spend, side by side |
 
 The summary is the point of the usage plane, and it carries a labelling rule.
 "My Claude Max plan" and "what I spend through Hanzo" come from different meters
@@ -121,7 +121,7 @@ somebody could widen.
 
 ### §4 Route is a policy, not a dial
 
-`GET /v1/links/route` returns the ordered candidate list a caller fails over
+`GET /v1/link/route` returns the ordered candidate list a caller fails over
 along — two subscriptions for redundancy, then the metered API as the
 always-available backstop. Each candidate carries provider, account, plan, kind,
 billing mode, availability and remaining rate-limit headroom, so a caller knows
@@ -165,7 +165,7 @@ no metering path can observe a secret.
 
 ### §6 Events and observability
 
-It publishes nothing on the bus. A customer's webhooks at `/v1/webhooks` receive
+It publishes nothing on the bus. A customer's webhooks at `/v1/webhook` receive
 no `link.*` event.
 
 Beyond the request span every route gets, it emits structured log lines only: one
@@ -197,15 +197,15 @@ usage collector registers, by value — a shared vocabulary, not shared code.
 The neighbour to confuse this with is `billing`, and the split is usage versus
 money.
 
-- **billing** is the ORG's money door — balance, spend, cards. `links` is the
+- **billing** is the ORG's money door — balance, spend, cards. `link` is the
   PERSON's account door — which providers they signed into and what those
   accounts consumed. `GET /v1/billing/usage/accounts` is billing's address and
   reads this capability's per-account breakdown at the same `(org, subject)`
   pair: the shape is link's, the address is billing's, and the charge of record
-  is commerce's ledger and never a counter here. A number under `/v1/links` is
+  is commerce's ledger and never a counter here. A number under `/v1/link` is
   USAGE; a number under `/v1/billing` is MONEY; they MUST NOT be added.
 - **iam** (HIP-0026) is who the caller is at Hanzo, and the only thing that
-  authenticates anyone. `links` is who the caller is at somebody ELSE, and it
+  authenticates anyone. `link` is who the caller is at somebody ELSE, and it
   authenticates nobody. A row here grants access to nothing, here or upstream.
 - **The connections plane** (`/v1/ai/connections/{provider}`) owns a linked
   account's LIFECYCLE: the authorization dance, sealing the secret per org, and
@@ -213,7 +213,7 @@ money.
   account, resolve the current sealed credential for one dial. Storage, sealing
   and refresh belong there; selection, ordering and metering belong here, which is
   why a secret has no home in this store (`apps/link/resolver.go:5-11`).
-- **The gateway.** `/v1/links/route` publishes the ORDER; `/v1/chat/completions`
+- **The gateway.** `/v1/link/route` publishes the ORDER; `/v1/chat/completions`
   dials. A capability that both chose and dialled would make the choice
   unobservable, and the choice is the half a customer needs to audit before it
   costs them anything.

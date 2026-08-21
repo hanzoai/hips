@@ -1,16 +1,16 @@
 ---
 hip: 1167
-title: Datasets — The Versioned Snapshot
+title: Dataset — An Immutable Snapshot
 author: Hanzo AI
 type: Standards Track
 category: Core
-capability: datasets
+capability: dataset
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139, HIP-1046
 ---
 
-# HIP-1167: Datasets — The Versioned Snapshot
+# HIP-1167: Dataset — An Immutable Snapshot
 
 ## Abstract
 
@@ -72,7 +72,7 @@ slash in the document is a trailing slash in every generated client.
 
 ### §3 One prefix, four capabilities
 
-`/v1/risk` carries operations from four apps: `risk` at the root, and `datasets`,
+`/v1/risk` carries operations from four apps: `risk` at the root, and `dataset`,
 `label` and `reference` at their own leaves. What MUST hold:
 
 1. The four MUST partition `/v1/risk` by DISJOINT sub-prefix. No two may claim
@@ -137,7 +137,7 @@ Metered, and the unit is the ACT that reads the source, never the row.
 - Listing, describing, exporting and disposing are free.
 
 The gate runs before the act and the debit lands after it, both through the one
-shared `cloud.ResourceMeter` under the product label `datasets`. A gate refusal
+shared `cloud.ResourceMeter` under the product label `dataset`. A gate refusal
 is rendered as the money wire's own bytes by `cloud.DenyEnvelope`, so this plane
 answers the fleet's one denial contract rather than a private spelling of it;
 any error that is not a denial passes through untouched. Every scan of the

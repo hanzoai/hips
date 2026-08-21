@@ -1,23 +1,23 @@
 ---
 hip: 1049
-title: Validators
+title: Validator — A Token Redeemed for a Node
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-08-20
-capability: validators
+capability: validator
 requires: HIP-0027, HIP-0106, HIP-0139
 ---
 
-# HIP-1049: Validators
+# HIP-1049: Validator — A Token Redeemed for a Node
 
 ## Abstract
 
-`/v1/validators` turns proof that a wallet holds a validator-tier NFT into a
+`/v1/validator` turns proof that a wallet holds a validator-tier NFT into a
 provisioned node: prove the slot, get a staking identity generated and sealed, get
 a node custom resource written, and get a registration QUEUED for the owner to
-co-sign. It is served by `apps/validators` in `hanzoai/cloud`.
+co-sign. It is served by `apps/validator` in `hanzoai/cloud`.
 
 The token id IS the slot. Everything else — the challenge, the signature, the
 on-chain ownership read, the sealed keys, the queued registration — exists to make
@@ -39,10 +39,10 @@ in RFC 2119.
 
 1. A challenge is issued for a slot: a single-use nonce bound to (validated org,
    slot), stored server-side, with the EXACT message to sign
-   (`apps/validators/validators.go:246`).
+   (`apps/validator/validators.go:246`).
 2. The claim burns the challenge FIRST, before any chain read, so a replayed or
    forged nonce dies before it can cost an RPC call
-   (`apps/validators/validators.go:326`).
+   (`apps/validator/validators.go:326`).
 3. The signer is recovered from the message THIS SERVER REBUILDS from the
    validated org, the slot and the nonce — never from a message the caller
    supplied.
@@ -60,18 +60,18 @@ signs.
 ### 2. Keys are sealed before anything is persisted
 
 The staking identity is generated and sealed into the key management plane BEFORE
-the claim row is written (`apps/validators/validators.go:363`). A claim MUST NOT
+the claim row is written (`apps/validator/validators.go:363`). A claim MUST NOT
 exist without its keys.
 
 Key material MUST NOT be returned, logged or stored in the clear. It seals under an
 org-scoped coordinate, and the reader that materialises it into a node is admitted
-only for that same org (`apps/validators/validators.go:621-624`).
+only for that same org (`apps/validator/validators.go:621-624`).
 
 ### 3. Registration is queued, never submitted
 
 The pipeline ENQUEUES an owner-gated registration and MUST NOT submit it to any
 chain. The owner co-signs out of band, and the stake weight is set at co-sign
-time — never derived from the NFT (`apps/validators/validators.go:412-419`).
+time — never derived from the NFT (`apps/validator/validators.go:412-419`).
 
 This is the line between "provisioning a node" and "committing stake". The first
 is automatable; the second is a decision a person makes.
@@ -82,13 +82,13 @@ Provisioning writes a resource for a node this pipeline owns. It MUST NOT touch 
 running node, and the guard is structural rather than procedural: the resource
 name is always the claim's own prefixed form, reserved namespaces are refused, and
 the legacy resource groups are refused, so even an org name that folds toward a
-reserved word cannot escape the prefix (`apps/validators/validators_test.go:332`).
+reserved word cannot escape the prefix (`apps/validator/validators_test.go:332`).
 
 ### 5. Degrade honestly
 
 With no cluster reachable, the slot is still claimed, the keys are still sealed and
 the registration is still queued; the node is reported PENDING
-(`apps/validators/validators.go:444-448`). A provisioner that cannot provision MUST
+(`apps/validator/validators.go:444-448`). A provisioner that cannot provision MUST
 report that rather than fake a success.
 
 ### 6. Tenancy, and the two 404s
@@ -96,7 +96,7 @@ report that rather than fake a success.
 The org is the validated principal, never a client header, and every store query
 filters on it. A slot held by ANOTHER org is a 404 on the read path — the same
 answer as a slot nobody holds — so the surface cannot be used to probe which slots
-are taken (`apps/validators/validators.go:531`). On the WRITE path a slot held by
+are taken (`apps/validator/validators.go:531`). On the WRITE path a slot held by
 another org is a conflict, which discloses only what the on-chain ownership read
 already established for this caller.
 
@@ -107,7 +107,7 @@ first claim answers 201, a re-claim 200.
 ### 7. Identity refusal precedes the body
 
 A write with no validated principal is refused BEFORE the request body is decoded
-(`apps/validators/validators.go:172`). A typed operation runs after decoding, so a
+(`apps/validator/validators.go:172`). A typed operation runs after decoding, so a
 check inside the handler answers 400 to an unauthenticated caller whose body is
 also malformed — telling them the shape of a surface they may not use. This is
 pinned by a test, because it is a property of where the check sits and not of what
@@ -116,18 +116,18 @@ it says.
 ### 8. The surface, whole
 
 Four operations, every one typed with no exception
-(`apps/validators/typed_wire_test.go:23`): `GET /v1/validators` lists the
-caller's own claims, `GET /v1/validators/challenge` issues §1's nonce,
-`POST /v1/validators` is the claim, and `GET /v1/validators/{tokenId}` reads
-one slot (`plugin/validators/openapi.json`).
+(`apps/validator/typed_wire_test.go:23`): `GET /v1/validator` lists the
+caller's own claims, `GET /v1/validator/challenge` issues §1's nonce,
+`POST /v1/validator` is the claim, and `GET /v1/validator/{tokenId}` reads
+one slot (`plugin/validator/openapi.json`).
 
 The one store it owns is a single SQLite file holding every org's
 entitlements, the owner-gated registration queue and the short-lived
 challenges, tenant-isolated on the `org` column of every scoped query
-(`apps/validators/store.go:25-30`). The staking keys are NOT in it — they seal
+(`apps/validator/store.go:25-30`). The staking keys are NOT in it — they seal
 into the key plane, which is §2.
 
-The capability is METERED (`plugin/validators/main.go:27`,
+The capability is METERED (`plugin/validator/main.go:27`,
 `Price: cloud.Metered`), and the billed act is the MATERIALIZATION — one
 validator node applied to the cluster — not the claim: the NFT makes a caller
 eligible, but eligibility is not settlement, and the node runs on rented
@@ -135,7 +135,7 @@ capacity. The fee is `VALIDATORS_FEE_CENTS[_NODE]`, resolving through the
 fleet's ordinary provision default; it is authorized BEFORE the CR is applied
 and debited only after one actually was, so a claim that stays pending — and
 a reprovision of a slot the org already holds — bills nothing
-(`apps/validators/meter.go`). Stake is still committed only at the owner's
+(`apps/validator/meter.go`). Stake is still committed only at the owner's
 co-sign (§3). It publishes no event, so a customer's webhooks receive nothing
 from it, and it emits nothing to observability beyond the request span every
 route already gets. Its stage is `beta` (`manifest/apps.go:277`,
@@ -146,7 +146,7 @@ route already gets. Its stage is `beta` (`manifest/apps.go:277`,
 The slot id and the page limit each have exactly ONE parse rule, and the typed
 inputs carry them as strings for that reason: the rule that has always served
 these routes trims surrounding whitespace, and one rule is better than two
-(`apps/validators/validators.go:632`). Path and query MUST NOT outrank a claim
+(`apps/validator/validators.go:632`). Path and query MUST NOT outrank a claim
 body — the claim's fields are body-only, so there is no second way to address the
 write.
 

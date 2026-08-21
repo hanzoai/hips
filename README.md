@@ -107,7 +107,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | Integrations, Connectors & the Extension Runtime — O... | Standards Track | Interface | Draft |
 | [HIP-0127](./HIPs/hip-0127-v8-architecture-distribution-language-seam.md) | V8 · Open Edition — Architecture, Distribution & the... | Standards Track | Meta | Active |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | Resource Surface Standard — Generated REST over ZAP | Standards Track | Core | Draft |
-| [HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) | Eval — The Judgment Plane | Standards Track | Infrastructure | Draft |
+| [HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) | Eval — A Score Over Model Output | Standards Track | Infrastructure | Draft |
 | [HIP-0130](./HIPs/hip-0130-open-core-split.md) | Open-Core Split — the Tenancy Line, the Composition ... | Standards Track | Core | Draft |
 | [HIP-0132](./HIPs/hip-0132-one-telemetry-plane.md) | One Telemetry Plane — One Door, One Schema, Many Lenses | Standards Track | Infrastructure | Draft |
 | [HIP-0133](./HIPs/hip-0133-entity-groups.md) | Entity Groups — Placement, Durability, Splitting and... | Standards Track | Core | Draft |
@@ -165,7 +165,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Active |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |
-| [HIP-1000](./HIPs/hip-1000-authors-royalty.md) | Authors — A Royalty on Deployed Open Source | Standards Track | Application | Active |
+| [HIP-1000](./HIPs/hip-1000-author-royalty.md) | Author — A Royalty Bound to a Repository | Standards Track | Application | Active |
 | [HIP-1001](./HIPs/hip-1001-books-double-entry-ledger.md) | Books — The Double-Entry Ledger | Standards Track | Application | Active |
 | [HIP-1002](./HIPs/hip-1002-cart.md) | Cart — The Basket a Sale Begins In | Standards Track | Application | Superseded |
 | [HIP-1004](./HIPs/hip-1004-licensing.md) | Licensing — Signed Tokens for Paid Binaries | Standards Track | Security | Draft |
@@ -185,7 +185,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1046](./HIPs/hip-1046-risk.md) | Risk | Standards Track | Application | Draft |
 | [HIP-1047](./HIPs/hip-1047-security-scanning.md) | Security Scanning | Standards Track | Security | Draft |
 | [HIP-1048](./HIPs/hip-1048-team.md) | Team | Standards Track | Application | Draft |
-| [HIP-1049](./HIPs/hip-1049-validators.md) | Validators | Standards Track | Infrastructure | Draft |
+| [HIP-1049](./HIPs/hip-1049-validator.md) | Validator — A Token Redeemed for a Node | Standards Track | Infrastructure | Draft |
 | [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) | Pubsub — The Tenant Door on the Bus | Standards Track | Infrastructure | Draft |
 | [HIP-1061](./HIPs/hip-1061-mq-queues-and-streams.md) | MQ — Queues and Streams | Standards Track | Infrastructure | Draft |
 | [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) | Tasks — The Durable Run | Standards Track | Infrastructure | Draft |
@@ -193,17 +193,17 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1064](./HIPs/hip-1064-flow-the-canvas-plane.md) | Flow — The Canvas Plane | Standards Track | Interface | Draft |
 | [HIP-1065](./HIPs/hip-1065-connectors-a-users-own-credentials.md) | Connectors — A User's Own Credentials | Standards Track | Security | Draft |
 | [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) | Channels — One Inbox | Standards Track | Interface | Draft |
-| [HIP-1067](./HIPs/hip-1067-destinations-conversions-forwarded.md) | Destinations — Conversions Forwarded | Standards Track | Interface | Draft |
+| [HIP-1067](./HIPs/hip-1067-destination-conversions-forwarded.md) | Destination — An Event Translated to a Sink | Standards Track | Interface | Draft |
 | [HIP-1069](./HIPs/hip-1069-tel-numbers-calls-and-messages.md) | Tel — Numbers, Calls and Messages | Standards Track | Interface | Draft |
-| [HIP-1100](./HIPs/hip-1100-ads-paid-campaigns.md) | Ads — Paid Campaigns | Standards Track | Infrastructure | Draft |
+| [HIP-1100](./HIPs/hip-1100-ad-paid-campaigns.md) | Ad — Paid Placement Under a Campaign | Standards Track | Infrastructure | Draft |
 | [HIP-1101](./HIPs/hip-1101-allowance-free-ceiling.md) | Allowance — The Free Lane's Ceiling | Standards Track | Infrastructure | Draft |
 | [HIP-1102](./HIPs/hip-1102-ask-grounded-answer.md) | Ask — The Grounded Answer | Standards Track | Interface | Draft |
 | [HIP-1103](./HIPs/hip-1103-audit-tamper-evident-trail.md) | Audit — The Tamper-Evident Trail | Standards Track | Infrastructure | Draft |
 | [HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) | Base — The Hosted Backend | Standards Track | Infrastructure | Draft |
 | [HIP-1105](./HIPs/hip-1105-benchmark-measurement-arena.md) | Benchmark — The Measurement Arena | Standards Track | Infrastructure | Draft |
 | [HIP-1106](./HIPs/hip-1106-blueprint-priced-stack.md) | Blueprint — The Priced Stack | Standards Track | Interface | Draft |
-| [HIP-1107](./HIPs/hip-1107-bots-runs-on-a-surface.md) | Bots — Runs on a Surface | Standards Track | Infrastructure | Draft |
-| [HIP-1110](./HIPs/hip-1110-campaigns.md) | Campaigns — One Go-To-Market Push | Standards Track | Interface | Draft |
+| [HIP-1107](./HIPs/hip-1107-bot-runs-on-a-surface.md) | Bot — A Run on a Surface | Standards Track | Infrastructure | Draft |
+| [HIP-1110](./HIPs/hip-1110-campaign.md) | Campaign — One Push Across Channels | Standards Track | Interface | Draft |
 | [HIP-1111](./HIPs/hip-1111-captable.md) | Captable — Who Owns What | Standards Track | Interface | Draft |
 | [HIP-1112](./HIPs/hip-1112-catalog.md) | Catalog — Cross-Org Discovery | Standards Track | Interface | Draft |
 | [HIP-1113](./HIPs/hip-1113-cloudflare.md) | Cloudflare — The Per-Org Asset Plane | Standards Track | Infrastructure | Draft |
@@ -228,12 +228,12 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1136](./HIPs/hip-1136-marketing-lifecycle-email.md) | Marketing — Lifecycle Email | Standards Track | Interface | Draft |
 | [HIP-1137](./HIPs/hip-1137-marketplace-listings.md) | Marketplace — Listings and Installs | Standards Track | Interface | Draft |
 | [HIP-1140](./HIPs/hip-1140-ml-model-serving.md) | ML — Model Serving | Standards Track | Infrastructure | Draft |
-| [HIP-1141](./HIPs/hip-1141-prefs-personal-settings.md) | Prefs — Personal Settings | Standards Track | Interface | Draft |
-| [HIP-1142](./HIPs/hip-1142-prompts-versioned-library.md) | Prompts — The Versioned Library | Standards Track | Interface | Draft |
-| [HIP-1143](./HIPs/hip-1143-referrals-attribution.md) | Referrals — Attribution | Standards Track | Interface | Draft |
+| [HIP-1141](./HIPs/hip-1141-pref-personal-settings.md) | Pref — One Document Per Person | Standards Track | Interface | Draft |
+| [HIP-1142](./HIPs/hip-1142-prompt-versioned-library.md) | Prompt — A Named, Versioned Value | Standards Track | Interface | Draft |
+| [HIP-1143](./HIPs/hip-1143-referral-attribution.md) | Referral — An Edge From Referrer to Referee | Standards Track | Interface | Draft |
 | [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) | Registry — The Artifact Control Plane | Standards Track | Infrastructure | Draft |
 | [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) | Research — The Experiment Record | Standards Track | Infrastructure | Draft |
-| [HIP-1146](./HIPs/hip-1146-sandboxes-compute-primitive.md) | Sandboxes — The Compute Primitive | Standards Track | Infrastructure | Draft |
+| [HIP-1146](./HIPs/hip-1146-sandbox-compute-primitive.md) | Sandbox — A Lease on Isolated Compute | Standards Track | Infrastructure | Draft |
 | [HIP-1147](./HIPs/hip-1147-search-hybrid-retrieval.md) | Search — Hybrid Retrieval | Standards Track | Interface | Draft |
 | [HIP-1150](./HIPs/hip-1150-seo-search-visibility.md) | SEO — Search Visibility as Data | Standards Track | Interface | Draft |
 | [HIP-1151](./HIPs/hip-1151-settings-product-configuration.md) | Settings — Per-Product Org Configuration | Standards Track | Infrastructure | Draft |
@@ -241,25 +241,25 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1153](./HIPs/hip-1153-social-channel-publishing.md) | Social — Publishing to Connected Channels | Standards Track | Interface | Draft |
 | [HIP-1154](./HIPs/hip-1154-sync-endpoint-reconciliation.md) | Sync — Two Endpoints Kept in Step | Standards Track | Infrastructure | Draft |
 | [HIP-1155](./HIPs/hip-1155-taxonomy-catalogue-shape.md) | Taxonomy — The Catalogue's Shape | Standards Track | Interface | Draft |
-| [HIP-1156](./HIPs/hip-1156-templates-starter-gallery.md) | Templates — The Starter Kit Gallery | Standards Track | Interface | Draft |
+| [HIP-1156](./HIPs/hip-1156-template-starter-gallery.md) | Template — A Deploy Cut From a Catalog | Standards Track | Interface | Draft |
 | [HIP-1160](./HIPs/hip-1160-todo-work-item-board.md) | Todo — The Work Item Board | Standards Track | Application | Draft |
-| [HIP-1161](./HIPs/hip-1161-wallets-key-custody.md) | Wallets — Key Custody | Standards Track | Core | Draft |
+| [HIP-1161](./HIPs/hip-1161-wallet-key-custody.md) | Wallet — Custody of Key Material | Standards Track | Core | Draft |
 | [HIP-1162](./HIPs/hip-1162-world-the-news-feed.md) | World — The News Feed | Standards Track | Application | Draft |
 | [HIP-1163](./HIPs/hip-1163-x402-pay-per-request.md) | x402 — Pay Per Request | Standards Track | Core | Draft |
 | [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) | Provisioning — Stores on Demand | Standards Track | Core | Draft |
 | [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) | S3 — Buckets and Objects | Standards Track | Core | Draft |
-| [HIP-1167](./HIPs/hip-1167-datasets-the-versioned-snapshot.md) | Datasets — The Versioned Snapshot | Standards Track | Core | Draft |
+| [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) | Dataset — An Immutable Snapshot | Standards Track | Core | Draft |
 | [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | visor — Compute You Rent | Standards Track | Infrastructure | Draft |
-| [HIP-1173](./HIPs/hip-1173-networks-the-zero-trust-overlay.md) | Networks — The Zero Trust Overlay | Standards Track | Infrastructure | Draft |
-| [HIP-1180](./HIPs/hip-1180-links-account-registry.md) | Links — The Account Registry | Standards Track | Core | Draft |
+| [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) | Network — An Org-Scoped Overlay | Standards Track | Infrastructure | Draft |
+| [HIP-1180](./HIPs/hip-1180-link-account-registry.md) | Link — A Record of Provider Accounts | Standards Track | Core | Draft |
 | [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) | Plan — The Tier Catalog | Standards Track | Core | Draft |
 | [HIP-1189](./HIPs/hip-1189-web3-chain-access.md) | Web3 — Chain Access | Standards Track | Core | Draft |
 | [HIP-1190](./HIPs/hip-1190-event-product-analytics.md) | Event — The Product Analytics Plane | Standards Track | Core | Draft |
 | [HIP-1198](./HIPs/hip-1198-graph-assertion-plane.md) | Graph — The Assertion Plane | Standards Track | Infrastructure | Draft |
 | [HIP-1200](./HIPs/hip-1200-account.md) | Account — The Caller's Own Surface | Standards Track | Application | Draft |
 | [HIP-1201](./HIPs/hip-1201-admission.md) | Admission — Launch Control | Standards Track | Platform | Draft |
-| [HIP-1202](./HIPs/hip-1202-entitlements.md) | Entitlements — What an Org May Run | Standards Track | Platform | Draft |
-| [HIP-1203](./HIPs/hip-1203-affiliates.md) | Affiliates — Commission on Referred Spend | Standards Track | Application | Draft |
+| [HIP-1202](./HIPs/hip-1202-entitlement.md) | Entitlement — What an Org May Run | Standards Track | Platform | Draft |
+| [HIP-1203](./HIPs/hip-1203-affiliate.md) | Affiliate — Commission on Referred Spend | Standards Track | Application | Draft |
 | [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) | Agents — Define, Run, Keep the Run | Standards Track | Application | Draft |
 | [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) | AI — The Model API | Standards Track | Infrastructure | Draft |
 | [HIP-1212](./HIPs/hip-1212-exec-the-code-interpreter.md) | Exec — The Code Interpreter | Standards Track | Infrastructure | Draft |
@@ -281,8 +281,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1260](./HIPs/hip-1260-knowledge.md) | Knowledge — Wiki and Agent Memory | Standards Track | Application | Draft |
 | [HIP-1261](./HIPs/hip-1261-label.md) | Label — Ground Truth | Standards Track | Application | Draft |
 | [HIP-1262](./HIPs/hip-1262-reference.md) | Reference — Lookup Sets | Standards Track | Application | Draft |
-| [HIP-1310](./HIPs/hip-1310-webhooks-outbound-delivery.md) | Webhooks — Outbound Delivery | Standards Track | Infrastructure | Draft |
-| [HIP-1311](./HIPs/hip-1311-experiments-the-ab-plane.md) | Experiments — The A/B Plane | Standards Track | Interface | Draft |
+| [HIP-1310](./HIPs/hip-1310-webhook-outbound-delivery.md) | Webhook — Delivery to an Endpoint You Own | Standards Track | Infrastructure | Draft |
+| [HIP-1311](./HIPs/hip-1311-experiment-the-ab-plane.md) | Experiment — Arms, Assignment, a Verdict | Standards Track | Interface | Draft |
 | [HIP-1312](./HIPs/hip-1312-company-the-formation-machine.md) | Company — The Formation Machine | Standards Track | Application | Draft |
 | [HIP-1313](./HIPs/hip-1313-usage-the-metered-record.md) | Usage — The Metered Record | Standards Track | Infrastructure | Draft |
 | [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) | Admin — The Operator Console | Standards Track | Infrastructure | Draft |
@@ -290,7 +290,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) | Skills — The Discovery Catalogue | Standards Track | Interface | Draft |
 | [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) | Kafka — A Wire Onto the One Bus | Standards Track | Infrastructure | Draft |
 | [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) | KV — Buckets of Versioned Values | Standards Track | Infrastructure | Draft |
-| [HIP-1325](./HIPs/hip-1325-nodes-your-machines-on-a-socket.md) | Nodes — Your Machines on a Socket | Standards Track | Infrastructure | Draft |
+| [HIP-1325](./HIPs/hip-1325-node-your-machines-on-a-socket.md) | Node — A Machine an Org Owns | Standards Track | Infrastructure | Draft |
 | [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) | AMQP — Exchanges, Queues and Bindings Onto the One Bus | Standards Track | Infrastructure | Draft |
 
 ## HIP Process
@@ -398,11 +398,11 @@ One capability, one HIP (HIP-0139). 122 of them, grouped as `capabilities.yaml` 
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
-[HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) `iam` · [HIP-1041](./HIPs/hip-1041-authz.md) `authz` · [HIP-1046](./HIPs/hip-1046-risk.md) `risk` · [HIP-1047](./HIPs/hip-1047-security-scanning.md) `security` · [HIP-1048](./HIPs/hip-1048-team.md) `team` · [HIP-1049](./HIPs/hip-1049-validators.md) `validators` · [HIP-1103](./HIPs/hip-1103-audit-tamper-evident-trail.md) `audit` · [HIP-1115](./HIPs/hip-1115-compliance.md) `compliance` · [HIP-1134](./HIPs/hip-1134-kms-secret-custody.md) `kms` · [HIP-1161](./HIPs/hip-1161-wallets-key-custody.md) `wallets` · [HIP-1167](./HIPs/hip-1167-datasets-the-versioned-snapshot.md) `datasets` · [HIP-1200](./HIPs/hip-1200-account.md) `account` · [HIP-1202](./HIPs/hip-1202-entitlements.md) `entitlements` · [HIP-1261](./HIPs/hip-1261-label.md) `label` · [HIP-1262](./HIPs/hip-1262-reference.md) `reference` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin`
+[HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) `iam` · [HIP-1041](./HIPs/hip-1041-authz.md) `authz` · [HIP-1046](./HIPs/hip-1046-risk.md) `risk` · [HIP-1047](./HIPs/hip-1047-security-scanning.md) `security` · [HIP-1048](./HIPs/hip-1048-team.md) `team` · [HIP-1103](./HIPs/hip-1103-audit-tamper-evident-trail.md) `audit` · [HIP-1115](./HIPs/hip-1115-compliance.md) `compliance` · [HIP-1134](./HIPs/hip-1134-kms-secret-custody.md) `kms` · [HIP-1200](./HIPs/hip-1200-account.md) `account` · [HIP-1261](./HIPs/hip-1261-label.md) `label` · [HIP-1262](./HIPs/hip-1262-reference.md) `reference` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin`
 
 **Intelligence** — models · agents · evaluation — the mind of the cloud
 
-[HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) `evals` · [HIP-0516](./HIPs/hip-0516-translate.md) `translate` · [HIP-1102](./HIPs/hip-1102-ask-grounded-answer.md) `ask` · [HIP-1105](./HIPs/hip-1105-benchmark-measurement-arena.md) `benchmark` · [HIP-1114](./HIPs/hip-1114-code.md) `code` · [HIP-1124](./HIPs/hip-1124-engine-runtime-lens.md) `engine` · [HIP-1140](./HIPs/hip-1140-ml-model-serving.md) `ml` · [HIP-1142](./HIPs/hip-1142-prompts-versioned-library.md) `prompts` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1146](./HIPs/hip-1146-sandboxes-compute-primitive.md) `sandboxes` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) `ai` · [HIP-1212](./HIPs/hip-1212-exec-the-code-interpreter.md) `exec` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1214](./HIPs/hip-1214-lsp-live-code-intelligence.md) `lsp` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills`
+[HIP-0516](./HIPs/hip-0516-translate.md) `translate` · [HIP-1102](./HIPs/hip-1102-ask-grounded-answer.md) `ask` · [HIP-1105](./HIPs/hip-1105-benchmark-measurement-arena.md) `benchmark` · [HIP-1114](./HIPs/hip-1114-code.md) `code` · [HIP-1124](./HIPs/hip-1124-engine-runtime-lens.md) `engine` · [HIP-1140](./HIPs/hip-1140-ml-model-serving.md) `ml` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) `ai` · [HIP-1212](./HIPs/hip-1212-exec-the-code-interpreter.md) `exec` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1214](./HIPs/hip-1214-lsp-live-code-intelligence.md) `lsp` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills`
 
 **Data** — the stores every capability writes to and reads from
 
@@ -410,7 +410,7 @@ One capability, one HIP (HIP-0139). 122 of them, grouped as `capabilities.yaml` 
 
 **Streams** — messaging · durable tasks · async orchestration
 
-[HIP-0061](./HIPs/hip-0061-notification-service-standard.md) `notify` · [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) `pubsub` · [HIP-1061](./HIPs/hip-1061-mq-queues-and-streams.md) `mq` · [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) `tasks` · [HIP-1063](./HIPs/hip-1063-auto-flows-that-run-themselves.md) `auto` · [HIP-1064](./HIPs/hip-1064-flow-the-canvas-plane.md) `flow` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1067](./HIPs/hip-1067-destinations-conversions-forwarded.md) `destinations` · [HIP-1069](./HIPs/hip-1069-tel-numbers-calls-and-messages.md) `tel` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1310](./HIPs/hip-1310-webhooks-outbound-delivery.md) `webhooks`
+[HIP-0061](./HIPs/hip-0061-notification-service-standard.md) `notify` · [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) `pubsub` · [HIP-1061](./HIPs/hip-1061-mq-queues-and-streams.md) `mq` · [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) `tasks` · [HIP-1063](./HIPs/hip-1063-auto-flows-that-run-themselves.md) `auto` · [HIP-1064](./HIPs/hip-1064-flow-the-canvas-plane.md) `flow` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1069](./HIPs/hip-1069-tel-numbers-calls-and-messages.md) `tel` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations`
 
 **Observability** — see everything — telemetry · analytics · usage
 
@@ -418,15 +418,15 @@ One capability, one HIP (HIP-0139). 122 of them, grouped as `capabilities.yaml` 
 
 **Commerce** — the economy — meter · price · bill · reward
 
-[HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) `billing` · [HIP-1000](./HIPs/hip-1000-authors-royalty.md) `authors` · [HIP-1001](./HIPs/hip-1001-books-double-entry-ledger.md) `books` · [HIP-1004](./HIPs/hip-1004-licensing.md) `licensing` · [HIP-1100](./HIPs/hip-1100-ads-paid-campaigns.md) `ads` · [HIP-1101](./HIPs/hip-1101-allowance-free-ceiling.md) `allowance` · [HIP-1110](./HIPs/hip-1110-campaigns.md) `campaigns` · [HIP-1111](./HIPs/hip-1111-captable.md) `captable` · [HIP-1120](./HIPs/hip-1120-crm-sales-pipeline.md) `crm` · [HIP-1136](./HIPs/hip-1136-marketing-lifecycle-email.md) `marketing` · [HIP-1137](./HIPs/hip-1137-marketplace-listings.md) `marketplace` · [HIP-1143](./HIPs/hip-1143-referrals-attribution.md) `referrals` · [HIP-1163](./HIPs/hip-1163-x402-pay-per-request.md) `x402` · [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) `plan` · [HIP-1203](./HIPs/hip-1203-affiliates.md) `affiliates` · [HIP-1220](./HIPs/hip-1220-commerce-the-merchant-half.md) `commerce` · [HIP-1221](./HIPs/hip-1221-treasury-the-reserve-fund.md) `treasury` · [HIP-1222](./HIPs/hip-1222-pricing-the-price-list.md) `pricing` · [HIP-1311](./HIPs/hip-1311-experiments-the-ab-plane.md) `experiments`
+[HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) `billing` · [HIP-1001](./HIPs/hip-1001-books-double-entry-ledger.md) `books` · [HIP-1004](./HIPs/hip-1004-licensing.md) `licensing` · [HIP-1101](./HIPs/hip-1101-allowance-free-ceiling.md) `allowance` · [HIP-1111](./HIPs/hip-1111-captable.md) `captable` · [HIP-1120](./HIPs/hip-1120-crm-sales-pipeline.md) `crm` · [HIP-1136](./HIPs/hip-1136-marketing-lifecycle-email.md) `marketing` · [HIP-1137](./HIPs/hip-1137-marketplace-listings.md) `marketplace` · [HIP-1163](./HIPs/hip-1163-x402-pay-per-request.md) `x402` · [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) `plan` · [HIP-1220](./HIPs/hip-1220-commerce-the-merchant-half.md) `commerce` · [HIP-1221](./HIPs/hip-1221-treasury-the-reserve-fund.md) `treasury` · [HIP-1222](./HIPs/hip-1222-pricing-the-price-list.md) `pricing`
 
 **Platform** — the cloud fabric — deploy · provision · route · host
 
-[HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1173](./HIPs/hip-1173-networks-the-zero-trust-overlay.md) `networks` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) `dns`
+[HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) `dns`
 
 **Applications** — the user-facing surfaces built on all of the above
 
-[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0074](./HIPs/hip-0074-software-bill-of-materials-standard.md) `sbom` · [HIP-1106](./HIPs/hip-1106-blueprint-priced-stack.md) `blueprint` · [HIP-1107](./HIPs/hip-1107-bots-runs-on-a-surface.md) `bots` · [HIP-1116](./HIPs/hip-1116-content.md) `content` · [HIP-1121](./HIPs/hip-1121-dataroom-shared-documents.md) `dataroom` · [HIP-1125](./HIPs/hip-1125-esign-signatures.md) `esign` · [HIP-1126](./HIPs/hip-1126-framework-doctype-engine.md) `framework` · [HIP-1130](./HIPs/hip-1130-guide-launch-journey.md) `guide` · [HIP-1131](./HIPs/hip-1131-help-support-desk.md) `help` · [HIP-1135](./HIPs/hip-1135-legal-documents.md) `legal` · [HIP-1141](./HIPs/hip-1141-prefs-personal-settings.md) `prefs` · [HIP-1150](./HIPs/hip-1150-seo-search-visibility.md) `seo` · [HIP-1151](./HIPs/hip-1151-settings-product-configuration.md) `settings` · [HIP-1152](./HIPs/hip-1152-share-public-tunnel.md) `share` · [HIP-1153](./HIPs/hip-1153-social-channel-publishing.md) `social` · [HIP-1156](./HIPs/hip-1156-templates-starter-gallery.md) `templates` · [HIP-1160](./HIPs/hip-1160-todo-work-item-board.md) `todo` · [HIP-1162](./HIPs/hip-1162-world-the-news-feed.md) `world` · [HIP-1180](./HIPs/hip-1180-links-account-registry.md) `links` · [HIP-1232](./HIPs/hip-1232-git-repository-hosting.md) `git` · [HIP-1252](./HIPs/hip-1252-meet-the-join-decision.md) `meet` · [HIP-1312](./HIPs/hip-1312-company-the-formation-machine.md) `company`
+[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0074](./HIPs/hip-0074-software-bill-of-materials-standard.md) `sbom` · [HIP-1106](./HIPs/hip-1106-blueprint-priced-stack.md) `blueprint` · [HIP-1116](./HIPs/hip-1116-content.md) `content` · [HIP-1121](./HIPs/hip-1121-dataroom-shared-documents.md) `dataroom` · [HIP-1125](./HIPs/hip-1125-esign-signatures.md) `esign` · [HIP-1126](./HIPs/hip-1126-framework-doctype-engine.md) `framework` · [HIP-1130](./HIPs/hip-1130-guide-launch-journey.md) `guide` · [HIP-1131](./HIPs/hip-1131-help-support-desk.md) `help` · [HIP-1135](./HIPs/hip-1135-legal-documents.md) `legal` · [HIP-1150](./HIPs/hip-1150-seo-search-visibility.md) `seo` · [HIP-1151](./HIPs/hip-1151-settings-product-configuration.md) `settings` · [HIP-1152](./HIPs/hip-1152-share-public-tunnel.md) `share` · [HIP-1153](./HIPs/hip-1153-social-channel-publishing.md) `social` · [HIP-1160](./HIPs/hip-1160-todo-work-item-board.md) `todo` · [HIP-1162](./HIPs/hip-1162-world-the-news-feed.md) `world` · [HIP-1232](./HIPs/hip-1232-git-repository-hosting.md) `git` · [HIP-1252](./HIPs/hip-1252-meet-the-join-decision.md) `meet` · [HIP-1312](./HIPs/hip-1312-company-the-formation-machine.md) `company`
 
 **Chain** — the networks the cloud speaks to — enumerate · call · read balances
 
@@ -434,4 +434,4 @@ One capability, one HIP (HIP-0139). 122 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) `kv` · [HIP-1325](./HIPs/hip-1325-nodes-your-machines-on-a-socket.md) `nodes` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp`
+[HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) `eval` · [HIP-1000](./HIPs/hip-1000-author-royalty.md) `author` · [HIP-1049](./HIPs/hip-1049-validator.md) `validator` · [HIP-1067](./HIPs/hip-1067-destination-conversions-forwarded.md) `destination` · [HIP-1100](./HIPs/hip-1100-ad-paid-campaigns.md) `ad` · [HIP-1107](./HIPs/hip-1107-bot-runs-on-a-surface.md) `bot` · [HIP-1110](./HIPs/hip-1110-campaign.md) `campaign` · [HIP-1141](./HIPs/hip-1141-pref-personal-settings.md) `pref` · [HIP-1142](./HIPs/hip-1142-prompt-versioned-library.md) `prompt` · [HIP-1143](./HIPs/hip-1143-referral-attribution.md) `referral` · [HIP-1146](./HIPs/hip-1146-sandbox-compute-primitive.md) `sandbox` · [HIP-1156](./HIPs/hip-1156-template-starter-gallery.md) `template` · [HIP-1161](./HIPs/hip-1161-wallet-key-custody.md) `wallet` · [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) `dataset` · [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) `network` · [HIP-1180](./HIPs/hip-1180-link-account-registry.md) `link` · [HIP-1202](./HIPs/hip-1202-entitlement.md) `entitlement` · [HIP-1203](./HIPs/hip-1203-affiliate.md) `affiliate` · [HIP-1310](./HIPs/hip-1310-webhook-outbound-delivery.md) `webhook` · [HIP-1311](./HIPs/hip-1311-experiment-the-ab-plane.md) `experiment` · [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) `kv` · [HIP-1325](./HIPs/hip-1325-node-your-machines-on-a-socket.md) `node` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp`

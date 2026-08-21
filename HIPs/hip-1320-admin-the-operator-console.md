@@ -68,7 +68,7 @@ Two kinds of address share that root and MUST NOT be confused:
    `sync`, `waitlist`, `plugins`. The second segment names a thing the OPERATOR
    works with, and admin is the capability that answers for it.
 2. **Another capability's operator view** — `/v1/admin/<name>/*`, served by
-   `<name>` and not by admin (HIP-0139 §3.2). `referrals` is the worked example:
+   `<name>` and not by admin (HIP-0139 §3.2). `referral` is the worked example:
    `/v1/admin/referrals/bonuses` is the referrals capability's row in the
    manifest, not admin's.
 

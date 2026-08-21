@@ -1,24 +1,24 @@
 ---
 hip: 1156
-title: Templates — The Starter Kit Gallery
+title: Template — A Deploy Cut From a Catalog
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: templates
+capability: template
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1156: Templates — The Starter Kit Gallery
+# HIP-1156: Template — A Deploy Cut From a Catalog
 
 ## Abstract
 
-`/v1/templates` is a gallery of starter kits you can deploy as they come, in two
+`/v1/template` is a gallery of starter kits you can deploy as they come, in two
 layers that never mix: the public catalog of deployable scaffolds, vendored from
 `hanzoai/gallery` and shipped embedded in the binary, and a customer org's own
 templates, private to that org. It is implemented in `hanzoai/cloud` at
-`apps/templates`. One template is one entry; the shapes it ships in — format,
+`apps/template`. One template is one entry; the shapes it ships in — format,
 page, theme — are Variants inside that entry, chosen at fork time.
 
 ## Motivation
@@ -30,7 +30,7 @@ The value is named StarterKit rather than Template because the fleet's schema
 namespace is flat and another app already publishes a `Template` with a different
 shape — one name with two shapes would make every generated SDK bind whichever it
 read last, so the name not yet published is the one that yields
-(`apps/templates/templates.go`).
+(`apps/template/templates.go`).
 
 ## Specification
 
@@ -41,7 +41,7 @@ in RFC 2119.
 
 The store holds ONLY private templates: one encrypted SQLite file
 (`cek.Open(namespace.System(), "templates", dir)`,
-`apps/templates/store.go:39`), each row keyed by the gateway-minted org, the
+`apps/template/store.go:39`), each row keyed by the gateway-minted org, the
 whole StarterKit as one JSON document so a row can never drift from the shape
 the API serves, with `(org, slug)` — the only things ever queried on — as real
 columns.
@@ -54,7 +54,7 @@ catalog by CONSTRUCTION, not by a filter every future reader has to remember.
 
 ### The address
 
-Five operations under `/v1/templates`: list (public catalog plus, for a validated
+Five operations under `/v1/template`: list (public catalog plus, for a validated
 caller, that org's own), get one by slug (the caller org's own, else public),
 publish (201, private to the caller's org), replace, and delete. All are typed
 except the delete, which answers 204 with no body — there is no value to type.
@@ -82,7 +82,7 @@ request field; every read of the private table binds it.
 
 ### Money, events, observability, stage
 
-It is free — the surface declares `cloud.Free` (`plugin/templates/main.go`). It
+It is free — the surface declares `cloud.Free` (`plugin/template/main.go`). It
 publishes nothing on the bus and emits nothing beyond the request span every
 route gets. The stage is `ga`: the gallery is the front door of the deploy path,
 part of the self-service platform core.

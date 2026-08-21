@@ -1,23 +1,23 @@
 ---
 hip: 1311
-title: Experiments — The A/B Plane
+title: Experiment — Arms, Assignment, a Verdict
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: experiments
+capability: experiment
 status: Draft
 created: 2026-08-20
 requires: HIP-0017, HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1311: Experiments — The A/B Plane
+# HIP-1311: Experiment — Arms, Assignment, a Verdict
 
 ## Abstract
 
-`/v1/experiments` is where a comparison is registered, run and settled: two or
+`/v1/experiment` is where a comparison is registered, run and settled: two or
 more arms, a deterministic assignment, an outcome measured against the control,
 a decision that locks the winner. The implementation is `hanzoai/cloud`
-`apps/experiments`.
+`apps/experiment`.
 
 It is a **composition, not a fourth engine**. It owns the experiment registry
 and nothing else — assignment comes from `flags`, outcomes from the analytics
@@ -45,17 +45,17 @@ as in RFC 2119.
 
 ### §1 The addresses
 
-Seven operations, every one under `/v1/experiments` (`manifest/apps.go:411`,
-`plugin/experiments/openapi.json`), all typed, none declared:
+Seven operations, every one under `/v1/experiment` (`manifest/apps.go:411`,
+`plugin/experiment/openapi.json`), all typed, none declared:
 
-- `GET|POST /v1/experiments` — list; create, which writes the multivariate flag
+- `GET|POST /v1/experiment` — list; create, which writes the multivariate flag
   definition the arms are served from
-- `GET /v1/experiments/{id}` — read, with results
-- `GET /v1/experiments/{id}/assign` — the arm for a subject
-- `POST /v1/experiments/{id}/analyze` — run the analysis over the evidence
-- `POST /v1/experiments/{id}/decide` — stop, and lock the winner by rewriting
+- `GET /v1/experiment/{id}` — read, with results
+- `GET /v1/experiment/{id}/assign` — the arm for a subject
+- `POST /v1/experiment/{id}/analyze` — run the analysis over the evidence
+- `POST /v1/experiment/{id}/decide` — stop, and lock the winner by rewriting
   the flag definition's weights to 100%
-- `GET /v1/experiments/health`
+- `GET /v1/experiment/health`
 
 Create and decide both write a flag definition, deliberately: the arm a request
 is actually served comes from the flag, so an experiment holding its own copy of
@@ -78,14 +78,14 @@ nothing else does.
 
 Outcomes MUST be read from the one analytics plane rather than a second exposure
 topic: the analyze fold reads each subject's outcome from the org-scoped event
-query and joins it to the arm by subject id (`apps/experiments/analyze.go`). A
+query and joins it to the arm by subject id (`apps/experiment/analyze.go`). A
 serving surface that records an exposure records an ordinary analytics event
 through the same capture door as every other event (HIP-0017) — no separate
 stream, no emitter in the request path.
 
 The analysis is one method: a two-proportion z-test against the control arm over
 the append-only evidence rows, computed with stdlib `math.Erfc` and no
-dependency (`apps/experiments/analyze.go:83,152-166`). Degenerate input — an arm
+dependency (`apps/experiment/analyze.go:83,152-166`). Degenerate input — an arm
 with no subjects, a control with no conversions — MUST be answered as degenerate
 rather than scored, because a p-value printed over an empty arm is the one
 output of this surface a reader would act on and should not. Richer methods are
@@ -100,19 +100,19 @@ The credential is the org's ordinary bearer, there is no key family specific to
 this surface, and an unauthenticated caller is refused.
 
 It owns one store: the experiment registry, a per-org SQLite file
-(`{DataDir}/orgs/{slug}/experiments.db`, `apps/experiments/store.go:3-9`).
+(`{DataDir}/orgs/{slug}/experiments.db`, `apps/experiment/store.go:3-9`).
 Isolation is physical, so a cross-tenant read is not a predicate that can be
 wrong. It owns no assignment store (§2), no definition store (flags'), no event
 store (analytics') and no evidence store (research's).
 
 It is free, in those words: `Price: cloud.Free`
-(`plugin/experiments/main.go:22`). It publishes no events on the bus, so a
+(`plugin/experiment/main.go:22`). It publishes no events on the bus, so a
 customer's webhooks (HIP-1310) receive nothing from it — exposure reaches the
 warehouse from the surfaces that serve the traffic. It emits nothing to
 observability beyond the request span every route gets.
 
 The stage is `beta` (HIP-0139 §8): the manifest row declares it, so an org
-reaches the surface by the `experiments` flag and it is in no generated client,
+reaches the surface by the `experiment` flag and it is in no generated client,
 tool list or public page. `flags` itself stays `ga` — it is the mechanism
 stage-gating rides, so it cannot sit behind a flag. It derives from no OSS
 upstream: the significance test is stdlib arithmetic and the evaluator it

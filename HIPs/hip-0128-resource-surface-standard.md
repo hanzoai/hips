@@ -249,7 +249,7 @@ Current status (measured 2026-07-27; verb-noun literals outside `compat`):
 | service  | verb-noun | `/api/` | native surface |
 |----------|-----------|---------|----------------|
 | `llm`    | 0         | 0       | conforming |
-| `bots`    | 0         | 0       | conforming |
+| `bot`    | 0         | 0       | conforming |
 | `dev`    | 0         | 0       | conforming |
 | `commerce` | 2       | 1       | near |
 | `gateway`  | 3       | 3       | near |

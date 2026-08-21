@@ -20,14 +20,14 @@ The `Network` CRD describes a complete blockchain network: validators, chains, o
 
 ### Group + version
 
-`hanzo.ai/v1`, plural `networks`, shortname `hnet`.
+`hanzo.ai/v1`, plural `network`, shortname `hnet`.
 
 ### Spec fields
 
 | Field | Type | Description |
 |---|---|---|
 | `networkID` | string | "1" (mainnet), "2" (testnet), "3" (local), "1337" (dev) |
-| `validators` | ValidatorSpec | image, replicas, resources, storage, bootstrapNodes, ports |
+| `validator` | ValidatorSpec | image, replicas, resources, storage, bootstrapNodes, ports |
 | `chains` | []ChainSpec | name, vmID, genesis, optional subnetID |
 | `indexer` | SubServiceSpec | optional luxfi/indexer |
 | `explorer` | ExplorerSpec | optional luxfi/explorer |

@@ -235,7 +235,7 @@ All artifacts are stored in dedicated MinIO buckets with lifecycle rules:
 | Model weights (released) | `models-release` | Enabled | Permanent |
 | Model weights (experimental) | `models-dev` | Enabled | 90 days |
 | Training checkpoints | `training-checkpoints` | Disabled | 30 days post-run |
-| Datasets (published) | `datasets` | Enabled (content-addressed) | Permanent |
+| Datasets (published) | `dataset` | Enabled (content-addressed) | Permanent |
 | Datasets (staging) | `datasets-staging` | Disabled | 14 days |
 
 #### Configuration and Secrets (Critical Tier)

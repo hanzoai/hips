@@ -125,7 +125,7 @@ price. It publishes what things cost; it never charges for the answer.
 
 ### §5 Events and observability
 
-It publishes nothing on the bus — a customer's webhooks at `/v1/webhooks` receive
+It publishes nothing on the bus — a customer's webhooks at `/v1/webhook` receive
 no `plan.*` event. A catalog read has no verb worth delivering.
 
 Beyond the request span every route gets, it emits structured log lines only: one
@@ -188,7 +188,7 @@ provider, a GPU hour, a tool call, a hosting plan — plus the registry that dec
 which entries a caller may see. `plan` is the tier catalog: what a PACKAGE costs
 and what it grants. Where both publish a section they are answering different
 questions from the same source: a rate versus a bundle. The entitlement half is
-this capability's alone and MUST stay here — `resolve`, `entitlements`, `vocab`
+this capability's alone and MUST stay here — `resolve`, `entitlement`, `vocab`
 and `schema` have no counterpart under `/v1/pricing`, because a price is not a
 grant.
 
@@ -201,7 +201,7 @@ costs and grants. So `plan` MUST NOT hold a store, MUST NOT serve the authority
 operations, and MUST NOT be the record a charge is computed from; and commerce
 MUST NOT restate the entitlement vocabulary — it reads it through §6.
 
-**entitlements** (`/v1/entitlements`, HIP-1202) answers what an ORG may run right
+**entitlements** (`/v1/entitlement`, HIP-1202) answers what an ORG may run right
 now: the billing truth read from commerce, and the org's own on/off intent.
 `plan` answers what a TIER grants, for any tier, with no org in the question. A
 grant is a property of the plan; an entitlement is a property of an org. The two

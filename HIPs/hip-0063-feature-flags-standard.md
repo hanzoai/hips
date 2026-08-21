@@ -27,7 +27,7 @@ client repoints by changing the host. An OpenFeature adapter, if published,
 wraps the generated SDK rather than defining the wire.
 
 The A/B plane that composes this primitive — the experiment registry, its
-analysis and its decision — is the separate `experiments` capability, HIP-1311.
+analysis and its decision — is the separate `experiment` capability, HIP-1311.
 
 **Evaluator**: [github.com/hanzoai/flags](https://github.com/hanzoai/flags) — the
 stateless Go engine (`flags/go`) compiled into the cloud binary
@@ -287,7 +287,7 @@ SuperAdmin writes them (`apps/flags/flags.go:21-27`).
 
 An A/B test is a caller of this primitive, not a second engine inside it: the
 experiment registry, the analysis over its arms and the decision that locks a
-winner are the `experiments` capability, HIP-1311. Create and decide there write
+winner are the `experiment` capability, HIP-1311. Create and decide there write
 a flag definition here, which is why the arm a request is served and the arm a
 report names are one value.
 
@@ -298,7 +298,7 @@ before the request reaches application code — is a design this section used
 to specify in KrakenD configuration. No such gateway plugin ships; what
 ships is in-process composition: any subsystem in the binary evaluates
 through `flags.Assign` (the same deterministic rollout hash the HTTP surface
-uses), which is how `apps/experiments` and `apps/campaign` split traffic
+uses), which is how `apps/experiment` and `apps/campaign` split traffic
 today with no network hop at all. A gateway-level split remains open design
 and MUST, if built, evaluate through the same embedded engine rather than a
 second one.
@@ -377,7 +377,7 @@ capability-local exporter.
 5. [OpenFeature Go SDK](https://github.com/open-feature/go-sdk)
 6. [Thompson Sampling for Multi-Armed Bandits](https://arxiv.org/abs/1707.02038)
 7. [Hanzo Flags Repository](https://github.com/hanzoai/flags)
-8. [HIP-1311: Experiments — The A/B Plane](./hip-1311-experiments-the-ab-plane.md)
+8. [HIP-1311: Experiment — Arms, Assignment, a Verdict](./hip-1311-experiment-the-ab-plane.md)
 
 ## Copyright
 
