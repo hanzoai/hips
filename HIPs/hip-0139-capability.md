@@ -166,11 +166,20 @@ section where the template has one:
   a customer can read back under `/v1/o11y` — beyond the request span every
   route already gets;
 - its stage (§8);
+- the upstream it derives from — every OSS project the capability forks,
+  embeds or mirrors, each with its license and what of it survives in HEAD —
+  or that it derives from none;
 - what an attacker gets from the wrong implementation.
 
 It does not restate §1–§5, and it names no count a gate already measures.
 One capability, one HIP: a HIP that declares two names is two specifications
 in one file and fails `coverage.py` CV005.
+
+The HIP is also where a change to the capability is proposed. The order is
+spec first: amend the HIP, land the code that implements it, and every
+projection — the document, the clients, the tools, the commands, the pages —
+regenerates from the code. A change that reaches the router without its HIP
+is caught where drift always is: the projections move and the spec did not.
 
 ### §7 Resolving a misfiled pair
 
