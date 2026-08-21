@@ -141,10 +141,19 @@ JetStream refuses a self-overlapping filter set.
 The AMQP body is the NATS payload verbatim. The content header's octets ride in
 one NATS header, `Amqp-Props`, base64-encoded.
 
-This is the right way round: a subscriber that is not an AMQP client — a
-NATS-native consumer, or a Kafka one through the sibling wire — reads the body a
-publisher sent, without having to know that AMQP was involved. Properties are
-available to whoever wants them and are in the way of nobody.
+This is the right way round: a NATS-NATIVE subscriber — one that speaks the bus
+directly, not through another wire adaptor — reads the body a publisher sent on
+`amqp.<exchange>.<routing key>`, without having to know that AMQP was involved.
+Properties are available to whoever wants them and are in the way of nobody.
+
+One bus does NOT mean one namespace. The AMQP and Kafka adaptors ride the same
+JetStream server, but each keeps its OWN subject subtree — `amqp.>` here,
+`kafka-<topic>-<partition>.>` there — so a message published through the Kafka
+wire is not readable through this one, and vice versa, and even the native
+reader of the Kafka subtree gets a Kafka `RecordBatch`, not the logical body.
+"Readable across wires" is therefore false as a blanket claim: a bus-native
+reader sees each wire's subtree in that wire's framing; the two wire adaptors do
+not read each other. This is measured in `hanzoai/cloud/e2e/crosswire`.
 
 ### §3 Acknowledgement, and what bounds a consumer
 
