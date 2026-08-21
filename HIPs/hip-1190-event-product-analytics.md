@@ -1,24 +1,24 @@
 ---
 hip: 1190
-title: Analytics — The Product Event
+title: Event — The Product Analytics Plane
 author: Hanzo AI
 type: Standards Track
 category: Core
-capability: analytics
+capability: event
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139
 ---
 
-# HIP-1190: Analytics — The Product Event
+# HIP-1190: Event — The Product Analytics Plane
 
 ## Abstract
 
-Analytics is product analytics: send an event, read back who did what. It is
+`/v1/event` is product analytics: send an event, read back who did what. It is
 both halves on purpose — one write core behind every ingest door, and the read
 lenses over the same warehouse — so a fact is admitted, stamped with the
 server-resolved tenant, and read back through one vocabulary. It is implemented
-in `hanzoai/cloud` at `apps/analytics`.
+in `hanzoai/cloud` at `apps/event`.
 
 ## Motivation
 
@@ -39,9 +39,9 @@ as in RFC 2119.
 It owns none, and the discipline that follows from that is the point. The event
 plane's schema belongs to `hanzoai/o11y` and this capability MUST NOT create or
 migrate it: it is a writer and a reader there, no more
-(`apps/analytics/capture.go:88-97`). A lens over a table it does not own answers
+(`apps/event/capture.go:88-97`). A lens over a table it does not own answers
 honest-empty when that table is absent rather than erroring
-(`apps/analytics/analytics.go:524-531`). The one table it touches with a
+(`apps/event/mount.go:524-531`). The one table it touches with a
 statement of shape is the model surface's usage ledger, ensured idempotently so
 that a fresh warehouse yields honest zeros instead of an error. It holds no
 connection either — one datastore client serves the whole binary, opened from
@@ -50,18 +50,28 @@ KMS-injected credentials on first use.
 What it DOES own is the grammar of the plane: the subject a fact travels on, the
 durable a consumer binds, and the envelope both vocabularies are read out of.
 Those are one decision, and a consumer that also published would be a second
-owner of all three (`apps/analytics/bus.go:478-487`).
+owner of all three (`apps/event/bus.go:478-487`).
 
 ### §2 The addresses
 
-**Typed.** `GET /v1/analytics/overview` (the caller org's KPIs for one window),
-`GET /v1/analytics/timeseries` (usage over time as an evenly-spaced series),
-`GET /v1/analytics/top` (five ranked lenses at once), `GET /v1/errors` (the
-org's most recently captured errors, newest first), `GET /v1/insights/events`
-(its most recent product events, newest first), `GET /v1/insights/health`, and
-`GET /v1/analytics/health` — which declares BOTH statuses it answers with, so a
-degraded probe carries the degraded report as its body instead of an empty
-error.
+**Typed.** `GET /v1/event/overview` (the caller org's KPIs for one window),
+`GET /v1/event/timeseries` (usage over time as an evenly-spaced series),
+`GET /v1/event/top` (five ranked lenses at once), `GET /v1/event/errors` (the
+org's most recently captured errors, newest first),
+`GET /v1/event/insights/events` (its most recent product events, newest first),
+`GET /v1/event/insights/health`, and `GET /v1/event/health` — which declares
+BOTH statuses it answers with, so a degraded probe carries the degraded report
+as its body instead of an empty error.
+
+These read under `/v1/event` because a lens over the plane this capability
+writes is not a second capability: it owns no store of its own to be one with
+(§1). Five stems — `/v1/analytics`, `/v1/errors`, `/v1/insights`, `/v1/replay`
+and `/v1/event.js` — folded here (HIP-0139 §7.1), and two of those folds cost
+real callers rather than being aliased, because §7 has no fourth way. The tag is
+embedded as a script `src` in customer HTML, so a page nobody re-embeds stops
+reporting; the replay path is compiled into deployed bundles, so they ship no
+replays until they rebuild. Both are stated because a spec that omits the cost
+of its own fold is a spec somebody pays for by surprise.
 
 **Declared with prose, and why each cannot be a value.**
 
@@ -78,7 +88,7 @@ socket peer the caps key on, the do-not-track and global-privacy-control
 headers, and the body whose LENGTH is the reduced lane's 64 KiB bound and whose
 first non-space byte selects the wire.
 
-`GET /v1/event.js` answers JavaScript. The hosted tag is the whole install for a
+`GET /v1/event/tag.js` answers JavaScript. The hosted tag is the whole install for a
 surface with no bundler, and it is served here, beside the door, because a tag
 that drifts from its wire is a tag that 400s: the two ship in one binary and
 version together. A script is not a value.
@@ -90,7 +100,7 @@ travels — path, query, headers and body — and the answer is relayed VERBATIM
 because a 401 is the SDK's signal to stop retrying and must not be reshaped into
 this API's error envelope.
 
-`POST /v1/replay` takes a session-recorder snapshot batch. It is opaque, bound
+`POST /v1/event/replay` takes a session-recorder snapshot batch. It is opaque, bound
 for a different consumer on a different transport, and lands no warehouse row at
 all — so it is not one of the doors and cannot be, since every door is a wire
 that decodes to events and flows through the one write core. What it shares is
@@ -121,10 +131,11 @@ and alerts, the error-tracking face, and — the fact that decides this boundary
 the OWNER of the `event.*` schema. Anything that creates or migrates a table on
 that plane is o11y's, and this capability MUST NOT issue DDL against it.
 
-**analytics** is the product event: what a person or a surface DID, admitted at
-the beacon door under a publishable key, and the per-org lenses read back over
-it. The beacon door is this capability's address, and it MUST NOT be re-served
-under another: a minted DSN keeps addressing `/v1/event` unchanged, and the
+**event** is the product event: what a person or a surface DID, admitted at the
+beacon door under a publishable key, and the per-org lenses read back over it.
+The beacon door is this capability's name as well as its address — `/v1/event`
+is what `@hanzo/event`, the hosted tag and HIP-0132's telemetry ingest all
+hard-code — and it MUST NOT be re-served under another: a minted DSN keeps addressing `/v1/event` unchanged, and the
 error wires it carries are forwarded to o11y over the internal plane rather than
 reimplemented here. In the other direction, an error a customer sends to
 `/v1/event` reaches the same surface a native SDK reaches, because the accepted
@@ -146,7 +157,7 @@ Every warehouse query binds the org POSITIONALLY, so even a token with wide
 scope cannot read another org's rows.
 
 **Writes** go through one resolver in a strict trust order
-(`apps/analytics/event.go:167`): a validated bearer or an org API key; then a
+(`apps/event/event.go:167`): a validated bearer or an org API key; then a
 publishable `pk-` key on `Authorization`, on `x-hanzo-ingest-key`, or in an
 `ingest_key` query parameter for `navigator.sendBeacon`, which cannot set
 headers; then, last, a signed workspace session, which is the only credential
@@ -161,7 +172,7 @@ other route on this API. So a leaked one lets a stranger write into a stream and
 never lets one read out of it, and reading rows back always takes a real bearer.
 
 **No credential is refused into a shared tenant.** There is no reserved
-anonymous tenant (`apps/analytics/public.go:115`). A write the server cannot
+anonymous tenant (`apps/event/public.go:115`). A write the server cannot
 attribute to a project is 401 `ingest_key_required`, and a credential that is
 presented but resolves to no project is 403 `ingest_key_unknown`. Events nobody
 can read are worse than events nobody sent, because the caller was told it
@@ -186,7 +197,7 @@ write into its own partition.
 ### §5 Money
 
 Free, and said in those words: the surface declares `cloud.Free`
-(`plugin/analytics/main.go`). Neither ingest nor a read debits any plane.
+(`plugin/event/main.go`). Neither ingest nor a read debits any plane.
 
 ### §6 The events it publishes
 
@@ -201,10 +212,11 @@ warehouse drains. Separately, one ENVELOPE per event is published under
 hostile name cannot mint unbounded subject cardinality; the fold is a PUBLISHED
 contract and MAY gain cases but MUST NOT change an existing mapping.
 
-The name is the customer's, which is why there is no `analytics.<noun>.<verb>`
-event here. Restating a tenant's own event under our vocabulary would assert a
-name over theirs and deliver every subscriber one subject instead of the one
-they asked for.
+The name is the customer's, which is why this capability publishes no
+`<name>.<noun>.<verb>` event of its own — the `event.*` subjects above carry the
+tenant's names, not ours. Restating a tenant's own event under our vocabulary
+would assert a name over theirs and deliver every subscriber one subject instead
+of the one they asked for.
 
 Two vocabularies therefore share one stream, and the discriminator is the BODY,
 not the subject: a fact names its signal and an envelope does not. Each consumer

@@ -256,7 +256,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) | Plan — The Tier Catalog | Standards Track | Core | Draft |
 | [HIP-1188](./HIPs/hip-1188-bots-watched-run.md) | Bots — The Watched Run | Standards Track | Core | Draft |
 | [HIP-1189](./HIPs/hip-1189-web3-chain-access.md) | Web3 — Chain Access | Standards Track | Core | Draft |
-| [HIP-1190](./HIPs/hip-1190-analytics-product-event.md) | Analytics — The Product Event | Standards Track | Core | Draft |
+| [HIP-1190](./HIPs/hip-1190-event-product-analytics.md) | Event — The Product Analytics Plane | Standards Track | Core | Draft |
 | [HIP-1198](./HIPs/hip-1198-graph-assertion-plane.md) | Graph — The Assertion Plane | Standards Track | Infrastructure | Draft |
 | [HIP-1200](./HIPs/hip-1200-account.md) | Account — The Caller's Own Surface | Standards Track | Application | Draft |
 | [HIP-1201](./HIPs/hip-1201-admission.md) | Admission — Launch Control | Standards Track | Platform | Draft |
@@ -410,7 +410,7 @@ One capability, one HIP (HIP-0139). 117 of them, grouped as `capabilities.yaml` 
 
 **Observability** — see everything — telemetry · analytics · usage
 
-[HIP-1030](./HIPs/hip-1030-openapi-the-served-contract.md) `openapi` · [HIP-1190](./HIPs/hip-1190-analytics-product-event.md) `analytics` · [HIP-1240](./HIPs/hip-1240-o11y-the-observability-plane.md) `o11y` · [HIP-1241](./HIPs/hip-1241-metrics-one-store-three-signals.md) `metrics` · [HIP-1242](./HIPs/hip-1242-leaderboard-who-leads.md) `leaderboard` · [HIP-1313](./HIPs/hip-1313-usage-the-metered-record.md) `usage`
+[HIP-1030](./HIPs/hip-1030-openapi-the-served-contract.md) `openapi` · [HIP-1190](./HIPs/hip-1190-event-product-analytics.md) `event` · [HIP-1240](./HIPs/hip-1240-o11y-the-observability-plane.md) `o11y` · [HIP-1241](./HIPs/hip-1241-metrics-one-store-three-signals.md) `metrics` · [HIP-1242](./HIPs/hip-1242-leaderboard-who-leads.md) `leaderboard` · [HIP-1313](./HIPs/hip-1313-usage-the-metered-record.md) `usage`
 
 **Commerce** — the economy — meter · price · bill · reward
 
