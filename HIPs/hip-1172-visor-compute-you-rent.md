@@ -64,56 +64,71 @@ somewhere else, and the split is clean at every neighbour:
 - **sandboxes** (HIP-1146) is the compute primitive for somebody else's code —
   a pod whose lifetime is a request, on capacity that already exists. visor
   never executes a customer's code; it hands back a machine and stops.
-- **bots** owns `/v1/bots`, which is a bot doing work on a desktop, live: a
-  session. `/v1/compute/bots` is a machine of kind bot plus its agent binding —
-  rented hardware bootstrapped with a runtime. Two nouns share a word and do not
-  share an address.
+- **bot** owns `/v1/bot/runs`, which is a bot doing work on a desktop, live: a
+  session. `/v1/visor/compute/bots` is a machine of kind bot plus its agent
+  binding — rented hardware bootstrapped with a runtime. Two nouns share a word
+  and do not share an address.
 - **agents** (HIP-1210) owns the agent. visor owns the binding that says a given
   machine hosts one, because the binding is a property of the machine.
 
-Inside visor, `/v1/clusters` is the fleet's answer to "what clusters do I have",
-provisioned and attached together, while `/v1/k8s` is the provider lifecycle
-that creates and destroys them. Both are visor's, which is exactly why they fold
-under one name rather than being called two capabilities.
+Inside visor, `/v1/visor/clusters` is the fleet's answer to "what clusters do I
+have", provisioned and attached together, while `/v1/visor/k8s` is the provider
+lifecycle that creates and destroys them. Both are visor's, which is exactly why
+they fold under one name rather than being called two capabilities.
 
 ### §3 The addresses
 
-visor answers under `/v1/machines`, `/v1/gpus`, `/v1/clusters`, `/v1/k8s`,
-`/v1/fleet` and `/v1/compute`. HIP-0139 §3 gives a
-capability one. Each of these is a line in the misfiled ratchet (HIP-0139 §5.1),
-and each closes by fold (HIP-0139 §7.1), never by split: there is one owner and
-§1 leaves no second store to split along.
+visor answers under `/v1/visor`, the one root HIP-0139 §3 gives a capability
+(`manifest/apps.go:309`), and every noun of the compute plane is one segment
+down (`apps/visor/visor.go:143-268`). The six top-level roots those nouns used
+to sit at — `/v1/machines`, `/v1/gpus`, `/v1/clusters`, `/v1/k8s`, `/v1/fleet`
+and `/v1/compute` — were six lines of the misfiled ratchet (HIP-0139 §5.1), and
+all six closed by fold (HIP-0139 §7.1), never by split: there is one owner and
+§1 leaves no second store to split along. No alias was left behind, so an
+address that begins anywhere else is not visor's.
 
-- `/v1/machines` — the org's machines, one machine, its agent binding, and every
-  binding in the fleet at `/v1/machines/agents`.
-- `/v1/gpus` — the accelerators on those machines, and `/v1/gpus/alerts`.
-- `/v1/clusters` — the cluster list, attach and detach, and node-pool create,
-  scale and delete.
-- `/v1/k8s` — cluster list, one cluster with its pools and worker nodes, create,
-  delete, and the fleet-wide worker nodes at `/v1/k8s/nodes`.
-- `/v1/fleet` — the board, the attached workers at `/v1/fleet/workers`, the
-  utilization series at `/v1/fleet/samples`, and the GPU job queue at
-  `/v1/fleet/jobs` with a cancel.
-- `/v1/compute` — the launch catalog at `/v1/compute/regions` and
-  `/v1/compute/sizes`, and bot machines under `/v1/compute/bots`.
+- `/v1/visor/machines` — the org's machines, one machine, its agent binding, and
+  every binding in the fleet at `/v1/visor/machines/agents`.
+- `/v1/visor/gpus` — the accelerators on those machines, and
+  `/v1/visor/gpus/alerts`.
+- `/v1/visor/clusters` — the cluster list, attach and detach, and node-pool
+  create, scale and delete.
+- `/v1/visor/k8s` — cluster list, one cluster with its pools and worker nodes,
+  create, delete, and the fleet-wide worker nodes at `/v1/visor/k8s/nodes`.
+- `/v1/visor/fleet` — the board, the attached workers at
+  `/v1/visor/fleet/workers`, the utilization series at
+  `/v1/visor/fleet/samples`, and the GPU job queue at `/v1/visor/fleet/jobs`
+  with a cancel.
+- `/v1/visor/compute` — the launch catalog at `/v1/visor/compute/regions` and
+  `/v1/visor/compute/sizes`, and bot machines under `/v1/visor/compute/bots`.
 
 Every route with a shape to state is typed. Five are declared with prose beside
 the route, and each names why it cannot be a value:
 
-1. `POST /v1/machines` and `POST /v1/compute/bots/launch` — the response shape
-   is chosen by the request: `dryRun` answers 200 with a price quote, a real
-   launch answers 201 with the created resource. A typed op declares one `Out`,
-   so typing either would have to change one of the two bodies.
-2. `GET /v1/compute/regions` and `GET /v1/compute/sizes` — the body is the
-   launch catalog exactly as the compute service states it. visor does not know
-   that shape, and inventing one is the opposite of what a passthrough is for.
-3. `POST /v1/compute/bots/{id}/{action}` — a verb dispatch, not a resource. The
-   `message` action streams the bound agent's answer back untouched: the
-   upstream body, its content type and its status. There is no `Out`, and
-   declaring one would buffer the stream.
+1. `POST /v1/visor/machines` and `POST /v1/visor/compute/bots/launch` — the
+   response shape is chosen by the request: `dryRun` answers 200 with a price
+   quote, a real launch answers 201 with the created resource. A typed op
+   declares one `Out`, so typing either would have to change one of the two
+   bodies.
+2. `GET /v1/visor/compute/regions` and `GET /v1/visor/compute/sizes` — the body
+   is the launch catalog exactly as the compute service states it. visor does
+   not know that shape, and inventing one is the opposite of what a passthrough
+   is for.
+3. `POST /v1/visor/compute/bots/{id}/{action}` — a verb dispatch, not a
+   resource. The `message` action streams the bound agent's answer back
+   untouched: the upstream body, its content type and its status. There is no
+   `Out`, and declaring one would buffer the stream.
 
 The two launches spend real money, so their prose MUST state where the quote is;
 a caller reading only the document has no other place to learn it.
+
+The address visor serves is not the address it dials. The compute service keeps
+its own spelling one segment apart — `/v1/machines`, `/v1/machines/launch`,
+`/v1/k8s/clusters`, `/v1/k8s/nodes` and their siblings on `visor.hanzo.svc` —
+and those literals are the wire, so they did not move with the fold
+(`apps/visor/client.go`). In this package a `cl.call` or `cl.op` path is
+upstream's and a `zip.Get(reg, …)` path is ours; the two are read apart by which
+one holds them, never by resemblance.
 
 ### §4 Tenancy
 
@@ -127,7 +142,7 @@ honoured. Absent a validated principal the answer is 403.
 A machine is addressed upstream as owner plus name, so another tenant's id is
 not reachable rather than refused — the surface is not an existence oracle.
 Reads are open to any validated member of the org. The two mutations on
-`/v1/k8s/clusters`, create and delete, additionally require a platform
+`/v1/visor/k8s/clusters`, create and delete, additionally require a platform
 SuperAdmin or an admin of the caller's own org (`requireClusterAdmin`,
 HIP-0118), because provisioning spends on the house account rather than the
 customer's.
@@ -158,12 +173,13 @@ visor publishes nothing on the bus: no `visor.*` event reaches a customer's
 webhooks. Beyond the request span every route already gets, it writes no audit
 record and exports no metric of its own.
 
-What it does emit is the tenant's own data, on request. `POST /v1/fleet/samples`
-is how an attached worker self-reports utilization; the sample is validated
-against the closed source and unit vocabularies, stamped with the caller's org,
-and appended to the shared series off the request path, so a slow or absent
-warehouse never fails an ingest. `GET /v1/fleet/samples` reads that series back
-and `GET /v1/fleet` folds the latest sample onto each unit.
+What it does emit is the tenant's own data, on request.
+`POST /v1/visor/fleet/samples` is how an attached worker self-reports
+utilization; the sample is validated against the closed source and unit
+vocabularies, stamped with the caller's org, and appended to the shared series
+off the request path, so a slow or absent warehouse never fails an ingest.
+`GET /v1/visor/fleet/samples` reads that series back and `GET /v1/visor/fleet`
+folds the latest sample onto each unit.
 
 ### §7 A partial answer says it is partial
 

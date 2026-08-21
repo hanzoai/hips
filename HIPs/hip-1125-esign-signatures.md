@@ -26,7 +26,7 @@ each opens, and where the cryptography lives.
 The upstream product was a Next.js pod with Prisma and Postgres; the fold
 retires it, and the standalone pod held no tenant data — zero documents,
 recipients or users — so cloud's per-tenant store is authoritative from the
-first write with nothing to migrate (`apps/esign/esign.go:36-41`). What
+first write with nothing to migrate (`apps/esign/esign.go:34-39`). What
 remains worth specifying is the part that moves legally binding documents: who
 may open which store, and what seals the PDF.
 
@@ -39,7 +39,7 @@ as in RFC 2119.
 
 Rows — documents, recipients, fields, the signing state machine, the audit
 trail — live in one SQLite file per tenant, opened by the shared goja host with
-one transaction per request (`apps/esign/esign.go:12-16`). Beside the tenant
+one transaction per request (`apps/esign/esign.go:13-15`). Beside the tenant
 files sits one system-namespace index, `token_index`
 (`apps/esign/index.go:34`) — the signing-token → tenant routing table, the
 single deliberately cross-tenant piece.
@@ -47,42 +47,63 @@ single deliberately cross-tenant piece.
 ### §2 The two doors
 
 Owner routes (`/v1/esign/documents/*`) require a validated principal and
-resolve the tenant from it (`apps/esign/esign.go:328-330`, HIP-0026). Recipient
+resolve the tenant from it (`apps/esign/typed.go:83`, HIP-0026). Recipient
 routes (`/v1/esign/o/{org}/sign/{token}/*`) are unauthenticated capability
 links: the crypto-random token is the whole credential, and it — resolved
 through the token index before any per-tenant store opens — is what selects the
 tenant DB. The `{org}` segment is only the caller's claim, checked against that
-answer (`apps/esign/esign.go:25-34`). The host pre-routes the bundle's database
+answer (`apps/esign/typed.go:87-115`). The host pre-routes the bundle's database
 to the resolved tenant, so isolation is a host property, not bundle discipline.
 
-### §3 Why nothing here is typed
+### §3 The typed surface
 
-Every route is a raw handler and none can be typed: each is built by a handler
-factory closing over a bundle route name, because the domain lives in the
-ported JS bundle and this leaf is only the door to it — and a closure has no
-doc comment for the registry to lift (`apps/esign/esign.go:148-157`). Each
-operation instead declares prose beside the wire fact, rendered only while the
-router serves the route, stating which of the two doors it is behind.
+All thirteen operations are typed ops (`apps/esign/typed.go:1054-1082`), so each
+is one registry entry carrying its route, its schema, its MCP tool, its CLI
+command and its generated SDK method. The premise this section once rested on —
+every route is built by a handler factory closing over a bundle route name, and
+a closure has no doc comment for the registry to lift — is a fact about the
+FACTORY and not about the routes: written as methods over the same bundle seam,
+on the shared `apps/goja` kit, the ops carry their own. The ledger of operations
+exempted from typing is therefore empty, and a gate keeps it empty or makes the
+next entry state its wire fact (`apps/esign/typed_wire_test.go:29-40`).
+
+The bundle still decides every answer and the Go host only carries it, so typing
+had to move neither half, and each half is pinned:
+
+- **What it answers.** The bundle's value crosses the goja boundary as a map and
+  is re-marshalled by encoding/json, which sorts object keys, so every model
+  declares its fields in alphabetical json-tag order and the typed answer is
+  byte-identical to the relay's own bytes rather than merely equal as JSON
+  (`TestTypedAnswersAreByteIdentical`, `apps/esign/typed_wire_test.go:307`).
+- **What it accepts.** The bundle validates with coercing helpers, so a Go
+  `string` or `int` field would refuse input the route accepts today. Every
+  caller-supplied field is a scalar carried through byte for byte, leaving the
+  bundle the only judge of it, and a page or a signing order stays the number
+  the caller sent (`:349`, `:626`).
+- **How it refuses.** The bundle authors its own envelope, `{"error": …}`, under
+  its own status; `goja.BundleErr` carries both and `goja.Envelope` writes them
+  back verbatim, so a 409 `recipients can only be added while DRAFT` reads
+  exactly as it did before (`:449`).
 
 ### §4 The seal
 
 PDF and PKI are the one capability the bundle cannot provide, so they are Go
 host functions injected as `__pdf = { stamp, sign }`
-(`apps/esign/esign.go:18-23`): page stamping through pdfcpu and an x509/PKCS#7
+(`apps/esign/esign.go:17-22`): page stamping through pdfcpu and an x509/PKCS#7
 seal through digitorus/pdfsign. The signing logic and seal orchestration stay
 in the bundle; only the crypto/PDF primitive is Go.
 
 ### §5 Money, events, telemetry
 
 esign is free, in those words (`plugin/esign/main.go:21`, `cloud.Free`; not in
-`spend.go:275`). It publishes no events on the bus — the audit trail is rows in
+`spend.go:278`). It publishes no events on the bus — the audit trail is rows in
 the tenant DB, read back through `/v1/esign/documents/{id}/audit` — and it
 emits nothing to observability beyond the request span every route gets.
 
 ### §6 Stage
 
 esign is `beta`: a vertical application, not the agentic-OS core. The manifest
-row declares it (`manifest/apps.go:402`, `Stage: Beta`), so the capability is
+row declares it (`manifest/apps.go:411`, `Stage: Beta`), so the capability is
 reached by flag (HIP-0139 §8).
 
 ### §7 Upstream
@@ -112,7 +133,7 @@ token index, whose answer is a tenant name, never rows; the org segment in the
 URL is checked against it, so a crafted URL naming another org resolves to
 nothing. A boot that cannot carry the pre-rename data directory forward aborts
 rather than serving an empty store over signed documents
-(`apps/esign/esign.go:84-90`).
+(`apps/esign/esign.go:77-83`).
 
 ## References
 

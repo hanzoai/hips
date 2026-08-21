@@ -30,7 +30,7 @@ process is a second auth stack, a second database and a second thing to leak.
 Embedding the store gives every subsystem an in-process client and gives the
 console one REST face, both backed by the same sealed store and gated by
 cloud's one auth boundary — never a parallel JWT stack
-(`apps/kms/kms.go:1-52`).
+(`apps/kms/kms.go:1-57`).
 
 ## Specification
 
@@ -41,35 +41,59 @@ as in RFC 2119.
 
 Each org's secrets live in its own encrypted file,
 `{DataDir}/orgs/{org}/kms.db`, opened through the canonical per-org store seam
-(`apps/kms/store.go:59-68`) — per-org files carry no single-opener lock, which
+(`apps/kms/store.go:62-77`) — per-org files carry no single-opener lock, which
 is what lets different pods serve different tenants. Two layers of at-rest
 protection root in the same key: each secret is sealed in an AES-256-GCM
 envelope (a fresh per-secret DEK wrapped by the master key) BEFORE it reaches
 SQLite, and the file itself is SQLCipher-encrypted under a per-db DEK
-(`apps/kms/kms.go:20-33`).
+(`apps/kms/kms.go:19-30`).
 
 The 32-byte master key is read ONLY from the environment
 (`CLOUD_KMS_MASTER_KEY_REF`), injected by the operator — never from the store,
 never logged, never persisted. Absent, the subsystem mounts health-only:
 `/v1/kms/health` answers 503, every secret operation refuses with a clear
 error, and the fallback store is ephemeral in-memory — never an unencrypted
-on-disk one, so a later keyed boot opens clean (`apps/kms/kms.go:35-44`).
+on-disk one, so a later keyed boot opens clean (`apps/kms/kms.go:32-42`).
 Signing is MPC-backed and MUST fail closed when the MPC backend is not
-configured; a signature is never fabricated (`apps/kms/kms.go:46-49`).
+configured; a signature is never fabricated (`apps/kms/kms.go:43-47`).
 
 ### §2 The address
 
-Seven REST operations (`apps/kms/mount.go:11-16`): health and the SPA config
+Seven REST operations (`apps/kms/mount.go:10-15`): health and the SPA config
 are public; listing and reading secrets are member operations; writing and
 deleting require org admin; and `auth/login` is a broker that exchanges a
 client id and secret at IAM — with no IAM token URL configured it refuses 503,
-because cloud is not a token issuer (`apps/kms/mount.go:50-58`). None is typed:
-each handler answers an assembled map and two answer the same body under two
-statuses, so the prose is declared beside the route table — written under one
-rule for a credential broker: a description never implies secret material turns
-up anywhere but the one response body that exists to carry it. The list
-operation returns metadata only; the read returns a value; neither a log line
-nor an error body carries either (`apps/kms/mount.go:64-80`).
+because cloud is not a token issuer (`apps/kms/mount.go:52-58`).
+
+Five of the seven are typed ops (`apps/kms/typed.go`), and typing moved no wire:
+each model spells the map its handler assembled, in alphabetical json-tag order,
+because encoding/json writes a map's keys sorted — so the answer is
+byte-identical to the map it replaced rather than merely equal as JSON. The door
+they pass is one function of values rather than of a request, `admits`
+(`apps/kms/typed.go:65`): the authority the caller holds, then the org key it
+resolved, then whether this process can open a secret at all — 403, 400, 503,
+fail-closed at each step and before any record is touched. The typed ops reach
+it through `admit` (`:92`), which takes the org from the parked principal and
+admin-ness from the request, neither of them an `In` field; the two raw handlers
+reach the same function off the request they are already holding. A typed op and
+a raw handler therefore cannot disagree about who may pass, or in what order.
+
+The two that stay untyped are the value routes, `GET` and `DELETE
+/v1/kms/secrets/+`, and what keeps them out is the ADDRESS rather than anything
+about secrets. A secret is named by a sub-path, so the route is fiber's greedy
+`+`; zip's registry publishes that segment verbatim while cloud's reading of the
+router names it `{wildcard1}`. The fold looks a typed op up by zip's spelling,
+finds no live route at that key, and refuses to produce a document at all — not
+a mis-named parameter, no document — which `TestTheWildcardCannotBeATypedOp`
+proves by trying it (`apps/kms/typed_wire_test.go:34-62`, `:223`). Both declare
+the body they answer with through `openapi.Register`, so an SDK generated off
+the document still has a return type.
+
+Every description here is written under one rule for a credential broker: it
+never implies secret material turns up anywhere but the one response body that
+exists to carry it. The list operation returns metadata only; the read returns a
+value; neither a log line nor an error body carries either
+(`apps/kms/mount.go:67-80`).
 
 ### §3 The internal plane
 
@@ -79,7 +103,7 @@ which listens only on this app's canonical socket, so there is no route from
 the edge to any of them. The surface is the `KMSClient` interface and nothing
 more, because a secret store's call surface is the one place where "while I'm
 here, expose the rest" is how a tenant's material leaves its boundary
-(`apps/kms/secret_rpc.go:15-55`).
+(`apps/kms/secret_rpc.go:39-51`).
 
 ### §4 Tenancy
 
@@ -89,7 +113,7 @@ principal's org, which made the tenant caller-selectable; the segment is gone.
 The org is folded into the store path as the isolation partition, the same role
 the org column plays in every table (`apps/kms/mount.go:17-25`). On the plane,
 a ref names its tenant and the authorize check binds the two
-(`apps/kms/secret_rpc.go:156-168`).
+(`apps/kms/secret_rpc.go:152-164`).
 
 ### §5 Money, events, observability, stage
 

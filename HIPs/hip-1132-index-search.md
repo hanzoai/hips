@@ -50,21 +50,48 @@ fail to create a table in the shipped binary (`apps/index/store.go:50-60`).
 
 ### §2 The address is a dialect
 
-Seventeen operations under `/v1/index`, none typed: the surface answers
-Meilisearch's own body shapes, and errors use Meilisearch's
-`{message, code, type, link}` form because the JS client branches on the codes —
-`index_not_found` is how its auto-create decides to fire
-(`apps/index/index.go:33-36`, `apps/index/store.go:26-29`). Reshaping either
-into cloud's types would break the clients the dialect exists for, so every
-operation is declared with prose beside its route instead. Writes are
-synchronous — SQLite applies them before the response — so a reported task is
-already `succeeded` and a client polling `waitForTask` resolves immediately
-(`apps/index/index.go:52-58`).
+Seventeen operations under `/v1/index`: fourteen are typed ops
+(`apps/index/typed.go`) and three carry the wire fact that keeps them out. The
+dialect did not move when the fourteen were typed. Each model spells the map its
+handler assembled, with its fields in alphabetical json-tag order because
+encoding/json writes a map's keys sorted — so a typed answer is byte-identical
+to the map it replaced rather than merely equal as JSON
+(`TestTypedAnswersAreByteIdenticalToTheMaps`,
+`apps/index/typed_wire_test.go:278`).
+
+The errors are the harder half and did not move either. The JS client branches
+on Meilisearch's `{message, code, type, link}` — `index_not_found` is how its
+auto-create decides to fire (`apps/index/index.go:33-36`,
+`apps/index/store.go:26-29`) — while zip renders a returned error as a flat
+`{status, code, error}` carrying neither `message` nor a dialect `code`. So an
+op returns a `*fault` holding the dialect body and one middleware writes it back
+under its own status (`apps/index/typed.go:58-117`,
+`TestTheDialectRefusalsSurviveTyping`). That is not an escape from typing: the
+op still declares its `In` and its `Out`, so the route reaches the document, an
+MCP tool, a CLI command and a generated SDK method — the four an untyped route
+is invisible to.
+
+Three stay untyped, and the reason is one fact about zip rather than anything
+about search. The two document upserts and the delete-batch each take a
+top-level JSON ARRAY as their body — `[doc,…]`, `[id,…]` — on a `:uid` route.
+zip binds a path parameter by walking the input's struct fields, so a slice `In`
+binds no uid at all, and a struct `In` is decoded with a call that fails on `[`,
+turning today's 202 into a 400 on every write the JS client makes. Either half
+alone is expressible — zip admits a bare list as a body — the pair is not. The
+three declare their bodies through `openapi.Register` + `openapi.OneOf` instead,
+so an SDK generated off the document no longer offers a document upload with
+nowhere to put the documents (`apps/index/index.go:142-212`). The partition is a
+closed ledger, each entry carrying its reason, and its two counts are pinned
+(`apps/index/typed_wire_test.go:35-62`, `:172`).
+
+Writes are synchronous — SQLite applies them before the response — so a reported
+task is already `succeeded` and a client polling `waitForTask` resolves
+immediately (`apps/index/index.go:51-56`).
 
 ### §3 Tenancy
 
 The tenant is `principal.Org` — the org minted from the validated bearer owner
-claim (HIP-0026), never a client-supplied header (`apps/index/index.go:695`).
+claim (HIP-0026), never a client-supplied header (`apps/index/typed.go:333`).
 Two orgs MAY both hold an index named `messages` without seeing each other's
 documents. Within an org, a caller narrows to an end user with an ordinary
 `user = "<id>"` filter, honoured as the dialect defines it.

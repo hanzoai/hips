@@ -51,14 +51,31 @@ recovered at mount.
 
 ### The address
 
-Thirteen operations under `/v1/social`: the account collection and item, the post
-collection and item, `POST /v1/social/posts/{id}/publish`, a per-org summary and
-a `providers` read reporting publish-readiness per network with the exact
-credential names still missing. Every operation is declared with prose beside the
-route (`openapi.Describe`, `apps/social/social.go:170` ff.) rather than typed:
-the fold mirrors the classic handler pattern, and nothing about these shapes
-prevents typing — they are values, and moving them into the typed registry is
-this capability's known debt, stated here rather than hidden.
+Thirteen operations under `/v1/social`, all of them typed ops
+(`apps/social/social.go:176-190`, models in `apps/social/typed.go`): the account
+collection and item, the post collection and item,
+`POST /v1/social/posts/{id}/publish`, a per-org summary and a `providers` read
+reporting publish-readiness per network with the exact credential names still
+missing. Nothing on this surface is wire-bound — every operation answers a value
+its own handler assembled — so the debt this section recorded is paid rather
+than deferred, and the ledger that would hold an exception is empty with the
+count pinned at thirteen (`apps/social/typed_wire_test.go:122`, `:185`).
+
+What is published is the store's own row: `socialAccount` and `socialPost` are
+the types the store scans into rather than a view copied beside them, because a
+second copy is a second thing to keep true and its drift is silent. What typing
+adds is the REQUEST half a row cannot state — a create accepts no `id`,
+`createdAt` or `updatedAt`, since the server mints all three, and an account's
+provider token is neither accepted nor returned here at all
+(`apps/social/typed.go:113-122`). The names carry the product because a Go type
+name becomes a schema name in the one fleet document, where two apps may not
+mean different things by one name (`openapi/weave.go:112`): the request bodies
+are `socialAccountBody` and `socialPostBody`, never a bare `Account` or `Post`.
+
+Where a handler assembled a map, field order is load-bearing: encoding/json
+writes a map's keys sorted and a struct in declaration order, so `socialSummary`
+declares its four alphabetically and the summary's bytes did not move
+(`TestSummaryBytesDidNotMove`, `apps/social/typed_wire_test.go:283`).
 
 ### Publishing
 
