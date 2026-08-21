@@ -58,7 +58,7 @@ Liveness is the host's generic `GET /v1/usage/health`, not one of these: the
 plugin does not declare `OwnsHealth`, so the host's route stands on a path none
 of the five shadows.
 
-Per-model and time-series detail is NOT served here — that is `/v1/analytics/*`
+Per-model and time-series detail is NOT served here — that is `/v1/event/*`
 — and the wallet's own raw drain is billing's `/v1/billing/usage`. Three
 addresses answer three questions, and a fourth spelling of any of them would be
 a fourth number to reconcile.

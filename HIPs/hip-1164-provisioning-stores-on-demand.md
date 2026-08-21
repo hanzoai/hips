@@ -171,7 +171,7 @@ This capability allocates and destroys. It never reads or writes a row, a
 document, an object or a vector. Where the resource is then reached splits
 three ways, and each side is somebody else's:
 
-- `s3` — the customer data plane is `storage` at `/v1/s3` (HIP-1165). Both
+- `s3` — the customer data plane is `s3` at `/v1/s3` (HIP-1165). Both
   derive the physical bucket from the caller's org through the SAME exported
   derivation, so a bucket allocated here is browsable there. They MUST derive it
   identically or the tenant boundary drifts between allocate and operate, which
@@ -249,7 +249,7 @@ plaintext copy at the cost of a caller that must keep what it asked for.
 - HIP-0401 — Datastore CRD
 - HIP-1134 — KMS — Secret Custody
 - HIP-1147 — Search — Hybrid Retrieval
-- HIP-1165 — Storage — Buckets and Objects
+- HIP-1165 — S3 — Buckets and Objects
 - HIP-1166 — Product — Search and Vector Inventory
 
 ## Copyright

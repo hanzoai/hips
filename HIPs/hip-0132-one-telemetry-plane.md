@@ -28,7 +28,7 @@ not migrated. No compatibility layer survives this document.
 | door | why it exists |
 |---|---|
 | `POST /v1/event` | the one telemetry ingest. Accepts a bare object, a bare array, or `{batch:[…]}`/`{events:[…]}` — batching is a SHAPE, not a route |
-| `POST /v1/replay` | session replay: a different data shape, not a different view |
+| `POST /v1/event/replay` | session replay: a different data shape, not a different view |
 | `/v1/form` | the form primitive — fields, submit, thank-you |
 | `/v1/survey` | a form PLUS targeting, scheduling, recurrence. Its RESPONSES are events |
 | `/v1/experiment` | the verdict plane (HIP-0512) |

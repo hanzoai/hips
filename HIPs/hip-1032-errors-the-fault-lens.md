@@ -13,11 +13,11 @@ requires: HIP-0026, HIP-0119, HIP-0128
 
 ## Abstract
 
-`/v1/errors` reads back the faults a tenant's own clients reported: the most
-recent captured errors, newest first, each with its exception surfaced as a
+`/v1/event/errors` reads back the faults a tenant's own clients reported: the
+most recent captured errors, newest first, each with its exception surfaced as a
 first-class field rather than buried in a property bag.
 
-It is a READ over the event plane that `hanzoai/cloud`'s `analytics` app already
+It is a READ over the event plane that `hanzoai/cloud`'s `event` app already
 writes — one write core behind many ingest doors, one warehouse, one vocabulary
 to read it with. This HIP states the tenancy invariant that makes the read safe,
 the redaction invariant that makes the stored fault safe to read at all, and what

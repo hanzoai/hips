@@ -54,7 +54,7 @@ still answer at other roots — `/v1/sentinel`, `/v1/summary` and
   (`apps/o11y/o11y.go:132,141`), so the fold is one address, two protocols.
 
 The beacon door is NOT this capability's address: `/v1/event` belongs to
-`analytics` (`manifest/apps.go:310`), which forwards the Sentry wire through
+`event` (HIP-1190), which forwards the Sentry wire through
 the plane ops to this capability's sink (`apps/o11y/o11y.go:651`,
 `apps/o11y/obs_rpc.go`). A minted DSN keeps addressing `/v1/event` unchanged.
 

@@ -82,7 +82,7 @@ What an autonomous firm actually requires, and where it lives:
 | **Commerce** | Charge for things | `/v1/commerce`, `/v1/billing`, `/v1/pricing` |
 | **Product** | Build and run software | `/v1/git`, `/v1/deploy`, `/v1/paas`, `/v1/functions` |
 | **Demand** | Find and keep customers | `/v1/guide`, `/v1/crm`, `/v1/campaign` |
-| **Observation** | Know its own state | `/v1/o11y`, `/v1/analytics`, `/v1/usage` |
+| **Observation** | Know its own state | `/v1/o11y`, `/v1/event`, `/v1/usage` |
 | **Compliance** | Stay legal | `/v1/compliance`, `/v1/audit`, `/v1/sbom` |
 | **Custody** | Hold secrets | `/v1/kms` |
 
@@ -299,7 +299,7 @@ storefront. This one can.
 A SAFE is a document plus a cap-table entry — both organs already present, so
 the endpoint is composition rather than new machinery. `/fundraise/deck`
 generates the narrative from state the company already holds: its metrics live
-in `/v1/analytics` and `/v1/usage`, its ownership in `/v1/captable`, its revenue
+in `/v1/event` and `/v1/usage`, its ownership in `/v1/captable`, its revenue
 in `/v1/commerce`. A deck assembled from live state instead of a founder's
 recollection is strictly more honest, which is an underrated argument for
 automating it.
@@ -330,8 +330,7 @@ the path.
 **Demand.** `/v1/guide` — the GTM autopilot — plus `/v1/crm`, `/v1/campaign`,
 `/v1/marketing`, `/v1/ads`, `/v1/social`, `/v1/content`.
 
-**Observation.** `/v1/o11y`, `/v1/analytics`, `/v1/usage`, `/v1/costs`,
-`/v1/insights`. A firm that cannot read its own state cannot govern itself, and
+**Observation.** `/v1/o11y`, `/v1/event`, `/v1/usage`, `/v1/costs`. A firm that cannot read its own state cannot govern itself, and
 autonomy without self-observation is just an unattended process.
 
 ## 8. What still requires a human, and why
