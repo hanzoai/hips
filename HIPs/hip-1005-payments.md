@@ -6,7 +6,6 @@ type: Standards Track
 category: Application
 status: Active
 created: 2026-08-20
-capability: payments
 ---
 
 # HIP-1005: Payments — Taking a Card

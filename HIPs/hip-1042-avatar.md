@@ -6,7 +6,6 @@ type: Standards Track
 category: Interface
 status: Draft
 created: 2026-08-20
-capability: avatar
 requires: HIP-0026
 ---
 

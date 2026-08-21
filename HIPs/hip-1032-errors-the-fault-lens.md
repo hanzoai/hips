@@ -7,7 +7,6 @@ category: Interface
 status: Active
 created: 2026-08-20
 requires: HIP-0026, HIP-0119, HIP-0128
-capability: errors
 ---
 
 # HIP-1032: Errors — The Fault Lens

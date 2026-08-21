@@ -4,7 +4,6 @@ title: Git Webhook — The Push Door
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: git-webhook
 status: Draft
 created: 2026-08-20
 requires: HIP-0027, HIP-0106, HIP-0119

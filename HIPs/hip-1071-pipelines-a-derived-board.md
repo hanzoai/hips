@@ -4,7 +4,6 @@ title: Pipelines — A Derived Board
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: pipelines
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106

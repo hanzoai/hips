@@ -6,7 +6,6 @@ type: Standards Track
 category: Interface
 status: Draft
 created: 2026-08-20
-capability: chains
 requires: HIP-0106
 ---
 

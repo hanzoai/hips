@@ -6,7 +6,6 @@ type: Standards Track
 category: Security
 status: Draft
 created: 2026-08-20
-capability: csrf
 requires: HIP-0519
 ---
 

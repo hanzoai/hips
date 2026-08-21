@@ -6,7 +6,6 @@ type: Standards Track
 category: Platform
 status: Active
 created: 2026-08-20
-capability: enablement
 ---
 
 # HIP-1003: Enablement — Off, Beta, GA

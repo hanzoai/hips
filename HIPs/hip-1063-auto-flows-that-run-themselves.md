@@ -4,7 +4,6 @@ title: Auto — Flows That Run Themselves
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: auto
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0126

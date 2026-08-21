@@ -6,7 +6,6 @@ type: Standards Track
 category: Application
 status: Draft
 created: 2026-08-20
-capability: cart
 ---
 
 # HIP-1002: Cart — The Basket a Sale Begins In

@@ -4,7 +4,6 @@ title: Tags — The Browser Half
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: tags
 status: Draft
 created: 2026-08-20
 requires: HIP-0106

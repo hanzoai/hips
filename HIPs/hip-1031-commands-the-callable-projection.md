@@ -7,7 +7,6 @@ category: Interface
 status: Draft
 created: 2026-08-20
 requires: HIP-0122, HIP-1030
-capability: commands
 ---
 
 # HIP-1031: Commands — The Callable Projection

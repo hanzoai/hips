@@ -4,7 +4,6 @@ title: Connectors — A User's Own Credentials
 author: Hanzo AI
 type: Standards Track
 category: Security
-capability: connectors
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0027, HIP-0126

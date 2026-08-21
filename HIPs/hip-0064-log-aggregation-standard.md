@@ -7,7 +7,6 @@ category: Infrastructure
 status: Draft
 created: 2026-02-23
 requires: HIP-0047
-capability: logs
 ---
 
 

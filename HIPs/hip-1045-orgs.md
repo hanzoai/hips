@@ -6,7 +6,6 @@ type: Standards Track
 category: Security
 status: Draft
 created: 2026-08-20
-capability: orgs
 requires: HIP-0118, HIP-0519, HIP-0521
 ---
 

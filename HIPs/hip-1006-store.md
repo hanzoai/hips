@@ -6,7 +6,6 @@ type: Standards Track
 category: Application
 status: Active
 created: 2026-08-20
-capability: store
 ---
 
 # HIP-1006: Store — Storefronts, Listings and Checkout
