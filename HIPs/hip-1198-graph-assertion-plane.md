@@ -229,14 +229,14 @@ The capability forks one project. **`github.com/hanzoai/graph`** derives from
 Dgraph (`github.com/dgraph-io/dgraph`, Apache-2.0), taken at `64804bd2`, with the
 upstream notice preserved.
 
-What survives in HEAD: eleven packages, 100 Go files outside tests and 44 test
-files, 40,827 and 13,791 lines respectively. The posting-list engine (`posting`,
+What survives in HEAD: eighteen packages, 99 Go files outside tests and 44 test
+files, 38,815 and 13,791 lines respectively. The posting-list engine (`posting`,
 6,588), the DQL parser (`dql`, 5,165), the tokenizer and index system (`tok`,
 4,086), the type system (`types`, 2,860), the schema layer (`schema`, 1,902), the
 UID set algebra (`algo`, 1,242), the posting codec (`codec`, 684), the lexer
 (`lex`, 500) and the build stamp (`buildvars`, 450), over the shared key layout
-(`x`, 7,473) and the generated wire types (`protos`, 9,877, of which `pb.pb.go`
-is 8,205).
+(`x`, 7,473) and the generated wire types (`protos`, 7,865, of which `pb.pb.go`
+is 7,850).
 
 What does not survive: the cluster half and the server. There is no `worker`,
 `query`, `edgraph`, `graphql`, `raftwal`, `conn` or `ee` directory, and the two
