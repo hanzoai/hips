@@ -1,12 +1,12 @@
 name: Sync from GitHub
 
 # git.hanzo.ai is CANONICAL and builds natively; development also lands on
-# github.com/hanzoai/HIPs. This job carries GitHub's commits to the forge.
+# github.com/hanzoai/HIPs. This job carries GitHub's commits to Hanzo Git.
 #
-# WITHOUT IT THIS REPO GOES DARK, and did: the forge sat at 9f792bf from
+# WITHOUT IT THIS REPO GOES DARK, and did: Hanzo Git sat at 9f792bf from
 # 2026-07-26 while GitHub moved on 15 commits. 3047c73 deleted
-# .github/workflows/sync.yml — the GitHub->forge transport — on the belief that
-# "the Hanzo GitHub App pushes a webhook, so the forge tracks GitHub without a
+# .github/workflows/sync.yml — the GitHub->Hanzo Git transport — on the belief that
+# "the Hanzo GitHub App pushes a webhook, so Hanzo Git tracks GitHub without a
 # per-repo workflow". There is no such webhook: `gh api repos/hanzoai/HIPs/hooks`
 # is empty. The mirror froze on the exact commit before the deletion, so
 # deploy.yml (added after) never reached a runner and hips.hanzo.ai stopped
@@ -14,7 +14,7 @@ name: Sync from GitHub
 # hanzoai/commerce carries the same file and stays current.
 #
 # ONE deterministic direction: an in-cluster PULL. The runner reaches both ends,
-# so the sync has no ingress dependency and nothing has to push INTO the forge
+# so the sync has no ingress dependency and nothing has to push INTO Hanzo Git
 # from outside.
 #
 # NO CREDENTIAL. hanzoai/HIPs is public, so the fetch is anonymous. commerce is

@@ -5,7 +5,7 @@ name: ci
 #     python3 scripts/lint-hips.py
 #
 # This job used to carry its own copy of the checks as an inline heredoc, so the
-# gate existed only on the forge and a failure could not be reproduced without
+# gate existed only on Hanzo Git and a failure could not be reproduced without
 # pushing. Two implementations of one rule is the defect this repository exists
 # to name. There is now one, in scripts/lint-hips.py, and this file calls it.
 #
