@@ -80,34 +80,59 @@ the defect HIP-0106 §4.2 names.
 
 ### §2 The name
 
-1. One word, lowercase ASCII, the noun people say for the thing. `books`, not
+1. One word, lowercase ASCII, the noun people say for the thing. `book`, not
    `accounting-ledger`; `tel`, not `telephony-gateway`.
-2. **Number follows the contract, not taste.** A capability is PLURAL when a
-   caller can address ONE member by id under its root — `GET /v1/<name>`
-   returns the set, `POST /v1/<name>` adds one, and the member hangs at
-   `/v1/<name>/{id}`. It is SINGULAR when the contract offers no such member.
+2. **The canonical name is the SINGULAR, and the plural answers anyway.**
+   A capability is named for the thing itself — `sandbox`, `agent`, `link`,
+   `dataset` — and that singular is the one name every projection in §1
+   carries: the manifest row, the `/v1/<name>` address, the tag, the tool,
+   the CLI word, the docs page and the HATEOAS self-description.
 
-   This is what every API a caller already knows spells out (`/v1/models`,
-   `/v1/files`, `/v1/messages`, `/v1/charges`), and it is what hypermedia
-   expects: a collection is a resource with an address and its members live
-   beneath it. `bots`, `agents`, `tasks`, `books`, `links`, `datasets`,
-   `campaigns`, `networks` are collections and take the plural.
+   The OTHER spelling of its number is accepted by the ROUTER and published
+   by nothing. A request to `/v1/sandboxes` is rewritten to `/v1/sandbox`
+   before anything reads the path, so an OpenAI- or Anthropic-shaped client
+   that says `/v1/models`, `/v1/agents` or `/v1/campaigns` works unchanged
+   while the canonical surface stays singular. The rewrite is bidirectional:
+   whichever spelling the row carries, the other one resolves, so a caller
+   never has to know which form we chose.
 
-   The singular roots are the ones with no addressable member, and they are
-   not oversights: `framework` is a metadata-driven runtime whose collection
-   is the doctype; `reference` names published lookup data, not a set of
-   references; `sync` is the verb, and the capability IS the act; `sbom` and
-   `kv` are initialisms under rule 5, where a wildcard is not a member.
+   The alias is DERIVED, never listed per capability, and never published.
+   Publishing both spellings would put two names on one thing — the exact
+   duplication this rule exists to end — and would double every table the
+   surface flows into: the index, the woven document, each generated SDK,
+   the tool list. Accepting both costs one comparison at the door. The
+   courtesy is the router's; the document claims one address.
 
-   A capability is renamed for number when the contract disagrees with the
-   name — never for taste, and never in a sweep that does not first ask
-   whether a member is addressable. The OpenAI- and Anthropic-compatible
-   wire keeps its own spellings regardless; those addresses are §3.2's.
+   The derivation is naive English, stated in full so it can be checked
+   rather than trusted: `-y` after a consonant takes `-ies`; a stem ending
+   in `s`, `x`, `z`, `ch` or `sh` takes `-es`; everything else takes `-s`.
+   Reading it backwards is the SAME rule run in reverse — a stem is accepted
+   only if pluralising it spells the word again — so the two directions are
+   inverse by construction and cannot drift into two tables that disagree.
+   Two classes are named explicitly rather than guessed at, because English
+   is genuinely ambiguous in both:
+
+   - **No number.** `dns` is not the plural of `dn`; `s3`, `o11y` and `x402`
+     are not words; `ai`, `iam`, `amqp`, `sbom` and `seo` are initialisms
+     under rule 5. Each would otherwise open a nonsense address that resolves
+     to a real capability, which is worse than opening none.
+   - **Ambiguous stem.** A stem ending in a sibilant plus a silent `-e`
+     spells the same plural as the stem without it — `base` + s and `bas` +
+     es are both `bases`. Every word of that shape is named; no word of
+     another shape is.
+
+   **A capability is NEVER renamed for number.** Not for taste, not for a
+   contract reading, not in a sweep. The reason to rename has been removed
+   rather than argued about: whichever spelling a row carries, the other one
+   already answers. This clause is the point of the rule — it exists so that
+   nobody ever does another plural sweep.
 3. No compound words. A hyphen or an underscore in a name is a refusal at
    the gate.
 4. No two capabilities whose names differ only in number. `bot` and `bots`
-   are one capability, and rule 2 decides which — here the plural, because a
-   run is addressable at `/v1/bots/{id}`.
+   are one capability — under rule 2 the singular `bot` is its name, and the
+   plural reaches it anyway. Two rows differing only in number is refused at
+   the gate, because each would derive the other's address and the router
+   would keep whichever the map built last.
 5. An abbreviation is a word only when it is the word people say: `ai`,
    `iam`, `kms`, `dns`, `crm`, `seo`, `mq`, `o11y`, `rpc`, `s3`, `kv`, `sql`,
    `sbom`, `lsp`, `x402`. A new one MUST be argued for in the capability's HIP.
