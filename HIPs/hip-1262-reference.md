@@ -84,7 +84,9 @@ of them. The capability is free, in those words
 (`plugin/reference/main.go:21`, `Price: cloud.Free`). It publishes no events on
 the bus. Beyond the request span it registers nothing; staleness and refusal —
 the two ways this plane can be quietly wrong — are reported on the wire rather
-than in a private metric. Its stage is `beta`.
+than in a private metric. Its stage is whatever its manifest row declares —
+HIP-0139 §8 keeps that in one place, and the `beta` this line used to assert had
+already drifted from it.
 
 ### Upstreams
 

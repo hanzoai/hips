@@ -89,7 +89,15 @@ The capability is free (`plugin/admission/main.go:26`, `cloud.Free`). It
 publishes no events on the bus and delivers nothing to customer webhooks.
 Beyond the request span, it emits its readiness line and warn-level
 degradation logs (`apps/admission/waitlist.go:244-248,354`). Its stage is
-`ga` — the manifest row (`manifest/apps.go:415`) carries no stage.
+whatever its manifest row says, and this text does not restate it: per
+HIP-0139 §8 the stage is declared once, in `manifest.App.Stage`, and a second
+copy here can only drift from it. It did — this section read `ga` while the row
+had been staged `alpha`, which is this capability's own case for the rule.
+
+That the stage is not `ga` is a fact about who is shown the capability, never
+about whether this specification is settled; `status:` above answers that.
+Admission is this deployment's own launch control, so an org that is not the
+operator has nothing to configure through it.
 
 ### §5 Upstream
 

@@ -81,7 +81,9 @@ org's own rows and is free. It publishes no events
 on the bus. Beyond the request span, compliance-relevant actions are recorded
 on the shared audit plane under the `compliance.` action prefix
 (`apps/compliance/compliance.go:31-32`), which is how `/v1/compliance/audit`
-can answer. Its stage is `beta`: a vertical application. It derives from no
+can answer. Its stage is the one its manifest row declares, which HIP-0139 §8
+keeps as the single copy; this text carried `beta` after the row had become
+`ga`. It derives from no
 upstream; the provider integration is a configuration of the `idv` seam, and
 storage is the `hanzoai/sqlite` facade.
 

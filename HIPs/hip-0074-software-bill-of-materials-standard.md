@@ -197,8 +197,10 @@ no second connection.
 Stated for HIP-0139 §6: the capability is **free**, said in those words
 (`plugin/sbom/main.go:21`, `Price: cloud.Free`). It publishes no events on the
 bus, so a customer's webhooks receive nothing from it, and it emits nothing to
-observability beyond the request span every route gets. Its stage is `beta`
-(`manifest/apps.go:345`, `Stage: Beta`). Upstream: it forks and embeds
+observability beyond the request span every route gets. Its stage is the one
+`manifest.App.Stage` declares and this text does not restate it (HIP-0139 §8):
+the copy here read `beta` with a line citation after the row had become `ga`,
+and a cited line number is the fastest of all copies to rot. Upstream: it forks and embeds
 nothing — syft, grype and cosign are CI tools invoked in the pipeline, never
 linked into the binary, and the CycloneDX document is a format consumed, not
 code inherited.
