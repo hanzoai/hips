@@ -11,6 +11,16 @@ than a skip. A coverage check that quietly passes when it cannot find the list i
 the shape this estate keeps deleting: a gate that has only ever been seen to pass
 has not been shown to work.
 
+There are TWO inputs, because one of them cannot answer for every capability.
+`capabilities.yaml` is curation over the EMITTED DOCUMENT, so an app that serves
+no HTTP operation is absent from it by construction -- `kafka` speaks its
+protocol on :9092 and emits nothing, and this gate could not report that it had
+no spec. cloud's hand-authored `manifest/apps.go` answers for those, and the
+capability universe is the UNION of the two. The manifest is optional (that repo
+is private); when it does not resolve the run SAYS the cross-check did not run,
+and the two checks that depend on it warn instead of failing, because a gate
+must not assert what it was unable to ask.
+
     python3 scripts/coverage.py            # exits 1 on any ERROR
     python3 scripts/coverage.py --list     # the checks, by code
     python3 scripts/coverage.py --report   # measure and print, never fail
@@ -61,6 +71,33 @@ CAPABILITY_SOURCES = (
     os.environ.get("HANZO_CAPABILITIES"),
     "../openapi/capabilities.yaml",
     "../../openapi/capabilities.yaml",
+)
+
+# The SECOND source, and it answers a question the first one cannot.
+#
+# `capabilities.yaml` is curation over the EMITTED DOCUMENT: publish.py refuses
+# a name the document does not carry, so an app that serves no HTTP operation
+# can never appear there. `kafka` speaks the Kafka binary protocol on :9092 and
+# emits nothing into the document; so do `catalogsync` and `rollingcap`, and
+# `zen` is coresident. Four apps with hand-authored rows in cloud's manifest,
+# invisible to this gate by construction rather than by oversight -- and a
+# capability a gate cannot see is one that can ship with no spec forever.
+#
+# cloud's `manifest/apps.go` says of itself: "This file is HAND-AUTHORED. It is
+# the SOURCE OF TRUTH for the fleet." So the capability universe is the UNION --
+# what the fleet ships, plus the host's own doors (`openapi` serves /v1,
+# /v1/{name}, /v1/openapi.json and /v1/commands and has no manifest row, because
+# the manifest lists plugin binaries and those doors belong to no app).
+#
+# It is OPTIONAL because hanzoai/cloud is private and this repo's CI checks out
+# only hanzoai/openapi. Optional is not the same as silent: when it does not
+# resolve, the run SAYS the cross-check did not run rather than reporting a
+# coverage number as though it had. A gate that cannot say which questions it
+# skipped is a gate nobody can read.
+MANIFEST_SOURCES = (
+    os.environ.get("HANZO_MANIFEST"),
+    "../cloud/manifest/apps.go",
+    "../../cloud/manifest/apps.go",
 )
 
 CHECKS = [
@@ -119,6 +156,18 @@ def capabilities(path: str) -> tuple[list[str], dict[str, str]]:
             domain.setdefault(cap, current)
         buf = ""
     return sorted(set(caps)), domain
+
+
+def fleet(path: str) -> list[str]:
+    """The app names cloud's manifest hand-authors, from `{Name: "<app>"`.
+
+    Read with a regex rather than a Go parser for the same reason the taxonomy
+    is read without PyYAML: this runs on a bare Python, and a lint that needs a
+    toolchain is a lint that gets skipped. The shape it matches is the only one
+    the file uses, and manifest/manifest_test.go is what keeps it that way.
+    """
+    src = open(path, encoding="utf-8", errors="replace").read()
+    return sorted(set(re.findall(r'\{Name:\s*"([A-Za-z0-9_.-]+)"', src)))
 
 
 def declares(text: str) -> list[str]:
@@ -185,6 +234,15 @@ def measure() -> tuple[Report, dict]:
         rep.error("CV004", path, "resolved but named no capabilities")
         return rep, {}
 
+    manifest = next((p for p in MANIFEST_SOURCES if p and os.path.exists(p)), None)
+    fleet_caps = fleet(manifest) if manifest else []
+    for c in fleet_caps:
+        if c not in domain:
+            # It ships, so it needs a spec or a reason. It has no domain because
+            # the taxonomy groups the document and this one is not in it.
+            domain[c] = "fleet"
+    caps = sorted(set(caps) | set(fleet_caps))
+
     bodies = {}
     for name in sorted(os.listdir(HIP_DIR)):
         if name.endswith(".md"):
@@ -196,9 +254,19 @@ def measure() -> tuple[Report, dict]:
         for cap in declares(text):
             if cap in hits:
                 hits[cap].append(name)
-            else:
+            elif manifest:
                 rep.error("CV006", name,
                           f"declares capability {cap!r}, which nothing serves")
+            else:
+                # Undecidable here. A capability serving no HTTP operation is
+                # absent from the taxonomy BY CONSTRUCTION, so without the
+                # manifest this is indistinguishable from a name nothing
+                # serves. Reporting it as an error would fail the build for the
+                # one thing this run is known not to be able to see.
+                rep.warn("CV006", name,
+                         f"declares capability {cap!r}, which the taxonomy does "
+                         f"not carry -- undecided, the manifest cross-check did "
+                         f"not run")
 
     have = {c for c, v in hits.items() if v}
     missing = [c for c in caps if c not in have]
@@ -217,8 +285,13 @@ def measure() -> tuple[Report, dict]:
                       f"is in {RATCHET} but {hits[c][0]} declares it -- "
                       "delete the line in the same commit")
         elif c not in caps:
-            rep.error("CV003", c,
-                      f"is in {RATCHET} but is not a capability any more")
+            if manifest:
+                rep.error("CV003", c,
+                          f"is in {RATCHET} but is not a capability any more")
+            else:
+                rep.warn("CV003", c,
+                         f"is in {RATCHET} and the taxonomy does not carry it -- "
+                         f"undecided, the manifest cross-check did not run")
 
     for c in sorted(have):
         if len(hits[c]) > 1:
@@ -227,7 +300,7 @@ def measure() -> tuple[Report, dict]:
                       "One capability, one HIP.")
 
     return rep, {
-        "source": path, "caps": caps, "domain": domain,
+        "source": path, "caps": caps, "domain": domain, "manifest": manifest,
         "hits": hits, "have": have, "missing": missing, "known": known,
     }
 
@@ -256,6 +329,11 @@ def main() -> int:
             if c in have:
                 row[0] += 1
         print(f"capabilities {len(caps)} from {m['source']}")
+        print(f"  + fleet        {m['manifest']}" if m["manifest"] else
+              "  + fleet        NOT RESOLVED -- the manifest cross-check did "
+              "not run. An app serving no HTTP operation cannot appear in the "
+              "taxonomy, so this run cannot see one. Set HANZO_MANIFEST to "
+              "hanzoai/cloud's manifest/apps.go to ask.")
         for d, (h, n) in sorted(by_domain.items()):
             print(f"  {d:16s} {h:3d}/{n:3d}")
         print(f"covered {len(have)}  uncovered {len(missing)}  "

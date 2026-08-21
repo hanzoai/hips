@@ -53,7 +53,22 @@ jobs:
       # without one fails here instead of going unnoticed. coverage.py refuses
       # to report at all if it cannot resolve the list -- a coverage gate that
       # passes when its input is missing has not been shown to work.
+      # The SECOND source, and it is allowed to be missing. The taxonomy is
+      # curation over the emitted document, so an app serving no HTTP operation
+      # (kafka on :9092, catalogsync on the bus, zen coresident) can never
+      # appear in it and no gate reading only that file can see one. cloud's
+      # manifest is the fleet's hand-authored source of truth and answers for
+      # those; it is also PRIVATE, so this step may not resolve. coverage.py
+      # prints NOT RESOLVED and downgrades the two checks that need it rather
+      # than reporting a coverage number as though it had asked.
+      - uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: hanzoai/cloud
+          path: .fleet
+
       - name: every capability has a HIP
         env:
           HANZO_CAPABILITIES: .capabilities/capabilities.yaml
+          HANZO_MANIFEST: .fleet/manifest/apps.go
         run: python3 scripts/coverage.py

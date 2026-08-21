@@ -33,5 +33,45 @@
 # operations, reachable only by a SuperAdmin -- and a customer specifies nothing
 # through it. If that address is ever opened to an org, this line comes out and
 # a HIP goes in.
+#
+# The four below became VISIBLE on 2026-08-21, when coverage.py took cloud's
+# manifest/apps.go as a second capability source. They ship, and no gate could
+# report they had no spec: capabilities.yaml is curation over the EMITTED
+# DOCUMENT, so an app serving no HTTP operation can never appear in it, and this
+# gate read only that file. They are not new; the ability to see them is.
+# kafka was in the same position and now has HIP-1323.
+
+# Consumes the commerce stream and calls content.EnsureCatalogAsset once per
+# created product. An in-process consumer with no address and no store of its
+# own; the mapping and idempotency live in the content lane, which its HIP
+# covers. Nothing a customer configures or calls.
+catalogsync
+
+# Installs the ai gate's rolling-window spend cap. Composes three co-resident
+# globals and owns no state. The cap a customer actually reasons about is a plan
+# limit, specified with commerce and allowance; this is where it is enforced,
+# not a surface of its own.
+rollingcap
+
+# Coresident: it wires the hanzoai/zen serving layer into the cloud binary
+# rather than serving an address. `ai` (HIP-1211) is the door every caller
+# reaches this through, and that is the HIP that owes the contract.
+zen
+
+# CONTESTED, and the only line here that is not settled. cloud renamed bot ->
+# bots on 2026-08-21 (cloud@35a75797, "a collection is a plural noun") for
+# NUMBER ALONE. HIP-0139 §2.2 forbids exactly that -- "a capability is never
+# renamed for number alone, in either direction" -- and §2.4 names this pair:
+# "`bot` and `bots` are one capability, and rule 2 keeps the singular." HIP-1107
+# specifies it as `bot` and still does.
+#
+# The rename cites §3 (the app name is the address's word) and §3 is satisfied
+# either way; it is §2 that decides the number, and §2 was not reckoned with.
+# The REST convention the commit argues from is real and §2.2 already answered
+# it: plurals belong to resource paths under the capability, not to the
+# capability. Resolving this means cloud returns to `bot`, or a HIP amends
+# §2.2/§2.4 -- which would also reopen `agents`, `tasks` and `books`, and §2.2
+# exists to stop that churn. Not resolvable inside this repo.
+bots
 
 plugins

@@ -288,6 +288,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) | Admin — The Operator Console | Standards Track | Infrastructure | Draft |
 | [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) | DNS — Zones and Records | Standards Track | Infrastructure | Draft |
 | [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) | Skills — The Discovery Catalogue | Standards Track | Interface | Draft |
+| [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) | Kafka — A Wire Onto the One Bus | Standards Track | Infrastructure | Draft |
 
 ## HIP Process
 
@@ -359,9 +360,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 121 | Capability |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 122 | Capability |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 118 | The Hanzo Plugin Contract |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 117 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 117 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -390,7 +391,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 118 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 119 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -427,3 +428,7 @@ One capability, one HIP (HIP-0139). 118 of them, grouped as `capabilities.yaml` 
 **Chain** — the networks the cloud speaks to — enumerate · call · read balances
 
 [HIP-1189](./HIPs/hip-1189-web3-chain-access.md) `web3` · [HIP-1253](./HIPs/hip-1253-explorer-chain-data.md) `explorer`
+
+**Not yet grouped**
+
+[HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka`
