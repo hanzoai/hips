@@ -287,6 +287,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1311](./HIPs/hip-1311-experiments-the-ab-plane.md) | Experiments — The A/B Plane | Standards Track | Interface | Draft |
 | [HIP-1312](./HIPs/hip-1312-company-the-formation-machine.md) | Company — The Formation Machine | Standards Track | Application | Draft |
 | [HIP-1313](./HIPs/hip-1313-usage-the-metered-record.md) | Usage — The Metered Record | Standards Track | Infrastructure | Draft |
+| [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) | Admin — The Operator Console | Standards Track | Infrastructure | Draft |
 
 ## HIP Process
 
@@ -358,9 +359,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 118 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 117 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 116 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 119 | Capability |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 118 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 117 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -370,8 +371,8 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 15 | Hanzo Service Conventions |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 15 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
+| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 9 | Hanzo IAM Authentication Standard |
-| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 9 | What Is Public |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 9 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
@@ -380,20 +381,20 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | 7 | In-Process Extension Runtime Standard |
 | [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 7 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
+| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 6 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |
 | [HIP-0068](./HIPs/hip-0068-ingress-standard.md) | 5 | Ingress Standard |
 | [HIP-0085](./HIPs/hip-0085-wallet-pq-account-type.md) | 5 | Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID) |
 | [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | 5 | ZAP-Native Transport & gRPC Elimination |
-| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 5 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | 5 | Integrations, Connectors & the Extension Runtime — One Registry, One Way |
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 117 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
-[HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) `iam` · [HIP-1041](./HIPs/hip-1041-authz.md) `authz` · [HIP-1046](./HIPs/hip-1046-risk.md) `risk` · [HIP-1047](./HIPs/hip-1047-security-scanning.md) `security` · [HIP-1048](./HIPs/hip-1048-team.md) `team` · [HIP-1049](./HIPs/hip-1049-validators.md) `validators` · [HIP-1103](./HIPs/hip-1103-audit-tamper-evident-trail.md) `audit` · [HIP-1115](./HIPs/hip-1115-compliance.md) `compliance` · [HIP-1134](./HIPs/hip-1134-kms-secret-custody.md) `kms` · [HIP-1161](./HIPs/hip-1161-wallets-key-custody.md) `wallets` · [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) `dataset` · [HIP-1200](./HIPs/hip-1200-account.md) `account` · [HIP-1202](./HIPs/hip-1202-entitlements.md) `entitlements` · [HIP-1261](./HIPs/hip-1261-label.md) `label` · [HIP-1262](./HIPs/hip-1262-reference.md) `reference`
+[HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) `iam` · [HIP-1041](./HIPs/hip-1041-authz.md) `authz` · [HIP-1046](./HIPs/hip-1046-risk.md) `risk` · [HIP-1047](./HIPs/hip-1047-security-scanning.md) `security` · [HIP-1048](./HIPs/hip-1048-team.md) `team` · [HIP-1049](./HIPs/hip-1049-validators.md) `validators` · [HIP-1103](./HIPs/hip-1103-audit-tamper-evident-trail.md) `audit` · [HIP-1115](./HIPs/hip-1115-compliance.md) `compliance` · [HIP-1134](./HIPs/hip-1134-kms-secret-custody.md) `kms` · [HIP-1161](./HIPs/hip-1161-wallets-key-custody.md) `wallets` · [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) `dataset` · [HIP-1200](./HIPs/hip-1200-account.md) `account` · [HIP-1202](./HIPs/hip-1202-entitlements.md) `entitlements` · [HIP-1261](./HIPs/hip-1261-label.md) `label` · [HIP-1262](./HIPs/hip-1262-reference.md) `reference` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin`
 
 **Intelligence** — models · agents · evaluation — the mind of the cloud
 

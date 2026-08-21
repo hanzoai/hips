@@ -13,12 +13,10 @@
 # already talks about that route -- usually the one that should adopt it.
 #
 # Re-seeded 2026-08-20 when the capability became the app (HIP-0139): the
-# vocabulary went 191 names to 116. The number below is deliberately not
-# restated in prose; run the script.
-# Four names the vocabulary carries that no HIP declares, each because it is
-# folding into a capability whose HIP already names its routes. A line leaves
-# here when its fold lands in cloud, not when someone writes a fifth spec.
-admin    # the operator's view of every capability, withheld from the public document (HIP-0139 §4.2); HIP-0106 names the route
-dns      # HIP-0049 names the route; the addresses fold into domain and cloudflare
-plugins  # folds to /v1/tools/plugins; HIP-1213 names the route
-skills   # folds to /v1/tools/skills; HIP-1213 names the route
+# vocabulary went 191 names to 116. No count is restated in prose here; run the
+# script.
+#
+# Nothing below. Every capability the vocabulary carries is declared by a HIP,
+# and the last four left together: admin gained one (HIP-1320), and dns, plugins
+# and skills stopped being capabilities when their addresses folded into domain,
+# admin and tools. The next new capability adds its line here.
