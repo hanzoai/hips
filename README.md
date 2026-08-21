@@ -388,7 +388,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 115 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -400,7 +400,7 @@ One capability, one HIP (HIP-0139). 115 of them, grouped as `capabilities.yaml` 
 
 **Data** — the stores every capability writes to and reads from
 
-[HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) `base` · [HIP-1112](./HIPs/hip-1112-catalog.md) `catalog` · [HIP-1117](./HIPs/hip-1117-crawl.md) `crawl` · [HIP-1132](./HIPs/hip-1132-index-search.md) `index` · [HIP-1147](./HIPs/hip-1147-search-hybrid-retrieval.md) `search` · [HIP-1154](./HIPs/hip-1154-sync-endpoint-reconciliation.md) `sync` · [HIP-1155](./HIPs/hip-1155-taxonomy-catalogue-shape.md) `taxonomy` · [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) `provisioning` · [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) `s3` · [HIP-1251](./HIPs/hip-1251-websearch-the-live-web.md) `websearch` · [HIP-1260](./HIPs/hip-1260-knowledge.md) `knowledge`
+[HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) `base` · [HIP-1112](./HIPs/hip-1112-catalog.md) `catalog` · [HIP-1117](./HIPs/hip-1117-crawl.md) `crawl` · [HIP-1132](./HIPs/hip-1132-index-search.md) `index` · [HIP-1147](./HIPs/hip-1147-search-hybrid-retrieval.md) `search` · [HIP-1154](./HIPs/hip-1154-sync-endpoint-reconciliation.md) `sync` · [HIP-1155](./HIPs/hip-1155-taxonomy-catalogue-shape.md) `taxonomy` · [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) `provisioning` · [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) `s3` · [HIP-1198](./HIPs/hip-1198-graph-assertion-plane.md) `graph` · [HIP-1251](./HIPs/hip-1251-websearch-the-live-web.md) `websearch` · [HIP-1260](./HIPs/hip-1260-knowledge.md) `knowledge`
 
 **Streams** — messaging · durable tasks · async orchestration
 
