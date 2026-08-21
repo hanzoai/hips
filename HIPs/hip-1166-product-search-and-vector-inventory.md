@@ -51,9 +51,9 @@ counts and timestamps; `GET /v1/search/stats` totals the documents across them;
 The credential is a typed input FIELD on every one of them, not middleware, and
 that is deliberate twice over. A header declared on the input appears in the
 document, in the command flag and in the tool schema, instead of being smuggled
-past every projection. And a key check hung on either subtree would have gated
-the neighbouring capabilities that own those roots — the confinement check
-refuses that composition, correctly.
+past every projection. And a key check hung on either subtree would gate the
+neighbouring capabilities that own those roots, which the confinement check
+refuses at compose time.
 
 This capability answers at two top-level addresses and serves nothing under
 `/v1/product`. Both pairs are carried by cloud's `openapi/misfiled.txt`. Because
@@ -90,11 +90,11 @@ an IAM claim, and the panel they feed is the operator console's.
 
 HIP-0139 §3.2 fixes where an operator view lives — an address family served by
 the capability itself and dropped from the public projection by address — and
-its own Security Considerations name this exact shape as the concrete defect:
-an operator surface offered as a customer method because the address said the
-product's name before it said whose view it was. So the two misfiled
-pairs MUST close by moving these reads to that depth, never by alias, and until
-they do the surface MUST hold the fleet-wide answers behind the deployment
+HIP-0139's Security Considerations name this exact shape as the concrete
+defect: an operator surface offered as a customer method because the address
+said the product's name before it said whose view it was. So the two misfiled
+pairs MUST close by moving these reads to that depth, never by alias; until they
+do, the surface MUST hold the fleet-wide answers behind the deployment
 credential and MUST NOT grow a fifth route on the customer side of the line.
 
 ### §5 Money
@@ -155,21 +155,20 @@ one owns "count", and only that.
 
 ## Rationale
 
-A shape-translating read with no state is a small thing to specify and an easy
-thing to file wrong, which is exactly what happened to its address. The honest
-description — a fleet-wide operator read behind a deployment credential — is
-what settles both questions at once: what it is, and which side of the public
-line it belongs on. Writing that down is worth more than the four handlers it
-describes.
+A shape-translating read with no state is a small thing to build and an easy
+thing to file wrong, because nothing about four handlers announces whose view
+they are. The honest description — a fleet-wide operator read behind a
+deployment credential — settles both questions at once: what it is, and which
+side of the public line it belongs on. That is worth more than the four
+handlers it describes.
 
 ## Security Considerations
 
-A wrong implementation here gives an attacker the shape of every tenant's
-corpus from one unauthenticated GET: how many
-indexes exist, what they are named, how many documents each holds, how many
-vectors and of what geometry. Names on a shared store are derived from an org,
-so a listing is also a census of who is on the platform and how much they have
-put there.
+A wrong implementation here gives an attacker the shape of every tenant's corpus
+from one unauthenticated GET: how many indexes exist, what they are named, how
+many documents each holds, how many vectors and of what geometry. Names on a
+shared store are derived from an org, so a listing is also a census of who is on
+the platform and how much they have put there.
 
 Two facts prevent it, and both must hold. The compare is constant time, so the
 key cannot be recovered a byte at a time. And an unset key fails CLOSED with

@@ -23,9 +23,10 @@ resource then holds. It is implemented in `hanzoai/cloud` at `apps/provisioning`
 
 ## Motivation
 
-Seven engines, asked for the same four ways. Without one address for the asking,
-each engine grows its own allocation surface, its own name-to-tenant derivation
-and its own idea of what a credential is scoped to — and the seventh copy of
+Seven engines, each asked for the same four ways. Without one address for the
+asking,
+each grows its own allocation surface, its own name-to-tenant derivation and its
+own idea of what a credential is scoped to — and the seventh copy of
 "derive a physical name from an org" is the one that folds two tenants onto one
 resource. The allocation is the part that must be identical across engines; what
 you do with the resource afterwards is the part that cannot be.
@@ -45,7 +46,7 @@ kind, the friendly name, the derived physical name, the endpoint, the declared
 size, the app instance it is bound to, and `secret_ref`. It NEVER carries a
 password. Two unique indexes do the work: `(org, kind, name)`, and
 `physical_name` globally across orgs — the second is the authoritative guard
-that two logical resources can never map onto one backend resource
+that two logical resources can never map onto one physical resource
 (`store.go:105-114`).
 
 ### §2 The address, and the seven kinds
@@ -102,33 +103,34 @@ Isolation is then by construction, two ways, one per strategy:
   namespace, which the operator reconciles. Its admin credential is naturally
   tenant-scoped because the org owns the whole instance. The assembled DSN is
   injected as `<KIND>_URL` into the addons Secret of the app instance named in
-  the create, so that instance switches onto the backend.
+  the create, so that instance switches onto it.
 - **Shared logical** — `s3`, `search`, `vector`. The resource is a logical one
-  inside an already-live shared backend, named `o<orgHash>_<name>` where the org
-  hash is FIXED WIDTH. The fixed width is the whole guard: it makes the
+  inside an engine that is already running, named `o<orgHash>_<name>` where the
+  org hash is FIXED WIDTH. The fixed width is the whole guard: it makes the
   org-to-name boundary unambiguous, so `(org, name)` is injective up to a
   64-bit collision and no two tenants fold onto one resource. The global
   `UNIQUE(physical_name)` index makes any residual fold fail closed with 409.
 
 The friendly name is validated at the door against
-`^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$`; every physical name and every backend
+`^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$`; every physical name and every engine
 identifier derives from it, so that regex is the injection guard.
 
-A kind whose backend cannot grant a per-tenant-safe credential MUST be refused
-with an honest 503 rather than granted a cross-tenant one
-(`unavailableKinds`, empty today because the four that could not be scoped on a
-shared backend moved to the dedicated strategy). A kind is never both refused
-and dedicated.
+A kind whose engine cannot grant a per-tenant-safe credential MUST be refused
+with an honest 503 rather than granted a cross-tenant one (`unavailableKinds`,
+empty today: the four kinds a shared engine cannot scope a per-tenant role on
+take the dedicated strategy instead). A kind is never both refused and
+dedicated.
 
 ### §4 Money
 
-Metered. A create is gated BEFORE anything is created: the fee is
-`cloud.ResourceFeeCents("CLOUD_PROVISION_FEE_CENTS", kind)` — a per-kind
-operator knob over a global one over `cloud.DefaultResourceFeeCents` — and an
-unfunded org gets 402, an unreachable ledger 503 in the fail-closed posture,
-with nothing provisioned either way. The debit lands after success through the
-one shared `cloud.ResourceMeter`, labelled with the kind. A fee of 0 makes a
-kind free and therefore un-gated. Reads and drops are free.
+Metered, and the unit is one create. The fee is
+`cloud.ResourceFeeCents("CLOUD_PROVISION_FEE_CENTS", kind)`: a per-kind operator
+knob over a global one over `cloud.DefaultResourceFeeCents`, a dollar. The gate
+runs BEFORE anything is created — an unfunded org gets 402, an unreachable
+ledger 503 in the fail-closed posture, and nothing is provisioned either way.
+The debit lands after success through the one shared `cloud.ResourceMeter`,
+labelled with the kind. A fee of 0 makes a kind free and therefore un-gated.
+Reads and drops are free.
 
 A dedicated instance also carries a recurring footprint charge: one GB-day tick
 per `dedicatedMeterInterval`, priced from the row's declared size at
@@ -159,7 +161,7 @@ own. The seal of a generated credential is recorded by the custody plane
 It derives from no upstream code: it forks nothing, embeds no engine and mirrors
 no project. It persists through `github.com/hanzoai/sqlite` and
 `github.com/hanzoai/cek`, seals through the custody client, and reaches each
-backend over that backend's own protocol — an index create, a collection put, a
+engine over that engine's own protocol — an index create, a collection put, a
 bucket make, or a CR the operator reconciles. The engines themselves are
 specified where they are deployed; nothing of them is linked into this app.
 
@@ -174,9 +176,11 @@ three ways, and each side is somebody else's:
   derivation, so a bucket allocated here is browsable there. They MUST derive it
   identically or the tenant boundary drifts between allocate and operate, which
   is worse than either side being wrong alone.
-- `search`, `vector` — a ranked answer over an org's own corpora is `search` at
-  `POST /v1/search` (HIP-1147); the inventory of the two shared stores is
-  `product` (HIP-1166). Neither is this capability's address.
+- `search`, `vector` — the allocated index or collection is reached at the
+  endpoint the create returned. What the document publishes at those two
+  addresses belongs to others: the inventory of the two shared stores is
+  `product` (HIP-1166), and a ranked answer over an org's own corpora is
+  `search` at `POST /v1/search` (HIP-1147).
 - `kv`, `sql`, `docdb`, `datastore` — reached only over the engine's own wire
   protocol, at the host, port and credential the create returned. There is no
   HTTP data plane for them, and there MUST NOT be one under this capability: a
@@ -197,9 +201,9 @@ in one function and one unique index rather than in seven implementations of an
 intention.
 
 The two strategies exist because a credential's scope is a property of the
-backend, not of this control plane. A shared backend that cannot mint a
-per-tenant credential can only be given a cross-tenant one, so the four kinds
-that could not be scoped got their own instance instead of a shared grant. The
+engine, not of this control plane. An engine that cannot mint a per-tenant
+credential can only be given a cross-tenant one, so the four kinds a shared
+engine cannot scope get their own instance rather than a shared grant. The
 mechanism that refuses an unscopable kind stays even though nothing is refused
 today, because the next kind is the one that needs it.
 
