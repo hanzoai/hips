@@ -1,23 +1,23 @@
 ---
 hip: 1110
-title: Campaign — One Go-To-Market Push
+title: Campaigns — One Go-To-Market Push
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: campaign
+capability: campaigns
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0126, HIP-0139
 ---
 
-# HIP-1110: Campaign — One Go-To-Market Push
+# HIP-1110: Campaigns — One Go-To-Market Push
 
 ## Abstract
 
 A campaign is one go-to-market push across paid, organic and email at once: a
 value — {name, audience, content[], schedule, budget, channels[], status} — that
 launches to every channel and reads back as one funnel with each channel's
-spend. `/v1/campaign` is that value's surface, implemented in `hanzoai/cloud`
+spend. `/v1/campaigns` is that value's surface, implemented in `hanzoai/cloud`
 `apps/campaign`. This HIP states what the capability owns (the campaign record,
 nothing else), what it composes (the connector plane, the channel executors, the
 analytics plane), and what it refuses to be (a second credential path, a second
@@ -39,7 +39,7 @@ as in RFC 2119.
 
 ### §1 The store
 
-The capability owns one store: the system namespace's `campaign` SQLite file,
+The capability owns one store: the system namespace's `campaigns` SQLite file,
 opened once for every org (`apps/campaign/store.go:151`). Tenant isolation is
 the `org` column, enforced on every query, and the table leads its lookup
 indexes with `org` so isolation is a physical property of the index, not only a
@@ -49,7 +49,7 @@ row atomically.
 
 ### §2 The addresses
 
-Every route is under `/v1/campaign`: the collection (list, create), the record
+Every route is under `/v1/campaigns`: the collection (list, create), the record
 (get, update, delete), `summary`, and the verbs `launch`, `pause`, `metrics`,
 and channel add/remove (`apps/campaign/campaign.go:45-57`). All operations are
 typed through the registry (`apps/campaign/typed.go`); the wire test

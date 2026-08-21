@@ -81,7 +81,7 @@ What an autonomous firm actually requires, and where it lives:
 | **Money** | Hold, move, settle | `/v1/finance`, `/v1/x402`, `/v1/wallets` |
 | **Commerce** | Charge for things | `/v1/commerce`, `/v1/billing`, `/v1/pricing` |
 | **Product** | Build and run software | `/v1/git`, `/v1/deploy`, `/v1/paas`, `/v1/functions` |
-| **Demand** | Find and keep customers | `/v1/guide`, `/v1/crm`, `/v1/campaign` |
+| **Demand** | Find and keep customers | `/v1/guide`, `/v1/crm`, `/v1/campaigns` |
 | **Observation** | Know its own state | `/v1/o11y`, `/v1/event`, `/v1/usage` |
 | **Compliance** | Stay legal | `/v1/compliance`, `/v1/audit`, `/v1/sbom` |
 | **Custody** | Hold secrets | `/v1/kms` |
@@ -327,7 +327,7 @@ meter, invoice, collect, gate on entitlement, pay partners.
 enters at `/v1/git` and leaves as something serving traffic, with no vendor in
 the path.
 
-**Demand.** `/v1/guide` — the GTM autopilot — plus `/v1/crm`, `/v1/campaign`,
+**Demand.** `/v1/guide` — the GTM autopilot — plus `/v1/crm`, `/v1/campaigns`,
 `/v1/marketing`, `/v1/ads`, `/v1/social`, `/v1/content`.
 
 **Observation.** `/v1/o11y`, `/v1/event`, `/v1/usage`, `/v1/costs`. A firm that cannot read its own state cannot govern itself, and

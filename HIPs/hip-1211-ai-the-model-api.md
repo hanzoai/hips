@@ -61,7 +61,7 @@ Six roots are deleted, not moved: `/v1/documents` and `/v1/query` and
 `/v1/query_multiple` are compatibility spellings of routes that already exist
 under rag; `/v1/dev-bridge` is desktop tooling that spawns a local child
 process; `/v1/install-patch` is a device-management remnant; `/v1/wecom-bot` is
-a bot channel that belongs to `bot` if it is ever productized. There is no
+a bot channel that belongs to `bots` if it is ever productized. There is no
 alias for any of them. Today's router still serves each satellite at its old
 root out of the `/v1` remainder; every such pair is a line in `hanzoai/cloud`
 `openapi/misfiled.txt` until the fold lands. The route moves land in the

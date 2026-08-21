@@ -1,20 +1,20 @@
 ---
 hip: 1180
-title: Link — The Account Registry
+title: Links — The Account Registry
 author: Hanzo AI
 type: Standards Track
 category: Core
-capability: link
+capability: links
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1180: Link — The Account Registry
+# HIP-1180: Links — The Account Registry
 
 ## Abstract
 
-`link` is the unified AI login manager's registry: the org+user-scoped record of
+`links` is the unified AI login manager's registry: the org+user-scoped record of
 WHICH provider accounts — Claude Max, ChatGPT Plus, a Hanzo API key, a raw
 provider key — a developer has signed into, ON WHICH MACHINES, with each
 account's latest usage snapshot. It answers at `/v1/links`. It holds no
@@ -44,7 +44,7 @@ kind, status, last-seen and latest usage snapshot. A device is the
 of its own — so there is no device-to-link join and no orphan device to collect
 (`apps/link/link.go:1-12`).
 
-The durable store is ONE encrypted SQLite file, the deployment's own `link`,
+The durable store is ONE encrypted SQLite file, the deployment's own `links`,
 opened through the one opener so it is born encrypted and comes back with the
 single-connection cap already applied (`apps/link/store.go:39-42`). It carries
 two tables whose meanings never mix. `links` holds one row per binding under the
@@ -197,7 +197,7 @@ usage collector registers, by value — a shared vocabulary, not shared code.
 The neighbour to confuse this with is `billing`, and the split is usage versus
 money.
 
-- **billing** is the ORG's money door — balance, spend, cards. `link` is the
+- **billing** is the ORG's money door — balance, spend, cards. `links` is the
   PERSON's account door — which providers they signed into and what those
   accounts consumed. `GET /v1/billing/usage/accounts` is billing's address and
   reads this capability's per-account breakdown at the same `(org, subject)`
@@ -205,7 +205,7 @@ money.
   is commerce's ledger and never a counter here. A number under `/v1/links` is
   USAGE; a number under `/v1/billing` is MONEY; they MUST NOT be added.
 - **iam** (HIP-0026) is who the caller is at Hanzo, and the only thing that
-  authenticates anyone. `link` is who the caller is at somebody ELSE, and it
+  authenticates anyone. `links` is who the caller is at somebody ELSE, and it
   authenticates nobody. A row here grants access to nothing, here or upstream.
 - **The connections plane** (`/v1/ai/connections/{provider}`) owns a linked
   account's LIFECYCLE: the authorization dance, sealing the secret per org, and

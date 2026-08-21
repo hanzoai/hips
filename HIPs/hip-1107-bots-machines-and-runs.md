@@ -1,20 +1,20 @@
 ---
 hip: 1107
-title: Bot — Your Machines and the Runs on Them
+title: Bots — Your Machines and the Runs on Them
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: bot
+capability: bots
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139
 ---
 
-# HIP-1107: Bot — Your Machines and the Runs on Them
+# HIP-1107: Bots — Your Machines and the Runs on Them
 
 ## Abstract
 
-`/v1/bot` is an org's own machines and the runs on them. A bot node on someone's
+`/v1/bots` is an org's own machines and the runs on them. A bot node on someone's
 machine dials in and holds a socket; the org lists its connected nodes and
 invokes commands on one, authorized once at the socket. A bot run is the other
 half: a task executing on a surface this platform operates — a desktop or
@@ -72,24 +72,24 @@ a pod-internal name is not (`apps/bot/run.go`).
 
 Three route families under one prefix, which is what makes one router safe here.
 
-**The node plane.** `GET /v1/bot/nodes` is typed. Three routes are declared with
+**The node plane.** `GET /v1/bots/nodes` is typed. Three routes are declared with
 prose beside their wire facts (`apps/bot/node.go`, held closed by
-`apps/bot/typed_wire_test.go`): `GET /v1/bot/connect` is a WebSocket upgrade —
+`apps/bot/typed_wire_test.go`): `GET /v1/bots/connect` is a WebSocket upgrade —
 101 and then a duplex frame stream for the life of the node, which no typed
-operation can declare; `POST /v1/bot/nodes/{id}/invoke` refuses with a domain
+operation can declare; `POST /v1/bots/nodes/{id}/invoke` refuses with a domain
 body a client switches on, identical for a pre-flight refusal and the node's own
 denial, and needs the caller's device header no `In` field may carry;
-`POST /v1/bot/peer/invoke` is the replica-to-replica forward, plain-text
+`POST /v1/bots/peer/invoke` is the replica-to-replica forward, plain-text
 refusals and a body bound a typed op cannot see.
 
-**The run plane.** `GET /v1/bot/runs` answers `{bots:[{runId, task, surface,
+**The run plane.** `GET /v1/bots/runs` answers `{bots:[{runId, task, surface,
 status, sessionUrl, startedAt}]}`. The array is always present, so an org with
 no runs serializes as `{"bots":[]}` and never as null; `status` is the
-executor's word, and `running` when it names none. `POST /v1/bot/runs/{runId}/stop`
+executor's word, and `running` when it names none. `POST /v1/bots/runs/{runId}/stop`
 answers `{runId, status}` with the run's terminal state, and the run id is
 URL-borne only — it has never been accepted in a body. Both are typed.
 
-`POST /v1/bot/runs` is declared with prose beside the route and answers 501 to
+`POST /v1/bots/runs` is declared with prose beside the route and answers 501 to
 every call. It cannot be a value because it has no success to publish: a typed
 operation declares a 200 body, and typing this one would declare a body it can
 never send, then mint a tool in the agent list and a command in the CLI for an
@@ -106,22 +106,22 @@ acknowledged, MUST NOT hand back a session address for a session that does not
 exist, and MUST NOT charge for either. It gets typed in the change that can
 prove a bot boots, and not before.
 
-**The executor's ops face.** `/v1/bot/runtime/*` relays `@hanzo/bot`'s own
+**The executor's ops face.** `/v1/bots/runtime/*` relays `@hanzo/bot`'s own
 operational paths verbatim, the prefix stripped on the way out
 (`apps/bot/relay.go`). A liveness probe is not a tenant-scoped resource, so it
 stays a relay rather than being reimplemented in Go, and it is not a public
 address: the public rule drops a relay door (HIP-0135), so it reaches no
 generated client and no tool list. The segment is load-bearing. The relay was
-once `All("/v1/bot/*")` in a second app, a greedy wildcard over the whole of a
+once `All("/v1/bots/*")` in a second app, a greedy wildcard over the whole of a
 sibling's subtree held apart only by two manifest rows and specificity; from
-`/v1/bot/runtime` it cannot reach a sibling at all.
+`/v1/bots/runtime` it cannot reach a sibling at all.
 
 ### §3 The boundary
 
 **visor** (HIP-1172) owns the bot MACHINE — a box you rent, at
 `/v1/visor/compute/bots`. This capability owns the bot RUN. Two values, two
 names, and the schema namespace is flat, which is why the row type here is
-qualified rather than called `bot`.
+qualified rather than called `bots`.
 
 **coding** dispatches its own tasks to the same executor over the same
 transport. That is a shared road, not a shared surface: each caller owns its own

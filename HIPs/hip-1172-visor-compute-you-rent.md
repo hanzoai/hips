@@ -64,7 +64,7 @@ somewhere else, and the split is clean at every neighbour:
 - **sandboxes** (HIP-1146) is the compute primitive for somebody else's code —
   a pod whose lifetime is a request, on capacity that already exists. visor
   never executes a customer's code; it hands back a machine and stops.
-- **bot** owns `/v1/bot/runs`, which is a bot doing work on a desktop, live: a
+- **bot** owns `/v1/bots/runs`, which is a bot doing work on a desktop, live: a
   session. `/v1/visor/compute/bots` is a machine of kind bot plus its agent
   binding — rented hardware bootstrapped with a runtime. Two nouns share a word
   and do not share an address.

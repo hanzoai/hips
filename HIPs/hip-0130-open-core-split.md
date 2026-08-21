@@ -221,7 +221,7 @@ which was derived independently from "what does a dev's app need on line one".
 Two derivations, one answer, again.
 
 **Hanzo's own business applications are NOT developer primitives.** `crm`,
-`marketing`, `social`, `ads`, `campaign`, `books`, `esign`, `dataroom`,
+`marketing`, `social`, `ads`, `campaigns`, `books`, `esign`, `dataroom`,
 `captable`, `company`, `legal`, `help`, `content`, `tracker`, `team`,
 `leaderboard`, `benchmark`, `research`, `experiments`, `guide`, `product`,
 `sbom`, `do` — publishing these hands a competitor our entire product suite and
@@ -583,7 +583,7 @@ extension braided in.
 
 The recurring shape: **the OSS side records a fact, the private side prices
 it.** `usage` records tokens; `metering` rates them. `ads` launches a campaign;
-`campaign` meters it. That is one interface repeated, not seventeen designs —
+`campaigns` meters it. That is one interface repeated, not seventeen designs —
 and it is the right seam because recording and pricing are genuinely different
 concerns that were braided together for convenience.
 

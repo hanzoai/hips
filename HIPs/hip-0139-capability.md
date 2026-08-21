@@ -82,16 +82,32 @@ the defect HIP-0106 §4.2 names.
 
 1. One word, lowercase ASCII, the noun people say for the thing. `books`, not
    `accounting-ledger`; `tel`, not `telephony-gateway`.
-2. Singular, as a rule: the capability is the faculty (`ai`, `plan`,
-   `link`, `web3`, `dataset`, `visor`), and the plural belongs to resource
-   paths under it. An EXISTING plural name stands where it already is the
-   word (`agents`, `books`, `tasks`); a capability is never renamed for
-   number alone, in either direction. The OpenAI- and Anthropic-compatible
-   wire keeps its own plurals — those addresses are §3.2's, not this rule's.
+2. **Number follows the contract, not taste.** A capability is PLURAL when a
+   caller can address ONE member by id under its root — `GET /v1/<name>`
+   returns the set, `POST /v1/<name>` adds one, and the member hangs at
+   `/v1/<name>/{id}`. It is SINGULAR when the contract offers no such member.
+
+   This is what every API a caller already knows spells out (`/v1/models`,
+   `/v1/files`, `/v1/messages`, `/v1/charges`), and it is what hypermedia
+   expects: a collection is a resource with an address and its members live
+   beneath it. `bots`, `agents`, `tasks`, `books`, `links`, `datasets`,
+   `campaigns`, `networks` are collections and take the plural.
+
+   The singular roots are the ones with no addressable member, and they are
+   not oversights: `framework` is a metadata-driven runtime whose collection
+   is the doctype; `reference` names published lookup data, not a set of
+   references; `sync` is the verb, and the capability IS the act; `sbom` and
+   `kv` are initialisms under rule 5, where a wildcard is not a member.
+
+   A capability is renamed for number when the contract disagrees with the
+   name — never for taste, and never in a sweep that does not first ask
+   whether a member is addressable. The OpenAI- and Anthropic-compatible
+   wire keeps its own spellings regardless; those addresses are §3.2's.
 3. No compound words. A hyphen or an underscore in a name is a refusal at
    the gate.
 4. No two capabilities whose names differ only in number. `bot` and `bots`
-   are one capability, and rule 2 keeps the singular.
+   are one capability, and rule 2 decides which — here the plural, because a
+   run is addressable at `/v1/bots/{id}`.
 5. An abbreviation is a word only when it is the word people say: `ai`,
    `iam`, `kms`, `dns`, `crm`, `seo`, `mq`, `o11y`, `rpc`, `s3`, `kv`, `sql`,
    `sbom`, `lsp`, `x402`. A new one MUST be argued for in the capability's HIP.
@@ -227,7 +243,7 @@ which:
      address.
 
    All three, or the rename is not done. This list was the router's half alone
-   and four renames shipped green against it: `storage`→`s3`, `zt`→`network`,
+   and four renames shipped green against it: `storage`→`s3`, `zt`→`networks`,
    `automations`→`auto`, `analytics`→`event` each landed in the manifest while
    the vocabulary and the corpus went on naming the old word. Nothing caught
    them, and the reason is §5: `coverage.py` measures the corpus against

@@ -40,6 +40,13 @@
 # DOCUMENT, so an app serving no HTTP operation can never appear in it, and this
 # gate read only that file. They are not new; the ability to see them is.
 # kafka was in the same position and now has HIP-1323.
+#
+# `bots` was here too, briefly, as a name this repo could not settle: cloud had
+# renamed bot -> bots for number alone, which HIP-0139 §2 forbade. The rule was
+# the thing that was wrong. §2.2 now decides number by the CONTRACT -- plural
+# when a caller can address one member by id under the root -- and by that rule
+# bots, links, datasets, campaigns and networks are all collections. HIP-1107
+# declares `bots`, so the line is gone rather than resolved in its favour.
 
 # Consumes the commerce stream and calls content.EnsureCatalogAsset once per
 # created product. An in-process consumer with no address and no store of its
@@ -58,20 +65,5 @@ rollingcap
 # reaches this through, and that is the HIP that owes the contract.
 zen
 
-# CONTESTED, and the only line here that is not settled. cloud renamed bot ->
-# bots on 2026-08-21 (cloud@35a75797, "a collection is a plural noun") for
-# NUMBER ALONE. HIP-0139 §2.2 forbids exactly that -- "a capability is never
-# renamed for number alone, in either direction" -- and §2.4 names this pair:
-# "`bot` and `bots` are one capability, and rule 2 keeps the singular." HIP-1107
-# specifies it as `bot` and still does.
-#
-# The rename cites §3 (the app name is the address's word) and §3 is satisfied
-# either way; it is §2 that decides the number, and §2 was not reckoned with.
-# The REST convention the commit argues from is real and §2.2 already answered
-# it: plurals belong to resource paths under the capability, not to the
-# capability. Resolving this means cloud returns to `bot`, or a HIP amends
-# §2.2/§2.4 -- which would also reopen `agents`, `tasks` and `books`, and §2.2
-# exists to stop that churn. Not resolvable inside this repo.
-bots
 
 plugins
