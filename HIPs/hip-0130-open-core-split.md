@@ -839,7 +839,7 @@ transfer.
    env-overridable, the image path is hardcoded). Plus `Dockerfile`,
    `Makefile:19`, `helm/cloud/values.yaml:8`, `deploy/compose.yml:17`,
    `hanzo.yml:21`. Per `~/work/CLAUDE.md` the canonical target is
-   `registry.hanzo.ai`; the split is the moment to finish that move.
+   `oci.hanzo.ai`; the split is the moment to finish that move.
 
 4. **Module path — the blast radius is 12 repos, not 51 files.** Raw file
    counts are inflated by ~16 live worktrees of the single `cloud` repo (this

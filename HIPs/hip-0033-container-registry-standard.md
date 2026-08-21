@@ -458,9 +458,9 @@ Registry authentication flows through Hanzo IAM. The Docker registry v2
 authentication protocol works as follows:
 
 ```
-1. Client attempts: docker pull registry.hanzo.ai/myimage
+1. Client attempts: docker pull oci.hanzo.ai/hanzoai/myimage
 2. Registry returns: 401 with WWW-Authenticate header
-3. Client requests token: GET /api/registry/token?service=registry.hanzo.ai&scope=repository:myimage:pull
+3. Client requests token: GET /v1/iam/registry/token?service=oci.hanzo.ai&scope=repository:hanzoai/myimage:pull
    (with Basic auth credentials)
 4. IAM validates credentials against user database
 5. IAM returns signed JWT with access claims
@@ -474,7 +474,7 @@ IAM implements this via `GetRegistryToken` (see `controllers/registry_token.go`)
 - Admin users receive all requested actions (pull, push, delete)
 - Non-admin users receive pull-only access regardless of request
 - Returns a 15-minute RS256-signed JWT with access claims
-- Registry verifies tokens via the JWKS endpoint at `/api/registry/jwks`
+- Registry verifies tokens via the JWKS endpoint at `/v1/iam/registry/jwks`
 
 ### Signing Key Management
 

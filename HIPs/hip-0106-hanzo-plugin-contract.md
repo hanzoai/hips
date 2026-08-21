@@ -762,7 +762,7 @@ jobs:
     secrets: inherit
 ```
 
-- Images push to **`registry.hanzo.ai`**, org-namespaced `<host>/<org>/<app>`.
+- Images push to **`oci.hanzo.ai`**, org-namespaced `<host>/<org>/<app>`.
   Registries never mix. `ghcr.io/<org>` remains only for already-published OSS
   deps external users pull.
 - The only GitHub secrets are `KMS_CLIENT_ID` / `KMS_CLIENT_SECRET` plus the
