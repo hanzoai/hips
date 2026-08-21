@@ -166,7 +166,7 @@ project's code.
 
 ### §8 The command projection
 
-`/v1/commands` serves every operation the API answers reduced to what running
+`/v1/openapi/commands` serves every operation the API answers reduced to what running
 it BY NAME needs — a service and command token, a method and path, the prose
 lifted from the handler, path parameters as positional arguments and the rest
 as typed flags. Surfaces that let a person run an operation by name — a `⌘K`
@@ -183,7 +183,7 @@ beside the code that makes it.
   the two addresses is asked for first renders the document and the other is
   a projection of exactly those bytes (`openapi/command.go:152`). A second
   build that could differ is the whole defect this avoids.
-- The address is `/v1/commands` (`openapi/command.go:81`), unauthenticated for
+- The address is `/v1/openapi/commands` (`openapi/command.go:81`) — under the capability that projects it, beside the document and the door —, unauthenticated for
   §1's reason: a client reads the contract before it holds a credential, and
   a list of names grants nothing. Both the document and this projection are
   operations with no owning subsystem, so each declares itself
