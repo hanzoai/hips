@@ -17,19 +17,12 @@
 # restated in prose; run the script.
 
 # applications
-bots
-link
 
 # chain
-web3
 
 # commerce
-plan
 
 # data
-product
-provisioning
-storage
 
 # identity
 dataset
@@ -37,11 +30,7 @@ dataset
 # intelligence
 
 # observability
-analytics
 
 # platform
-visor
-zt
 
 # streams
-automations
