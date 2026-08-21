@@ -115,7 +115,7 @@ pull. All typed, none declared.
 It is free, in those words: the plugin declares `Price: cloud.Free`
 (plugin/mq/main.go:23), and no meter runs behind any route.
 
-It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. It emits nothing to observability beyond the request
 span every route gets; the degraded state is answered on the health operation,
 not exported.

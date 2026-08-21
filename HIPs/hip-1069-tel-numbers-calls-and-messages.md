@@ -117,7 +117,7 @@ It is free, in those words: the plugin declares `Price: cloud.Free`
 carrier; no meter runs here today, and a deployment that resells them prices
 them outside this surface.
 
-It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it, and it emits nothing to observability beyond the
 request span every route gets.
 

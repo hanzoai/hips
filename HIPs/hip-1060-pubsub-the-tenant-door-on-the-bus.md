@@ -118,7 +118,7 @@ It is free, in those words: the plugin declares `Price: cloud.Free`
 (plugin/pubsub/main.go:21), and no meter runs behind any route.
 
 It publishes no events of its own — it is what events ride — so a customer's
-webhooks (HIP-0061) receive nothing from it, and it emits nothing to
+webhooks (HIP-1310) receive nothing from it, and it emits nothing to
 observability beyond the request span every route gets.
 
 The stage is `ga` — the manifest row declares none, and absent is `ga`

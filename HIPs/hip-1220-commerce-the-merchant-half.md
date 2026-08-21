@@ -102,7 +102,7 @@ is the point all four run through.
 ### §6 Events and observability
 
 No `commerce.<noun>.<verb>` events reach the platform bus, so a customer's
-webhooks (HIP-0061) receive nothing from it directly. A settled charge is
+webhooks (HIP-1310) receive nothing from it directly. A settled charge is
 stated once, as the analytics event `order_completed` through the same capture
 core `POST /v1/event` reaches (`apps/commerce/emit.go:24-31`, `:58`, `:80`) —
 counted by the same lenses, forwarded by the same destinations fan-out. The

@@ -131,7 +131,7 @@ refuses everywhere else.
 It is free, in those words: the plugin declares `Price: cloud.Free`
 (plugin/tasks/main.go:25), and no meter runs behind any route.
 
-It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. It emits nothing to observability beyond the request
 span every route gets: the run history is read through this door from the
 engine's own record, not from exported spans.

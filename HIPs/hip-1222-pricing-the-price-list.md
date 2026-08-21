@@ -109,7 +109,7 @@ plans capability and answer the same data (`apps/pricing/pricing.go:8-10`).
 
 It is free, in those words: `Price: cloud.Free` (`plugin/pricing/main.go:22`).
 Reads are open to any authenticated caller — it is the public price list. It
-publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it, and it emits nothing to observability beyond the
 request span every route gets.
 

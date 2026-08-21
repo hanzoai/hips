@@ -139,7 +139,7 @@ It is free, in those words: the plugin declares `Price: cloud.Free`
 (plugin/channels/main.go:21). The model completion a turn spends is metered
 where inference is metered, behind the AI door, not here.
 
-It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. Beyond the request span every route gets, the turn's
 span comes from this package's own tracer, `hanzo.channels`
 (apps/channels/turn.go:35).

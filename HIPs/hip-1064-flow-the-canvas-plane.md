@@ -129,7 +129,7 @@ refused for and the number they are charged cannot drift — and the debit lands
 through the resource meter after the upstream returned: work that never ran is
 work nobody owes for.
 
-It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it, and it emits nothing to observability beyond the
 request span every route gets.
 

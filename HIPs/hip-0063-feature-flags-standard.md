@@ -1,26 +1,39 @@
 ---
 hip: 0063
-title: Feature Flags & Experimentation Standard
+title: Feature Flags Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
 status: Draft
 created: 2026-02-23
-requires: HIP-0017, HIP-0139
-capability: [experiments, flags]
+requires: HIP-0017, HIP-0139, HIP-1311
+capability: flags
 ---
 
 
-# HIP-0063: Feature Flags & Experimentation Standard
+# HIP-0063: Feature Flags Standard
 
 ## Abstract
 
-This proposal defines the feature flag and experimentation platform for the Hanzo ecosystem. Hanzo Flags provides boolean flags, multivariate flags, percentage rollouts, user targeting, and a full A/B experimentation engine with statistical significance analysis -- all with first-class support for AI-specific experiments like model routing, prompt template testing, and RAG strategy comparison.
+This proposal defines the feature flag platform for the Hanzo ecosystem. Hanzo
+Flags provides boolean flags, multivariate flags, percentage rollouts and user
+targeting — the primitive every other plane composes, including the AI-specific
+splits that make model routing, prompt selection and retrieval strategy
+switchable without a deploy.
 
-Evaluation semantics are PostHog-compatible — the embedded evaluator is pinned to a 621-case parity table (`apps/flags/engine.go:11-13`) — so a PostHog-shaped client repoints by changing the host. It integrates with Hanzo Analytics (HIP-0017) for experiment metric collection; an OpenFeature adapter, if published, wraps the generated SDK rather than defining the wire.
+Evaluation semantics are PostHog-compatible — the embedded evaluator is pinned
+to a 621-case parity table (`apps/flags/engine.go:11-13`) — so a PostHog-shaped
+client repoints by changing the host. An OpenFeature adapter, if published,
+wraps the generated SDK rather than defining the wire.
 
-**Evaluator**: [github.com/hanzoai/flags](https://github.com/hanzoai/flags) — the stateless Go engine (`flags/go`) compiled into the cloud binary
-**Serving**: `apps/flags` and `apps/experiments` in `hanzoai/cloud`, at `/v1/flags` and `/v1/experiments` — there is no standalone flags service, port or image; SDK access is the generated cloud SDKs (HIP-1030)
+The A/B plane that composes this primitive — the experiment registry, its
+analysis and its decision — is the separate `experiments` capability, HIP-1311.
+
+**Evaluator**: [github.com/hanzoai/flags](https://github.com/hanzoai/flags) — the
+stateless Go engine (`flags/go`) compiled into the cloud binary
+**Serving**: `apps/flags` in `hanzoai/cloud`, at `/v1/flags` — there is no
+standalone flags service, port or image; SDK access is the generated cloud SDKs
+(HIP-1030)
 
 ## Motivation
 
@@ -54,7 +67,7 @@ For AI inference routing, stale flags mean requests routed to the wrong model --
 
 ## Specification
 
-### The shipped surface — two capabilities, two prefixes
+### The shipped surface
 
 **flags** (`manifest/apps.go:47`) serves seven operations under `/v1/flags`
 (`apps/flags/routes.go:47-60`): `POST /v1/flags` and `POST /v1/flags/decide`
@@ -70,35 +83,23 @@ of (definitions JSON, context JSON) answering in microseconds
 every pod evaluates from its own hot copy, which is what makes the p99 targets
 below ordinary rather than aspirational.
 
-**experiments** (`manifest/apps.go:404`) serves six operations under
-`/v1/experiments`: `GET|POST /v1/experiments`, `GET /{id}`,
-`GET /{id}/assign`, `POST /{id}/analyze`, `POST /{id}/decide`, plus
-`/health`. It is a composition, not a fourth engine: it owns only the
-experiment registry — one per-org SQLite file,
-`{DataDir}/orgs/{slug}/experiments.db` (`apps/experiments/store.go:3-9`) —
-and composes assignment from flags (a deterministic rollout hash, so there is
-no assignment store), outcomes from the analytics warehouse, and evidence
-from research's immutable sample rows.
+The credential is the org's ordinary bearer per HIP-0026 — there is no `hf_*`
+key family. The admin plane is not a second prefix: definition writes are
+org-scoped on the same surface, and the platform's own switches are the
+reserved platform store the SuperAdmin flips from the cockpit through the same
+engine (`apps/flags/flags.go:21-27`).
 
-The credential on both is the org's ordinary bearer per HIP-0026 — there is
-no `hf_*` key family. The admin plane is not a second prefix: definition
-writes are org-scoped on the same surface, and the platform's own switches
-are the reserved platform store the SuperAdmin flips from the cockpit through
-the same engine (`apps/flags/flags.go:21-27`).
-
-Stated for HIP-0139 §6: both capabilities are **free**, said in those words
-(`plugin/flags/main.go:21`, `plugin/experiments/main.go:22` — `Price:
-cloud.Free`), and `/v1/flags/` is on the spend gate's never-refuse list
-(`spend.go:433`) because the kill switch must be observable by an unpaid org.
-Both publish **no events** on the bus — exposure lands as analytics events
-from the surfaces that serve traffic, not from here — and emit nothing to
-observability beyond the request span. Both are **ga** (HIP-0139 §8): flags
-is the mechanism stage-gating itself rides, so it cannot sit behind a flag.
-Upstream: flags embeds `github.com/hanzoai/flags/go`, our own implementation
-of PostHog-compatible evaluation semantics, pinned to the prior
-implementation's answers by a 621-case parity table
-(`apps/flags/engine.go:11-13`); experiments derives from none — its
-significance test is stdlib math.
+Stated for HIP-0139 §6: the capability is **free**, said in those words
+(`plugin/flags/main.go:21` — `Price: cloud.Free`), and `/v1/flags/` is on the
+spend gate's never-refuse list (`spend.go:433`) because the kill switch must be
+observable by an unpaid org. It owns the definition store above and no other.
+It publishes **no events** on the bus, so a customer's webhooks (HIP-1310)
+receive nothing from it, and it emits nothing to observability beyond the
+request span. It is **ga** (HIP-0139 §8): flags is the mechanism stage-gating
+itself rides, so it cannot sit behind a flag. Upstream: it embeds
+`github.com/hanzoai/flags/go`, our own implementation of PostHog-compatible
+evaluation semantics, pinned to the prior implementation's answers by a
+621-case parity table (`apps/flags/engine.go:11-13`).
 
 ### Flag Types
 
@@ -287,12 +288,6 @@ GET    /v1/flags/defs/{key}    # read one
 PUT    /v1/flags/defs/{key}    # create / update (versioned)
 DELETE /v1/flags/defs/{key}    # delete
 GET    /v1/flags/activity      # the audit log of definition changes
-
-GET    /v1/experiments               # list experiments
-POST   /v1/experiments               # create (writes the multivariate flag def)
-GET    /v1/experiments/{id}          # read, with results
-POST   /v1/experiments/{id}/analyze  # run the analysis fold
-POST   /v1/experiments/{id}/decide   # stop, lock the winner (rewrites the def's weights to 100%)
 ```
 
 Every mutation to a flag definition is recorded append-only with the acting
@@ -302,103 +297,13 @@ rollout percentage at 3am?". The platform's own operational switches are the
 one cross-tenant surface: they live in the reserved platform store and only a
 SuperAdmin writes them (`apps/flags/flags.go:21-27`).
 
-## AI Model Experimentation
+## The plane that composes this one
 
-This is the core differentiator of Hanzo Flags. Traditional A/B testing asks "which button color converts better?" AI experimentation asks "which model/prompt/strategy produces better results at what cost?"
-
-### Experiment Definition
-
-```json
-{
-  "id": "exp_zen120b_rollout",
-  "name": "Zen-120B Production Readiness",
-  "description": "Compare Zen-120B against Zen-72B on production inference traffic",
-  "flag_key": "inference-model-experiment",
-  "type": "ai_model_comparison",
-  "variants": [
-    {"key": "control", "value": "zen-72b", "allocation": 80},
-    {"key": "treatment", "value": "zen-120b", "allocation": 20}
-  ],
-  "metrics": {
-    "primary": {
-      "name": "quality_score",
-      "type": "continuous",
-      "direction": "increase",
-      "minimum_detectable_effect": 0.05
-    },
-    "secondary": [
-      {"name": "latency_p95_ms", "type": "continuous", "direction": "decrease"},
-      {"name": "cost_per_request_usd", "type": "continuous", "direction": "decrease"},
-      {"name": "user_satisfaction", "type": "continuous", "direction": "increase"},
-      {"name": "error_rate", "type": "proportion", "direction": "decrease"}
-    ],
-    "guardrails": [
-      {"name": "latency_p99_ms", "type": "continuous", "threshold": 5000, "action": "alert"},
-      {"name": "error_rate", "type": "proportion", "threshold": 0.05, "action": "kill"}
-    ]
-  },
-  "analysis": {
-    "method": "bayesian",
-    "confidence_threshold": 0.95,
-    "minimum_sample_size": 1000,
-    "maximum_duration_days": 14
-  },
-  "targeting": {
-    "conditions": [
-      {"attribute": "plan", "op": "in", "value": ["pro", "enterprise"]}
-    ]
-  }
-}
-```
-
-### Metric Collection
-
-AI experiments collect metrics through two channels:
-
-**Automatic metrics** land in the analytics warehouse: the analyze fold reads each subject's outcome from the org-scoped `hanzo.events` query (`analytics.Outcomes`, joined to the flags variant by `distinct_id` — `apps/experiments/analyze.go`), so exposure and outcome ride the ONE analytics plane rather than a second exposure topic. There is no Kafka `experiment_exposures` topic and no gateway emitter; the event a serving surface records is an ordinary analytics event shaped like:
-
-```json
-{
-  "event": "experiment_exposure",
-  "experiment_id": "exp_zen120b_rollout",
-  "variant": "treatment",
-  "distinct_id": "user_789",
-  "timestamp": "2026-02-23T14:30:00.000Z",
-  "properties": {
-    "model": "zen-120b",
-    "prompt_tokens": 245,
-    "completion_tokens": 512,
-    "latency_ms": 1850,
-    "cost_usd": 0.0042,
-    "status": 200
-  }
-}
-```
-
-**Custom metrics** are sent by application code via the Flags SDK or the Analytics SDK (HIP-0017):
-
-```python
-from hanzoai.flags import FlagsClient
-
-flags = FlagsClient(api_key="hf_project_key_abc123")
-
-# Evaluate the flag (get the variant)
-variant = flags.get_string_value(
-    "inference-model-experiment",
-    default="zen-72b",
-    context={"user_id": "user_789", "plan": "pro"}
-)
-
-# ... perform inference with the assigned model ...
-
-# Report a custom metric
-flags.track_metric(
-    experiment_id="exp_zen120b_rollout",
-    distinct_id="user_789",
-    metric="quality_score",
-    value=0.87
-)
-```
+An A/B test is a caller of this primitive, not a second engine inside it: the
+experiment registry, the analysis over its arms and the decision that locks a
+winner are the `experiments` capability, HIP-1311. Create and decide there write
+a flag definition here, which is why the arm a request is served and the arm a
+report names are one value.
 
 ### Integration with the serving path
 
@@ -412,210 +317,26 @@ today with no network hop at all. A gateway-level split remains open design
 and MUST, if built, evaluate through the same embedded engine rather than a
 second one.
 
-### AI-Specific Experiment Types
-
-#### Model Version Rollout
-
-Route a percentage of inference traffic to a new model version. Measure quality, latency, and cost. Auto-promote when confidence threshold is met.
-
-```yaml
-Type: ai_model_comparison
-Control: zen-72b (80%)
-Treatment: zen-120b (20%)
-Primary metric: quality_score (increase)
-Guardrail: latency_p99 < 5000ms, error_rate < 5%
-Duration: 7-14 days
-Auto-promote: yes, when P(treatment > control) > 0.95
-```
-
-#### Prompt Template A/B Test
-
-Same model, different system prompts. Measure task completion, user satisfaction, and token efficiency.
-
-```yaml
-Type: prompt_ab_test
-Model: zen-72b (fixed)
-Variant A: "You are a helpful assistant. Be concise." (50%)
-Variant B: "You are an expert analyst. Think step by step." (50%)
-Primary metric: task_completion_rate (increase)
-Secondary: tokens_per_response (decrease), user_thumbs_up (increase)
-```
-
-#### RAG Strategy Comparison
-
-Compare different retrieval-augmented generation configurations. The flag returns a JSON object that the RAG pipeline consumes directly.
-
-```yaml
-Type: rag_strategy
-Variant A: {"chunk_size": 256, "overlap": 50, "top_k": 3, "reranker": "none"}
-Variant B: {"chunk_size": 512, "overlap": 100, "top_k": 5, "reranker": "cross-encoder"}
-Variant C: {"chunk_size": 1024, "overlap": 200, "top_k": 10, "reranker": "cohere"}
-Primary metric: answer_relevance_score (increase)
-Secondary: retrieval_latency_ms (decrease), context_tokens (decrease)
-Method: multi-armed bandit (auto-allocate traffic to best performer)
-```
-
-#### Cost Optimization Experiment
-
-Route traffic to cheaper models and verify quality holds. This is financially motivated -- the experiment succeeds if quality stays within tolerance AND cost decreases.
-
-```yaml
-Type: cost_optimization
-Control: zen-72b @ $0.003/1K tokens
-Treatment: zen-32b @ $0.0008/1K tokens
-Primary metric: quality_score (must stay within 5% of control)
-Success condition: cost_per_request decreases AND quality holds
-Guardrail: quality_score > 0.80 (absolute floor)
-```
-
-## Statistical Engine
-
-What ships is one method: the analyze fold runs a **two-proportion z-test**
-against the control arm over the immutable evidence rows — stdlib
-`math.Erfc`, no dependency, degenerate inputs answered honestly rather than
-scored (`apps/experiments/analyze.go:83,152-166`) — and `decide` locks the
-winner by rewriting the flag definition's weights to 100%. The Bayesian and
-multi-armed-bandit methods below are PROPOSED extensions, not built; they are
-kept because the arguments for them (the peeking problem, regret
-minimization) are what any future engine must answer.
-
-### Bayesian Analysis
-
-The default method. Bayesian analysis provides a natural answer to "what is the probability that treatment is better than control?" rather than the frequentist "can we reject the null hypothesis?"
-
-For **continuous metrics** (latency, cost, quality score), the engine uses a Normal-Inverse-Gamma conjugate prior:
-
-```
-Prior:     mu ~ Normal(mu_0, sigma^2 / kappa_0)
-           sigma^2 ~ Inverse-Gamma(alpha_0, beta_0)
-
-Posterior: Updated with observed data (sample mean, sample variance, n)
-
-Decision:  P(mu_treatment > mu_control | data) > threshold
-```
-
-For **proportion metrics** (conversion rate, error rate), the engine uses a Beta-Binomial model:
-
-```
-Prior:     theta ~ Beta(alpha_0, beta_0)   # default: Beta(1, 1) = uniform
-Posterior: theta | data ~ Beta(alpha_0 + successes, beta_0 + failures)
-Decision:  P(theta_treatment > theta_control | data) > threshold
-```
-
-The probability is computed via Monte Carlo sampling (100K draws from each posterior). This is fast -- under 10ms for two-variant experiments, under 100ms for multi-variant.
-
-**Why Bayesian over frequentist as default?** Bayesian analysis lets you check results at any time without inflating false positive rates (the "peeking problem" that plagues frequentist A/B tests). With frequentist tests, checking results daily before reaching the planned sample size inflates the Type I error rate from 5% to 20-30%. Bayesian posterior probabilities are valid at every observation count.
-
-### Frequentist Analysis
-
-Available for teams that prefer traditional hypothesis testing or need results compatible with academic publication standards.
-
-For **continuous metrics**: Welch's t-test (unequal variances assumed). Reports p-value, confidence interval, and effect size (Cohen's d).
-
-For **proportion metrics**: Two-proportion z-test. Reports p-value, confidence interval, and relative lift.
-
-**Sample size calculation** is performed upfront based on the minimum detectable effect (MDE), significance level (alpha, default 0.05), and power (1-beta, default 0.80):
-
-```
-n_per_variant = (Z_alpha/2 + Z_beta)^2 * 2 * sigma^2 / delta^2
-```
-
-The experiment dashboard shows a progress bar toward the required sample size. Results are marked as "preliminary" until the planned sample size is reached.
-
-### Multi-Armed Bandit
-
-For experiments where the goal is optimization rather than measurement, Hanzo Flags supports Thompson Sampling -- a multi-armed bandit algorithm that automatically allocates more traffic to the winning variant as evidence accumulates.
-
-```
-For each request:
-  1. Sample from each variant's posterior distribution
-  2. Select the variant with the highest sample
-  3. Serve that variant to the user
-  4. Observe the outcome and update the posterior
-```
-
-Thompson Sampling converges to the best variant while minimizing regret (the cost of showing inferior variants during the experiment). It is ideal for RAG strategy comparison, where you have 3+ variants and want to find the best one quickly without exposing users to poor configurations.
-
-**Trade-off**: Bandit experiments do not produce clean statistical comparisons between variants. The traffic allocation is non-uniform and changes over time. If you need a rigorous "is A better than B?" answer, use Bayesian or frequentist A/B testing. If you need to "find and use the best option as fast as possible," use Thompson Sampling.
-
-### Experiment Results API
-
-```http
-GET /admin/v1/experiments/exp_zen120b_rollout/results HTTP/1.1
-Host: flags.hanzo.ai
-Authorization: Bearer hf_admin_key_xyz
-```
-
-Response:
-```json
-{
-  "experiment_id": "exp_zen120b_rollout",
-  "status": "running",
-  "started_at": "2026-02-16T00:00:00Z",
-  "duration_days": 7,
-  "variants": {
-    "control": {
-      "name": "zen-72b",
-      "allocation": 80,
-      "sample_size": 45230,
-      "metrics": {
-        "quality_score": {"mean": 0.82, "std": 0.15, "ci_95": [0.816, 0.824]},
-        "latency_p95_ms": {"mean": 1200, "std": 450},
-        "cost_per_request_usd": {"mean": 0.0031, "std": 0.0012},
-        "error_rate": {"mean": 0.012, "std": 0.002}
-      }
-    },
-    "treatment": {
-      "name": "zen-120b",
-      "allocation": 20,
-      "sample_size": 11308,
-      "metrics": {
-        "quality_score": {"mean": 0.87, "std": 0.13, "ci_95": [0.863, 0.877]},
-        "latency_p95_ms": {"mean": 2100, "std": 680},
-        "cost_per_request_usd": {"mean": 0.0058, "std": 0.0018},
-        "error_rate": {"mean": 0.009, "std": 0.001}
-      }
-    }
-  },
-  "analysis": {
-    "method": "bayesian",
-    "primary_metric": "quality_score",
-    "probability_treatment_better": 0.993,
-    "expected_lift": 0.061,
-    "ci_95_lift": [0.047, 0.075],
-    "recommendation": "Treatment (zen-120b) shows 6.1% quality improvement with 99.3% probability. Latency increased 75% and cost increased 87%. Recommend promotion for quality-sensitive traffic; maintain control for cost-sensitive segments.",
-    "guardrails": {
-      "latency_p99_ms": {"status": "pass", "value": 4200, "threshold": 5000},
-      "error_rate": {"status": "pass", "value": 0.009, "threshold": 0.05}
-    }
-  }
-}
-```
-
 ## Architecture
 
-One binary, two subsystems, no tiers. `apps/flags` holds the definitions in
-each org's own encrypted SQLite file and evaluates them in-process through the
-embedded evaluator; `apps/experiments` holds the experiment registry in each
-org's own file and composes flags (assignment), analytics (outcomes) and
-research (evidence). There is no standalone flags service, no SQL-to-KV sync,
-no KV pub/sub channel, no Kafka exposure topic and no separate deployment —
-the earlier revision of this HIP specified all four, and the shipped shape
-replaced them with something strictly simpler: the store is beside the
-evaluator, so there is nothing to sync and nothing to go stale. Deployment is
-the cloud image; the plugin binaries are `plugin/flags` and
-`plugin/experiments`.
+One binary, one subsystem, no tiers. `apps/flags` holds the definitions in each
+org's own encrypted SQLite file and evaluates them in-process through the
+embedded evaluator. There is no standalone flags service, no SQL-to-KV sync, no
+KV pub/sub channel, no Kafka exposure topic and no separate deployment — the
+earlier revision of this HIP specified all four, and the shipped shape replaced
+them with something strictly simpler: the store is beside the evaluator, so
+there is nothing to sync and nothing to go stale. Deployment is the cloud image;
+the plugin binary is `plugin/flags`.
 
-The credential is the caller's ordinary org key (HIP-0026). There is no
-`hf_*` key family: the evaluate routes take the same bearer as every other
-`/v1` surface, and tenancy is the validated principal, never the key prefix.
+The credential is the caller's ordinary org key (HIP-0026). There is no `hf_*`
+key family: the evaluate routes take the same bearer as every other `/v1`
+surface, and tenancy is the validated principal, never the key prefix.
 
 ### SDK Usage
 
 The client surface is the generated cloud SDKs and the `hanzo` CLI, both
 projections of the served document (HIP-1030): the flags operations appear as
-the `Flags` class/command group in every generated language, the experiments
-operations as `Experiments`. The hand-written `@hanzoai/flags-js` /
+the `Flags` class/command group in every generated language. The hand-written `@hanzoai/flags-js` /
 `hanzoai-flags` / `flags-go` packages and the OpenFeature provider wrappers
 this section used to show are not published; if OpenFeature adapters are
 wanted they wrap the generated client, they do not replace it.
@@ -652,15 +373,10 @@ Every flag mutation (create, update, toggle, delete) is recorded with:
 
 The audit log is append-only and cannot be modified or deleted via the API. It is stored in SQL with a 2-year retention policy.
 
-### Experiment Data Privacy
-
-Experiment exposure events contain `distinct_id` and variant assignment. They do NOT contain the user's request or response content. Metric values (latency, cost, quality score) are aggregate numbers, not raw inference data. This ensures that the experimentation system never stores or transmits user prompts, completions, or any PII beyond the stable user identifier.
-
 ## Monitoring
 
-Neither capability exports metrics of its own today: there is no
-`flags_*` metric family and no sync or consumer lag to alert on, because
-there is no sync and no consumer. What a customer can read back under
+It exports no metrics of its own today: there is no `flags_*` metric family and
+no sync or consumer lag to alert on, because there is no sync and no consumer. What a customer can read back under
 `/v1/o11y` is the request span every route already gets; the definition
 change history is `GET /v1/flags/activity`. Alerting on evaluation latency,
 if wanted, rides the fleet's ordinary request telemetry rather than a
@@ -676,6 +392,7 @@ capability-local exporter.
 6. [Thompson Sampling for Multi-Armed Bandits](https://arxiv.org/abs/1707.02038)
 7. [Bayesian A/B Testing at VWO](https://vwo.com/downloads/VWO_SmartStats_technical_whitepaper.pdf)
 8. [Hanzo Flags Repository](https://github.com/hanzoai/flags)
+9. [HIP-1311: Experiments — The A/B Plane](./hip-1311-experiments-the-ab-plane.md)
 
 ## Copyright
 

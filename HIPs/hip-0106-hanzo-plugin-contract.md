@@ -8,7 +8,6 @@ status: Active
 created: 2026-05-19
 updated: 2026-08-04
 requires: HIP-0026, HIP-0027, HIP-0036, HIP-0105, HIP-0111, HIP-0119, HIP-0132, HIP-0134, HIP-0139, HIP-0302, HIP-0400
-capability: usage
 ---
 
 
@@ -1194,37 +1193,8 @@ detail (tokens, latency, per-model breakdowns) lives in the
 `hanzo.cloud_usage` warehouse ledger the ai plane writes; the money
 lands on the org's commerce ledger.
 
-The `usage` capability is the categorized read over all of that, plus
-the account-usage collection plane, at `/v1/usage`
-(`manifest/apps.go:264`, package doc `apps/usage/usage.go`):
-
-```
-POST /v1/usage                  record account-usage samples (the collector's write path,
-                                onto the hanzo.account_usage warehouse series)
-GET  /v1/usage/samples          one provider account's own lane time series
-GET  /v1/usage/summary          the org's footprint roll-up: spend by category off the
-                                commerce ledger + LLM totals off hanzo.cloud_usage + the
-                                linked-account board, each source degrading independently
-                                to honest zeros with a marker saying which answered
-GET  /v1/usage/analytics        the entitlement-gated rich per-org read
-GET  /v1/usage/analytics/access
-```
-
-The `timeseries`/`by-model`/`by-user`/`by-key`/`events` reads an
-earlier revision listed here are not served at this address — the
-per-model and timeseries detail is `/v1/analytics/*`, and the wallet's
-own raw drain is billing's `/v1/billing/usage`. The capability owns ONE
-store, the `hanzo.account_usage` series (`apps/usage/datastore.go`);
-everything else it answers is a read over ledgers other capabilities
-own, reached over the plane. The tenant is the validated principal,
-fail-closed — no principal, 401 — with the commerce subject pinned
-server-side to that org and every warehouse query binding the org
-positionally. Reading it is free (`plugin/usage/main.go:21`,
-`Price: cloud.Free`); it publishes no events on the bus; it emits
-nothing to observability beyond the request span; its stage is `ga`;
-it derives from no OSS upstream. What an attacker gets from the wrong
-implementation is another org's spend and activity profile — which
-models, how much, when — from a single unbound query.
+The `usage` capability is the categorized read over that record, and it
+is specified in HIP-1313.
 
 ### OpenAI-compatible surface
 

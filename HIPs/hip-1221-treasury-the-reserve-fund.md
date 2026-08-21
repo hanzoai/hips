@@ -94,7 +94,7 @@ operator at `PUT /v1/admin/treasury/anchor/signer`.
 It is free, in those words: `Price: cloud.Free` (`plugin/treasury/main.go:26`);
 reads and SuperAdmin mutations, no meter behind any route.
 
-It publishes no events on the platform bus, so a customer's webhooks (HIP-0061)
+It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. Every money action lands a best-effort audit record
 (`apps/treasury/treasury.go:96`, `:572-578`) that mirrors to the shared
 datastore projection on the same event stream o11y already emits — one

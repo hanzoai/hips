@@ -157,7 +157,7 @@ It is free, in those words: the plugin declares `Price: cloud.Free`
 it is sent is that platform's bill, read back through the reporting half.
 
 It publishes no events on the platform bus — it is a sink, and the one-way rule
-above is why — so a customer's webhooks (HIP-0061) receive nothing from it. It
+above is why — so a customer's webhooks (HIP-1310) receive nothing from it. It
 emits nothing to observability beyond the request span every route gets; a
 saturated fan-out logs the drop with a warning (apps/destinations/fanout.go:41),
 which is the visibility the lossy trade above promises.
