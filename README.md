@@ -357,7 +357,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 118 | Capability |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 119 | Capability |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 116 | Identity & Access Management Standard |
 | [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 115 | The Hanzo Plugin Contract |
 

@@ -157,6 +157,16 @@ been shown to work (HIP-0106 §9).
 5. **`hanzoai/hips` `capability-coverage.txt`** — every capability has
    exactly one HIP declaring it (`scripts/coverage.py`).
 
+The list all five are measured against is the PUBLIC vocabulary, so what §8
+hides from a customer is also hidden from these gates: a capability that is not
+`ga` is in no public document, is therefore in no `capabilities.yaml`, and its
+HIP declares no `capability:` until it is promoted. Declaring one earlier fails
+`coverage.py` CV006 against a name the taxonomy does not carry, and adding the
+name to the taxonomy to satisfy it fails `publish.py` in the other direction.
+The HIP is still written and still merged — that is what §8's entry evidence
+asks for — it simply does not claim a vocabulary slot before the customer has
+one.
+
 ### §6 The HIP a capability carries
 
 A capability HIP is Standards Track. Its front matter carries
@@ -207,8 +217,26 @@ which:
    store is the defect HIP-0106 names, and a split that creates it is refused.
 3. **Rename.** The app takes the address's name when the address is the word
    people say and the package name is not (`link` → `links`, `plan` →
-   `plans`). A rename is one commit: the directory, the plugin, the manifest
-   row, the Makefile's `APPS`, and the frozen order test.
+   `plans`). A rename is one commit, and the commit is not the router's alone:
+
+   - `hanzoai/cloud` — the directory, the plugin, the manifest row, the
+     Makefile's `APPS`, and the frozen order test;
+   - `hanzoai/openapi` — the name in `capabilities.yaml`;
+   - `hanzoai/hips` — the capability HIP's `capability:`, its `title:`, its
+     filename, and every sibling HIP that cites the old name or the old
+     address.
+
+   All three, or the rename is not done. This list was the router's half alone
+   and four renames shipped green against it: `storage`→`s3`, `zt`→`network`,
+   `automations`→`auto`, `analytics`→`event` each landed in the manifest while
+   the vocabulary and the corpus went on naming the old word. Nothing caught
+   them, and the reason is §5: `coverage.py` measures the corpus against
+   `capabilities.yaml`, and `publish.py` measures `capabilities.yaml` against
+   the document. Neither reads the manifest, so a rename that moves the
+   manifest and stops there leaves both gates agreeing with each other about a
+   capability that no longer exists. A gate is only as current as its most
+   stale input, and the input each of these gates trusts is the one the rename
+   forgot.
 
 An address served by two apps is closed by fold into the one that owns the
 root — or, where neither does, by the capability HIP deciding which one the

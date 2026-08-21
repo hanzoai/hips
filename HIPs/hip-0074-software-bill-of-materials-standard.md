@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2026-02-23
-requires: HIP-0027, HIP-0033, HIP-0036
+requires: HIP-0027, HIP-0033, HIP-0036, HIP-0139
 capability: sbom
 ---
 
