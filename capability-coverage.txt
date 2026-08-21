@@ -15,22 +15,4 @@
 # Re-seeded 2026-08-20 when the capability became the app (HIP-0139): the
 # vocabulary went 191 names to 116. The number below is deliberately not
 # restated in prose; run the script.
-
-# applications
-
-# chain
-
-# commerce
-
-# data
-
-# identity
-dataset
-
-# intelligence
-
-# observability
-
-# platform
-
-# streams
+# EMPTY: measured 2026-08-20 — every capability the cloud serves has its HIP.

@@ -14,10 +14,10 @@ requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139
 
 ## Abstract
 
-Product is the read-only inventory of the search and vector backends:
-`/v1/search/{indexes,stats}` read from Meilisearch and
-`/v1/vector/{collections,stats}` from Qdrant, reshaped into the rows the console
-renders. It reimplements no search or vector logic, holds no index or collection
+Product is the read-only inventory of the search and vector stores:
+`/v1/search/indexes` and `/v1/search/stats` read from Meilisearch,
+`/v1/vector/collections` and `/v1/vector/stats` from Qdrant, each reshaped into
+the rows the console renders. It reimplements no search or vector logic, holds no index or collection
 state, and resolves no tenant. It is implemented in `hanzoai/cloud` at
 `apps/product` (HIP-0106).
 
@@ -88,9 +88,8 @@ These four reads are the OPERATOR's view (HIP-0135), not a customer method. They
 answer for the fleet, they authenticate with a deployment credential rather than
 an IAM claim, and the panel they feed is the operator console's.
 
-HIP-0139 §3.2 fixes where an operator view lives — the `/v1/admin` family,
-served by the capability itself, dropped from the public projection by address —
-and HIP-0139's own Security Considerations name this exact shape as the concrete
+HIP-0139 §3.2 fixes where an operator view lives — an address family served by
+the capability itself and dropped from the public projection by address — and HIP-0139's own Security Considerations name this exact shape as the concrete
 defect: an operator surface offered as a customer method because the address
 said the product's name before it said whose view it was. So the two misfiled
 pairs MUST close by moving these reads to that depth, never by alias, and until
