@@ -41,18 +41,22 @@ Every address is under `/v1/agents`. The definition-and-run collection is typed:
 list/create at the root, get/update/delete at `/:ref`, `POST /:ref/run`,
 `GET /:ref/runs` (`apps/agents/agents.go:17-27`), beside the typed session
 surface (`apps/agents/sessions.go`). The conversation group — one tool-calling
-round, its presets, its threads — answers at `/v1/agents`, `/v1/agents/presets`
-and `/v1/agents/conversations[/:id]`; its four operations stay untyped until the
+round, its presets, its threads — answers at `/v1/agents/chat`,
+`/v1/agents/chat/presets` and `/v1/agents/chat/conversations[/:id]`: UNDER the
+collection root, not at it. `POST /v1/agents` is already the typed create, and
+one address MUST NOT answer two operations, so the round takes a sub-path and
+the collection keeps its root. Its four operations stay untyped until the
 upstream seams they name land, and each declares its contract in prose beside
-the wire (`apps/agents/conversation.go:72-116`). `POST /v1/agents/coding`
+the wire (`apps/agents/conversation.go`, const `chat`). `POST /v1/agents/coding`
 starts one autonomous coding run, typed, answering 202 with the run's handle
 (`plugin/agents/coding.go:133`).
 
-Today's router still serves the conversation surface at `/v1/agent` and the
-coding door at `/v1/coding`; each is a line in `hanzoai/cloud`
-`openapi/misfiled.txt` until the fold lands. The coding fold MUST move the chat
-server's dispatch of `/v1/coding` in the same release: that op's reachability is
-the only way a chat turn gets to a sandbox (`plugin/agents/coding.go:128-131`).
+Both folds have landed and `hanzoai/cloud` `openapi/misfiled.txt` carries no
+line for this capability. The coding door moved off `/v1/coding` together with
+the chat server's dispatch of it, in one release, because that op's reachability
+is the only way a chat turn gets to a sandbox (`plugin/agents/coding.go:128-131`).
+The conversation surface moved off `/v1/agent` when the orchestrator stopped
+owning its own address (see Upstreams); the manifest row is one prefix again.
 
 ### One store, one org, one file
 
@@ -94,11 +98,15 @@ gets, it emits the per-run trace: an `agent.run` root span with nested
 
 ### Upstreams
 
-The conversation orchestrator embeds `github.com/hanzoai/agent` v1.0.5 (MIT;
+The conversation orchestrator embeds `github.com/hanzoai/agent` v1.0.6 (MIT;
 its LICENSE carries OpenAI's copyright — the agents-SDK lineage the module
 forks), which registers the conversation routes and owns their per-org
-history (`apps/agents/conversation.go:3-5,28`). Nothing else here derives from
-an OSS upstream.
+history (`apps/agents/conversation.go`). The module composes those four routes
+off ONE prefix: `MountAt(app, prefix, ...)` registers under the prefix it is
+given and `Mount(app, ...)` is `MountAt` at `DefaultPrefix` — so the standalone
+daemon keeps `/v1/agent` and whoever composes the router chooses the address
+cloud serves. Nothing in the round reads the prefix. Nothing else here derives
+from an OSS upstream.
 
 ## Rationale
 
