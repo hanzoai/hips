@@ -127,6 +127,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0251](./HIPs/hip-0251-ai-compute-carbon-footprint.md) | AI Compute Carbon Footprint | Meta | - | Draft |
 | [HIP-0260](./HIPs/hip-0260-efficient-model-practices.md) | Efficient Model Practices | Meta | - | Draft |
 | [HIP-0270](./HIPs/hip-0270-ai-supply-chain-responsibility.md) | AI Supply Chain Responsibility | Meta | - | Draft |
+| [HIP-0300](./HIPs/hip-0300-unified-mcp.md) | Unified MCP — one door, and local servers that forwa... | Standards Track | Interface | Review |
 | [HIP-0301](./HIPs/hip-0301-python-sdk-agent-runtime-protocols.md) | Agent Runtime Protocols & Cross-Platform Parity | Standards Track | Core | Draft |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | Hanzo Replicate: Encrypted SQLite Durability for Bas... | Standards Track | Infrastructure | Active |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Hanzo adopts LP-0010: Brand Sovereignty and Federati... | Meta | Governance | Active |
@@ -158,12 +159,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | One Identity Boundary | Standards Track | Infrastructure | Active |
 | [HIP-0520](./HIPs/hip-0520-serving-topology.md) | Serving Topology — Three Tiers, Horizontally Scalabl... | Standards Track | Infrastructure | Draft |
 | [HIP-0521](./HIPs/hip-0521-org-hierarchy.md) | Org Hierarchy | Standards Track | Security | Draft |
-<<<<<<< Updated upstream
-| [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Active |
-=======
 | [HIP-0522](./HIPs/hip-0522-the-context-graph.md) | The Context Graph — Edges, Decisions and Derivation a... | Standards Track | Core | Draft |
-| [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Final |
->>>>>>> Stashed changes
+| [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Active |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |
 
