@@ -28,7 +28,7 @@ Which models an org may see is a question every plane asks; answered separately
 it becomes registries that disagree, visible to customers as a feature present
 in one surface and absent from another. One registry, one resolver
 (`apps/pricing/enablement.go:3-7`). The registry's own address and the two
-admin roots sit outside the app's prefix today (`manifest/apps.go:119`); they
+admin roots sit outside the app's prefix today (`manifest/apps.go:126`); they
 come home.
 
 ## Specification
@@ -93,7 +93,7 @@ validated principal is refused on write and shown the public view on read
 `apps/pricing/enablement_attack_test.go` drives an off-gateway request with a
 forged tenant header at both paths and fails if the grant lands. The item
 namespace is closed to `model`, `provider`, `feature`
-(`apps/pricing/enablement.go:34`), and the catalog gate, the admin surface and
+(`apps/pricing/enablement.go:36`), and the catalog gate, the admin surface and
 the caller's own view MUST all resolve through the one resolver.
 
 ### §6 The prices are the module's

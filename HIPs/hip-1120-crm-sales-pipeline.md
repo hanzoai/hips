@@ -47,7 +47,7 @@ imported for it.
 
 ### §2 The addresses
 
-Every route is under `/v1/crm` (`manifest/apps.go:266`). The CRUD over
+Every route is under `/v1/crm` (`manifest/apps.go:273`). The CRUD over
 companies, contacts and opportunities, `GET /v1/crm/summary`, and the staff
 reads of applications are typed operations; each DELETE answers no body and so
 carries no response schema. One route is a raw handler and MUST stay one:
@@ -55,7 +55,7 @@ carries no response schema. One route is a raw handler and MUST stay one:
 and 64 KiB body cap are HTTP middleware, and the MCP and CLI projections of a
 typed op do not run middleware — typing it would publish an unmetered alias of a
 deliberately limited public endpoint (`apps/crm/crm.go:200-207`). Its prose is
-declared beside the wire fact instead (`apps/crm/applications.go:128`).
+declared beside the wire fact instead (`apps/crm/applications.go:130`).
 
 ### §3 Tenancy
 
@@ -70,16 +70,15 @@ so there is no tenant to name and none to leak. Re-submitting the same
 ### §4 Money, events, telemetry
 
 crm is free, in those words: its plugin declares `cloud.Free`
-(`plugin/crm/main.go:22`) and crm is not in the metered set (`spend.go:275`).
+(`plugin/crm/main.go:21`) and crm is not in the metered set (`spend.go:275`).
 The AI screen a filed application receives runs on the deployment's own gateway
 credential, not the applicant's. crm publishes no events on the bus, and emits
 nothing to observability beyond the request span every route gets.
 
 ### §5 Stage
 
-crm is `beta`: a vertical application, not the agentic-OS core. Its manifest
-row predates the stage field and therefore reads `ga` by default (HIP-0139 §8);
-this HIP is the spec-first declaration of the stage that row MUST carry.
+crm is `beta`: a vertical application, not the agentic-OS core. The manifest
+row declares it (`manifest/apps.go:273`, `Stage: Beta`; HIP-0139 §8).
 
 ### §6 Upstream
 

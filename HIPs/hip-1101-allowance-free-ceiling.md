@@ -28,7 +28,7 @@ Without a ceiling the free lane is unlimited for anyone who can name a free
 model, and a route stated at zero can still be served by a vendor who bills us.
 The sibling question — how fast a caller may burn their OWN money — is
 `rollingcap`'s; this capability bounds how much of OUR compute a caller with no
-money may take (`manifest/apps.go:132-135`).
+money may take (`manifest/apps.go:139-142`).
 
 ## Specification
 

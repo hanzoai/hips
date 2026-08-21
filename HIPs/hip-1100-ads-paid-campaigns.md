@@ -81,8 +81,8 @@ deployment can run; a platform with no entry never has its token sought.
 It publishes nothing to the bus. Beyond the request span every route gets, it
 emits structured log lines through the process logger and nothing else. Its
 stage is `beta`: a vertical marketing application, not part of the self-service
-agentic-OS core — the manifest row carries no stage field yet, so the
-declaration here is what the row inherits when stage lands in `manifest.App`.
+agentic-OS core — the manifest row declares it (`manifest/apps.go:275`,
+`Stage: Beta`; HIP-0139 §8).
 It derives from no OSS upstream — the provider edge is plain HTTP against each
 network's own API.
 

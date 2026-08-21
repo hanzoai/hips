@@ -30,7 +30,7 @@ is not enforced anywhere else. Both defects were real here: the price table,
 the charger and the wallet resolver were process-globals, the fleet runs one
 process per app, so in the settling process the table was nil — and reading a
 nil table as "nothing is priced" made every listed tool free the moment the
-fleet split (`apps/marketplace/marketplace.go:17-33`).
+fleet split (`apps/marketplace/marketplace.go:16-30`).
 
 ## Specification
 
@@ -64,10 +64,10 @@ monetized listing is enforced per call by the x402 rail, and the enforcement is
 four internal-plane operations, each served by the process that owns the
 answer: tools asks x402 to settle; x402 asks marketplace what it costs and who
 is paid; x402 asks wallets to resolve the payee; x402 asks commerce to credit
-it (`apps/marketplace/marketplace.go:33-44`). The in-process seam stays the
+it (`apps/marketplace/marketplace.go:32-39`). The in-process seam stays the
 fast path where an owner is co-resident; both paths are the same policy and
 both fail closed, asserted against each other by a one-process test and a
-five-process test (`apps/marketplace/marketplace.go:45-48`).
+five-process test (`apps/marketplace/marketplace.go:41-44`).
 
 On the plane, the price answer carries the row's recipient, never a request's:
 a buyer that could state either would buy at its own price or redirect the
@@ -89,8 +89,8 @@ unconstructible rather than merely unlikely
 ### §5 Events, observability, stage, upstream
 
 It publishes nothing on the bus and emits nothing beyond the request span
-every route gets. Stage `ga`: it is the install door of the core tool plane.
-It derives from no upstream.
+every route gets. The stage is `beta` (`manifest/apps.go:430`, `Stage: Beta`):
+reached by flag until promoted (HIP-0139 §8). It derives from no upstream.
 
 ## Rationale
 

@@ -58,7 +58,7 @@ recipient is refused at the seam, and a signed public one-click unsubscribe
 writes the same list. A product announcement is not a feature beside this: it
 is a one-step sequence with an audience enrolled, inheriting claimed-once
 delivery, the suppression gate and the unsubscribe footer
-(`apps/marketing/marketing.go:44-51`).
+(`apps/marketing/marketing.go:42-45`).
 
 ### §3 Audiences are honest
 
@@ -66,7 +66,7 @@ An audience resolves to real mailboxes through the IAM roster; one with an
 event filter narrows that roster to the cohort the analytics warehouse
 selected. When the roster or warehouse cannot be read the answer is honestly
 empty — never a fabricated count, never a send to nobody reported as success
-(`apps/marketing/marketing.go:22-28`).
+(`apps/marketing/marketing.go:18-23`).
 
 ### §4 A redemption is evidence, not money
 
@@ -84,7 +84,7 @@ instrument is required as the anti-farming key
 
 Thirty-five operations under `/v1/marketing`, every one a typed op — one
 registry entry projecting REST, the document, the MCP tool and the CLI
-(`apps/marketing/marketing.go:52-58`). The tenant is the org minted from the
+(`apps/marketing/marketing.go:47-52`). The tenant is the org minted from the
 validated bearer (HIP-0026), carried to the typed seam by the bridge and read
 back server-side — never a header, never an In field. Free (`cloud.Free`,
 `plugin/marketing/main.go`); the send rail and any granted credit are other

@@ -54,7 +54,7 @@ domain the challenge itself stated. The default settlement network is
 
 ### §2 The store, and settle-once
 
-One SQLite store, `x402` (`apps/x402/store.go:56`): one row per claimed
+One SQLite store, `x402` (`apps/x402/store.go:55`): one row per claimed
 authorization, keyed by a deterministic id derived from (payer address,
 nonce). That id is both the replay-dedup key — a primary key, so a second
 insert of the same authorization is atomically refused — and the idempotency
@@ -70,7 +70,7 @@ wallet resolves to later.
 ### §3 The address, and the three callers
 
 The addressed surface is one typed operation, `GET
-/v1/x402/settlements/{id}` (`manifest/apps.go:167`) — the receipt lookup,
+/v1/x402/settlements/{id}` (`manifest/apps.go:174`) — the receipt lookup,
 scoped by `principal.Ledger`, which folds in the SuperAdmin masquerade so an
 admin inspecting another org still reads their own settlements
 (`apps/x402/x402.go:791`). The flow itself is written once (`run`) and reached
@@ -113,9 +113,8 @@ License 1.2), the same primitive wallets custody signs with. Persistence is
 
 ### §7 Stage
 
-`ga`: the money core of the self-service cloud — per-request payment is how a
-priced listing is bought at all. The manifest row declares no stage, and
-absent is `ga` (HIP-0139 §8).
+`beta`: the manifest row declares it (`manifest/apps.go:174`, `Stage: Beta`;
+HIP-0139 §8), reached by flag until promoted.
 
 ## Rationale
 

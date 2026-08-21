@@ -25,7 +25,7 @@ around a ledger-of-record port whose backend owns the double-entry.
 ## Motivation
 
 The app answers on two prefixes today and owns neither whole
-(`manifest/apps.go:406`): its front door lives under `/v1/finance`, an address
+(`manifest/apps.go:413`): its front door lives under `/v1/finance`, an address
 that belongs to no capability. The reads come home to the app that serves them.
 
 ## Specification
@@ -68,7 +68,7 @@ the projection (`apps/treasury/treasury.go:22-29`).
 ### §3 Tenant
 
 One scope-aware engine, three surfaces projected by IAM scope
-(`apps/treasury/treasury.go:31-34`): the tenant is derived from the validated
+(`apps/treasury/treasury.go:30-32`): the tenant is derived from the validated
 identity (HIP-0026), house and reserve are locked to SuperAdmin, and a per-org
 caller only ever sees its own tenant. The org is never an input.
 

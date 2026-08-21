@@ -105,7 +105,7 @@ tokens the executors resolve. A wrong implementation that accepted an org from
 the request body would let a caller launch a campaign that spends another
 tenant's ad budget on the caller's creatives. The org therefore comes only from
 the validated principal, and it is the single key to token custody. Field caps
-(`maxField`, `maxContent`, `maxChannels`, `apps/campaign/campaign.go:66-77`)
+(`maxField`, `maxContent`, `maxChannels`, `apps/campaign/campaign.go:70-77`)
 bound what one write can amplify into the shared file.
 
 ## References

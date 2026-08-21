@@ -6,6 +6,7 @@ type: Standards Track
 category: Application
 status: Active
 created: 2026-08-20
+requires: HIP-0139
 capability: authors
 ---
 
@@ -36,13 +37,13 @@ in RFC 2119.
 
 A repository earns only after a verification that demonstrates control over it:
 either a forge token showing admin or push permission, or a file on the default
-branch carrying the author's minted verify code (`apps/authors/authors.go:22-27`).
+branch carrying the author's minted verify code (`apps/authors/authors.go:20-23`).
 Both prove the same fact — that the claimant can change what that repository
 deploys. Neither is a claim about who the claimant is, and the program MUST NOT
 treat it as one.
 
 A deploy edge is recorded per `(repo, project, deploying org)` and is idempotent
-(`apps/authors/authors.go:29-32`). Without that edge nothing accrues, so an
+(`apps/authors/authors.go:24-26`). Without that edge nothing accrues, so an
 unattributable deploy earns nothing rather than earning by default.
 
 ### The royalty is a latch, not a computation over history
@@ -50,7 +51,7 @@ unattributable deploy earns nothing rather than earning by default.
 Accrual is at most once per `(author, deploying org, period)`. The amount is that
 org's metered spend for the period times the share stored on the author at that
 moment: `earningCents = spendCents * shareBps / 10000`
-(`apps/authors/basis.go:47`), evaluated in `accrueOne`
+(`apps/authors/basis.go:48`), evaluated in `accrueOne`
 (`apps/authors/authors.go:336`).
 
 The row written by the latch captures `share_bps`, `spend_cents` and
@@ -91,8 +92,20 @@ identity boundary mints and that the ordinary principal does not carry
 (`apps/authors/typed.go:84`).
 
 The support view of an author's basis MUST be produced by the same builder as the
-author's own read (`apps/authors/authors.go:52-53`), so support and author can
+author's own read (`apps/authors/typed.go:845`), so support and author can
 never be looking at two numbers.
+
+### Store, price, events, telemetry, stage, upstream
+
+The capability owns one encrypted SQLite database, `authors`, opened through the
+one opener (`sqlpool.Open("authors", dir)`, `apps/authors/store.go:177`). It is
+free, in those words: `Price: cloud.Free` (`plugin/authors/main.go:21`) — it
+records obligations and meters nothing. It publishes no events on the bus, so a
+customer's webhooks receive nothing from it; money actions land best-effort
+records on cloud's audit trail (`apps/authors/authors.go:133`, `:475-479`).
+Beyond that and the request span it emits log lines only. Its stage is `beta` —
+the manifest row declares it (`manifest/apps.go:388`, `Stage: Beta`; HIP-0139
+§8). It derives from no forked, embedded or mirrored OSS project.
 
 ### What this refuses
 

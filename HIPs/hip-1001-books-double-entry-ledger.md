@@ -34,10 +34,10 @@ in RFC 2119.
 
 ### The surface, and what stays untyped
 
-Every address is under `/v1/books` — twenty-two paths, enumerated in the
-manifest row (`manifest/apps.go:405`) and published in the capability's own
-subset (`plugin/books/openapi.json`). Twenty operations are typed; five are
-untyped by design and each is named at its registration and held in a ledger
+Every address is under `/v1/books` — twenty-one prefixes enumerated in the
+manifest row (`manifest/apps.go:412`), twenty-two paths published in the
+capability's own subset (`plugin/books/openapi.json`). Twenty operations are
+typed; five are untyped by design and each is named at its registration and held in a ledger
 test (`apps/books/projection_test.go`): the three raw-byte uploads —
 `POST /v1/books/scan`, `POST /v1/books/inbox` and `POST /v1/books/bank/import`
 take the receipt or statement file ITSELF as the body, which no JSON `In` can
@@ -58,10 +58,9 @@ own in `apps/books`.
 
 ### Stage
 
-Books is a vertical application, not the agentic-OS core: its declared stage
-is **beta** (HIP-0139 §8). The manifest row does not yet carry a stage field,
-so today the operations serve as `ga` does; the declaration here is what the
-row inherits when stage lands in `manifest.App`.
+Books is a vertical application, not the agentic-OS core: its stage is
+**beta**, declared in the manifest row (`manifest/apps.go:412`, `Stage: Beta`;
+HIP-0139 §8).
 
 ### Upstreams
 
@@ -76,7 +75,7 @@ hand-written read-only clients to those services, not forks of anything.
 Three sources post into the ledger: the platform's own transaction feed, a
 read-only bank connector, and a reviewed receipt capture. All three land through
 one choke point, `store.post` (`apps/books/store.go:238`), and none of them can
-mint a deposit, a credit or a payout (`apps/books/books.go:16-20`).
+mint a deposit, a credit or a payout (`apps/books/books.go:14-19`).
 
 This is the invariant the whole capability rests on: **books can restate money,
 never create it.** Any new posting source MUST arrive through the same choke point
@@ -145,7 +144,7 @@ forgetting harmless, and the cost is bounded because the ledger is small.
 What an attacker gets from the wrong implementation is one of two things: a
 posting source that carries authority to move funds turns a bookkeeping bug
 into minted money, which is why every source lands through the one choke point
-that cannot mint (`apps/books/books.go:16-20`); and a tenancy defect here is
+that cannot mint (`apps/books/books.go:14-19`); and a tenancy defect here is
 not a leak of preferences but of a company's finances.
 
 A ledger is a disclosure surface: revenue, vendors, payroll shape. Tenancy is

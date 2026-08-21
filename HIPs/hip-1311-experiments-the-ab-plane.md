@@ -45,7 +45,7 @@ as in RFC 2119.
 
 ### §1 The addresses
 
-Seven operations, every one under `/v1/experiments` (`manifest/apps.go:404`,
+Seven operations, every one under `/v1/experiments` (`manifest/apps.go:411`,
 `plugin/experiments/openapi.json`), all typed, none declared:
 
 - `GET|POST /v1/experiments` — list; create, which writes the multivariate flag

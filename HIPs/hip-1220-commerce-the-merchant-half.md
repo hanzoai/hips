@@ -72,7 +72,7 @@ somebody else's.
 Per-tenant merchant and money stores under `<DataDir>/commerce`
 (`apps/commerce/mount.go:319-323`), encrypted under the process master key when
 the sqlcipher codec is linked. The at-rest posture is decided in exactly one
-function (`apps/commerce/mount.go:161-172`): a production build refuses to open
+function (`apps/commerce/mount.go:161-170`): a production build refuses to open
 money data unencrypted, and a pure-Go dev build gets the module's documented
 unencrypted dev store rather than no money plane at all.
 
@@ -83,9 +83,10 @@ The customer ledger of record is NOT here: `EmbedConfig.Ledger` injects
 ### §4 Tenant
 
 The paying org is read from the validated principal (HIP-0026) and never from a
-header — every inbound header is caller-supplied, and an org read from one is a
-cross-tenant write (`apps/commerce/payments.go:25-30`). A card payment taken
-here can only credit the caller's own org.
+request field — a field is caller-supplied, and an org read from one is a
+cross-tenant write the caller asserted for itself
+(`apps/commerce/payments.go:25-30`). A card payment taken here can only credit
+the caller's own org.
 
 ### §5 Price, and the screen on the mint
 
@@ -141,7 +142,7 @@ stay; they become path segments of the app that owns their rows.
 
 The wrong implementation hands an attacker the mint. A screen mounted on the
 router instead of the handler leaves the same authorized deposit reachable
-unscreened through the tool projection; an org taken from a header turns a card
+unscreened through the tool projection; an org taken from a request field turns a card
 payment into a cross-tenant credit; a per-config at-rest posture lets a
 production build quietly write plaintext money data where the per-build
 decision in §3 refuses to boot.

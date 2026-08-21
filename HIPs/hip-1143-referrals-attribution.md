@@ -92,9 +92,8 @@ a customer, carrying no amount because this package issues none.
 
 ### Stage
 
-`ga`: growth attribution is part of the self-service money plane's own loop —
-signup, spend, payable — not a vertical application; the manifest row
-(`manifest/apps.go:424`) declares no stage.
+`beta`: the manifest row declares it (`manifest/apps.go:431`, `Stage: Beta`;
+HIP-0139 §8).
 
 ### Upstream
 

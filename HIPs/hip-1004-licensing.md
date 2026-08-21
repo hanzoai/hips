@@ -6,6 +6,7 @@ type: Standards Track
 category: Security
 status: Draft
 created: 2026-08-20
+requires: HIP-0139
 capability: licensing
 ---
 
@@ -101,6 +102,16 @@ The operations are transport-free and become routes in exactly one place
 (`pkg/licensing/server.go:3-8`). A second route table is a second contract, and the
 published document would then describe whichever of the two the generator happened
 to read.
+
+### Price, events, telemetry, stage, upstream
+
+The capability is free, in those words: `Price: cloud.Free`
+(`hanzoai/cloud` `plugin/licensing/main.go:23`) — what is paid for is the
+product the token unlocks, never the mint. It publishes no events on the bus.
+Its stage is `beta` — the manifest row declares it (`manifest/apps.go:124`,
+`Stage: Beta`; HIP-0139 §8). The issuer is `hanzoai/licensing`, pinned
+v0.1.15 in cloud's `go.mod:692`; it derives from no forked, embedded or
+mirrored OSS project.
 
 ### On the private repository
 

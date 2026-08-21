@@ -60,7 +60,7 @@ The correct approach is **both**: the native PSP for fiat, blockchain for crypto
 The capability named `billing` (HIP-0139) is the customer's own money door in
 `hanzoai/cloud`: **nine read operations, all GET, all free** — `/v1/billing/
 {balance, usage, usage/accounts}` and `/v1/finance/{balance, credits, usage,
-invoices, payment-methods, ledger}` (`manifest/apps.go:130`, package doc
+invoices, payment-methods, ledger}` (`manifest/apps.go:137`, package doc
 `apps/billing/billing.go`). It owns **no store**: balance and usage are read
 from the co-resident commerce ledger over the internal plane
 (`apps/billing/balance.go:75-76`), falling back to a verbatim S2S proxy only
@@ -73,7 +73,7 @@ The rest of this document — checkout, subscriptions, webhooks, refunds,
 payouts — is the money surface **commerce** serves under the same
 `/v1/billing` product prefix; two capabilities share the product and the
 address split is the manifest's, not this table's. The whole `/v1/billing/`
-tree, both halves, is on the spend gate's never-refuse list (`spend.go:424`):
+tree, both halves, is on the spend gate's never-refuse list (`spend.go:444`):
 the path to payment is never gated, because gating it deadlocks every unpaid
 and lapsed customer at once.
 
@@ -251,7 +251,7 @@ Free-tier credits reset monthly and do not accumulate. Paid-tier included credit
 #### One-Time Credit Purchase (Fiat)
 
 ```
-1. Client: POST /v1/billing/checkout { amount: 2000, currency: "usd", credits: 21000 }
+1. Client: POST /v1/billing/topup { amount: 2000, currency: "usd", credits: 21000 }
 2. Commerce creates a PSP checkout session with metadata (user_id, org_id, credits, idempotency_key)
 3. Commerce returns checkout URL -> client redirects user to the native hosted checkout
 4. User completes payment on the native hosted checkout page (Hanzo Vault CDE)
@@ -274,16 +274,16 @@ Commerce also accepts $AI token (HIP-1) payments on Hanzo Network (chain ID 3696
 |--------|----------|-------------|------|
 | GET | `/v1/billing/balance` | Current credit balance | Bearer token |
 | GET | `/v1/billing/transactions` | Transaction history with pagination | Bearer token |
-| POST | `/v1/billing/checkout` | Create PSP checkout session | Bearer token |
-| POST | `/v1/billing/checkout/crypto` | Create crypto payment intent | Bearer token |
-| POST | `/v1/billing/subscribe` | Create or change subscription | Bearer token |
-| DELETE | `/v1/billing/subscribe` | Cancel subscription | Bearer token |
-| GET | `/v1/billing/subscription` | Current subscription details | Bearer token |
+| POST | `/v1/billing/topup` | Card top-up: charge and credit the ledger | Bearer token |
+| POST | `/v1/billing/crypto/deposit` | Create crypto payment intent | Bearer token |
+| POST | `/v1/billing/subscribe/card` | Create or change a card subscription | Bearer token |
+| POST | `/v1/billing/subscriptions/:id/cancel` | Cancel subscription | Bearer token |
+| GET | `/v1/billing/subscriptions` | Current subscription details | Bearer token |
 | GET | `/v1/billing/invoices` | List invoices | Bearer token |
-| GET | `/v1/billing/invoices/:id` | Download invoice PDF | Bearer token |
+| GET | `/v1/billing/invoices/:id/pdf` | Download invoice PDF | Bearer token |
 | GET | `/v1/billing/usage` | Usage breakdown by period | Bearer token |
-| POST | `/v1/billing/portal` | Create PSP customer portal session | Bearer token |
-| POST | `/v1/billing/webhooks/:provider` | inbound PSP webhook receiver (commerce; under `/v1` like everything else, and never behind the spend gate — `spend.go:369`) | PSP signature |
+| GET, POST | `/v1/billing/portal/methods` | Saved payment methods via the portal | Bearer token |
+| POST | `/v1/billing/webhooks/:provider` | inbound PSP webhook receiver (commerce; under `/v1` like everything else, and never behind the spend gate — `spend.go:444`) | PSP signature |
 
 #### Response Examples
 
@@ -381,7 +381,7 @@ LLM Gateway receives request
     +-- 7. Return response to user
 ```
 
-The Gateway batches transaction submissions. Rather than calling IAM for every request, it accumulates usage per user over a 10-second window and submits a single aggregated transaction. This reduces IAM load by ~90% during high-throughput periods.
+The Gateway batches transaction submissions. Rather than calling IAM for every request, it accumulates usage per user over a 10-second window and submits a single aggregated transaction.
 
 ```yaml
 metering:
@@ -431,7 +431,7 @@ Organizations can choose between two billing modes:
 
 #### Refund Flow
 
-1. User requests refund via support or `/v1/billing/refund`.
+1. User requests refund via support (a self-serve `/v1/billing/refund` route is a target, not yet served).
 2. Commerce validates eligibility (14-day window, sufficient credit balance).
 3. Commerce creates a refund via the PSP (`psp.refunds.create`) for the original payment intent.
 4. The PSP processes the refund (3-5 business days to card).
@@ -461,10 +461,11 @@ Invoices are stored as PDFs in MinIO (HIP-32) and emailed to the user. Enterpris
 
 Users can configure automatic credit purchases when their balance drops below a threshold:
 
-```json
-POST /v1/billing/auto-recharge
-Authorization: Bearer <access_token>
+The configuration write (`POST /v1/billing/auto-recharge`) is a target, not yet
+served; today the recharge sweep runs operator-side (`POST
+/v1/billing/recharge/run-all`) against stored settings.
 
+```json
 {
   "enabled": true,
   "threshold": 1000,
@@ -527,8 +528,8 @@ These three layers provide defense-in-depth against double-processing.
 
 | Endpoint | Limit | Window |
 |----------|-------|--------|
-| `/v1/billing/checkout` | 10 | per minute per user |
-| `/v1/billing/subscribe` | 5 | per minute per user |
+| `/v1/billing/topup` | 10 | per minute per user |
+| `/v1/billing/subscribe/card` | 5 | per minute per user |
 | `/v1/billing/balance` | 60 | per minute per user |
 | `/v1/billing/transactions` | 30 | per minute per user |
 | `/v1/billing/usage` | 10 | per minute per user |

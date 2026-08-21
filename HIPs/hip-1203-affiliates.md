@@ -47,7 +47,7 @@ board (`GET`), `POST …/{id}/approve`, `…/{id}/rate`, `…/{id}/suspend`,
 `…/{id}/payout`, `…/sweep`, and the referral-analytics board at
 `GET /v1/admin/affiliates/referrals`. Today's router serves that last read at
 `/v1/admin/referrals` — a root whose remaining routes the `referrals`
-capability genuinely serves (`manifest/apps.go:424`) — and the pair is carried
+capability genuinely serves (`manifest/apps.go:431`) — and the pair is carried
 by `hanzoai/cloud` `openapi/misfiled.txt`; it closes by fold into this
 capability, because the board reads this capability's own tables
 (`apps/affiliates/store.go:863-880`).
@@ -55,7 +55,7 @@ capability, because the board reads this capability's own tables
 ### §2 Store
 
 The capability owns one encrypted SQLite database, opened through the one
-opener (`sqlpool.Open("affiliates", dir)`, `apps/affiliates/store.go:185`):
+opener (`sqlpool.Open("affiliates", dir)`, `apps/affiliates/store.go:184`):
 affiliate rows, the `affiliate_referrals` attribution spine, and
 `affiliate_accruals`. Attribution is first-touch, one row per referred org,
 self-attribution refused. An accrual is latched at-most-once per
@@ -91,8 +91,8 @@ the caller names.
 The capability is free (`plugin/affiliates/main.go:21`, `cloud.Free`) — it
 accrues liabilities to partners and meters nothing. It publishes no events on
 the bus and delivers nothing to customer webhooks. Beyond the request span it
-emits log lines only. Its stage is `ga` — the manifest row
-(`manifest/apps.go:394`) carries no stage.
+emits log lines only. Its stage is `beta` — the manifest row
+declares it (`manifest/apps.go:401`, `Stage: Beta`; HIP-0139 §8).
 
 ### §6 Upstream
 
