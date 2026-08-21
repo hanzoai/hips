@@ -29,7 +29,7 @@ those already has an owner, and none is copied here.
 This capability shared HIP-0063 with `flags` — two specifications in one file,
 which HIP-0139 §6 allows only for a merge in flight. The store boundary is where
 the two separate: flags owns definitions in a per-(org, project) file and
-evaluates them as a pure function; experiments owns a per-org registry of
+evaluates them as a pure function; experiment owns a per-org registry of
 comparisons and composes that evaluation.
 
 The boundary is load-bearing rather than tidy. Flags is the primitive every
