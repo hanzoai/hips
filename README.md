@@ -252,7 +252,6 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) | Dataset — The Versioned Snapshot | Standards Track | Core | Draft |
 | [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | visor — Compute You Rent | Standards Track | Infrastructure | Draft |
 | [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) | Network — The Zero Trust Overlay | Standards Track | Infrastructure | Draft |
-| [HIP-1174](./HIPs/hip-1174-automations-workflows-that-run-themselves.md) | automations — Workflows That Run Themselves | Standards Track | Core | Draft |
 | [HIP-1180](./HIPs/hip-1180-link-account-registry.md) | Link — The Account Registry | Standards Track | Core | Draft |
 | [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) | Plan — The Tier Catalog | Standards Track | Core | Draft |
 | [HIP-1188](./HIPs/hip-1188-bots-watched-run.md) | Bots — The Watched Run | Standards Track | Core | Draft |
@@ -361,8 +360,8 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
 | [HIP-0139](./HIPs/hip-0139-capability.md) | 120 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 119 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 118 | The Hanzo Plugin Contract |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 118 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 117 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -407,7 +406,7 @@ One capability, one HIP (HIP-0139). 117 of them, grouped as `capabilities.yaml` 
 
 **Streams** — messaging · durable tasks · async orchestration
 
-[HIP-0061](./HIPs/hip-0061-notification-service-standard.md) `notify` · [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) `pubsub` · [HIP-1061](./HIPs/hip-1061-mq-queues-and-streams.md) `mq` · [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) `tasks` · [HIP-1064](./HIPs/hip-1064-flow-the-canvas-plane.md) `flow` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1067](./HIPs/hip-1067-destinations-conversions-forwarded.md) `destinations` · [HIP-1069](./HIPs/hip-1069-tel-numbers-calls-and-messages.md) `tel` · [HIP-1174](./HIPs/hip-1174-automations-workflows-that-run-themselves.md) `automations` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1310](./HIPs/hip-1310-webhooks-outbound-delivery.md) `webhooks`
+[HIP-0061](./HIPs/hip-0061-notification-service-standard.md) `notify` · [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) `pubsub` · [HIP-1061](./HIPs/hip-1061-mq-queues-and-streams.md) `mq` · [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) `tasks` · [HIP-1063](./HIPs/hip-1063-auto-flows-that-run-themselves.md) `auto` · [HIP-1064](./HIPs/hip-1064-flow-the-canvas-plane.md) `flow` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1067](./HIPs/hip-1067-destinations-conversions-forwarded.md) `destinations` · [HIP-1069](./HIPs/hip-1069-tel-numbers-calls-and-messages.md) `tel` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1310](./HIPs/hip-1310-webhooks-outbound-delivery.md) `webhooks`
 
 **Observability** — see everything — telemetry · analytics · usage
 
