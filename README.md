@@ -202,7 +202,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) | Base — The Hosted Backend | Standards Track | Infrastructure | Draft |
 | [HIP-1105](./HIPs/hip-1105-benchmark-measurement-arena.md) | Benchmark — The Measurement Arena | Standards Track | Infrastructure | Draft |
 | [HIP-1106](./HIPs/hip-1106-blueprint-priced-stack.md) | Blueprint — The Priced Stack | Standards Track | Interface | Draft |
-| [HIP-1107](./HIPs/hip-1107-bots-machines-and-runs.md) | Bots — Your Machines and the Runs on Them | Standards Track | Infrastructure | Draft |
+| [HIP-1107](./HIPs/hip-1107-bots-runs-on-a-surface.md) | Bots — Runs on a Surface | Standards Track | Infrastructure | Draft |
 | [HIP-1110](./HIPs/hip-1110-campaigns.md) | Campaigns — One Go-To-Market Push | Standards Track | Interface | Draft |
 | [HIP-1111](./HIPs/hip-1111-captable.md) | Captable — Who Owns What | Standards Track | Interface | Draft |
 | [HIP-1112](./HIPs/hip-1112-catalog.md) | Catalog — Cross-Org Discovery | Standards Track | Interface | Draft |
@@ -289,6 +289,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) | DNS — Zones and Records | Standards Track | Infrastructure | Draft |
 | [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) | Skills — The Discovery Catalogue | Standards Track | Interface | Draft |
 | [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) | Kafka — A Wire Onto the One Bus | Standards Track | Infrastructure | Draft |
+| [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) | KV — Buckets of Versioned Values | Standards Track | Infrastructure | Draft |
+| [HIP-1325](./HIPs/hip-1325-nodes-your-machines-on-a-socket.md) | Nodes — Your Machines on a Socket | Standards Track | Infrastructure | Draft |
 
 ## HIP Process
 
@@ -360,9 +362,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 122 | Capability |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 118 | The Hanzo Plugin Contract |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 117 | Identity & Access Management Standard |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 124 | Capability |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 120 | The Hanzo Plugin Contract |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 119 | Identity & Access Management Standard |
 
 ### Then the invariants
 
@@ -372,8 +374,8 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 15 | Hanzo Service Conventions |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 15 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
+| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 9 | Hanzo IAM Authentication Standard |
-| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 9 | What Is Public |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 9 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
@@ -391,7 +393,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 119 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 121 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -423,7 +425,7 @@ One capability, one HIP (HIP-0139). 119 of them, grouped as `capabilities.yaml` 
 
 **Applications** — the user-facing surfaces built on all of the above
 
-[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0074](./HIPs/hip-0074-software-bill-of-materials-standard.md) `sbom` · [HIP-1106](./HIPs/hip-1106-blueprint-priced-stack.md) `blueprint` · [HIP-1107](./HIPs/hip-1107-bots-machines-and-runs.md) `bots` · [HIP-1116](./HIPs/hip-1116-content.md) `content` · [HIP-1121](./HIPs/hip-1121-dataroom-shared-documents.md) `dataroom` · [HIP-1125](./HIPs/hip-1125-esign-signatures.md) `esign` · [HIP-1126](./HIPs/hip-1126-framework-doctype-engine.md) `framework` · [HIP-1130](./HIPs/hip-1130-guide-launch-journey.md) `guide` · [HIP-1131](./HIPs/hip-1131-help-support-desk.md) `help` · [HIP-1135](./HIPs/hip-1135-legal-documents.md) `legal` · [HIP-1141](./HIPs/hip-1141-prefs-personal-settings.md) `prefs` · [HIP-1150](./HIPs/hip-1150-seo-search-visibility.md) `seo` · [HIP-1151](./HIPs/hip-1151-settings-product-configuration.md) `settings` · [HIP-1152](./HIPs/hip-1152-share-public-tunnel.md) `share` · [HIP-1153](./HIPs/hip-1153-social-channel-publishing.md) `social` · [HIP-1156](./HIPs/hip-1156-templates-starter-gallery.md) `templates` · [HIP-1160](./HIPs/hip-1160-todo-work-item-board.md) `todo` · [HIP-1162](./HIPs/hip-1162-world-the-news-feed.md) `world` · [HIP-1180](./HIPs/hip-1180-links-account-registry.md) `links` · [HIP-1232](./HIPs/hip-1232-git-repository-hosting.md) `git` · [HIP-1252](./HIPs/hip-1252-meet-the-join-decision.md) `meet` · [HIP-1312](./HIPs/hip-1312-company-the-formation-machine.md) `company`
+[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0074](./HIPs/hip-0074-software-bill-of-materials-standard.md) `sbom` · [HIP-1106](./HIPs/hip-1106-blueprint-priced-stack.md) `blueprint` · [HIP-1107](./HIPs/hip-1107-bots-runs-on-a-surface.md) `bots` · [HIP-1116](./HIPs/hip-1116-content.md) `content` · [HIP-1121](./HIPs/hip-1121-dataroom-shared-documents.md) `dataroom` · [HIP-1125](./HIPs/hip-1125-esign-signatures.md) `esign` · [HIP-1126](./HIPs/hip-1126-framework-doctype-engine.md) `framework` · [HIP-1130](./HIPs/hip-1130-guide-launch-journey.md) `guide` · [HIP-1131](./HIPs/hip-1131-help-support-desk.md) `help` · [HIP-1135](./HIPs/hip-1135-legal-documents.md) `legal` · [HIP-1141](./HIPs/hip-1141-prefs-personal-settings.md) `prefs` · [HIP-1150](./HIPs/hip-1150-seo-search-visibility.md) `seo` · [HIP-1151](./HIPs/hip-1151-settings-product-configuration.md) `settings` · [HIP-1152](./HIPs/hip-1152-share-public-tunnel.md) `share` · [HIP-1153](./HIPs/hip-1153-social-channel-publishing.md) `social` · [HIP-1156](./HIPs/hip-1156-templates-starter-gallery.md) `templates` · [HIP-1160](./HIPs/hip-1160-todo-work-item-board.md) `todo` · [HIP-1162](./HIPs/hip-1162-world-the-news-feed.md) `world` · [HIP-1180](./HIPs/hip-1180-links-account-registry.md) `links` · [HIP-1232](./HIPs/hip-1232-git-repository-hosting.md) `git` · [HIP-1252](./HIPs/hip-1252-meet-the-join-decision.md) `meet` · [HIP-1312](./HIPs/hip-1312-company-the-formation-machine.md) `company`
 
 **Chain** — the networks the cloud speaks to — enumerate · call · read balances
 
@@ -431,4 +433,4 @@ One capability, one HIP (HIP-0139). 119 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka`
+[HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) `kv` · [HIP-1325](./HIPs/hip-1325-nodes-your-machines-on-a-socket.md) `nodes`

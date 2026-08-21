@@ -14,11 +14,16 @@ requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 
 ## Abstract
 
-One message bus runs inside the cloud binary, and it has two doors. The cluster's
-door is the broker's own client port: in-process apps and in-cluster clients,
-unscoped, speaking the broker protocol. `/v1/pubsub` is the tenant's door: a
-JSON surface for publish, request/reply and keyed state, where every subject and
-every bucket a caller can name is confined to that caller's org.
+One message bus runs inside the cloud binary, and it has many doors. The
+cluster's door is the broker's own client port: in-process apps and in-cluster
+clients, unscoped, speaking the broker protocol. `/v1/pubsub` is this
+capability's tenant door: a JSON surface for publish and request/reply, where
+every subject a caller can name is confined to that caller's org.
+
+Keyed state is NOT here. A bucket holds values and answers reads; nothing about
+it publishes or subscribes, so it is its own capability at `/v1/kv`
+(HIP-1324), riding this same node through the four calls this package exports
+for a rider. One bus, more than one product on it.
 
 This HIP specifies the tenant door — what it guarantees, what it will not carry,
 and why the isolation is a namespace rather than a broker account. The
@@ -54,10 +59,12 @@ reaches the bus.
 The node runs one domain shared with the platform's own streams, so the door maps
 names on the way in and strips them on the way out:
 
-- Subjects live under a per-org root (`apps/pubsub/typed.go:256`). A caller sees
-  its own clean subject space and cannot express a subject outside it.
-- Buckets carry a physical prefix that keeps the tenant plane disjoint from
-  platform state (`apps/pubsub/typed.go:213`).
+- Subjects live under a per-org root. A caller sees its own clean subject space
+  and cannot express a subject outside it, and wildcards are refused outright:
+  both operations here address ONE subject, and `*` or `>` names a set.
+- Streams and buckets carry a physical prefix that keeps the tenant plane
+  disjoint from platform state. The rule is stated once, by this package, and
+  every rider on the node qualifies its names through it.
 
 The encoding MUST be injective: a physical name decodes to exactly one
 (org, name) pair. Caller-supplied names are constrained so the separator cannot
@@ -110,9 +117,16 @@ file store under cloud's data dir are run by this same package
 (`apps/pubsub/pubsub.go`), and every other plane — the event plane, the queue
 surface (HIP-1061), the wire facades — rides it. The door adds no second one.
 
-The addresses are the operations at `/v1/pubsub` (plugin/pubsub/openapi.json):
-publish, request, and the keyed surface — bucket create and delete, value get,
-put and delete, and a key's history. All typed, none declared.
+The addresses are the two operations at `/v1/pubsub` (plugin/pubsub/openapi.json):
+publish and request. Both typed, neither declared.
+
+What the door exports is part of the contract, because a second capability
+depends on it. A rider on this node reaches it through four calls and no others
+— the dialer, the validated org, the plane-wide name of a caller's stream or
+bucket, and the translation of a broker refusal into a wire refusal. The dialer
+MUST hand back the in-process handle where this process runs the node and MUST
+dial the one bus address otherwise, so a rider in its own binary reaches the
+same server without a second address variable of its own.
 
 It is free, in those words: the plugin declares `Price: cloud.Free`
 (plugin/pubsub/main.go:21), and no meter runs behind any route.
@@ -124,9 +138,9 @@ observability beyond the request span every route gets.
 The stage is `ga` — the manifest row declares none, and absent is `ga`
 (HIP-0139 §8).
 
-The node is `hanzoai/pubsub` (pinned v1.4.6 in cloud's go.mod), a derivative of
-NATS Server (Apache 2.0); the broker core, the stream layer and the key-value
-layer survive in HEAD. In-process callers reach it over the `nats.go` client
+The node is `hanzoai/pubsub` (pinned in cloud's go.mod), a derivative of NATS
+Server (Apache 2.0); the broker core, the stream layer and the key-value layer
+survive in HEAD. In-process callers reach it over the `nats.go` client
 (Apache 2.0).
 
 ## Rationale
@@ -166,6 +180,7 @@ embedded node on an ephemeral port — no fakes in the path
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0119 — Hanzo Service Conventions
 - HIP-1061 — MQ — Queue and Stream Administration
+- HIP-1324 — KV — Buckets of Versioned Values
 
 ## Copyright
 
