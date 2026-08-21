@@ -286,6 +286,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1312](./HIPs/hip-1312-company-the-formation-machine.md) | Company — The Formation Machine | Standards Track | Application | Draft |
 | [HIP-1313](./HIPs/hip-1313-usage-the-metered-record.md) | Usage — The Metered Record | Standards Track | Infrastructure | Draft |
 | [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) | Admin — The Operator Console | Standards Track | Infrastructure | Draft |
+| [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) | DNS — Zones and Records | Standards Track | Infrastructure | Draft |
+| [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) | Skills — The Discovery Catalogue | Standards Track | Interface | Draft |
 
 ## HIP Process
 
@@ -357,9 +359,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 119 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 116 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 115 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 121 | Capability |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 117 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 117 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -388,7 +390,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 118 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -396,7 +398,7 @@ One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` 
 
 **Intelligence** — models · agents · evaluation — the mind of the cloud
 
-[HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) `evals` · [HIP-0516](./HIPs/hip-0516-translate.md) `translate` · [HIP-1102](./HIPs/hip-1102-ask-grounded-answer.md) `ask` · [HIP-1105](./HIPs/hip-1105-benchmark-measurement-arena.md) `benchmark` · [HIP-1114](./HIPs/hip-1114-code.md) `code` · [HIP-1124](./HIPs/hip-1124-engine-runtime-lens.md) `engine` · [HIP-1140](./HIPs/hip-1140-ml-model-serving.md) `ml` · [HIP-1142](./HIPs/hip-1142-prompts-versioned-library.md) `prompts` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1146](./HIPs/hip-1146-sandboxes-compute-primitive.md) `sandboxes` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) `ai` · [HIP-1212](./HIPs/hip-1212-exec-the-code-interpreter.md) `exec` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1214](./HIPs/hip-1214-lsp-live-code-intelligence.md) `lsp`
+[HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) `evals` · [HIP-0516](./HIPs/hip-0516-translate.md) `translate` · [HIP-1102](./HIPs/hip-1102-ask-grounded-answer.md) `ask` · [HIP-1105](./HIPs/hip-1105-benchmark-measurement-arena.md) `benchmark` · [HIP-1114](./HIPs/hip-1114-code.md) `code` · [HIP-1124](./HIPs/hip-1124-engine-runtime-lens.md) `engine` · [HIP-1140](./HIPs/hip-1140-ml-model-serving.md) `ml` · [HIP-1142](./HIPs/hip-1142-prompts-versioned-library.md) `prompts` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1146](./HIPs/hip-1146-sandboxes-compute-primitive.md) `sandboxes` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) `ai` · [HIP-1212](./HIPs/hip-1212-exec-the-code-interpreter.md) `exec` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1214](./HIPs/hip-1214-lsp-live-code-intelligence.md) `lsp` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills`
 
 **Data** — the stores every capability writes to and reads from
 
@@ -416,7 +418,7 @@ One capability, one HIP (HIP-0139). 116 of them, grouped as `capabilities.yaml` 
 
 **Platform** — the cloud fabric — deploy · provision · route · host
 
-[HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) `network` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects`
+[HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) `network` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) `dns`
 
 **Applications** — the user-facing surfaces built on all of the above
 

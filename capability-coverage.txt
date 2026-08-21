@@ -16,7 +16,22 @@
 # vocabulary went 191 names to 116. No count is restated in prose here; run the
 # script.
 #
-# Nothing below. Every capability the vocabulary carries is declared by a HIP,
-# and the last four left together: admin gained one (HIP-1320), and dns, plugins
-# and skills stopped being capabilities when their addresses folded into domain,
-# admin and tools. The next new capability adds its line here.
+# One line below, and the reason it is the only one.
+#
+# `dns`, `plugins` and `skills` were recorded here as having stopped being
+# capabilities -- folded, it said, into domain, admin and tools. None of the
+# three had folded. Each still has its own row in cloud's manifest/apps.go, its
+# own package, and its own served operations; what had happened is narrower and
+# worse. They were absent from hanzoai/openapi's capabilities.yaml, and this
+# gate reads the corpus against THAT file. A capability the taxonomy does not
+# name cannot be reported missing, so the gap read as a fold and the prose wrote
+# it down as one. `graph` was invisible the same way.
+#
+# dns and skills now have HIPs (HIP-1321, HIP-1322) and graph declares the one
+# it always had (HIP-1198). plugins keeps a line because it is the operator's
+# control over the app binaries the host loads -- /v1/admin/plugins, four
+# operations, reachable only by a SuperAdmin -- and a customer specifies nothing
+# through it. If that address is ever opened to an org, this line comes out and
+# a HIP goes in.
+
+plugins
