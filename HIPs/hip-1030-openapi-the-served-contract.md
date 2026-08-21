@@ -65,6 +65,15 @@ The document MUST be readable without a credential, and MUST NOT vary by caller.
 A client has to be able to read a contract before it holds a token, and a list of
 operations grants nothing: every route named stays individually authorized.
 
+What that address answers with is the CUSTOMER projection of §4, not the whole
+weave. The two are separate committed artifacts and the NAMES follow the
+audience: `openapi.yaml` is the customer contract, `private.yaml` is everything
+the fleet serves. The public one MUST hold the conventional name, because the
+name is what gets read — a generator that has never heard of §4 still obeys it by
+reaching for the file every generator reaches for, and the reverse arrangement
+put every staged capability into every published SDK while §4 said it could
+not.
+
 ### §2 Provenance, and the limits of it
 
 A document MUST be a projection of a router, never a registry of paths kept
@@ -103,10 +112,18 @@ addresses exclude: not under `/v1/`, the operator product `/v1/admin/*`, a relay
 wildcard, or a legacy spelling tagged `Compat` (`openapi/public.go:74`). There is
 no allowlist, so a product launched next month is public the day it answers.
 
+A capability still reached by flag is excluded by the same rule: its stage
+(HIP-0139 §8) is a term of it, stamped over the finished composition where every
+term is finally known.
+
 A whitelist was tried and is refused. A handful of operations were declared
 public by hand while most products — commerce, git, observability, the cap table
 — stayed out of every generated client, and those clients read the internal
 document instead. A whitelist nothing reads is a statement of intent.
+
+Both documents MUST come out of ONE composition run. Two commands producing two
+files is two documents free to describe two commits, and the disagreement is
+invisible until a client is generated from the stale one.
 
 The projection MUST refuse to emit an empty document, and MUST refuse a `$ref`
 naming a component the document does not define. Both are broken documents; the
@@ -128,10 +145,17 @@ other check compares two derived artifacts that can agree while both are wrong:
 Counts per product rather than in total, because totals net out: a run that lost
 one product's entire surface added enough elsewhere to keep the total rising.
 
+Both ratchets measure the INTERNAL document (`private.yaml`), and MUST NOT be
+re-based onto the customer contract. Whether an address is routed carries no
+audience question — an operator address that 404s is as dark as a customer one —
+and a floor sized to the smaller document would accept the loss of every product
+the projection already drops. The customer contract is its own ratchet: it is
+small enough to compare WHOLE, so a shrink and a leak are both a diff in it.
+
 ### §6 What the capability owns, meters and emits
 
 This capability **owns no store**. The document is a render of the routers;
-what is committed — `openapi.yaml`, `public.yaml`, each `plugin/<app>/openapi.json`
+what is committed — `openapi.yaml`, `private.yaml`, each `plugin/<app>/openapi.json`
 subset, the two ratchet files of §5 — is artifact, not state, regenerated from
 source and verified byte-for-byte. There is nothing to migrate and nothing a
 backup could lose that a rebuild does not produce.
