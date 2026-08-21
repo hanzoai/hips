@@ -247,7 +247,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1162](./HIPs/hip-1162-world-the-news-feed.md) | World — The News Feed | Standards Track | Application | Draft |
 | [HIP-1163](./HIPs/hip-1163-x402-pay-per-request.md) | x402 — Pay Per Request | Standards Track | Core | Draft |
 | [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) | Provisioning — Stores on Demand | Standards Track | Core | Draft |
-| [HIP-1165](./HIPs/hip-1165-storage-buckets-and-objects.md) | Storage — Buckets and Objects | Standards Track | Core | Draft |
+| [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) | S3 — Buckets and Objects | Standards Track | Core | Draft |
 | [HIP-1166](./HIPs/hip-1166-product-search-and-vector-inventory.md) | Product — Search and Vector Inventory | Standards Track | Core | Draft |
 | [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) | Dataset — The Versioned Snapshot | Standards Track | Core | Draft |
 | [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | visor — Compute You Rent | Standards Track | Infrastructure | Draft |
@@ -403,7 +403,7 @@ One capability, one HIP (HIP-0139). 117 of them, grouped as `capabilities.yaml` 
 
 **Data** — the stores every capability writes to and reads from
 
-[HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) `base` · [HIP-1112](./HIPs/hip-1112-catalog.md) `catalog` · [HIP-1117](./HIPs/hip-1117-crawl.md) `crawl` · [HIP-1132](./HIPs/hip-1132-index-search.md) `index` · [HIP-1147](./HIPs/hip-1147-search-hybrid-retrieval.md) `search` · [HIP-1154](./HIPs/hip-1154-sync-endpoint-reconciliation.md) `sync` · [HIP-1155](./HIPs/hip-1155-taxonomy-catalogue-shape.md) `taxonomy` · [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) `provisioning` · [HIP-1165](./HIPs/hip-1165-storage-buckets-and-objects.md) `storage` · [HIP-1166](./HIPs/hip-1166-product-search-and-vector-inventory.md) `product` · [HIP-1251](./HIPs/hip-1251-websearch-the-live-web.md) `websearch` · [HIP-1260](./HIPs/hip-1260-knowledge.md) `knowledge`
+[HIP-1104](./HIPs/hip-1104-base-hosted-backend.md) `base` · [HIP-1112](./HIPs/hip-1112-catalog.md) `catalog` · [HIP-1117](./HIPs/hip-1117-crawl.md) `crawl` · [HIP-1132](./HIPs/hip-1132-index-search.md) `index` · [HIP-1147](./HIPs/hip-1147-search-hybrid-retrieval.md) `search` · [HIP-1154](./HIPs/hip-1154-sync-endpoint-reconciliation.md) `sync` · [HIP-1155](./HIPs/hip-1155-taxonomy-catalogue-shape.md) `taxonomy` · [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) `provisioning` · [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) `s3` · [HIP-1166](./HIPs/hip-1166-product-search-and-vector-inventory.md) `product` · [HIP-1251](./HIPs/hip-1251-websearch-the-live-web.md) `websearch` · [HIP-1260](./HIPs/hip-1260-knowledge.md) `knowledge`
 
 **Streams** — messaging · durable tasks · async orchestration
 

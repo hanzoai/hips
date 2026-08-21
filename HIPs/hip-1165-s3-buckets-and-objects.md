@@ -1,16 +1,16 @@
 ---
 hip: 1165
-title: Storage — Buckets and Objects
+title: S3 — Buckets and Objects
 author: Hanzo AI
 type: Standards Track
 category: Core
-capability: storage
+capability: s3
 status: Draft
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1165: Storage — Buckets and Objects
+# HIP-1165: S3 — Buckets and Objects
 
 ## Abstract
 
@@ -18,7 +18,7 @@ requires: HIP-0026, HIP-0106, HIP-0139
 for upload and download. It is the DATA plane over the shared object store —
 `provisioning` (HIP-1164) is the control plane that allocates the bucket
 resource, and both derive a bucket's real name from the caller's org the same
-way. It is implemented in `hanzoai/cloud` at `apps/storage` (HIP-0106).
+way. It is implemented in `hanzoai/cloud` at `apps/s3` (HIP-0106).
 
 ## Motivation
 
@@ -73,11 +73,12 @@ each refusal is a wire this stack cannot yet describe:
 All three clear on one change: an error that can carry a body, and a second
 declarable success status.
 
-The pair `/v1/s3 storage` is carried by cloud's `openapi/misfiled.txt` and
-closes by rename (HIP-0139 §7.3), never by alias or by fold: `s3` is a name
+The pair `/v1/s3 storage` that cloud's `openapi/misfiled.txt` used to carry is
+closed, by rename (HIP-0139 §7.3) and never by alias or by fold: `s3` is a name
 HIP-0139 §2.5 admits and is the word people say for the thing, and the rest of
-the corpus already addresses object storage there (HIP-1060, HIP-1061). Rename
-is the resolution that leaves every existing reference correct.
+the corpus already addressed object storage there (HIP-1060, HIP-1061). The app,
+the package and this HIP took the address's name, which left every existing
+reference correct and the ledger one line shorter.
 
 ### §3 Tenancy
 
@@ -116,7 +117,7 @@ with a usage-derived amount. There is no second metering path.
 
 ### §5 Events
 
-It publishes nothing on the bus; a customer's webhooks receive no `storage.*`
+It publishes nothing on the bus; a customer's webhooks receive no `s3.*`
 events.
 
 ### §6 Observability
@@ -132,7 +133,7 @@ is not logged: the URL is the capability.
 
 ### §8 Upstream
 
-It derives from `github.com/hanzos3/go` v1.0.2 (Apache-2.0), the Hanzo storage
+It derives from `github.com/hanzos3/go` v1.0.2 (Apache-2.0), the Hanzo S3
 client built on the MinIO Go client; the S3 request signing, the bucket and
 object calls and the presigner survive in HEAD, and the app adds the tenancy
 derivation, the gate and the route set rather than a fork of the client's
