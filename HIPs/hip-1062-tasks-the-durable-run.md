@@ -115,10 +115,28 @@ must agree.
 ### Addresses, and the one that is legacy
 
 The door serves two shapes — the bare noun's redirect and the one wildcard route
-that carries the engine's operation set, on every method — under two prefixes:
-`/v1/tasks`, the canonical address, and the bare `/tasks` the studio shipped with
-(plugin/tasks/openapi.json, manifest/apps.go:409). That bare pair is ledgered in
-`openapi/misfiled.txt` and closes by fold under `/v1/tasks`, never by alias.
+that carries the engine's operation set, on every method — under one prefix,
+`/v1/tasks`. The bare `/tasks` the studio shipped with is gone.
+
+The studio is not a cloud address. It is its own image (`ghcr.io/hanzoai/tasks`,
+built from `hanzoai/admin` `apps/tasks` at base `/`) at the root of
+`tasks.hanzo.ai`, like `todo` and `meet` before it. The `/tasks` pair was
+ledgered in `openapi/misfiled.txt` and closes by deletion, not by fold.
+
+It is the one of the three that could not simply move, and the reason belongs
+here because it decides the ROUTING rather than the code. The studio reads
+`/v1/tasks` with same-origin credentials and carries no bearer, so the
+arrangement `todo` and `meet` use — a static host and a cross-origin API —
+would send no credential at all. So the host is split at the edge instead: the
+bundle from its own pods, `/v1/tasks` to cloud, which is the shape
+`console.hanzo.ai` already runs. The browser sees one origin, and nothing about
+the requests cloud receives changes.
+
+That split carves ONE prefix, measured against the built bundle rather than
+assumed. The bundle names three — `/v1/tasks`, `/v1/csrf`, `/v1/iam` — and only
+the first is same-origin: `/v1/csrf` is fetched through `@hanzogui/admin`'s
+`apiUrl()`, which resolves to the brand's API origin on every `hanzo.ai` host,
+and `/v1/iam` belongs to shared IAM-policy screens this app routes nowhere.
 
 ### What it owns, charges and emits
 

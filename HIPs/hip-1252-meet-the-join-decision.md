@@ -50,14 +50,22 @@ asked of `team`, which owns the workspace rows, over the internal plane
 
 ### §2 The address
 
-The surface is `/v1/meet`: `getToken`, `session`, `health`. The embedded call
-client — the built Hanzo Meet SPA (`apps/meet/ui`) — is today served at a
-second, versionless root, `/meet`, which is a HIP-0139 §3.3 violation carried
-by cloud's `openapi/misfiled.txt:15`. It resolves by fold to `/v1/meet/ui`,
-with deletion available once a verified console address serves the client; the
-destination is decided at implementation, and the client's own source already
-assumes independence — the published office client supplies its own address
-(`apps/meet/meet.go:103`).
+The surface is `/v1/meet`, and it is the whole of it: `getToken`, `session`,
+`health`. There is no second, versionless root any more.
+
+The call client is not a cloud address. It is its own image
+(`ghcr.io/hanzoai/meet`, built from `hanzoai/admin` `apps/meet` at base `/`) on
+its own host, `meet.hanzo.ai`, served by `ghcr.io/hanzoai/static`. Cloud
+embedded a copy at `/meet` and `/meet/*` — a HIP-0139 §3.3 violation ledgered
+at `openapi/misfiled.txt` — and that copy is deleted rather than folded: a fold
+to `/v1/meet/ui` would have kept a browser app on the API origin under a
+tidier name, and by then the real destination was already serving.
+
+Deletion cost the client nothing, which is what made it the right shape rather
+than the bold one: its two server calls are `/v1/meet/session` and
+`/v1/meet/getToken`, it carries a bearer for both, and both are answered
+identically whether or not the bundle shares this origin. The media plane never
+touched either — a direct browser-to-LiveKit connection.
 
 ### §3 Operations
 
