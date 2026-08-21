@@ -291,6 +291,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) | Kafka — A Wire Onto the One Bus | Standards Track | Infrastructure | Draft |
 | [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) | KV — Buckets of Versioned Values | Standards Track | Infrastructure | Draft |
 | [HIP-1325](./HIPs/hip-1325-nodes-your-machines-on-a-socket.md) | Nodes — Your Machines on a Socket | Standards Track | Infrastructure | Draft |
+| [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) | AMQP — Exchanges, Queues and Bindings Onto the One Bus | Standards Track | Infrastructure | Draft |
 
 ## HIP Process
 
@@ -362,8 +363,8 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 124 | Capability |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 120 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 125 | Capability |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 121 | The Hanzo Plugin Contract |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 119 | Identity & Access Management Standard |
 
 ### Then the invariants
@@ -393,7 +394,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 121 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 122 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -433,4 +434,4 @@ One capability, one HIP (HIP-0139). 121 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) `kv` · [HIP-1325](./HIPs/hip-1325-nodes-your-machines-on-a-socket.md) `nodes`
+[HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) `kv` · [HIP-1325](./HIPs/hip-1325-nodes-your-machines-on-a-socket.md) `nodes` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp`
