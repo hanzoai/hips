@@ -118,7 +118,7 @@ The door serves two shapes — the bare noun's redirect and the one wildcard rou
 that carries the engine's operation set, on every method — under one prefix,
 `/v1/tasks`. The bare `/tasks` the studio shipped with is gone.
 
-The studio is not a cloud address. It is its own image (`ghcr.io/hanzoai/tasks`,
+The studio is not a cloud address. It is its own image (`ghcr.io/hanzoai/admin-tasks`,
 built from `hanzoai/admin` `apps/tasks` at base `/`) at the root of
 `tasks.hanzo.ai`, like `todo` and `meet` before it. The `/tasks` pair was
 ledgered in `openapi/misfiled.txt` and closes by deletion, not by fold.
