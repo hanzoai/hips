@@ -11,6 +11,7 @@
     "postinstall": "hanzo-mdx"
   },
   "dependencies": {
+    "@hanzo/design": "^0.5.18",
     "@hanzo/docs": "16.2.7",
     "@hanzo/logo": "^1.0.5",
     "@hanzo/mdx": "^14.2.5",

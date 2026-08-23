@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      '@hanzo/design':
+        specifier: ^0.5.18
+        version: 0.5.21
       '@hanzo/docs':
         specifier: 16.2.7
         version: 16.2.7(a6848f2b11809debb6809a4f2da606bc)
@@ -576,6 +579,10 @@ packages:
       prettier:
         optional: true
 
+  '@hanzo/design@0.5.21':
+    resolution: {integrity: sha512-E2g6DZCn2IUf2AQKqPMwlVV5fz2wvIpAagFRLx33gIsJfmpyubFnx0LINjFs7UoMI1ajnwSa73k7rPteVSemUw==}
+    hasBin: true
+
   '@hanzo/docs-cli@1.1.1':
     resolution: {integrity: sha512-xLtG0cVeU5c2jJmdcTco4wXjlTB1juVovQiH7bjz5kthBbv98tANXg3iVIbRG5W9ls95/eGBcodMqBMOX9p9Yw==}
     hasBin: true
@@ -797,6 +804,7 @@ packages:
 
   '@hanzo/ui@5.3.34':
     resolution: {integrity: sha512-iFMZLT8L5BNFYNJec8cBSHeSH3ookWq3am3RsJauyGOnel4faGF2tv9p81Yt7ZiJQkH6qyqCtJ/1avvI5oQaNg==}
+    deprecated: moved to @hanzo/ui-shadcn; @hanzo/ui@8+ is the @hanzo/gui-based unified library
     hasBin: true
     peerDependencies:
       '@dnd-kit/core': ^6.0.0
@@ -2210,6 +2218,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@vitejs/plugin-react@5.1.4':
     resolution: {integrity: sha512-VIcFLdRi/VYRU8OL/puL7QXMYafHmqOnwTZY50U1JPlCNj30PxCMx65c494b1K9be9hX83KVt0+gTEwTWLqToA==}
@@ -3464,6 +3473,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   validator@13.15.26:
@@ -3923,6 +3933,8 @@ snapshots:
   '@fumari/json-schema-to-typescript@2.0.0':
     dependencies:
       js-yaml: 4.1.1
+
+  '@hanzo/design@0.5.21': {}
 
   '@hanzo/docs-cli@1.1.1':
     dependencies:
