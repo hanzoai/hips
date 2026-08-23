@@ -102,9 +102,8 @@ console's `/*`, so a first-match scan reaches them.
 - **skills** is the unauthenticated *description* of what exists, read before any
   call.
 
-One is the shelf, the other is the sign on the door. A skill document MUST NOT
-be the only place a capability's contract is written; it points at the served
-document, which HIP-1030 specifies.
+A skill document MUST NOT be the only place a capability's contract is written;
+it points at the served document, which HIP-1030 specifies.
 
 ## Rationale
 

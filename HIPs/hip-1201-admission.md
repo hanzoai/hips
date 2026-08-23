@@ -68,7 +68,7 @@ itself is the flag engine's switch.
 ### §3 The rule, and who may read
 
 The mode read is anonymous by design and MUST remain so: an unadmitted visitor
-cannot hold a flag, so HIP-0139 §8.2's flag-gated 404 cannot apply to the door
+cannot hold a flag, so HIP-0139 §8.2's flag-gated 404 cannot apply to the endpoint
 that implements launch gating. The read carries no tenant data.
 
 Enforcement applies the rule at one native middleware (`Enforce`,

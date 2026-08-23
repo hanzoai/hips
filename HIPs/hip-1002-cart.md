@@ -30,7 +30,7 @@ The checkout addresses have been served for as long as the binary has existed. T
 cart they operate on had no address at all, so the first step of a documented flow
 was unreachable while the last three were (`apps/commerce/cart.go:5-13`). The
 capability was never missing — the module implements the whole noun — only the
-door was. This HIP records the shape that door commits to, so the next reader does
+endpoint was. This HIP records the shape that endpoint commits to, so the next reader does
 not mistake it for a second cart.
 
 ## Specification
@@ -60,7 +60,7 @@ own method and MUST NOT restate its rules
 (`apps/commerce/cart.go:15-21`). What this capability adds is an address, a
 declared input, a declared answer and the prose that makes all three legible to a
 generated client, a tool listing and a command line. A rule reimplemented at the
-door is a rule that will disagree with the module that owns it.
+endpoint is a rule that will disagree with the module that owns it.
 
 ### Identity is not an input
 
@@ -78,10 +78,10 @@ checkout resolves an option and a tax region; a cart total before checkout is a
 subtotal with those two at zero, and a caller MUST NOT present it as a final
 amount.
 
-### No money and no marketing ride on this door
+### No money and no marketing ride on this endpoint
 
 A cart moves no money, so no credit screen is composed onto it — the screen belongs
-on the acts that mint, which is why HIP-1005 puts it on the payment door
+on the acts that mint, which is why HIP-1005 puts it on the payment endpoint
 (`apps/commerce/cart.go:178-181`).
 
 The standalone deployment of the commerce module mirrors cart writes into an
@@ -96,7 +96,7 @@ to drift.
 The obvious alternative is `DELETE /v1/cart/:id/item/:key` beside the set. It reads
 naturally and it doubles the state space: two paths to an empty line, two places to
 get the coupon recomputation right, two things to keep idempotent. Quantity zero is
-already exactly what the model's own set does, so the second door would be a
+already exactly what the model's own set does, so the second endpoint would be a
 spelling and not a capability.
 
 The second alternative is to accept the org on the request so a storefront service

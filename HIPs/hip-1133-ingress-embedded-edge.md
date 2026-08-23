@@ -14,7 +14,7 @@ requires: HIP-0026, HIP-0106, HIP-0139
 
 ## Abstract
 
-`/v1/ingress` is the front door as a capability: automatic TLS certificates and
+`/v1/ingress` is the edge as a capability: automatic TLS certificates and
 hostname routing to any backend, changed live over an API with no config file
 and no restart. It is cloud's embedded, runtime-configurable edge, implemented
 in `hanzoai/cloud` at `apps/ingress` (HIP-0106) — a control plane every
@@ -76,7 +76,7 @@ closed, with no second gate to keep in sync
 
 Free (`cloud.Free`, `plugin/ingress/main.go`). It publishes nothing on the bus
 and emits nothing beyond the request span every route gets. Stage `ga`: the
-platform core's front door.
+platform core's edge.
 
 ### §6 Upstream
 

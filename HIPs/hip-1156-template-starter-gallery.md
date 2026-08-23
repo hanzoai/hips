@@ -84,7 +84,7 @@ request field; every read of the private table binds it.
 
 It is free — the surface declares `cloud.Free` (`plugin/template/main.go`). It
 publishes nothing on the bus and emits nothing beyond the request span every
-route gets. The stage is `ga`: the gallery is the front door of the deploy path,
+route gets. The stage is `ga`: the gallery is the entry point of the deploy path,
 part of the self-service platform core.
 
 ### Upstream

@@ -23,7 +23,7 @@ a customer.
 It owns no store. Every panel is a read fanned into IAM, commerce, the ledger,
 o11y and the cluster; every mutation is somebody else's write, recorded first in
 the tamper-evident trail. What admin owns is the ADMISSION and the AGGREGATION —
-one predicate at the door, and the fold that turns a hundred upstream reads into
+one predicate at the endpoint, and the fold that turns a hundred upstream reads into
 one board.
 
 This HIP states that surface, the two-tier gate it admits through, and why a
@@ -198,7 +198,7 @@ logs and no metrics of its own. The one publication it makes is in-process — t
 per-provider funding split, handed to the `ai` module's funding state
 (`apps/admin/finance/finance.go`) — and reaches no bus and no tenant.
 
-### §7 The reload door
+### §7 The reload endpoint
 
 `/v1/admin/plugins` is four operations: the fleet's per-host account of what it
 is running, and reload, enable and disable for one plugin. Each is `core.Admit`
@@ -211,7 +211,7 @@ The identity of what is running is the artifact's SHA-256 and MUST NOT be a
 version string, because the digest is the only identifier that cannot drift from
 the bits actually serving.
 
-Three rules bind the door:
+Three rules bind the endpoint:
 
 1. **The version-to-digest mapping has one author.** A version resolves through
    `CLOUD_PLUGIN_ORIGIN` to `<origin>/<version>/binaries.json` — the index CI
@@ -273,7 +273,7 @@ cannot be tested and each failure reads as a blank.
 
 The second alternative was to gate admin at the edge alone — a proxy in front of
 `admin.hanzo.ai` — and to leave the handlers ungated. That is one projection of
-four. The MCP door and the CLI reach the same typed operations without passing
+four. The MCP endpoint and the CLI reach the same typed operations without passing
 any edge, so a gate that lives at the edge is a gate two callers walk around;
 this is why §2.3 puts the call in the handler.
 
@@ -303,7 +303,7 @@ a "make it work" patch that widens the test to any org in the set, or to the
 isAdmin bit, converts a refusal bug into an escalation. Membership of the
 reserved org, at any position, is the predicate; nothing else is.
 
-**The reload door as the shortest path to code execution.** An attacker who
+**The reload endpoint as the shortest path to code execution.** An attacker who
 reaches it does not need a vulnerability in any handler — they need a URL. This
 is why the origin is deployment config and not a request field, why the digest
 comes from the index CI writes rather than from the caller, and why zip verifies

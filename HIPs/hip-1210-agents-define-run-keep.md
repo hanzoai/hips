@@ -52,7 +52,7 @@ starts one autonomous coding run, typed, answering 202 with the run's handle
 (`plugin/agents/coding.go:133`).
 
 Both folds have landed and `hanzoai/cloud` `openapi/misfiled.txt` carries no
-line for this capability. The coding door moved off `/v1/coding` together with
+line for this capability. The coding endpoint moved off `/v1/coding` together with
 the chat server's dispatch of it, in one release, because that op's reachability
 is the only way a chat turn gets to a sandbox (`plugin/agents/coding.go:128-131`).
 The conversation surface moved off `/v1/agent` when the orchestrator stopped
@@ -112,7 +112,7 @@ from an OSS upstream.
 
 The alternative the codebase actually had was three apps — `agent`, `agents`,
 `coding` — one concept under a pair of names a reader could not tell apart, plus
-a door whose app held no store of its own. HIP-0139 §2.4 decides the number
+an endpoint whose app held no store of its own. HIP-0139 §2.4 decides the number
 (the collection is plural), and §7.1 decides the folds: a coding run is an agent
 run, recorded in the same per-org file, billed by the same meter, so a second
 root was a second name for one thing.

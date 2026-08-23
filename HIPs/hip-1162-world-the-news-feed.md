@@ -52,7 +52,7 @@ Every route is under `/v1/world` (`manifest/apps.go:382`): six operations,
 five typed. `GET /v1/world/stream` is the one declared route — an SSE stream
 is not a value, so it carries prose beside the wire fact
 (`apps/world/stream.go:120`). Two reads are public by design and carry no
-tenant data: `GET /v1/world` (the front door naming the product's wires) and
+tenant data: `GET /v1/world` (the entry point naming the product's wires) and
 `GET /v1/world/limits` (a plan's gates). Two more wires answer under this
 prefix and are NOT served by this binary — `/v1/world/mcp` and `/v1/world/zap`
 are carved off by the ingress and answered by world-gw; the generated document

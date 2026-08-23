@@ -289,7 +289,7 @@ A plugin does not serve the console, does not thread operator flags, does not
 scope credentials for other processes, and does not own the ops listener when it
 runs as a child (`zip.Addr("") != ""` means a host handed it a socket; the ops
 port is the host's — HIP-0119 §1 applies to the *deployment's* listeners, and a
-child's socket is not one). These are front-door concerns and stay in one
+child's socket is not one). These are edge concerns and stay in one
 process.
 
 ### §2 The entry point
@@ -380,7 +380,7 @@ prefixes through `zip.Load` and the first match wins. A prefix nobody wrote down
 is not a documentation gap; it is a 404 or a 405 on live traffic.
 
 The proof is on the record. The `analytics` row listed the read endpoints and
-omitted the four ingestion doors `apps/analytics/event.go` actually serves
+omitted the four ingestion endpoints `apps/analytics/event.go` actually serves
 (`/v1/event`, `/v1/insights/e`, `/v1/analytics`, `/v1/analytics/batch`). Every
 product beacon in the fleet therefore fell past every prefix onto the row
 holding the bare `/v1` remainder, which does not serve them, and answered 405 —
@@ -473,7 +473,7 @@ was consulted instead of a router.
 
 Updating a plugin is then ONE commit in the host repo that moves
 `{URL, Sum, declaration}` together, and the routing change is *visible in the
-diff*: the six analytics doors appear or disappear as lines, reviewed, instead of
+diff*: the six analytics endpoints appear or disappear as lines, reviewed, instead of
 being absent from a table nobody diffed against reality.
 
 #### §3.4 How the host validates a declaration it did not write
@@ -822,7 +822,7 @@ binary; fail on any diff. Additionally assert `openapi ⊆ declaration`: every p
 in the OpenAPI subset MUST appear in the declaration.
 *Catches:* the analytics-ingestion outage class — a published path the host will
 not route. The subset relation is one-way: a served-but-unpublished route (a
-webhook door) MUST still be declared, or it 405s.
+webhook endpoint) MUST still be declared, or it 405s.
 
 **§8.4 `openapi-current`.** Regenerate the OpenAPI subset from the binary and
 fail on any porcelain change.
@@ -1114,7 +1114,7 @@ Build a conforming plugin repo in one pass:
 ## The API surface a composition serves
 
 These sections describe the API a composition presents to callers — the
-credential, the meter and the OpenAI-compatible door — not the plugin
+credential, the meter and the OpenAI-compatible endpoint — not the plugin
 contract above. They are filed here because the HIPs that owned them were
 merged into this document; they constrain what a plugin serving those
 surfaces must do, and they are unchanged by the composition model.

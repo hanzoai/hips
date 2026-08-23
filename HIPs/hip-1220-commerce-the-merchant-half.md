@@ -16,12 +16,12 @@ requires: HIP-0018, HIP-0026, HIP-0106, HIP-0139
 
 `/v1/commerce` is selling: checkout, subscriptions, invoices, spend alerts,
 payment webhooks, the storefront and its catalog, carts, priced SKUs and the
-typed payment door. It is `hanzoai/cloud` `apps/commerce`, which mounts the
+typed payment endpoint. It is `hanzoai/cloud` `apps/commerce`, which mounts the
 `hanzoai/commerce` module natively on the cloud's own router — one router, one
 specificity space, zero handler adaptation (`apps/commerce/mount.go:3-14`).
 
 This HIP states the target surface — one root for every merchant noun — and the
-boundary with `billing`, the customer money door HIP-0018 declares: commerce is
+boundary with `billing`, the customer money endpoint HIP-0018 declares: commerce is
 the merchant half and the store it owns; billing is the address a customer's
 money questions are answered at.
 
@@ -44,7 +44,7 @@ Every route commerce serves MUST be under `/v1/commerce`:
 - `/v1/commerce/cart` — the shopper's basket (from `/v1/cart`; HIP-1002).
 - `/v1/commerce/catalog` — the merchant catalog rows in commerce's store,
   merging the SuperAdmin CRUD now at `/v1/catalog/*`.
-- `/v1/commerce/payments` — the typed payment door (from `/v1/payments`;
+- `/v1/commerce/payments` — the typed payment endpoint (from `/v1/payments`;
   HIP-1005).
 - `/v1/commerce/plans` — plan ROWS in commerce's datastore (from
   `/v1/plans/{entries,seed}`). The `/v1/plans` root is the plans capability's;
@@ -63,7 +63,7 @@ lines in cloud's `openapi/misfiled.txt`, and each closes by fold, never alias.
 Commerce MUST NOT serve `/v1/billing`. That address is billing's (HIP-0018),
 answered over the plane; commerce keeps the store and publishes the plane
 operations — balance, the prepaid gate, credit, usage, transactions, spend and
-scope rules (`apps/commerce/mount.go:204-210`) — that the money door and every
+scope rules (`apps/commerce/mount.go:204-210`) — that the money endpoint and every
 metered surface debit through. One store, one publisher, one address that is
 somebody else's.
 
@@ -94,7 +94,7 @@ The surface is free, in those words: `Price: cloud.Free`
 (`plugin/commerce/main.go:21`) — it is the path to payment itself. The meter
 downstream of the edge is the one §2 publishes.
 
-Both doors that mint spendable balance from a settled charge — the browser
+Both endpoints that mint spendable balance from a settled charge — the browser
 top-up and the typed payment op — MUST wrap their handler, not their route, with
 the one risk screen (`apps/commerce/mount.go`, the credit-screen note;
 `apps/commerce/risk.go`): a typed op is projected four ways and only the handler

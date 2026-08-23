@@ -91,7 +91,7 @@ UNGATED — the failure is silent and looks exactly like success.
 
 A write registered outside the minting package uses the same exported middleware
 bound to the same process key (`apps/account/csrf.go:195`), so a token minted at
-the door verifies at that write byte-identically. Two implementations of one
+the endpoint verifies at that write byte-identically. Two implementations of one
 check are two answers eventually.
 
 ### 5. What it is not

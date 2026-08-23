@@ -16,9 +16,9 @@ requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 
 Hanzo Flow is the visual agent-workflow product — a canvas, a graph engine and a
 component library — and it lives in its own repository, `hanzoai/flow`, written in
-Python. `/v1/flow` is the cloud's door onto it.
+Python. `/v1/flow` is the cloud's endpoint onto it.
 
-This HIP specifies what the door adds and, more importantly, what it refuses to
+This HIP specifies what the endpoint adds and, more importantly, what it refuses to
 add. The cloud contributes exactly three things: identity, the tenant boundary,
 and the unified surface. It contributes no data model, because a plane that
 remodels a product's shapes can drift from them. The implementation is
@@ -26,7 +26,7 @@ remodels a product's shapes can drift from them. The implementation is
 
 ## Motivation
 
-Two failure modes bracket this kind of door.
+Two failure modes bracket this kind of endpoint.
 
 The first is reimplementation: cloud grows its own workflow model beside the
 product's, and the two diverge until a graph saved through one cannot be read
@@ -152,7 +152,7 @@ isolation in tested code paths on the cloud side, where the identity already is.
 ## Security Considerations
 
 One shared upstream credential means the upstream cannot distinguish tenants; the
-door is the only thing that can. Two properties carry it: the project is pinned
+endpoint is the only thing that can. Two properties carry it: the project is pinned
 server-side on write, and every per-workflow operation passes an ownership check
 whose negative answer is identical to the not-found answer.
 

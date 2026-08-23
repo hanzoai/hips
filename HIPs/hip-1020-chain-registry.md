@@ -115,7 +115,7 @@ dialled.
 ## References
 
 - HIP-0106 — Hanzo Plugin Contract
-- HIP-1021 — Chain JSON-RPC Door
+- HIP-1021 — Chain JSON-RPC Endpoint
 - HIP-1022 — Native Balance Reads
 
 ## Copyright

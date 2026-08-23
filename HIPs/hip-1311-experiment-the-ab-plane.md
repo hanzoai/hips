@@ -66,7 +66,7 @@ answer serving traffic.
 
 Assignment MUST be the same deterministic rollout hash the flags surface
 evaluates — `flags.Assign`, in process, no network hop — so a subject's arm is
-one value whether read here, evaluated at the flags door, or composed by another
+one value whether read here, evaluated at the flags endpoint, or composed by another
 subsystem in the binary (`apps/campaign` splits traffic the same way).
 
 Because the hash is a pure function of subject, key and seed, there is no
@@ -80,7 +80,7 @@ Outcomes MUST be read from the one analytics plane rather than a second exposure
 topic: the analyze fold reads each subject's outcome from the org-scoped event
 query and joins it to the arm by subject id (`apps/experiment/analyze.go`). A
 serving surface that records an exposure records an ordinary analytics event
-through the same capture door as every other event (HIP-0017) — no separate
+through the same capture endpoint as every other event (HIP-0017) — no separate
 stream, no emitter in the request path.
 
 The analysis is one method: a two-proportion z-test against the control arm over

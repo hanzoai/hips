@@ -1,6 +1,6 @@
 ---
 hip: 0132
-title: One Telemetry Plane — One Door, One Schema, Many Lenses
+title: One Telemetry Plane — One Endpoint, One Schema, Many Lenses
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
@@ -10,12 +10,12 @@ requires: HIP-0119, HIP-0512
 ---
 
 
-# HIP-0132: One Telemetry Plane — One Door, One Schema, Many Lenses
+# HIP-0132: One Telemetry Plane — One Endpoint, One Schema, Many Lenses
 
 ## Abstract
 
-Hanzo ingests telemetry through one door, stores it in one flat schema, and presents it
-through as many product surfaces as the business needs. Today it has two doors, nine
+Hanzo ingests telemetry through one endpoint, stores it in one flat schema, and presents it
+through as many product surfaces as the business needs. Today it has two endpoints, nine
 databases, three DDL paths and a version suffix on the table taking production writes.
 
 This HIP states the target, and the cut that reaches it: the old plane is destroyed,
@@ -23,9 +23,9 @@ not migrated. No compatibility layer survives this document.
 
 ## Specification
 
-### §1 Doors
+### §1 Endpoints
 
-| door | why it exists |
+| endpoint | why it exists |
 |---|---|
 | `POST /v1/event` | the one telemetry ingest. Accepts a bare object, a bare array, or `{batch:[…]}`/`{events:[…]}` — batching is a SHAPE, not a route |
 | `POST /v1/event/replay` | session replay: a different data shape, not a different view |
@@ -38,9 +38,9 @@ not migrated. No compatibility layer survives this document.
 `/v1/session` MUST NOT be used for replay — `/v1/agents/sessions` already owns that word,
 and one word for two concepts is the defect this HIP removes.
 
-`/v1/insights/e` is a live SECOND door today (verified 200, against a 404 control on a
+`/v1/insights/e` is a live SECOND endpoint today (verified 200, against a 404 control on a
 sibling path). It is **deleted**, not shimmed. A forwarding shim exists to serve SDKs you
-do not control; we own `@hanzo/event`, so the client moves and the door closes. A shim
+do not control; we own `@hanzo/event`, so the client moves and the endpoint is removed. A shim
 here would be permanent debt bought for nothing.
 
 ### §2 Lenses, not planes
@@ -202,7 +202,7 @@ Not one of them owns storage. Adding a fifth surface is a query, not a database.
 **LLM observability is not a fourth signal.** A `gen_ai` span IS a span — the wire already
 carries `gen_ai.system`, `gen_ai.request.model`, `gen_ai.response.model`,
 `gen_ai.operation.name`, `gen_ai.hanzo.org_id`, `gen_ai.hanzo.project` as span attributes.
-It lands in `o11y.spans` like any other span and needs no table, no database and no door
+It lands in `o11y.spans` like any other span and needs no table, no database and no endpoint
 of its own. That an LLM call is expensive does not make it a different KIND of thing; it
 makes it a span with a cost attribute.
 
@@ -224,7 +224,7 @@ an observation.
 
 ## Conformance
 
-1. One ingest door. A second door is a shim that forwards, or it is deleted.
+1. One ingest endpoint. A second endpoint is a shim that forwards, or it is deleted.
 2. One database. The table never restates it.
 3. No version suffix on any live table.
 4. `org` on every table, 1:1 with IAM.

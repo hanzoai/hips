@@ -153,7 +153,7 @@ Against the other capabilities that keep blobs: the deploy blobs, the static
 site content and the team files all reach the same object store through the same
 admin client, and none of them is this capability's address. `/v1/s3` is the
 customer's own file surface. A capability that stores blobs as an implementation
-detail MUST NOT publish a second object door — objects are `/v1/s3` (HIP-1060).
+detail MUST NOT publish a second object endpoint — objects are `/v1/s3` (HIP-1060).
 
 ## Rationale
 
@@ -198,7 +198,7 @@ cannot escape the bucket the caller was scoped to.
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0139 — Capability
-- HIP-1060 — Pubsub — The Tenant Door on the Bus
+- HIP-1060 — Pubsub — The Tenant Endpoint on the Bus
 - HIP-1061 — MQ — Queues and Streams
 - HIP-1164 — Provisioning — Stores on Demand
 

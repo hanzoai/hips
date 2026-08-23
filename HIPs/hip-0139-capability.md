@@ -59,7 +59,7 @@ as in RFC 2119.
 A capability is a Go package under `apps/` in `hanzoai/cloud` that returns a
 `*zip.App` (HIP-0106 §2). Its name is the package's directory name. One
 capability is the host's own: `openapi` — the document, its projections and
-the agent door are served by the host process (`cmd/cloud`), which mounts no
+the MCP endpoint are served by the host process (`cmd/cloud`), which mounts no
 subsystem, so it has no `apps/` package and no plugin; every other rule below
 applies to it unchanged. The following MUST all equal the name:
 
@@ -100,7 +100,7 @@ the defect HIP-0106 §4.2 names.
    Publishing both spellings would put two names on one thing — the exact
    duplication this rule exists to end — and would double every table the
    surface flows into: the index, the woven document, each generated SDK,
-   the tool list. Accepting both costs one comparison at the door. The
+   the tool list. Accepting both costs one comparison at the endpoint. The
    courtesy is the router's; the document claims one address.
 
    The derivation is naive English, stated in full so it can be checked
@@ -156,7 +156,7 @@ the defect HIP-0106 §4.2 names.
      `<name>`. Its audience is the operator (HIP-0135), and the public
      projection drops it by address; the capability it belongs to is the
      second segment.
-   - `/v1/openapi.json` and `/v1/mcp` — the document and the agent door.
+   - `/v1/openapi.json` and `/v1/mcp` — the document and the MCP endpoint.
      Every SDK generator, IDE and MCP client is pointed at these two
      spellings, so they are the wire the ecosystem hard-codes, and they
      belong to `openapi` — the host — and to no other capability.
@@ -170,7 +170,7 @@ the defect HIP-0106 §4.2 names.
    address axis and is read by the public rule (`openapi/public.go`) and by
    the gate in §5; it is not the tag.
 2. An operation is public by the rule HIP-0135 and `openapi/public.go` state:
-   under `/v1`, not the operator's, not a relay door, not a legacy spelling,
+   under `/v1`, not the operator's, not a relay endpoint, not a legacy spelling,
    and `ga` (§8).
 3. Every operation a capability serves MUST be typed (HIP-0106 §4) or, where
    the response cannot be a value, declared with prose beside the route. An

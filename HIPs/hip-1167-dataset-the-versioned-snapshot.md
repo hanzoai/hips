@@ -237,12 +237,12 @@ way to obtain a spec, so every statement takes a normalised value.
 
 **A rewritten citation.** A published version is `ready`, and the only rank
 above it is `disposed` — the tenant's own retention decision, the one write that
-may outrank a publication. No other stage can displace it, at the door or in the
+may outrank a publication. No other stage can displace it, at the endpoint or in the
 engine. Version numbers are monotone and never reused, including across
 disposal, because a citation that is ambiguous across time is not a citation.
 
 **The warehouse itself.** The window, the maturity horizon, the row cap, the
-number of names and the number of versions are all bounded at the door, and
+number of names and the number of versions are all bounded at the endpoint, and
 every source scan is admitted through one priced gate — one per tenant, a fixed
 ceiling in the process, each with its own deadline. The per-tenant limit alone
 is not enough: a thousand tenants each holding their own single slot is still a

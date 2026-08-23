@@ -36,7 +36,7 @@ connects (HIP-0126), `/v1/cloudflare/*` manages
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted
 as in RFC 2119.
 
-### §1 The token, and the one door to it
+### §1 The token, and the one way it is read
 
 The capability owns no store. Its only state is the per-org API token, sealed
 in KMS at `/orgs/{org}/integrations/cloudflare/api_token` and read in-process

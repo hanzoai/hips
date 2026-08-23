@@ -166,7 +166,7 @@ A walk is a recursive query over the rows where `names` is set, bounded by
 `knowable <= ?`. Point-in-time is therefore not a second code path: the same
 seeds at a past instant answer what the graph looked like then.
 
-Bounds are asked once, at the door, on every caller-sized value — 512 bytes
+Bounds are asked once, at the endpoint, on every caller-sized value — 512 bytes
 of entity, 128 of relation, 2048 of value (512 when it names an entity) and 512
 of evidence. With those asked, `count × max` is the byte bound of everything
 below, which a count over caller-sized values would not be.

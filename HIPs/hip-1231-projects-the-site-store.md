@@ -20,7 +20,7 @@ store of buildable, deployable sites, shared by every surface that shows a
 user's projects — the builder and the console render the same rows because
 both call this one surface (`apps/projects/projects.go:1-13`). It is
 implemented in `hanzoai/cloud` at `apps/projects`. This HIP states the target
-surface — one address, `/v1/projects` — and carries the browser tag door,
+surface — one address, `/v1/projects` — and carries the browser tag endpoint,
 formerly HIP-1068, which is a projects address because the project store is.
 
 ## Motivation
@@ -56,9 +56,9 @@ Every route is under `/v1/projects`:
 - the site collection ops at `/v1/projects/sites` — generate from a brief,
   deploy a raw file manifest, fork, list the org's live sites;
 - releases per slug — publish, promote, list, activate (the rollback);
-- `/v1/projects/edge` — the CDN state door: provider, reach, cache policy
+- `/v1/projects/edge` — the CDN state endpoint: provider, reach, cache policy
   for the org's published sites (`apps/projects/edge.go`);
-- `/v1/projects/tags` — the browser tag door below.
+- `/v1/projects/tags` — the browser tag endpoint below.
 
 The router today still serves four stray roots — `/v1/sites`, `/v1/edge`,
 `/v1/tags`, and the `/v1/platform/sites` mirror; each pair is a line in
@@ -73,7 +73,7 @@ multipart part — and a typed body is JSON-decoded before the handler runs,
 so typing them would answer a real archive with 400. Each declares its byte
 request through the registry instead (`apps/projects/projects.go:424-449`).
 
-### The tag door
+### The tag endpoint
 
 `GET /v1/projects/tags` tells the hosted analytics tag which client-side
 pixels a site has connected, so it can inject them first-party. It is one
@@ -92,7 +92,7 @@ The org is minted by the gateway from the validated IAM JWT (HIP-0026) and
 is not an input to any handler; a deploy debit and every cap are keyed on
 the resolved caller org, hardened against a masquerading admin, with the
 validated project sub-scope threaded so a forged `X-Project-Id` can neither
-hard-stop nor evade a cap (`apps/projects/billing.go:30-45`). The tag door
+hard-stop nor evade a cap (`apps/projects/billing.go:30-45`). The tag endpoint
 is deliberately public and can address no other org's project: a key that
 names no project falls back to the host, and a host that names no site
 yields the empty set rather than a default.
@@ -120,7 +120,7 @@ no stage field, and absent means `ga` (HIP-0139 §8).
 ### Upstreams
 
 The capability forks nothing. It links the Hanzo S3 client (`hanzos3/go`)
-to upload site bytes; serving is the static plugin's, and the edge door
+to upload site bytes; serving is the static plugin's, and the edge endpoint
 reports on it rather than implementing it.
 
 ## Rationale
@@ -134,7 +134,7 @@ HIP-0106 names, so the split is refused by the store rule.
 
 ## Security Considerations
 
-The wrong implementation leaks through three doors. A tag door that returns
+The wrong implementation leaks through three endpoints. A tag endpoint that returns
 anything beyond publishable identifiers turns a public unauthenticated read
 into a secret oracle for any site on the platform. A hostname binding
 without the first-come `site_hosts` table lets one org serve under another's

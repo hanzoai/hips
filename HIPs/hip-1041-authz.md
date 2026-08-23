@@ -21,7 +21,7 @@ surface is that library's `serve` package, mounted by `hanzoai/cloud`.
 
 The surface is STATELESS. It holds no policy store, and a check carries the grants
 it is to be decided against. IAM signs the grant set, so IAM owns it, and a second
-writable copy behind this door would be a second source of truth for who may do
+writable copy behind this endpoint would be a second source of truth for who may do
 what (`serve/mount.go:23-28`).
 
 ## Motivation
@@ -80,7 +80,7 @@ It MUST NOT store policy, mint grants, or read a grant set of its own. Everythin
 it decides against arrives in the request, which is what makes the answer a pure
 function of its inputs and the service safe to run anywhere.
 
-Two artifacts around the door disagree with that today, and both are the door's
+Two artifacts around the endpoint disagree with that today, and both are the endpoint's
 problem rather than the library's. The fleet manifest routes a `policies` prefix
 here that nothing registers — a name resolving to no handler. And the prose
 published for the check describes a stored per-org policy set and a three-field
@@ -125,7 +125,7 @@ the grant calculus. Two questions, two predicates, no overlap.
 
 The alternative is the ordinary one: a policy engine with stored policies per
 tenant, and a CRUD surface to edit them. It puts the authority to grant authority
-behind this door, which means this door is now identity infrastructure and must be
+behind this endpoint, which means this endpoint is now identity infrastructure and must be
 protected as such — while IAM, which signs the memberships, still holds its own
 copy. Keeping the store in one place and passing the grants costs a slightly
 larger request body and removes the whole class.

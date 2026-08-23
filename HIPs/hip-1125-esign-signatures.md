@@ -18,7 +18,7 @@ requires: HIP-0026, HIP-0106, HIP-0139
 fields, send it, and file the signed result with an audit trail — a real
 cryptographically sealed PDF comes out. It is implemented in `hanzoai/cloud` at
 `apps/esign`, running the ported Documenso-lineage domain logic in-process.
-This HIP states the two doors — the sender's and the recipient's — the store
+This HIP states the two endpoints — the sender's and the recipient's — the store
 each opens, and where the cryptography lives.
 
 ## Motivation
@@ -44,7 +44,7 @@ files sits one system-namespace index, `token_index`
 (`apps/esign/index.go:34`) — the signing-token → tenant routing table, the
 single deliberately cross-tenant piece.
 
-### §2 The two doors
+### §2 The two endpoints
 
 Owner routes (`/v1/esign/documents/*`) require a validated principal and
 resolve the tenant from it (`apps/esign/typed.go:83`, HIP-0026). Recipient

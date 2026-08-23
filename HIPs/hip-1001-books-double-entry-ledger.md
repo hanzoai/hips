@@ -123,7 +123,7 @@ every credentialed bank operation closed (`apps/books/books.go:55-59`).
 
 ### What this refuses
 
-- **No manual journal door.** Postings come from the three declared sources.
+- **No manual journal endpoint.** Postings come from the three declared sources.
 - **No float.** An amount is integer cents or it does not enter.
 - **No cross-org read.** The tenant is not an input.
 - **No model-sourced figure.** Narration is prose only.

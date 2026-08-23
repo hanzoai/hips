@@ -68,7 +68,7 @@ because cloud is not a token issuer (`apps/kms/mount.go:52-58`).
 Five of the seven are typed ops (`apps/kms/typed.go`), and typing moved no wire:
 each model spells the map its handler assembled, in alphabetical json-tag order,
 because encoding/json writes a map's keys sorted — so the answer is
-byte-identical to the map it replaced rather than merely equal as JSON. The door
+byte-identical to the map it replaced rather than merely equal as JSON. The admission
 they pass is one function of values rather than of a request, `admits`
 (`apps/kms/typed.go:65`): the authority the caller holds, then the org key it
 resolved, then whether this process can open a secret at all — 403, 400, 503,

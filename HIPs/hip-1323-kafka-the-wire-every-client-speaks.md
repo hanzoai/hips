@@ -132,7 +132,7 @@ NOT be published beyond the fabric that needs it.
 
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0139 — Capability
-- HIP-1060 — PubSub — The Tenant Door on the Bus
+- HIP-1060 — PubSub — The Tenant Endpoint on the Bus
 - HIP-1061 — MQ — Queues and Streams
 
 ## Copyright

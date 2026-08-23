@@ -61,7 +61,7 @@ nine are typed. The three that are not — POST, PATCH and DELETE on
 route (`apps/todo/todo.go`): project lifecycle is named at the forge, and an
 operation whose only answer is a refusal has no shape to type.
 
-Two more doors carry the same upsert across process boundaries, on the
+Two more endpoints carry the same upsert across process boundaries, on the
 internal plane rather than `/v1`: the `cloud.IssueSink` a co-resident feeder
 calls, and the plane op `/todo/upsert` for the integrations process that holds
 the GitHub App webhook (`apps/todo/upsert_plane.go`). Both are idempotent by

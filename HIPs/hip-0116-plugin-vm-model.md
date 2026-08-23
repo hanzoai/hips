@@ -39,13 +39,13 @@ one, and the composition model shipped there rather than here.
   versioning, independent memory. A broken plugin degrades to 503 on its own
   prefixes and the host keeps serving every sibling (HIP-0106 §3.4).
 - **ZAP is only a transport.** Being reachable on a plugin socket confers no
-  authority; identity stays with the assertion the front door minted
+  authority; identity stays with the assertion the edge minted
   (HIP-0106 §6, HIP-0114's Bridge Law).
 - **One codebase, two shapes.** The same binary serves standalone and as a
   composed child, with no second code path — `zip.Addr` decides which
   (HIP-0106 §2).
 - **An interop edge, second-class on purpose.** A foreign protocol is translated
-  at the door and never appears between host and plugin. The adaptor's ceiling —
+  at the edge and never appears between host and plugin. The adaptor's ceiling —
   no capability beyond the ZAP surface — is what makes the concession safe.
 
 **What did not ship, and is replaced rather than carried:**

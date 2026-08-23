@@ -41,7 +41,7 @@ in RFC 2119.
 ### A consumer, never a second collector
 
 This plane is installed as a **sink on the canonical event stream**. It MUST NOT
-have an ingest door of its own. There is one collector; this reads what it
+have an ingest endpoint of its own. There is one collector; this reads what it
 accepted.
 
 ### One interlingua, translated once

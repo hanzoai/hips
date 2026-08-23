@@ -15,7 +15,7 @@ requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139
 ## Abstract
 
 `/v1/event` is product analytics: send an event, read back who did what. It is
-both halves on purpose — one write core behind every ingest door, and the read
+both halves on purpose — one write core behind every ingest endpoint, and the read
 lenses over the same warehouse — so a fact is admitted, stamped with the
 server-resolved tenant, and read back through one vocabulary. It is implemented
 in `hanzoai/cloud` at `apps/event`.
@@ -25,8 +25,8 @@ in `hanzoai/cloud` at `apps/event`.
 A product event is a claim about somebody's customers, arriving from a browser
 that nobody controls. Two things decide whether the claim is worth anything: who
 it gets filed under, and whether the caller is told the truth about what landed.
-Both are properties of the door, not of the warehouse behind it. Putting the
-doors and the lenses in one capability is what makes the answer to "what did we
+Both are properties of the endpoint, not of the warehouse behind it. Putting the
+endpoints and the lenses in one capability is what makes the answer to "what did we
 store" and the answer to "what can you read" the same sentence.
 
 ## Specification
@@ -75,7 +75,7 @@ of its own fold is a spec somebody pays for by surprise.
 
 **Declared with prose, and why each cannot be a value.**
 
-`POST /v1/event` is the one door for every wire a surface emits, dispatched by
+`POST /v1/event` is the one endpoint for every wire a surface emits, dispatched by
 the SHAPE of the body and never by a second path: a bare event object, a bare
 array of them, the `{batch:[…]}` and `{events:[…]}` envelopes, and the wire
 spelled `distinct_id`/`api_key`. Batch is a body, not a path — there is no
@@ -89,7 +89,7 @@ headers, and the body whose LENGTH is the reduced lane's 64 KiB bound and whose
 first non-space byte selects the wire.
 
 `GET /v1/event/tag.js` answers JavaScript. The hosted tag is the whole install for a
-surface with no bundler, and it is served here, beside the door, because a tag
+surface with no bundler, and it is served here, beside the endpoint, because a tag
 that drifts from its wire is a tag that 400s: the two ship in one binary and
 version together. A script is not a value.
 
@@ -102,13 +102,13 @@ this API's error envelope.
 
 `POST /v1/event/replay` takes a session-recorder snapshot batch. It is opaque, bound
 for a different consumer on a different transport, and lands no warehouse row at
-all — so it is not one of the doors and cannot be, since every door is a wire
+all — so it is not one of the endpoints and cannot be, since every endpoint is a wire
 that decodes to events and flows through the one write core. What it shares is
 the half that matters: admission, resolved by the same resolver and refused in
 the same words. A produce failure is a 503, never a 200: the produce is the
 commit point, and a fire-and-forget would turn the receipt into a maybe.
 
-**The receipt is the same everywhere.** Every door and every lane answers
+**The receipt is the same everywhere.** Every endpoint and every lane answers
 `{accepted, dropped}`, and the two always total what was sent — a beacon is
 never silently discarded. The status says whether anything landed, so a green
 answer can never mean an empty warehouse: 200 means at least one event was
@@ -132,8 +132,8 @@ the OWNER of the `event.*` schema. Anything that creates or migrates a table on
 that plane is o11y's, and this capability MUST NOT issue DDL against it.
 
 **event** is the product event: what a person or a surface DID, admitted at the
-beacon door under a publishable key, and the per-org lenses read back over it.
-The beacon door is this capability's name as well as its address — `/v1/event`
+beacon endpoint under a publishable key, and the per-org lenses read back over it.
+The beacon endpoint is this capability's name as well as its address — `/v1/event`
 is what `@hanzo/event`, the hosted tag and HIP-0132's telemetry ingest all
 hard-code — and it MUST NOT be re-served under another: a minted DSN keeps addressing `/v1/event` unchanged, and the
 error wires it carries are forwarded to o11y over the internal plane rather than
@@ -225,7 +225,7 @@ lands facts and ignores envelopes, the webhook delivery does the reverse — and
 payload that names no signal is not a lost fact.
 
 Two orderings are normative. The fact publish is the COMMIT POINT and is
-synchronous: the door answers `accepted` only once the broker holds the message.
+synchronous: the endpoint answers `accepted` only once the broker holds the message.
 The drain then commits before it acknowledges, in that order always, because
 acking first loses the fact while the bus believes it delivered; redelivery is
 safe because the fact table collapses a redelivered row on merge, which makes
@@ -237,14 +237,14 @@ costs deliveries, never data.
 ### §7 Observability
 
 Beyond the request span every route gets, one counter and one log line, on
-purpose. `hanzo_ingest_dropped_total` counts events a door received and did not
-land, labelled by tenant, door origin and reason. It is per REASON rather than
+purpose. `hanzo_ingest_dropped_total` counts events an endpoint received and did not
+land, labelled by tenant, endpoint origin and reason. It is per REASON rather than
 one total, because "a fleet of clients writing with no usable credential" and
 "one client sending bodies nothing can store" are different incidents and an
 alert that cannot tell them apart wakes the wrong person. The log line names the
-same three, so whoever the alert wakes knows which tenant and which door.
+same three, so whoever the alert wakes knows which tenant and which endpoint.
 Cardinality is bounded on all three labels: the tenant is server-resolved, the
-origin comes from the finite set of doors, and the reason is two values.
+origin comes from the finite set of endpoints, and the reason is two values.
 
 ### §8 Stage
 
@@ -253,7 +253,7 @@ origin comes from the finite set of doors, and the reason is two values.
 ### §9 Upstream
 
 It derives from none: it forks, embeds and mirrors no OSS project. It ACCEPTS
-foreign wires at its own doors as interoperation — the product-analytics wire
+foreign wires at its own endpoints as interoperation — the product-analytics wire
 spelled `distinct_id`/`api_key`, and the error-SDK envelope and store wires,
 relayed unchanged — which is a fact about what an unmodified client may send,
 not a dependency. The hosted tag carries one file copied verbatim from
@@ -263,7 +263,7 @@ one person on every Hanzo surface whichever client a page loaded.
 
 ## Rationale
 
-The alternative to one door is a path per wire. Five doors is five admissions,
+The alternative to one endpoint is a path per wire. Five endpoints is five admissions,
 five receipts and five places for the meaning of `accepted` to drift, and a
 caller learns which one it hit by reading a changelog. Shape dispatch costs one
 byte of lookahead and keeps the contract single.
@@ -276,7 +276,7 @@ ever read.
 
 ## Security Considerations
 
-An ingest door is a write into somebody else's dataset, so the wrong
+An ingest endpoint is a write into somebody else's dataset, so the wrong
 implementation hands an attacker three distinct prizes.
 
 If the tenant came off the wire, any caller could file rows into any org's

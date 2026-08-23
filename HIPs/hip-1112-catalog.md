@@ -68,7 +68,7 @@ tenant row into the published corpus.
 
 Free (`plugin/catalog/main.go:21`, `cloud.Free`). It publishes no events on the
 bus and emits nothing to observability beyond the request span. Its stage is
-`ga`: it is the discovery lens of the self-service platform — the front door
+`ga`: it is the discovery lens of the self-service platform — the entry point
 templates and community projects are found through. It derives from no
 upstream; it is a query composer over `apps/index`
 (`apps/catalog/catalog.go:338`, and the index-peer call at

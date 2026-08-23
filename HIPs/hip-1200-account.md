@@ -122,7 +122,7 @@ read-merge-write and a partial submission blanks credential material — a
 write that cannot first read its row MUST refuse (HIP-1040 §2). The CSRF mint
 guards every ambient-cookie money write in the process, including co-resident
 commerce writes, off one process-wide key (HIP-1043 §3). The avatar read is a
-public door whose safety is entirely in what it can address (HIP-1042 §5).
+public endpoint whose safety is entirely in what it can address (HIP-1042 §5).
 Org creation is a tenancy-boundary write with its own failure modes
 (HIP-1045).
 

@@ -37,7 +37,7 @@ as in RFC 2119.
 ### The addresses, and the two that fold
 
 The capability answers eleven operations (`plugin/metrics/openapi.json`):
-write, query and health for each signal, plus the metric batch door and the
+write, query and health for each signal, plus the metric batch endpoint and the
 single-trace read. Every route MUST be under `/v1/metrics`:
 
 - `/v1/logs/{write,query,health}` → `/v1/metrics/logs/{write,query,health}`
@@ -105,10 +105,10 @@ registry, which would trade its whole dependency discipline for docstrings.
 ## Security Considerations
 
 The wrong implementation here is the one the module shipped first: a tenant
-resolved from a caller-supplied header, which turns every write door into a
-cross-tenant write and every query door into a cross-tenant read. The fix is
+resolved from a caller-supplied header, which turns every write endpoint into a
+cross-tenant write and every query endpoint into a cross-tenant read. The fix is
 structural — the org function is injected by the boundary that validated the
-principal, and the module has no other way to name a tenant. Ingest doors
+principal, and the module has no other way to name a tenant. Ingest endpoints
 accept unauthenticated-looking traffic shaped as batches; they still resolve
 the same injected org, so a batch without a validated principal lands nowhere.
 

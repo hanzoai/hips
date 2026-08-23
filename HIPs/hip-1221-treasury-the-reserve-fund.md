@@ -25,7 +25,7 @@ around a ledger-of-record port whose backend owns the double-entry.
 ## Motivation
 
 The app answers on two prefixes today and owns neither whole
-(`manifest/apps.go:413`): its front door lives under `/v1/finance`, an address
+(`manifest/apps.go:413`): its entry point lives under `/v1/finance`, an address
 that belongs to no capability. The reads come home to the app that serves them.
 
 ## Specification

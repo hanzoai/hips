@@ -106,7 +106,7 @@ Beyond the request span it emits the `git.usage` line and structured logs
 only. Its stage is `ga`: the manifest row carries no stage field, and
 absent means `ga` (HIP-0139 §8).
 
-The push-to-build door is not here. The deploy trigger's one registrant is
+The push-to-build endpoint is not here. The deploy trigger's one registrant is
 the platform process, so the forge delivers pushes to platform's hook
 (HIP-1230); a receiver in this process signed, accepted, answered 204 and
 built nothing, which is why the address moved.

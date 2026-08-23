@@ -99,7 +99,7 @@ lookup whose answer is an org name, not data.
 
 ## Security Considerations
 
-The viewer path is an unauthenticated door into tenant data by design, so the
+The viewer path is an unauthenticated endpoint into tenant data by design, so the
 whole exposure concentrates in the link: a guessable id is a readable dataroom.
 Link ids are crypto-random, a passworded link verifies through bcrypt before
 any page is served, and the index answers only the owning org — never rows. The

@@ -1,6 +1,6 @@
 ---
 hip: 1021
-title: Chain JSON-RPC Door
+title: Chain JSON-RPC Endpoint
 author: Hanzo AI
 type: Standards Track
 category: Interface
@@ -9,12 +9,12 @@ created: 2026-08-20
 requires: HIP-1020
 ---
 
-# HIP-1021: Chain JSON-RPC Door
+# HIP-1021: Chain JSON-RPC Endpoint
 
 ## Abstract
 
 `rpc` forwards a JSON-RPC 2.0 call to a chain the deployment has declared, and
-returns that chain's answer unchanged. It is a door onto an upstream the
+returns that chain's answer unchanged. It is an endpoint onto an upstream the
 operator holds, not a chain client: it interprets no method, rewrites no result,
 and keeps no state. Implementation: `apps/web3` in `hanzoai/cloud`.
 
@@ -51,7 +51,7 @@ body, so this capability is described like every other one. Two fields stay raw
 because JSON-RPC defines them as method-specific and caller-chosen
 (`apps/web3/web3.go:249`):
 
-- `params` is passed through unread. The door MUST NOT inspect, reorder or
+- `params` is passed through unread. The endpoint MUST NOT inspect, reorder or
   re-encode it.
 - `id` is echoed back untouched, including on the failure path, because it is
   how a client correlates an answer with its call.
@@ -62,7 +62,7 @@ round trip.
 
 A JSON-RPC BATCH is not carried: the input is one call, so an array body is
 refused at decode. Batching is a transport optimisation whose only beneficiary
-is the upstream's connection count, and this door already reuses one client
+is the upstream's connection count, and this endpoint already reuses one client
 (`apps/web3/client.go:15`).
 
 ### 3. An upstream failure is a JSON-RPC error, at a success status
@@ -70,7 +70,7 @@ is the upstream's connection count, and this door already reuses one client
 When the upstream cannot be reached, the answer is a JSON-RPC error object with
 code `-32603` under HTTP 200 (`apps/web3/web3.go:298`), not an HTTP 5xx.
 
-This is the one place the door deliberately does not mirror the transport. Every
+This is the one place the endpoint deliberately does not mirror the transport. Every
 standard JSON-RPC client parses the error object; a transport-level failure
 breaks those clients before they can read anything, so a 5xx here converts a
 legible refusal into a stack trace in somebody's console. `message` distinguishes
@@ -94,7 +94,7 @@ Every call is bounded, and the bounds belong here rather than to the upstream:
 
 ### 5. The method set is the upstream's, and that is an operator obligation
 
-This door filters no method. An allowlist here would be a second, always-stale
+This endpoint filters no method. An allowlist here would be a second, always-stale
 copy of the chain's own method set, and every chain would need its own.
 
 The consequence is normative and belongs to whoever writes the registry: a
@@ -124,12 +124,12 @@ nothing but the refusal.
 
 **Method exposure.** §5 is a real hole if a registry names a node's
 administrative endpoint: any validated principal of the deployment reaches every
-method that node serves. The fix is the declaration, not a filter in this door.
+method that node serves. The fix is the declaration, not a filter in this endpoint.
 
 **Echoing `id`.** The id is returned as received, uninterpreted. It is raw JSON
 chosen by the caller and reflected only to that caller, so it grants nothing —
 but it MUST stay uninterpreted, because parsing it would make a caller-chosen
-value into a value this door acts on.
+value into a value this endpoint acts on.
 
 **No per-org data.** A chain is a public ledger, so this capability holds no
 tenant rows and the boundary is presence of a principal rather than an org

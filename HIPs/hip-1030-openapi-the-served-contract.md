@@ -17,7 +17,7 @@ capability: openapi
 `/v1/openapi.json` is the API describing itself. It is not an authored file that
 someone remembers to update: it is a **projection of the routers that answer**,
 emitted by the `openapi` package in `hanzoai/cloud` and served by the host that
-owns the front door.
+owns the edge.
 
 Everything a client touches is downstream of it — the published SDKs, the `hanzo`
 CLI, the MCP tool list, the command projection (§7) and the docs site. This
@@ -85,7 +85,7 @@ a path no grep can find is not missed.
 no subsystem: what it serves is woven from the subsets each app binary projected
 when it was BUILT. So the published `description` states exactly that each
 operation is a route the subsystem publishing it registered, and claims nothing
-about the deployed front door delivering that path to that subsystem
+about the deployed edge delivering that path to that subsystem
 (`openapi/fleet.go`, `fleetInfo`). A false provenance is worse than a missing one
 because it is READ: downstream tooling has quoted this sentence as its own
 correctness argument.
@@ -207,7 +207,7 @@ beside the code that makes it.
   the two addresses is asked for first renders the document and the other is
   a projection of exactly those bytes (`openapi/command.go:152`). A second
   build that could differ is the whole defect this avoids.
-- The address is `/v1/openapi/commands` (`openapi/command.go:81`) — under the capability that projects it, beside the document and the door —, unauthenticated for
+- The address is `/v1/openapi/commands` (`openapi/command.go:81`) — under the capability that projects it, beside the document and the MCP endpoint —, unauthenticated for
   §1's reason: a client reads the contract before it holds a credential, and
   a list of names grants nothing. Both the document and this projection are
   operations with no owning subsystem, so each declares itself
@@ -265,7 +265,7 @@ authorization is.
 
 Overstated provenance is a security problem, not only a hygiene one: a consumer
 that believes the document proves a route is mounted will drop operations,
-skip probes, or trust an address the front door never delivers.
+skip probes, or trust an address the edge never delivers.
 
 ## References
 

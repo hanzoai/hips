@@ -48,11 +48,11 @@ and `provisioning` while none has. An org with no routers has no network, and
 the answer is an empty list. A fabricated network would be worse than no
 network, because a tenant would build on it.
 
-### §2 The boundary: east–west, not the front door
+### §2 The boundary: east–west, not the edge
 
 Three capabilities touch a packet and only one of them is this.
 
-- **ingress** (HIP-1133) is the front door: TLS and hostname routing for traffic
+- **ingress** (HIP-1133) is the edge: TLS and hostname routing for traffic
   arriving from the public internet.
 - **gateway** (HIP-1127) is the policy applied to a request that has already
   arrived: CORS, rate ceiling, cache TTL, allowed methods.

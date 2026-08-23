@@ -132,7 +132,7 @@ its own.
 
 The capability answers at two prefixes, and the second is deliberate:
 `/v1/team` — the control plane, bots, files, billing reads and the transactor
-door — and `/collaborator`, the live document lane, app-level because the
+endpoint — and `/collaborator`, the live document lane, app-level because the
 front derives its WebSocket address from an origin, not from the `/v1/team`
 base (`manifest/apps.go:339-346`). Operations are typed by default; the closed
 exception list names each one that cannot be a value, with its wire fact —

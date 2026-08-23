@@ -109,7 +109,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | Resource Surface Standard — Generated REST over ZAP | Standards Track | Core | Draft |
 | [HIP-0129](./HIPs/hip-0129-eval-the-judgment-plane.md) | Eval — A Score Over Model Output | Standards Track | Infrastructure | Draft |
 | [HIP-0130](./HIPs/hip-0130-open-core-split.md) | Open-Core Split — the Tenancy Line, the Composition ... | Standards Track | Core | Draft |
-| [HIP-0132](./HIPs/hip-0132-one-telemetry-plane.md) | One Telemetry Plane — One Door, One Schema, Many Lenses | Standards Track | Infrastructure | Draft |
+| [HIP-0132](./HIPs/hip-0132-one-telemetry-plane.md) | One Telemetry Plane — One Endpoint, One Schema, Many... | Standards Track | Infrastructure | Draft |
 | [HIP-0133](./HIPs/hip-0133-entity-groups.md) | Entity Groups — Placement, Durability, Splitting and... | Standards Track | Core | Draft |
 | [HIP-0134](./HIPs/hip-0134-one-process-one-socket-one-identity.md) | One Process, One Socket, One Identity | Standards Track | Core | Active |
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | What Is Public | Process | Governance | Active |
@@ -129,7 +129,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0251](./HIPs/hip-0251-ai-compute-carbon-footprint.md) | AI Compute Carbon Footprint | Meta | - | Draft |
 | [HIP-0260](./HIPs/hip-0260-efficient-model-practices.md) | Efficient Model Practices | Meta | - | Draft |
 | [HIP-0270](./HIPs/hip-0270-ai-supply-chain-responsibility.md) | AI Supply Chain Responsibility | Meta | - | Draft |
-| [HIP-0300](./HIPs/hip-0300-unified-mcp.md) | Unified MCP — one door, and local servers that forwa... | Standards Track | Interface | Review |
+| [HIP-0300](./HIPs/hip-0300-unified-mcp.md) | Unified MCP — one endpoint, and local servers that f... | Standards Track | Interface | Review |
 | [HIP-0301](./HIPs/hip-0301-python-sdk-agent-runtime-protocols.md) | Agent Runtime Protocols & Cross-Platform Parity | Standards Track | Core | Draft |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | Hanzo Replicate: Encrypted SQLite Durability for Bas... | Standards Track | Infrastructure | Active |
 | [HIP-0303](./HIPs/hip-0303-brand-sovereignty-and-federation-discovery.md) | Hanzo adopts LP-0010: Brand Sovereignty and Federati... | Meta | Governance | Active |
@@ -172,7 +172,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1005](./HIPs/hip-1005-payments.md) | Payments — Taking a Card | Standards Track | Application | Superseded |
 | [HIP-1006](./HIPs/hip-1006-store.md) | Store — Storefronts, Listings and Checkout | Standards Track | Application | Superseded |
 | [HIP-1020](./HIPs/hip-1020-chain-registry.md) | Chain Registry | Standards Track | Interface | Draft |
-| [HIP-1021](./HIPs/hip-1021-chain-rpc-door.md) | Chain JSON-RPC Door | Standards Track | Interface | Draft |
+| [HIP-1021](./HIPs/hip-1021-chain-rpc-door.md) | Chain JSON-RPC Endpoint | Standards Track | Interface | Draft |
 | [HIP-1022](./HIPs/hip-1022-native-balance-reads.md) | Native Balance Reads | Standards Track | Interface | Draft |
 | [HIP-1030](./HIPs/hip-1030-openapi-the-served-contract.md) | OpenAPI — The Served Contract | Standards Track | Interface | Active |
 | [HIP-1032](./HIPs/hip-1032-errors-the-fault-lens.md) | Errors — The Fault Lens | Standards Track | Interface | Active |
@@ -186,7 +186,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1047](./HIPs/hip-1047-security-scanning.md) | Security Scanning | Standards Track | Security | Draft |
 | [HIP-1048](./HIPs/hip-1048-team.md) | Team | Standards Track | Application | Draft |
 | [HIP-1049](./HIPs/hip-1049-validator.md) | Validator — A Token Redeemed for a Node | Standards Track | Infrastructure | Draft |
-| [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) | Pubsub — The Tenant Door on the Bus | Standards Track | Infrastructure | Draft |
+| [HIP-1060](./HIPs/hip-1060-pubsub-the-tenant-door-on-the-bus.md) | Pubsub — The Tenant Endpoint on the Bus | Standards Track | Infrastructure | Draft |
 | [HIP-1061](./HIPs/hip-1061-mq-queues-and-streams.md) | MQ — Queues and Streams | Standards Track | Infrastructure | Draft |
 | [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) | Tasks — The Durable Run | Standards Track | Infrastructure | Draft |
 | [HIP-1063](./HIPs/hip-1063-auto-flows-that-run-themselves.md) | Auto — Flows That Run Themselves | Standards Track | Interface | Draft |

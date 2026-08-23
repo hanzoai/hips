@@ -135,7 +135,7 @@ declared as a version, materialised once, fingerprinted, and NEVER rewritten.
 A published version is `ready`, and the only rank above it is `disposed` — the
 tenant's own retention decision, the one write that may outrank a publication. No
 other stage may displace it, and that MUST be enforced both in the store and at
-the door.
+the endpoint.
 
 There is no table-level expiry. Disposal is the tenant's own partitioned drop,
 which cannot be spelled cross-tenant.

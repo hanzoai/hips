@@ -66,7 +66,7 @@ succeeded. A carrier that returns "sent" synchronously is telling you it accepte
 the request, and recording that as delivery is how a message that never arrived
 becomes a message the record says arrived.
 
-The door that would receive those events does not exist yet: this package mounts
+The endpoint that would receive those events does not exist yet: this package mounts
 no carrier callback route and consumes no stream, so today a record's status is
 what the carrier answered synchronously plus the transitions this surface itself
 makes — a hangup, a release (apps/tel/store.go:163). The rule above is the
@@ -78,10 +78,10 @@ A call handed to an agent is answered by a Hanzo assistant on Hanzo inference: t
 same models, prompts and tools every other surface uses. The carrier moves the
 audio and does not decide what is said.
 
-The package reaches the platform's own AI door rather than a model package
+The package reaches the platform's own AI endpoint rather than a model package
 (`apps/tel/agent.go:24`), so an assistant improved for chat is improved for calls
 in the same release, and which model answers is the catalog's decision behind that
-door rather than a constant in a telecom package.
+endpoint rather than a constant in a telecom package.
 
 ### Tenancy
 
@@ -153,7 +153,7 @@ charge and a phone line.
 
 Carrier credentials live in configuration sourced from the key store and never
 appear in a response. Records carry what the carrier reported: with no event
-door yet, a status stays at what the carrier acknowledged, so the record cannot
+endpoint yet, a status stays at what the carrier acknowledged, so the record cannot
 claim an outcome nobody observed.
 
 ## References

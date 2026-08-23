@@ -80,7 +80,7 @@ fold.
   (`apps/label/resolve.go:146`). There is no UPDATE statement in the package.
 - **Provenance.** Every assertion names its source, its evidence, and the
   identity that filed it, the last stamped server-side from the validated
-  principal; a label with no evidence is refused at the door
+  principal; a label with no evidence is refused at the endpoint
   (`apps/label/label.go:35-41`).
 
 `hold` places the record behind an answer under litigation hold by its content

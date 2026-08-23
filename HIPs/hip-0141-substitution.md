@@ -262,7 +262,7 @@ and mints whichever org a caller asked for is fully conformant and fully
 compromised — the failure is invisible to the only test substitution has. An
 operator who wants a different identity provider reaches it through the protocol
 the identity capability already speaks at `/.well-known` (HIP-0139 §3.2); that is
-configuration, and it is the door that stays open.
+configuration, and it is the substitution that remains available.
 
 **The code that holds key material in the clear.** Custody's property is what is
 NOT observable, and conformance is observational: an engine that seals correctly

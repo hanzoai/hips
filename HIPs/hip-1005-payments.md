@@ -11,7 +11,7 @@ created: 2026-08-20
 
 # HIP-1005: Payments — Taking a Card
 
-> **Superseded by HIP-1220.** The card door answers at `/v1/commerce/payments`.
+> **Superseded by HIP-1220.** The card endpoint answers at `/v1/commerce/payments`.
 > It shares the merchant store with the cart and the storefront, so it is one
 > capability with them (HIP-0139 §7.2). The customer's own money questions —
 > balance, ledger, invoices — are `billing`'s address, not this one.
@@ -19,7 +19,7 @@ created: 2026-08-20
 ## Abstract
 
 `/v1/payments` takes a card payment and credits the paying org's balance. It is
-implemented in `hanzoai/cloud` at `apps/commerce/payments.go` and is a second door
+implemented in `hanzoai/cloud` at `apps/commerce/payments.go` and is a second endpoint
 onto the same money move the console's top-up button uses. This HIP states the one
 rule that matters — one implementation of the charge, screened on the handler and
 not on the route — and the inputs the capability refuses to accept.
@@ -27,7 +27,7 @@ not on the route — and the inputs the capability refuses to accept.
 ## Motivation
 
 A settled card charge is its own mint authority: it turns into spendable balance,
-and balance buys inference. Money could already be taken through the browser door.
+and balance buys inference. Money could already be taken through the browser endpoint.
 What could not happen was an agent taking a payment, and the reason was shape
 rather than policy — the browser route was a raw handler, so it produced a route
 and nothing else: no schema, no tool, no generated client, no command
@@ -43,10 +43,10 @@ derivations to disagree, which is a double charge waiting for the right retry
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted as
 in RFC 2119.
 
-### One core, several doors
+### One core, several endpoints
 
 There is exactly one card money move. The browser route and the typed operations
-are doors onto it, and any further door MUST compose the same core rather than
+are endpoints onto it, and any further endpoint MUST compose the same core rather than
 restate it. Bounds, idempotency derivation, processor selection, the charge and the
 ledger credit all live there.
 
@@ -95,9 +95,9 @@ therefore guards the URL and waves the tool through — which was the whole cont
 absent on the one plane it was built for
 (`apps/commerce/risk.go:29-37`).
 
-So the screen composes onto the **handler** of each door: one decision, one payer
+So the screen composes onto the **handler** of each endpoint: one decision, one payer
 rule, one settlement key, every projection
-(`apps/commerce/risk.go:39-41`). Every door onto the charge core MUST be screened
+(`apps/commerce/risk.go:39-41`). Every endpoint onto the charge core MUST be screened
 this way.
 
 The gate declares itself privileged rather than relying on a grant list it is not
@@ -125,7 +125,7 @@ guarded projection of an operation, which is not a control.
 
 The alternative to a windowed fallback key is to require an idempotency key. It is
 cleaner and it makes the common browser double-click a double charge, because the
-browser form did not send one. Requiring the key on the typed door and defaulting
+browser form did not send one. Requiring the key on the typed endpoint and defaulting
 on both is the compromise that keeps one core.
 
 ## Security Considerations
@@ -137,7 +137,7 @@ ledger write.
 
 The screening model ships without enforcement — an unreviewed model is held in
 shadow, and shadow makes the decision advisory while still recording what the model
-would have said. Widening the gate to a new door therefore widens the **record**,
+would have said. Widening the gate to a new endpoint therefore widens the **record**,
 not the enforcement, and the default regime is unchanged. What does refuse today is
 a scorer that is present and unable to answer.
 

@@ -48,7 +48,7 @@ caller's crawl scope, in crawl's storage — never here.
 
 ### §2 The address
 
-The target surface is `/v1/websearch`: the typed native door at the root, the
+The target surface is `/v1/websearch`: the typed native endpoint at the root, the
 SearXNG-shaped search at `/v1/websearch/search`, and the Firecrawl-shaped
 scrape at `/v1/websearch/scrape`. Today scrape answers at a second root,
 `/v1/scrape`; the pair is carried by cloud's `openapi/misfiled.txt:93` and
@@ -64,14 +64,14 @@ HIP-0139 amendment argued here; this HIP does not argue it.
 
 `POST /v1/websearch` is the one typed operation (`search_web`,
 `apps/websearch/websearch.go:338`) — the tool, client method and command every
-projection carries. The two compat doors are declared with prose beside the
+projection carries. The two compat endpoints are declared with prose beside the
 route and cannot be values, each for a measured reason
-(`apps/websearch/typed_wire_test.go`): the search door answers every method the
+(`apps/websearch/typed_wire_test.go`): the search endpoint answers every method the
 router knows and its write arms read the query string while ignoring the body,
-which a typed operation refuses; the scrape door deliberately answers
+which a typed operation refuses; the scrape endpoint deliberately answers
 `200 {"success":false}` to a malformed body and caps the read at 1 MiB, because
 Firecrawl clients read `data.success`, not the status line. Both run the same
-search and the same fetch as the typed door — the adapter's frozen contract
+search and the same fetch as the typed endpoint — the adapter's frozen contract
 binds the adapter, never the capability.
 
 ### §4 Tenancy and the two gates
@@ -80,7 +80,7 @@ Search admits either a validated principal (HIP-0026) or the shared service
 key `WEBSEARCH_API_KEY` as `X-API-Key` — the chat server's service-to-service
 path. Scrape requires the key as a Bearer. An unset key MUST answer 503 and a
 missing or mismatched key 401; a request with a validated principal never needs
-the key. Neither door is ever an open proxy.
+the key. Neither endpoint is ever an open proxy.
 
 ### §5 Metering, events, telemetry, stage
 
@@ -119,7 +119,7 @@ the three-state outcome log is what makes its failures visible instead of soft.
 
 ## Security Considerations
 
-The wrong implementation is an open proxy: an unauthenticated scrape door is
+The wrong implementation is an open proxy: an unauthenticated scrape endpoint is
 server-side request forgery against anything the cluster egress can reach, paid
 for by us. The two gates close it — principal or key for search, key alone for
 scrape, 503 when the key is unset rather than open-when-unconfigured. The

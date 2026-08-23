@@ -23,7 +23,7 @@ The registry accepts six runtimes today — `node`, `python`, `go`, `deno`, `bas
 
 AI-specific triggers connect functions to the broader Hanzo infrastructure: model inference events from the LLM Gateway (HIP-0004), webhook delivery, scheduled retraining cycles, data pipeline stages from Hanzo Stream (HIP-0030), and async task invocation from Hanzo MQ (HIP-0055). Functions can also be deployed to the Edge (HIP-0050) for latency-sensitive invocation without GPU requirements.
 
-**Serving**: `apps/functions` in `hanzoai/cloud`, at `/v1/functions` (`manifest/apps.go:176`) — the registry and invoke door ship inside the cloud binary (`plugin/functions`), not as a standalone service with its own ports, image or `hanzo-fn` binary; the CLI is the generated `hanzo functions` command group (HIP-1030)
+**Serving**: `apps/functions` in `hanzoai/cloud`, at `/v1/functions` (`manifest/apps.go:176`) — the registry and invoke endpoint ship inside the cloud binary (`plugin/functions`), not as a standalone service with its own ports, image or `hanzo-fn` binary; the CLI is the generated `hanzo functions` command group (HIP-1030)
 
 ## Motivation
 

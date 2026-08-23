@@ -38,7 +38,7 @@ in RFC 2119.
 ### The store
 
 Per-org SQLite files through the org-store registry: `storeFor` is the one way
-the package reaches a store, naming the database through the single door a
+the package reaches a store, naming the database through the single entry point a
 validated org walks through (`apps/sync/sync.go`, storeFor). The store holds the
 sync intent, the engine's cursor, and the two facts the forge cannot hold — what
 an advance did, and where a repo replicates to. A sync is org-scoped, not

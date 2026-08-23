@@ -23,7 +23,7 @@ family at the root, everything else under `/v1/ai`.
 
 ## Motivation
 
-The module registers one greedy `/v1/*` door and the manifest hands it the `/v1`
+The module registers one greedy `/v1/*` endpoint and the manifest hands it the `/v1`
 remainder (`manifest/apps.go:444`), which is how a dozen satellite roots —
 router, memory, rag and their compatibility twins — came to answer beside the
 wire under names nobody would call a product. The document now comes from the
@@ -121,7 +121,7 @@ namespace, the ref is server-minted (a client-controlled ref let one pinned
 owner/name pair dedupe every later completion into the first one's entry —
 `apps/ai/ai.go:184-193`), and the free-call count runs even when the debit
 fails, so neither leg's failure opens the other. Deleting the compatibility
-roots is also a security act: each was an unowned door into the same index the
+roots is also a security act: each was an unowned endpoint into the same index the
 canonical routes guard.
 
 ## References

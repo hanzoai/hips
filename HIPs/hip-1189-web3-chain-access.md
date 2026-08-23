@@ -15,7 +15,7 @@ requires: HIP-0026, HIP-0106, HIP-0139
 ## Abstract
 
 Web3 is the chain-access surface: which chains this deployment can reach, a
-JSON-RPC door onto each, and the balance read a wallet interface needs. It holds
+JSON-RPC endpoint onto each, and the balance read a wallet interface needs. It holds
 no key, signs nothing, indexes nothing, and stores nothing. It is implemented in
 `hanzoai/cloud` at `apps/web3`. `web3` is the word people say for the faculty,
 and HIP-0139 §2.2 already carries it.
@@ -26,7 +26,7 @@ A console page that shows a chain, a balance or a transaction needs one address
 to call and one answer it can trust. Reaching a chain directly from a browser
 means every page carries an upstream URL, frequently with a provider key in its
 path, and every deployment's chain list is whatever each page happened to be
-built with. One door, fed by one declared registry, makes the reachable set a
+built with. One endpoint, fed by one declared registry, makes the reachable set a
 property of the deployment instead of a property of the caller.
 
 ## Specification
@@ -168,7 +168,7 @@ caller is not, and nothing about the request looks abnormal. The check is the
 first statement in every operation.
 
 If the `{chain}` segment were treated as a URL, or if an unknown id fell through
-to a default, the surface becomes a request-forgery door onto whatever the
+to a default, the surface becomes a request-forgery endpoint onto whatever the
 process can reach, including the cluster's own network. Resolution goes through
 the declared map with no fall-through: an id that is not in it is 404.
 

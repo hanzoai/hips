@@ -20,7 +20,7 @@ application reconciled as an operator Service CR into the caller's own
 `tenant-<org>` Kubernetes namespace (`apps/platform/platform.go:1-27`). It is
 implemented in `hanzoai/cloud` at `apps/platform`. This HIP states the target
 surface — one address, `/v1/platform` — and carries two pieces previously
-specified apart: the forge push door (formerly HIP-1070) and the pipelines
+specified apart: the forge push endpoint (formerly HIP-1070) and the pipelines
 board (formerly HIP-1071), both platform addresses because their
 implementation is this package.
 
@@ -58,22 +58,22 @@ still serves seven of these families at the root (`/v1/builds`,
 `openapi/misfiled.txt` and folds here, with `git-webhook` — a hyphenated
 compound — renamed to `hook` in the same move.
 
-Operations are typed zip operations except the push door, which cannot be:
+Operations are typed zip operations except the push endpoint, which cannot be:
 its authentication is an HMAC over the raw bytes checked before the payload
 is parsed, and a typed operation decodes first (`apps/platform/hook.go:19-22`).
 
-### The push door
+### The push endpoint
 
 `POST /v1/platform/hook` is where the forge delivers a push. The receiver
 MUST live in this process because the deploy trigger has exactly one
-registrant, and it is platform's: the door once lived in git's process, where
+registrant, and it is platform's: the endpoint once lived in git's process, where
 that registrant is nil, so every delivery was signed, accepted, answered 204
 and built nothing (`apps/platform/hook.go:1-17`).
 
 The forge holds no platform session, so the address is public at the identity
 layer and authenticated by the HMAC signature; the bytes verified MUST be the
 bytes acted on, and the event kind is taken from the payload, never a header.
-Four bounds keep an unauthenticated door from being a lever: an encoded body
+Four bounds keep an unauthenticated endpoint from being a lever: an encoded body
 is refused 415 before it is touched, a body cap bounds what is hashed, the
 verifying secret refreshes on a bounded window from KMS (HIP-0027), and that
 key-store read times out below the forge's delivery timeout. An unreadable
@@ -103,9 +103,9 @@ taken from the request, and cross-tenant identifiers are structurally not
 inputs to any handler (`apps/platform/platform.go:20-26`). Console reads
 additionally require the identity to carry a user, refusing the one forgeable
 path — a caller reaching a pod directly with an asserted org and no bearer.
-Two doors differ by audience: `/v1/platform/fleet` is the operator's drift
+Two endpoints differ by audience: `/v1/platform/fleet` is the operator's drift
 board, admitted only for a SuperAdmin or an org-confined OrgAdmin
-(`apps/platform/fleet.go:31-34`, HIP-0135), and the push door authenticates
+(`apps/platform/fleet.go:31-34`, HIP-0135), and the push endpoint authenticates
 by signature as above. `POST /v1/platform/runner` — the privileged build
 trigger `hanzo build` and the push hook call — is gated by a constant-time
 shared token plus an image-ref allowlist confined to the registries we own
@@ -160,7 +160,7 @@ one capability sliced into three specs, the inversion of the defect HIP-0139
 
 The wrong implementation hands an attacker the build plane. An unsigned or
 parse-before-verify hook lets an unauthenticated caller mint builds in the
-process that owns deploys; an encoded body accepted at that door buys
+process that owns deploys; an encoded body accepted at that endpoint buys
 megabytes of allocation for kilobytes on the wire. A deploy namespace taken
 from the request is a cross-tenant deploy; it is derived from the validated
 org instead. A leaked runner token without the image-ref allowlist pushes to

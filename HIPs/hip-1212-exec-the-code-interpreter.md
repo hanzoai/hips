@@ -91,7 +91,7 @@ One run is the billed act: the plugin declares `Price: cloud.Metered`
 (`plugin/exec/main.go:33`) and `exec` is in the `meteredApps` standing list
 (`spend.go:300`). The fee — one cent per run by default, set by
 `CODE_EXEC_FEE_CENTS[_RUN]`, zero making runs free — is gated and debited on
-this subsystem's own door (`apps/exec/meter.go`), deliberately not inside the
+this subsystem's own endpoint (`apps/exec/meter.go`), deliberately not inside the
 exported interpreter, because `apps/functions` composes the same call and
 already charges its own invoke fee for it. The sandbox lease underneath is the
 sandboxes capability's own metered act, not folded in here. It publishes no
@@ -104,7 +104,7 @@ gets.
 `ga`. This surface serves live chat traffic through a client whose calls can
 arrive on the service key alone, and HIP-0139 §8.2's flag-404 on a non-`ga`
 prefix would break them in production; the credential settles through IAM
-without hiding the door.
+without hiding the endpoint.
 
 ### Upstreams
 

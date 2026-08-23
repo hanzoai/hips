@@ -27,7 +27,7 @@ Raw completions live at the model wire and the tool-calling orchestrator at
 `/v1/agent`; neither promises that a figure in the answer is a value something
 actually read. A founder asking "what's my MRR" needs the number to be the
 ledger's, and a wrong answer to be a wrong query rather than an invention. One
-door, one contract: figures are computed before any model call and returned
+endpoint, one contract: figures are computed before any model call and returned
 unaltered (`apps/ask/ask.go`).
 
 ## Specification
@@ -52,7 +52,7 @@ at 402/503, not the flat typed error. The request IS declared so generated SDKs
 have somewhere to put the question; the response deliberately is not, because a
 single declared shape would be false for the other branch
 (`apps/ask/ask.go:102-132`). `POST /v1/ask/web` is the same engine as a typed
-op — the door a model can open, added because an untyped route reaches REST and
+op — the endpoint a model can call, added because an untyped route reaches REST and
 nothing else, leaving the fleet's research loop invisible to every agent in it
 (`apps/ask/web.go`).
 

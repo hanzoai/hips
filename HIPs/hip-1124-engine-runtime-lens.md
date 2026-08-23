@@ -72,15 +72,15 @@ their own tests. An upstream that refuses the platform credential is reported
 
 ### §4 Inference is not here
 
-The fleet's one inference door is the OpenAI-compatible `/v1` surface, where
-requests are metered and billed. A second completion door under `/v1/engine`
+The fleet's one inference endpoint is the OpenAI-compatible `/v1` surface, where
+requests are metered and billed. A second completion endpoint under `/v1/engine`
 would split billing, so it MUST NOT exist (`apps/engine/engine.go:31-35`).
 
 ### §5 Money, events, telemetry
 
 engine is free, in those words (`plugin/engine/main.go:23`, `cloud.Free`; not
 in `spend.go:275`) — the billed act is inference, which happens at the other
-door. It publishes no events on the bus, and emits nothing to observability
+endpoint. It publishes no events on the bus, and emits nothing to observability
 beyond the request span every route gets.
 
 ### §6 Stage

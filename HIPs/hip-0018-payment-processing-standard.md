@@ -57,7 +57,7 @@ The correct approach is **both**: the native PSP for fiat, blockchain for crypto
 
 ### The billing capability — what `/v1/billing` the customer reads actually is
 
-The capability named `billing` (HIP-0139) is the customer's own money door in
+The capability named `billing` (HIP-0139) is the customer's own money endpoint in
 `hanzoai/cloud`: **nine read operations, all GET, all free** — `/v1/billing/
 {balance, usage, usage/accounts}` and `/v1/finance/{balance, credits, usage,
 invoices, payment-methods, ledger}` (`manifest/apps.go:137`, package doc

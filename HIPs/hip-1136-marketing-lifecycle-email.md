@@ -53,7 +53,7 @@ every step is claimed once, so a redeploy neither loses nor duplicates a send
 Every marketing delivery — campaign, drip step, calendar email — calls the one
 deliver function, which consults the per-org suppression list and then hands
 off to the platform notify rail; marketing never constructs a provider and has
-no second door out (`apps/marketing/suppress.go:138-148`). A suppressed
+no second egress endpoint (`apps/marketing/suppress.go:138-148`). A suppressed
 recipient is refused at the seam, and a signed public one-click unsubscribe
 writes the same list. A product announcement is not a feature beside this: it
 is a one-step sequence with an audience enrolled, inheriting claimed-once
@@ -109,7 +109,7 @@ money mint left switched off is one flag away from switched on.
 
 The wrong implementation here is a spam cannon with a ledger attached. Send
 authority: any path around the deliver seam bypasses opt-out, so the seam is
-the only door and tests assert exactly which recipients reach the rail. Money:
+the only egress and tests assert exactly which recipients reach the rail. Money:
 the removed deposit is the standing lesson — a redemption input that named its
 own plan converted open signup into self-served credit; the current shape has
 no field to inflate and fails closed on an unreadable authority. Tenancy: the

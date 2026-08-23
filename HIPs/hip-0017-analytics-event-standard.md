@@ -15,9 +15,9 @@ requires: HIP-0030
 
 > **Superseded by HIP-1190, HIP-0063 and HIP-1311.** The product event and the
 > lenses over it are `event` at `/v1/event`; the flags this document decided
-> from are `flags`; the A/B half is `experiment`. One door takes every wire,
+> from are `flags`; the A/B half is `experiment`. One endpoint takes every wire,
 > dispatched by the shape of the body — so the `/e`, `/batch`, `/capture` and
-> `/decide` doors here are not addresses the cloud serves.
+> `/decide` endpoints here are not addresses the cloud serves.
 
 ## Abstract
 

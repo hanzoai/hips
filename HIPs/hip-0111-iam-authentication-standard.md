@@ -229,7 +229,7 @@ These break in production and are not permitted under any circumstance:
 4. **Legacy paths** — `/oauth/*`, `/api/login/oauth/*`, anything `/api/`-prefixed. Gone. No backward compatibility.
 5. **Non-empty `originFrontend`** in production — produces a split-origin discovery document that breaks strict clients.
 6. **Per-app social OAuth clients** — an app registering its own Google/GitHub (or Web3) OAuth client. Social providers are configured ONCE per network, org-level, and shared (§7). A per-app client re-creates the shared one N times and drifts.
-7. **`/api/` on the front-door too** — the IAM's own login UI / portal Worker uses the native login API under `/v1/iam/*` (§6), never `/api/login`, `/api/get-app-login`, `/api/signup`. The "no `/api/`" rule is absolute, including the front-door.
+7. **`/api/` on the login entry point too** — the IAM's own login UI / portal Worker uses the native login API under `/v1/iam/*` (§6), never `/api/login`, `/api/get-app-login`, `/api/signup`. The "no `/api/`" rule is absolute, including the login entry point.
 8. **"Verb" aliases / bespoke REST for a standardized capability** — `get-users`, `get-user?id=`, `add-user`, `update-user`, `delete-user`, `get-organizations`, `get-records`, `issue-user-token`, `get-account`, `mint-user-keys`, and every other non-standard verb are **gone**, on iam and on every client. Each has an RFC that IS the surface: identity provisioning → **SCIM 2.0** (§8), delegated/on-behalf-of tokens → **Token Exchange** (§7), account claims → **UserInfo** (§1). A client that reaches for a verb is reaching for the wrong contract; there is no compat layer that will answer it.
 9. **A duplicate spelling of a standard endpoint** — one `token` endpoint, not `token` + `access_token`; one `userinfo`, not `userinfo` + `get-account`. An alias is two ways to do one thing; the standard path is the only one served.
 
@@ -239,7 +239,7 @@ These break in production and are not permitted under any circumstance:
 - **Discovery self-consistency** — issuer/authorize/token/userinfo/jwks share one origin (host-relative). Keep `originFrontend` empty in `app.prod.conf`.
 - **`owner` is the tenant** — the org slug. IAM emits **`owner`** (and the standard-name alias **`organization`**) in BOTH the OIDC userinfo response AND the JWT, in every token format, scope-independent — so a consumer reading either claim off either surface gets the tenant. Scope every data query to it. The gateway (HIP-0044) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT. A consumer that reads org from a non-standard field (e.g. a legacy `groups` claim) and finds nothing MUST fail closed, never silently fall back to a `"default"`/`"personal"` org — that is a tenant-isolation defect.
 
-### 6. The login front-door — the AS's own concern, not a client surface
+### 6. The login entry point — the AS's own concern, not a client surface
 
 OAuth 2.0 / OIDC deliberately do **not** specify how the authorization server authenticates the end user (the credential-entry step). That is the AS's internal concern. So the hosted login page (the per-brand portal at `hanzo.id`/`lux.id`/… and its Worker) has a small first-party API it — and ONLY it — calls, under the canonical `/v1/iam/*` prefix:
 
@@ -253,7 +253,7 @@ OAuth 2.0 / OIDC deliberately do **not** specify how the authorization server au
 
 This is NOT a client integration surface and NOT a set of "verbs" a client may call — it is the AS's own login UI talking to the AS. **Account claims are NOT here**: there is no `get-account` and no second `userinfo` — every consumer (including the gateway admin-guard, HIP-0044) reads the standard **OIDC UserInfo** (`/v1/iam/oauth/userinfo`, §1), which carries `sub`, `owner`/`organization`, `email`, `email_verified`, and the `isAdmin` claim the SuperAdmin predicate derives from. One account contract, and it is the RFC one.
 
-Same rule as §1: `/v1/iam/*` only — no `/api/`, anywhere, including the front-door Worker. **Client apps use only the standard surface (§1) through the SDK**; the login API is internal to the AS.
+Same rule as §1: `/v1/iam/*` only — no `/api/`, anywhere, including the login Worker. **Client apps use only the standard surface (§1) through the SDK**; the login API is internal to the AS.
 
 ### 7. Delegation / on-behalf-of — OAuth 2.0 Token Exchange (RFC 8693)
 

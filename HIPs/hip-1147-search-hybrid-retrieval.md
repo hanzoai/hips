@@ -40,7 +40,7 @@ The key words MUST, MUST NOT and SHOULD are to be interpreted as in RFC 2119.
 
 This capability owns no store and holds no state between requests. Both legs
 are in-process seams of stores other capabilities own; deleting this subsystem
-loses a door, not data.
+loses an endpoint, not data.
 
 ### The address
 
@@ -66,7 +66,7 @@ because the store is the one this capability's lexical leg queries; the operator
 view of the vector store is `provisioning`'s, at `/v1/admin/provisioning/vector/*`
 (HIP-1164).
 
-A second, in-process door exists for callers that established their tenant by
+A second, in-process endpoint exists for callers that established their tenant by
 other means: `ForOrg(ctx, org, in)` — the Team transactor's path — returns the
 identical fused answer with no HTTP hop, and its org is the CALLER's boundary
 to have authenticated (`apps/search/search.go:200-208`).

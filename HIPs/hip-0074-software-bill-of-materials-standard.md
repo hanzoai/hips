@@ -159,7 +159,7 @@ The SBOM workflow is added as a post-build step in every Hanzo CI pipeline:
             --type slsaprovenance1 \
             ${IMAGE}@${DIGEST}
 
-      # Ingest into the component store — the one served door
+      # Ingest into the component store — the one served endpoint
       - name: Ingest SBOM
         run: |
           curl -fsS -X POST "https://api.hanzo.ai/v1/sbom" \

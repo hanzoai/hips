@@ -33,7 +33,7 @@ fix is the shape of this spec. Each transport adapter used to emit an event into
 the inbox *and*, separately, spawn an agent turn of its own. One message drove two
 mechanisms and only the second ever replied. The turn belongs beside the inbox
 because everything it needs is already there — the policy that says whether the
-sender may speak, the route that says where a reply goes, and the egress doors.
+sender may speak, the route that says where a reply goes, and the egress endpoints.
 
 ## Specification
 
@@ -60,7 +60,7 @@ silently dropped.
 ### The dependency points one way
 
 Identity and token custody stay in the integrations package. Inbound events arrive
-here over the internal plane and replies leave through that package's send doors.
+here over the internal plane and replies leave through that package's send endpoints.
 
 **channels depends on integrations; integrations MUST NOT depend on channels.**
 
@@ -91,7 +91,7 @@ the allowlist additionally requires an org admin; reading the inbox does not.
 
 Ingest runs on a per-event goroutine under a bounded context, so nothing in this
 package can delay the webhook delivery that produced the event. It publishes its
-service state before serving the ingest door, so the first event finds a mounted
+service state before serving the ingest endpoint, so the first event finds a mounted
 store, and unpublishes before closing, so a late event cannot adopt a store that
 is about to close.
 
@@ -137,7 +137,7 @@ the send being the one declared route, per the section above.
 
 It is free, in those words: the plugin declares `Price: cloud.Free`
 (plugin/channels/main.go:21). The model completion a turn spends is metered
-where inference is metered, behind the AI door, not here.
+where inference is metered, behind the AI endpoint, not here.
 
 It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. Beyond the request span every route gets, the turn's
@@ -147,7 +147,7 @@ span comes from this package's own tracer, `hanzo.channels`
 The stage is `ga` — the manifest row declares none, and absent is `ga`
 (HIP-0139 §8). The capability derives from no OSS upstream: transport wire
 shapes are normalized in this package, and delivery rides integrations' own
-doors.
+endpoints.
 
 ## Rationale
 

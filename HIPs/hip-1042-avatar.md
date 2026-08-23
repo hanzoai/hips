@@ -126,7 +126,7 @@ second blob path, no schema change.
 
 ## Security Considerations
 
-The read is a public door by design, so its safety is entirely in what it can
+The read is a public endpoint by design, so its safety is entirely in what it can
 address: a verified digest shape, refused-not-folded identity components, and a
 content-type allow-list applied twice. Remove any one of them and the route
 becomes a general reader of the blob bucket.

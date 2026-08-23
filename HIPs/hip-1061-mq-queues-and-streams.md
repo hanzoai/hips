@@ -17,7 +17,7 @@ requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 `/v1/mq` is the queue side of the platform bus: an org creates durable streams,
 inspects and purges them, reads stored messages by sequence, manages pull
 consumers and pulls the next batch. It rides the same embedded broker the tenant
-publish door rides (HIP-1060) and shares none of its operations.
+publish endpoint rides (HIP-1060) and shares none of its operations.
 
 This HIP specifies the split, the tenancy encoding, and the delivery semantics a
 client has to know because they are not the broker's defaults. The implementation
@@ -29,7 +29,7 @@ One broker can front two products or one confused one. When the authored intent
 for this surface was written it carried publish, subscribe, request/reply, keyed
 storage and object storage alongside the queue operations — five capabilities on
 one address, three of which the platform already serves elsewhere. Serving all of
-it would have meant the same broker call behind two doors with two shapes, and a
+it would have meant the same broker call behind two endpoints with two shapes, and a
 client choosing between them by accident.
 
 The split is therefore the first normative statement here, not a footnote.
@@ -50,7 +50,7 @@ defect.
 Two further families stay off this surface for the same reason: keyed storage is
 already a product of its own, and object storage is `/v1/s3`. The broker's own
 mechanisms for both are an implementation detail of this deployment, not a second
-door.
+endpoint.
 
 The served set and the refused set are both closed lists in
 `apps/mq/typed_wire_test.go`, checked against the live router in both directions:
@@ -147,7 +147,7 @@ degraded answer when the plane is down.
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0119 — Hanzo Service Conventions
-- HIP-1060 — Pubsub — The Tenant Door on the Bus
+- HIP-1060 — Pubsub — The Tenant Endpoint on the Bus
 
 ## Copyright
 

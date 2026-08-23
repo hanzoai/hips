@@ -122,7 +122,7 @@ capability would have supplied the belief.
 ## References
 
 - HIP-1020 — Chain Registry
-- HIP-1021 — Chain JSON-RPC Door
+- HIP-1021 — Chain JSON-RPC Endpoint
 
 ## Copyright
 

@@ -136,7 +136,7 @@ cross-tenant identifier, no replayable bearer.
 - HIP-0061 — Notification & Messaging Service Standard
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0139 — Capability
-- HIP-1060 — Pubsub — The Tenant Door on the Bus
+- HIP-1060 — Pubsub — The Tenant Endpoint on the Bus
 
 ## Copyright
 

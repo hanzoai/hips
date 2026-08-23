@@ -18,7 +18,7 @@ most recent captured errors, newest first, each with its exception surfaced as a
 first-class field rather than buried in a property bag.
 
 It is a READ over the event plane that `hanzoai/cloud`'s `event` app already
-writes — one write core behind many ingest doors, one warehouse, one vocabulary
+writes — one write core behind many ingest endpoints, one warehouse, one vocabulary
 to read it with. This HIP states the tenancy invariant that makes the read safe,
 the redaction invariant that makes the stored fault safe to read at all, and what
 the capability deliberately is not.
@@ -56,7 +56,7 @@ wrong signal. No token, however privileged, may read another tenant's faults.
 Browser beacons carry a publishable key (`pk-`), which exists so a request with
 no bearer can still be attributed to the tenant that minted it. It is
 RESOLVABLE, not authenticating: the identity path refuses it outright, at the
-boundary, so publishable means publishable whichever door it arrives at.
+boundary, so publishable means publishable whichever endpoint it arrives at.
 
 This read therefore MUST require a real bearer. Minting is a different concern
 and lives on the key resource, not here.
@@ -105,7 +105,7 @@ to act on.
 
 - Any tenant selector on the wire.
 - A read on a publishable key.
-- A second ingest door on this address. Faults arrive through the plane's one
+- A second ingest endpoint on this address. Faults arrive through the plane's one
   write core; this capability only reads.
 - Issue lifecycle. There is no assignment, no resolution state and no ownership
   here — the capability is a read. Structured frames exist so a consumer can

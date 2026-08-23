@@ -16,7 +16,7 @@ requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139
 
 `/v1/bot` is a bot doing your work on a surface this platform operates — a task
 executing on a desktop or terminal sandbox, with a live session a person can
-open to watch or take over — together with the door to the service that executes
+open to watch or take over — together with the endpoint onto the service that executes
 it. It is implemented in `hanzoai/cloud` at `apps/bot` (HIP-0106).
 
 A bot is not a machine. The org's own connected machines are `node`
@@ -88,7 +88,7 @@ prove a bot boots, and not before.
 operational paths verbatim, the prefix stripped on the way out
 (`apps/bot/relay.go`). A liveness probe is not a tenant-scoped resource, so it
 stays a relay rather than being reimplemented in Go, and it is not a public
-address: the public rule drops a relay door (HIP-0135), so it reaches no
+address: the public rule drops a relay endpoint (HIP-0135), so it reaches no
 generated client and no tool list. The segment is load-bearing. The relay was
 once `All("/v1/bot/*")` in a second app, a greedy wildcard over the whole of a
 sibling's subtree held apart only by two manifest rows and specificity; from

@@ -65,7 +65,7 @@ There is currently a SECOND DEPLOYMENT of it — `localhost:8200` / `kms.hanzo.a
 which every chart's `kmsSecrets` still points at through the KMSSecret CRD's
 `hostAPI`. That is not a second architecture and must never be written up as one.
 It is the same `luxfi/kms` binary serving the same `/v1/kms/secrets` routes under
-the same JWT boundary — its own source says of the two doors, *"gates on the same
+the same JWT boundary — its own source says of the two endpoints, *"gates on the same
 thing requireOrgJWT ultimately does: whether the caller's own org authorizes this
 deployment's home org. Two doors, one boundary."* One program, deployed twice,
 with its data split across the two.

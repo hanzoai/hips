@@ -17,7 +17,7 @@ capability: tools
 `/v1/tools` is the one registry of everything an org can call: each entry is a
 `Tool` with a `Source`, a JSON-Schema, a per-`(org, project)` activation state
 and an optional price. Cloud's own typed operations are not here — they are
-code, projected onto the fleet's MCP door (HIP-0300); what lives here is rows
+code, projected onto the fleet's MCP endpoint (HIP-0300); what lives here is rows
 (`apps/tools/LLM.md:1-9`). It is implemented in `hanzoai/cloud` at `apps/tools`,
 and this HIP states the surface under which its skills, plugins and
 external-MCP-server views answer.
@@ -26,7 +26,7 @@ external-MCP-server views answer.
 
 The plane's views grew their own roots — `/v1/skills`, `/v1/plugins`,
 `/v1/mcp/servers` — and the last of these left the `/v1/mcp` root answered by
-two apps, the host's agent door and this one's server collection. The store
+two apps, the host's MCP endpoint and this one's server collection. The store
 decides all three (HIP-0139 §7): every row behind those roots is tools' own, so
 each view folds home rather than splitting into an app that would share this
 one's store.
@@ -54,7 +54,7 @@ same row (`apps/tools/external_mcp.go`). Every other operation is typed.
 Today's router serves the three views at `/v1/skills`, `/v1/plugins` and
 `/v1/mcp/servers` (`manifest/apps.go:429`); each pair is a line in
 `hanzoai/cloud` `openapi/misfiled.txt` until the fold lands, and the last fold
-vacates `/v1/mcp` entirely to the host's agent door. The `skills` app keeps
+vacates `/v1/mcp` entirely to the host's MCP endpoint. The `skills` app keeps
 only `/.well-known/agent-skills` discovery and the `plugins` app only
 `/v1/admin/plugins`, both exempt by HIP-0139 §3.2.
 
@@ -66,7 +66,7 @@ plugins, skills, mcp — each opened only by this package
 `skillstore.go:57`, `external_mcp.go:87`). Sources register their own
 `Provider` from their own Mount (`apps/tools/registry.go:75`), so this package
 never learns how another source lists or runs its tools; what it owns is the
-rows and the door.
+rows and the endpoint.
 
 ### Tenancy
 

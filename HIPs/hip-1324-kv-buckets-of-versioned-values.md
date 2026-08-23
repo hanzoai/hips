@@ -60,7 +60,7 @@ boundary is exact and enforced by construction, not by convention:
 
 - A bucket is a key-value object under the broker's own key-value namespace.
   This capability can address nothing else.
-- `pubsub`'s tenant door roots every subject a caller can name under that org's
+- `pubsub`'s tenant endpoint roots every subject a caller can name under that org's
   subject prefix, and refuses wildcards outright, so a publish cannot land on a
   bucket and a request cannot read one.
 - Neither capability can name the other's objects through its own API, in either
@@ -102,7 +102,7 @@ broker's own port see, and answers 204. `GET /v1/kv/{bucket}/{key}/history`
 answers the key's retained revisions oldest first, delete markers included.
 
 Values are TEXT. A value is carried verbatim as UTF-8 bytes, so its round trip
-through this door is exact; bytes written on the broker's own port that are not
+through this endpoint is exact; bytes written on the broker's own port that are not
 UTF-8 read back lossily here.
 
 ### §3 Tenancy
@@ -121,7 +121,7 @@ The same name in two orgs is two buckets, and each org may claim it.
 What a malformed name is answered WITH is part of the boundary. On a create,
 where the caller is choosing the name, it is a refusal that says so. Everywhere
 else it is absence — the same answer another org's real bucket gets — because a
-door that distinguished "your name is malformed" from "that bucket is not yours"
+endpoint that distinguished "your name is malformed" from "that bucket is not yours"
 would be an existence oracle for names in other tenants.
 
 ### §4 Money
@@ -178,7 +178,7 @@ rather than a check.
 The org is the gateway's verdict, so a caller cannot name a tenant. The
 plane-wide name is injective, so one org's handle cannot resolve to another's
 bucket even if a name were forged into existence by some other path. And the
-tenant prefix keeps every bucket this door creates disjoint from the platform's
+tenant prefix keeps every bucket this endpoint creates disjoint from the platform's
 own state on the same node, so a caller cannot address the event plane's storage
 by guessing at a name.
 
@@ -193,7 +193,7 @@ and into that broker's configuration, where none of the above is enforced.
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — The Hanzo Plugin Contract
 - HIP-0139 — Capability
-- HIP-1060 — Pubsub — The Tenant Door on the Bus
+- HIP-1060 — Pubsub — The Tenant Endpoint on the Bus
 - HIP-1310 — Webhooks — Outbound Delivery
 
 ## Copyright

@@ -186,8 +186,8 @@ o11y.migrations     name String, hash String, applied_at DateTime
 
 ============================ ROUTES =================================
 
-POST /v1/event                one ingest door, all kinds, all shapes
-POST /v1/event/{key}/envelope one Sentry-wire door for third-party SDKs
+POST /v1/event                one ingest endpoint, all kinds, all shapes
+POST /v1/event/{key}/envelope one Sentry-wire endpoint for third-party SDKs
 GET  /v1/record               the record lens (kind= filters it)
 GET  /v1/span, /v1/trace/{id}, /v1/sample, /v1/issue, /v1/issue/{id}
 RETIRED: /v1/ingest, /v1/analytics, /v1/analytics/batch, /v1/tracker,
@@ -200,7 +200,7 @@ IAM pk- publishable key, minted where every other key is minted.
 ## Unified
 
 - event + sentry + logs + span-exceptions => ONE table o11y.records. All four answer 'what happened at time T with these attributes'. Today an exception from a Hanzo surface is written TWICE by the same client call (@hanzo/event captureError dual-writes a Sentry envelope AND a type:'error' row), into two tables, under two tenant keys (org SLUG vs UUIDv5 of that slug), read by two different UIs, and only one of the two groups it. 58 rows on one side, 167 on the other, un-joinable. That is the defect, stated in rows.
-- insights => STOPS EXISTING as a concern. It never had a table. POST /v1/insights/e was a PostHog-wire shim onto hanzo.events and GET /v1/insights/events was a read lens over the same rows. It is a second wire for the one ingest, which is exactly the thing the contract forbids. One door, one lens.
+- insights => STOPS EXISTING as a concern. It never had a table. POST /v1/insights/e was a PostHog-wire shim onto hanzo.events and GET /v1/insights/events was a read lens over the same rows. It is a second wire for the one ingest, which is exactly the thing the contract forbids. One endpoint, one lens.
 - the TWO error-tracking faces => ONE. The project-DSN face (POST /v1/sentry/{uuid}/envelope) and the org-DSN face (POST /v1/o11y/api/{org}/envelope) run the SAME ingest engine (implerrortracking/reuse.go) and upsert the SAME o11y_issues rows, differing only in which UUID the DSN HMAC is domain-separated by. The org-DSN face is already dead in production (403 at the edge, because mount.go's rewriteExternalPath strips /v1/o11y/ before the gate's isErrorIngestPath prefix test can match). Delete it rather than fix it.
 - six attribute catalogues => o11y.attributes. traces.tag_attributes_v2, logs.tag_attributes_v2, traces.span_attributes_keys, logs.logs_attribute_keys, logs.logs_resource_keys, metadata.attributes_metadata + column_evolution_metadata are one question: what names has this tenant emitted.
 - two resource tables => o11y.resources. traces_v3_resource and logs_v2_resource have the identical three columns (labels, fingerprint, seen_at_ts_bucket_start) today. Being two tables is the accident.
@@ -298,13 +298,13 @@ IAM pk- publishable key, minted where every other key is minted.
 - hanzoai/o11y pkg/modules/rulestatehistory/implrulestatehistory/store.go — :23 rule state -> records kind='alert'.
 - hanzoai/o11y pkg/querier/o11yquerier/provider.go and pkg/o11y/o11y.go — the per-signal provider wiring that names the audit/meter/metadata planes.
 - hanzoai/o11y pkg/apiserver/o11yapiserver/errortracking.go — DELETE the org-DSN ingest routes (already 403 in production).
-- hanzoai/o11y mount.go — rewriteExternalPath; the asymmetry that killed the org-DSN ingest goes away with the door.
+- hanzoai/o11y mount.go — rewriteExternalPath; the asymmetry that killed the org-DSN ingest goes away with the endpoint.
 - hanzoai/cloud clients/o11y/tables.go + tables_test.go — ALREADY AUTHORED on branch o11y/v1-table-names (commit 65775405) and must change AGAIN: o11y_traces.distributed_spans -> o11y.distributed_spans, o11y_logs.distributed_records -> o11y.distributed_records.
 - hanzoai/cloud clients/o11y/{logs.go,metricsread.go,tracesink.go,ingest.go,zapingest.go,event_ingest.go,spanconv.go,alerts.go}
 - hanzoai/cloud clients/admin/{o11y.go,aimetrics.go} (+ their tests) — the const block at o11y.go:26-29,58-60 and the o11y_ai.observations reads.
 - hanzoai/cloud clients/eval/metrics.go:335 — genAISpanTable.
 - hanzoai/cloud clients/analytics/capture.go — DELETE eventsTableDDL and EnsureEventsTable. The writer stops owning DDL; the migrator owns it. (This also removes the odd second caller, analytics.Outcomes at outcomes.go:45, creating a table from a read path.)
-- hanzoai/cloud clients/analytics/{query.go,event.go,public.go,publishable.go,insights.go,analytics.go,outcomes.go,campaign.go,forward.go} — query.go:41's `const eventsTable`, the /v1/ingest + /v1/analytics + /v1/tracker + /v1/insights/e doors, GET /v1/errors (live, 403 vs a 404 control, and read by nothing first-party), and the $public tenant at public.go:89.
+- hanzoai/cloud clients/analytics/{query.go,event.go,public.go,publishable.go,insights.go,analytics.go,outcomes.go,campaign.go,forward.go} — query.go:41's `const eventsTable`, the /v1/ingest + /v1/analytics + /v1/tracker + /v1/insights/e endpoints, GET /v1/errors (live, 403 vs a 404 control, and read by nothing first-party), and the $public tenant at public.go:89.
 - hanzoai/cloud clients/guide/{detect.go,gtm.go} — detect.go:127 carries a SECOND `const eventsTable` literal for the same table; a rename that misses it breaks the guide silently.
 - hanzoai/cloud clients/campaign/metrics.go:89
 - hanzoai/cloud apps/apps.go:265 — the o11y PluginSpec prefixes (/v1/o11y, /v1/sentry) and the gate's isSentryIngestPath / isErrorIngestPath exemptions.

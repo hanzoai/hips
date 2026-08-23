@@ -352,7 +352,7 @@ the HEADER, before the body is read.
 
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0139 — Capability
-- HIP-1060 — PubSub — The Tenant Door on the Bus
+- HIP-1060 — PubSub — The Tenant Endpoint on the Bus
 - HIP-1061 — MQ — Queues and Streams
 - HIP-1323 — Kafka — A Wire Onto the One Bus
 - AMQP 0-9-1, and its `basic`, `queue`, `exchange`, `tx` and `confirm` classes

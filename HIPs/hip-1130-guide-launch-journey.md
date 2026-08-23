@@ -39,7 +39,7 @@ as in RFC 2119.
 
 Per-org progress and the org's own curriculum override live in that org's own
 database, opened through `cloud.OrgStore` — one file per org, resolved through
-the one namespace door (`apps/guide/guide.go:47-63`). The shared brand blueprint
+the one namespace entry point (`apps/guide/guide.go:47-63`). The shared brand blueprint
 is a second, deployment-wide store (`apps/guide/blueprint_store.go:45`), seeded
 idempotently from embedded fixtures — the base journey plus one YAML file per
 brand (`apps/guide/brands.go`) — after which the database is authoritative and

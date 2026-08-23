@@ -197,8 +197,8 @@ usage collector registers, by value — a shared vocabulary, not shared code.
 The neighbour to confuse this with is `billing`, and the split is usage versus
 money.
 
-- **billing** is the ORG's money door — balance, spend, cards. `link` is the
-  PERSON's account door — which providers they signed into and what those
+- **billing** is the ORG's money endpoint — balance, spend, cards. `link` is the
+  PERSON's account endpoint — which providers they signed into and what those
   accounts consumed. `GET /v1/billing/usage/accounts` is billing's address and
   reads this capability's per-account breakdown at the same `(org, subject)`
   pair: the shape is link's, the address is billing's, and the charge of record

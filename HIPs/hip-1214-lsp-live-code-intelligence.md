@@ -87,7 +87,7 @@ from it, and it emits nothing to observability beyond the request span every
 route gets; attribution lives on the ledger rows. The stage is `ga` — the
 manifest row declares none — and `ga` here rests on the `hanzoai/lsp` daemon
 deployment actually serving; a deployment without the daemon MUST declare the
-capability `beta` rather than 503 behind a `ga` door.
+capability `beta` rather than 503 behind a `ga` endpoint.
 
 ### Upstreams
 

@@ -167,7 +167,7 @@ may grant a principal:
   redact a credential from an audit record, and to refuse to treat a publishable
   key as authentication. They classify a string; they do not authenticate.
 - **Tenant attribution** (`OrgForKey`) — resolves a key to the org whose beacon
-  it is, so an ingest door can attribute analytics. Resolvable is not
+  it is, so an ingest endpoint can attribute analytics. Resolvable is not
   authenticated, and a publishable key MUST NOT resolve to a principal.
 
 ### Conformance

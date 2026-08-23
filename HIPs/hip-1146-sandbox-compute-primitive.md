@@ -56,7 +56,7 @@ declared beside each (`openapi.Describe`): the collection and member CRUD,
 trios — the terminal is a WebSocket PTY and the screen a live display, wires no
 typed op can answer. Six ARE typed ops, registered from the same handlers the
 internal plane serves (`lease`, `run`, `read`, `write`, `stop`, `end`), so an
-agent at the fleet door can name them; `stop` ends the WORK and `end` ends the
+agent at the fleet's MCP endpoint can name them; `stop` ends the WORK and `end` ends the
 RESOURCE, two verbs because a run that went wrong is one somebody still wants
 to look at.
 

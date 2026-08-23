@@ -27,7 +27,7 @@ that firing is bounded. A surface that turns one event into runs, and lets a run
 emit an event, is a loop generator holding the customer's credentials — so the
 budget, the concurrency bound and the causation depth are not operational
 knobs bolted on afterwards, they are the specification. The second property is
-that a run costs the same once no matter which door started it: a manual start,
+that a run costs the same once no matter which endpoint started it: a manual start,
 a tool call and a schedule tick are three entrances to one recorded run, or they
 are three different bills for one thing.
 
@@ -59,7 +59,7 @@ Three things a reader might expect to find in it are deliberately elsewhere:
 - **No tool registry.** Every connector action registers into the one tool plane
   (HIP-1213) at mount, and that registration is its only projection: discovery
   is `GET /v1/tools`, dispatch is `POST /v1/tools/call`. There is no second tool
-  door.
+  endpoint.
 
 ### §2 The boundary: what starts it
 
@@ -198,7 +198,7 @@ Three ceilings, each on a different amplification, and each MUST hold:
 1. **Run starts per rolling minute, per org**, counted from persisted rows so
    the ceiling survives a restart rather than resetting with the process. A
    fan-out or an in-platform loop meets it and stops.
-2. **Concurrent run starts and tool executions, per org**, at the front door, so
+2. **Concurrent run starts and tool executions, per org**, at the entry point, so
    one tenant's burst cannot starve another's workers. Per-org and not global:
    a shared counter turns one noisy tenant into everyone's outage.
 3. **Causation depth.** An in-platform event carries the number of hops that
@@ -236,8 +236,8 @@ is `github.com/hanzoai/sqlite`.
 The alternative to composing the durable engine is an execution loop inside this
 subsystem, which is a second definition of "a run survived a crash" and a second
 place to get retry wrong. The alternative to one metered unit at the durable
-boundary is metering at each door, which double-counts the moment a door is
-added — and a door was added, in the tool plane, at no cost because the meter
+boundary is metering at each endpoint, which double-counts the moment an endpoint is
+added — and an endpoint was added, in the tool plane, at no cost because the meter
 was never there.
 
 The alternative to bounding amplification at the plane is bounding it per

@@ -41,7 +41,7 @@ The key words MUST, MUST NOT, SHOULD and MAY are to be interpreted as in RFC
 
 This capability owns no store. Its state is the cluster's: every read and write
 is a call on a Kubernetes dynamic client, and deleting the subsystem loses
-nothing but the door. The client authenticates as the dedicated `cloud-ml`
+nothing but the endpoint. The client authenticates as the dedicated `cloud-ml`
 ServiceAccount when `HANZO_ML_TOKEN_FILE` names a mounted token, failing closed
 if the named token is unreadable (`apps/ml/ml.go:659-681`) — the product-API
 path never inherits ML's cluster reach.

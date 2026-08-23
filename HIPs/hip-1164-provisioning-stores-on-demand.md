@@ -111,7 +111,7 @@ Isolation is then by construction, two ways, one per strategy:
   64-bit collision and no two tenants fold onto one resource. The global
   `UNIQUE(physical_name)` index makes any residual fold fail closed with 409.
 
-The friendly name is validated at the door against
+The friendly name is validated at the endpoint against
 `^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$`; every physical name and every engine
 identifier derives from it, so that regex is the injection guard.
 
@@ -187,7 +187,7 @@ three ways, and each side is somebody else's:
 - `kv`, `sql`, `docdb`, `datastore` — reached only over the engine's own wire
   protocol, at the host, port and credential the create returned. There is no
   HTTP data plane for them, and there MUST NOT be one under this capability: a
-  proxy here would be a second door onto a store whose first door already
+  proxy here would be a second endpoint onto a store whose first endpoint already
   authenticates, with a credential this app would then have to hold.
 
 The credential is returned exactly once, in the create response, and nowhere

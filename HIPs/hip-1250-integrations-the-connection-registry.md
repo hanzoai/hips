@@ -53,7 +53,7 @@ custody failure MUST NOT leave a row behind.
 
 Every route answers under `/v1/integrations`: the provider lifecycle
 (`/{provider}`, `/{provider}/connect`, `/callback`, `/verify`, `/disconnect`),
-the provider-specific doors (Slack, GitHub, Discord, Teams, Telegram, GitLab,
+the provider-specific endpoints (Slack, GitHub, Discord, Teams, Telegram, GitLab,
 OpenRouter), and the user plane at `/v1/integrations/connectors`. Today the
 user plane is served at a second root, `/v1/connectors`; that pair is carried by
 cloud's `openapi/misfiled.txt:34` and closes by fold — one store, so per

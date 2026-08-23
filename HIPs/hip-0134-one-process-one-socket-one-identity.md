@@ -98,7 +98,7 @@ plugin's job, and the plugin will never grow the ability to do it correctly.
 ### 4. Naming
 
 **The binary is `cloud`.** A second Service name for the same pods is a second
-door with different properties.
+address with different properties.
 
 **One IAM application per guarded surface, named for the surface**:
 `hanzo-admin` for admin.hanzo.ai, `hanzo-platform` for platform.hanzo.ai,

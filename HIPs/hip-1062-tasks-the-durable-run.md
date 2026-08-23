@@ -16,10 +16,10 @@ requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 
 A durable run is work that survives the process that started it. `hanzoai/tasks`
 is the event-sourced engine that provides one — workflows, activities, schedules,
-task queues, workers — and `/v1/tasks` is the cloud's door onto it, together with
+task queues, workers — and `/v1/tasks` is the cloud's endpoint onto it, together with
 the studio the run history is read in.
 
-This HIP specifies the door: which engine answers, how a request becomes a
+This HIP specifies the endpoint: which engine answers, how a request becomes a
 tenant's shard, and why this surface is a relay rather than a typed operation set.
 The implementation is `hanzoai/cloud` `apps/tasks`.
 
@@ -41,15 +41,15 @@ invisible to every read that looked for it. Nothing errored.
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted as
 in RFC 2119.
 
-### One engine per process, and this door fronts it
+### One engine per process, and this endpoint fronts it
 
 This subsystem MUST NOT create an engine. The cloud binary embeds exactly one
-(`cloud/durable.go`), shared with the durable ingest path, and this door mounts
+(`cloud/durable.go`), shared with the durable ingest path, and this endpoint mounts
 that engine's handlers. The Tasks product and the ingest path therefore read the
 same durable state.
 
 The engine is wired after mounting, so the surface resolves it lazily per request
-and answers 503 until it is live. A door that reported healthy before the engine
+and answers 503 until it is live. An endpoint that reported healthy before the engine
 existed would be reporting on itself.
 
 ### Reads across processes are asked for, not opened
@@ -97,7 +97,7 @@ that shape, and each blocker is measured rather than asserted
   rest of this API carries a status string.
 
 The consequence is stated rather than hidden: a generic client will be surprised
-by both facts, so the door **declares prose beside the wire fact**, keyed on
+by both facts, so the endpoint **declares prose beside the wire fact**, keyed on
 method and path, rendering only while the router serves the route. That is what
 stops the document, the generated clients and the spec-derived CLI from offering
 calls they cannot explain.
@@ -114,7 +114,7 @@ must agree.
 
 ### Addresses, and the one that is legacy
 
-The door serves two shapes — the bare noun's redirect and the one wildcard route
+The endpoint serves two shapes — the bare noun's redirect and the one wildcard route
 that carries the engine's operation set, on every method — under one prefix,
 `/v1/tasks`. The bare `/tasks` the studio shipped with is gone.
 
@@ -141,7 +141,7 @@ and `/v1/iam` belongs to shared IAM-policy screens this app routes nowhere.
 ### What it owns, charges and emits
 
 The capability owns no store. The durable state is the embedded engine's — one
-SQLite with one writer under cloud's data dir (durable.go) — and this door fronts
+SQLite with one writer under cloud's data dir (durable.go) — and this endpoint fronts
 it; a second store here would be the second copy of the engine's model this HIP
 refuses everywhere else.
 
@@ -150,7 +150,7 @@ It is free, in those words: the plugin declares `Price: cloud.Free`
 
 It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. It emits nothing to observability beyond the request
-span every route gets: the run history is read through this door from the
+span every route gets: the run history is read through this endpoint from the
 engine's own record, not from exported spans.
 
 ### Stage and upstream
