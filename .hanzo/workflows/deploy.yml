@@ -58,8 +58,13 @@ on:
   workflow_dispatch:
 
 concurrency:
+  # A superseded build is cancelled. The site flips live at the completion
+  # POST, not while bytes are uploading, so a killed run leaves an incomplete
+  # deployment that never became a Release — the live site is untouched. Held
+  # false, a burst of pushes serialised into a train of full builds and the
+  # newest commit waited behind builds of commits nobody wanted.
   group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   site:
