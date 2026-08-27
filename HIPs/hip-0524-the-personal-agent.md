@@ -23,13 +23,19 @@ sends. At `confirm` it asks first and sends what the person picks. At `send` it
 tells the person what it is about to do, waits a chosen interval, and sends if
 they say nothing.
 
+It also specifies what the agent IS, separately from what it may do. An agent
+wears a persona — a named expert identity and its instructions, cut from a
+library — and a person's agent is the one whose persona is derived from that
+person rather than picked from the shelf. The persona is who it is; the ladder is
+what it may do; the two never mix.
+
 This HIP specifies the one agent per person, the key it is stored under, the
-three levels and where each applies, what a waiting window means, and the rule
-that every message a machine sent says so. It composes HIP-0523's rooms,
-HIP-1210's agents and HIP-1141's per-person settings, and §12 lists the four
-things it asks of other specifications rather than deciding on their behalf.
-§11 marks each mechanism as shipped, partial or absent, measured in the source
-on 2026-08-27.
+persona it wears, the three levels and where each applies, what a waiting window
+means, and the rule that every message a machine sent says so. It composes
+HIP-0523's rooms, HIP-1210's agents and HIP-1141's per-person settings, and §12
+lists the five things it asks of other specifications rather than deciding on
+their behalf. §11 marks each mechanism as shipped, partial or absent, measured in
+the source on 2026-08-27.
 
 ## Motivation
 
@@ -109,15 +115,54 @@ the org pays for what it runs. An org admin MUST NOT read its instructions, its
 memory, or the contents of the rooms it works in. Paying for a thing does not
 confer the right to read it — the org pays for the person's mailbox too.
 
-### §3 What it is made of
+### §3 The persona is who it is
 
-A personal agent is HIP-1210's agent — a model, instructions and a set of tool
-names — plus per-person inputs it MUST read and MUST NOT hold its own copy of:
-settings from `pref` (HIP-1141), which is already one document per person, and
-presentation from `appearance` (HIP-1040) and `avatar` (HIP-1042).
+An agent wears a **persona**: a named identity giving it a voice and a remit.
+It is a value, not a subsystem:
 
-An agent that keeps its own copy of a preference is a second answer to what the
-person wants, and the copy will be the stale one.
+```
+    persona = { name, description, instructions, capability defaults }
+```
+
+`name` is the handle a person addresses — `@cto`, `@dev`, `@des`. `instructions`
+are the system prompt that makes it that expert. `capability defaults` are the
+tools the job comes with, which a researcher and a marketer do not share.
+
+Personas come from a library. The platform ships presets; an org MAY add its own,
+and an org preset with a platform preset's name shadows it for that org alone.
+**Creating an agent from a persona is one operation**, not a copy-and-edit ritual
+— that operation is `agents`' to serve, and §12 asks HIP-1210 for it.
+
+**A persona says who an agent is. It never says what it may do without a
+person.** These are orthogonal and MUST stay so:
+
+| | Answers | Set by | Specified in |
+|---|---|---|---|
+| persona | who is this — voice, remit, tools it comes with | picked from the library | this section |
+| ladder (§4) | may it send without me | the person, and only them | §4 |
+
+A persona's `capability defaults` are HIP-1041 grants — what the agent may call.
+They are NOT an authority level. **A persona MUST NOT carry, imply or default a
+ladder level**, because a preset that shipped `send` would raise a person's
+authority without that person's act, which §4's second rule forbids. A newly
+created agent, from any persona, starts at `draft`.
+
+**The personal agent is the user-bound agent, and its persona is the person's
+own.** Where a library persona is a job, a person's persona is that person: their
+instructions, their customizations, how they answer. It derives from the
+per-person inputs the agent MUST read and MUST NOT copy — settings from `pref`
+(HIP-1141), which is already one document per person, and presentation from
+`appearance` (HIP-1040) and `avatar` (HIP-1042). An agent that keeps its own copy
+of a preference is a second answer to what the person wants, and the copy will be
+the stale one.
+
+So a person's agent is not a fourth kind of thing. It is the same object as
+`@cto` and `@des`, cut from a persona that happens to be derived rather than
+picked, bound to a user by the key of §2.
+
+One naming point, since the code already has both words: the shipped struct is
+`persona` and the shipped list is `personalities` (`apps/agents/personalities.go`).
+That is one concept wearing two names, and the noun is **persona**.
 
 **Memory is an open question this HIP does not close.** HIP-1260's founding
 property is that human wiki and agent memory are one org-scoped store, indexed
@@ -296,6 +341,13 @@ on exists, and two of the pieces that look ready are not.
 | Per-user agent | **gap** | `apps/agents/store.go:38 Agent` has no user field; the unique index is `(org, name)` (`store.go:140`); the store is one file per org (`apps/agents/tenancy.go:44`) |
 | A run attributable to a person | **shipped** | `apps/agents/store.go:89 Run.Actor`, `apps/agents/sessions_store.go:142`; the nearest existing hook |
 | Automatic provisioning | **partial, and per-org only** | `agents.SeedPersonalities(ctx, org)` (`apps/agents/personalities.go:79`) runs on every login from `apps/team/account.go:539` and is idempotent. It seeds an ORG's agents; nothing is seeded per person |
+| The persona as a value | **shipped** | `apps/agents/personalities.go:27` — `persona{Name, Description, Instructions}`, exactly this HIP's shape less the capability defaults |
+| A platform preset library | **shipped, compiled in** | `personalities.go:35` `var personalities` — the crew `dev`, `des`, `vi`, under test at `personalities_test.go:30` and `brand_test.go:198`. Presets flatten into ordinary agent rows and are not special-cased downstream, which is the property this HIP wants |
+| Capability defaults on a persona | **gap** | the struct carries no tool set; every seeded persona gets the deployment's default model and nothing else |
+| Org-extendable presets | **gap** | the library is a package-level var, and the file states "no per-org config" as its design. Org extension is a change of shape, not a value added to a list |
+| Create-an-agent-from-a-persona, as one operation | **in progress** | only a bulk idempotent seed of the whole crew exists (`SeedPersonalities`). No per-persona create. Landing in the `apps/agents` persona lane |
+| The persona an agent wears, as stored state | **gap** | a persona is flattened into the agent row at seed time (`personalities.go:88`); nothing records which persona an agent was cut from, so an agent cannot change one |
+| User-bound agent link | **in progress** | not present at HEAD, and absent from the working tree and every worktree checked on 2026-08-27. Landing in the `apps/agents` persona lane, with the per-user agent row above |
 | Per-person settings store | **shipped** | `apps/pref/store.go:62` `prefs(subject, doc, updated_at)`, `GET`/`PATCH /v1/pref`. An opaque JSON document, so the setting needs no migration |
 | …readable from an agent turn | **gap** | `apps/pref/prefs.go:186` resolves the subject from an HTTP request and fails closed without one; a turn runs on a detached context (`apps/channels/turn.go:211`). The store that must hold the setting cannot be read by the code that must honour it |
 | Send-on-behalf | **not what the name says** | `apps/agents/onbehalf.go:34 RunOnBehalf` sets the billing and audit actor on a run record (`:102`). It sets no identity on any outbound message |
@@ -319,7 +371,7 @@ smallest window offered.
 
 ### §12 What this asks of other specifications
 
-Four things this HIP needs are owned elsewhere. Each is named here as a request,
+Five things this HIP needs are owned elsewhere. Each is named here as a request,
 not decided here as a fact:
 
 1. **HIP-1066** — the on-behalf principal is a new tagged member on the
@@ -340,6 +392,11 @@ not decided here as a fact:
    written. Note also that HIP-1211 already calls `/v1/ai/memory` "per-user
    memories" while tenanting by org; that inconsistency predates this HIP and
    should be resolved with it rather than inherited.
+5. **HIP-1210** — the persona library and the create-from-persona operation are
+   surface on `/v1/agents`, which HIP-1210 owns. §3 specifies what a persona IS
+   and the rule that it carries no authority; the address, the preset list's
+   shape, and how an org extends it are HIP-1210's to declare. The concept is
+   already in that package (§11) — what is missing is a route, not an idea.
 
 ### §13 Conformance
 
@@ -350,7 +407,8 @@ An implementation conforms when all of these hold:
 2. The row key is the (org, user) pair; no read resolves an agent by org alone
    and filters afterwards.
 3. The default level is `draft`, everywhere, including for scopes that did not
-   exist when the person last looked.
+   exist when the person last looked, and for an agent freshly cut from any
+   persona. No persona carries, implies or defaults a level.
 4. No principal other than the person can raise that person's level, the agent
    cannot reach its own setting, and an org ceiling can only lower it.
 5. Every stored message carries its authoring kind, set by the server, and every

@@ -81,8 +81,12 @@ therefore says **room** and never overloads `channel`, for the same reason
 HIP-1107 §3 refuses to let one word mean a run, a rented box and a connected
 machine at once.
 
-A surface MAY render a room's name with a leading `#`. That is a display of the
-room's name, not a second noun.
+The two layers are named separately on purpose: **`room` is the wire and the
+specification; "channel" is the product word.** A surface renders a room as
+`#name` and the people using it say channel; nothing behind the screen does. No
+envelope field is renamed and neither HIP-1066 nor HIP-1153 is amended by this
+HIP — the two shipped meanings of `channel` keep their addresses, and this
+specification simply does not use the word.
 
 ### §2 The room
 
