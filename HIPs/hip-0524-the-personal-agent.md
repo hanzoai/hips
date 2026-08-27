@@ -32,8 +32,8 @@ what it may do; the two never mix.
 This HIP specifies the one agent per person, the key it is stored under, the
 persona it wears, the three levels and where each applies, what a waiting window
 means, the personal phone, email and WhatsApp line it answers on, where a person
-configures it, how a seat is billed, and the rule that every message a machine
-sent says so. It composes
+configures it, how capacity and runtime are billed, and the rule that every
+message a machine sent says so. It composes
 HIP-0523's rooms, HIP-1210's agents and HIP-1141's per-person settings, and §15
 lists the five things it asks of other specifications rather than deciding on
 their behalf. §14 marks each mechanism as shipped, partial or absent, measured in
@@ -86,11 +86,11 @@ and neither is the other's fallback:
 | Configured by | an org admin | that person, and only that person |
 | Authority to send | org policy | the ladder in §4 |
 
-**Provisioning is free; running is not.** The free plan carries the one agent
-seat this section requires (§13), so creating the agent costs nothing and MUST
-NOT require a balance. Every run it performs is metered exactly as HIP-1210
-meters any run. "Everyone has an agent" means everyone has one that is ready — a
-granted seat, not free inference.
+**Provisioning is free; running is not.** The free plan carries capacity for the
+one agent this section requires (§13), so creating the agent costs nothing and
+MUST NOT require a balance. Every hour it runs meters at the one rate. "Everyone
+has an agent" means everyone has one that is ready — granted capacity, not free
+running time.
 
 ### §2 The key is the pair, and there is no org-less person
 
@@ -479,41 +479,60 @@ serve the same family today: `/v1/integrations`, `/v1/integrations/connectors`,
 `/v1/connectors`, and `/v1/automations/connectors`. Adding a product word on top
 of that is safe only while the prohibition in point 1 holds.
 
-### §13 The roster is the bill
+### §13 The roster is the capacity, the runtime is the bill
 
-A seat is a member that costs, and the seat kinds are the member kinds of
-HIP-0523 §3 — human, agent, bot. There is no fourth thing to inventory: **what an
-org pays for is who is in its rooms.**
+Two questions that look like one, and the whole model is keeping them apart.
+**How many agents may an org have** is a capacity limit its plan carries. **What
+does an org pay** is a function of how long those agents actually ran. A capacity
+limit refuses; a meter bills. Neither may quietly do the other's job.
+
+The kinds are still the member kinds of HIP-0523 §3 — human, agent, bot —
+because what an org counts is who is in its rooms. What changed is that counting
+is no longer charging.
 
 The shape, which is all this HIP fixes:
 
-- A plan carries an ALLOWANCE of agent seats, as a plan limit.
-- Seats beyond the allowance are add-ons at a flat rate per kind.
-- A bot seat prices persistent compute, so its rate is a FLOOR and not a fixed
-  price: a bot on a bigger machine costs more, and the rate names the smallest
-  one. An agent seat has no such floor because an agent holds no compute between
-  runs (§1) — it is metered when it runs, exactly as HIP-1210 meters any run.
-- The free plan carries exactly one agent seat, which is the personal agent of
-  §1, and includes the personal line of §11.
+- A plan carries an ALLOWANCE of agents and of bots, as capacity limits. They
+  cap what may EXIST. They are not a per-head price.
+- Agent runtime is metered at ONE hourly rate, whatever the agent is doing.
+  Agentic coding, a chat session, and a resident bot that never sleeps are the
+  same meter. A bot costs more because it runs continuously, not because it is a
+  different kind of thing being charged differently.
+- There are no per-kind add-on rates, because there are no seats to buy. Wanting
+  more capacity than a plan carries is a plan change.
+- The free plan carries capacity for the one personal agent of §1 and includes
+  the personal line of §11.
+
+**A bot "included" in a plan is capacity, not free running time.** A catalog
+entry granting one bot grants the right to HAVE one; its hours meter like any
+other. This is the reading that cannot lose money by accident — the alternative,
+where an included bot runs continuously at no charge, is an unbounded cost
+sitting behind a fixed price.
 
 **The numbers live in one place and this HIP does not copy them.** Plan limits
-and per-kind rates are catalog data in `@hanzo/plans` — authored JSON, embedded
+and the hourly rate are catalog data in `@hanzo/plans` — authored JSON, embedded
 as a Go module, normalized to a flat namespaced dictionary, and read by the cloud
-through that one package rather than reimplemented. HIP-1181 and HIP-1202 own it.
-A table of prices here would be a second copy that drifts the first time one
-changes, and the drift would be invisible because both copies would look
-authoritative. Read the catalog.
+through that one package rather than reimplemented. The rate has one home,
+`seats.json` `runtime.agentHourUSD`; the capacity limits sit beside it. HIP-1181
+and HIP-1202 own both. A table of prices here would be a second copy that drifts
+the first time one changes, and the drift would be invisible because both copies
+would look authoritative. Read the catalog.
 
-Two facts about today's billing bear on this shape, and §14 records them rather
-than letting the section imply otherwise. A per-seat PRICE already exists and
-charges real money — for exactly one plan. And the seat count it charges is a
-quantity the CALLER supplies, which nothing joins to the roster the deployment
-independently counts. So "the roster is the bill" is the standard this section
-sets. It is not yet a description of what the code does.
+That rule is why the repricing which dissolved the seat model cost this section a
+paragraph rather than a correction: there was never a number here to be wrong.
 
-This settles what §1 leaves open. "Provisioning is free" means the free plan's
-one agent seat is granted, not that inference is free; a run still meters, and an
-org that wants a second agent buys a second seat.
+One fact about today's billing bears on this shape, and §14 records it rather
+than letting the section imply otherwise. Where a plan still charges per head,
+the count it charges is a quantity the CALLER supplies, and nothing joins it to
+the roster the deployment independently counts. The reprice sharpens that instead
+of settling it: capacity is now the thing a limit has to enforce, and a limit
+enforced against a self-reported number is not enforced.
+
+This settles what §1 leaves open, and the reprice makes it exact rather than
+approximate. **"Provisioning is free; running is not" is now the literal billing
+model.** Creating an agent costs nothing at any tier, every hour it runs meters
+at the one rate, and an org that wants more agents than its plan admits changes
+plan.
 
 ### §14 What is built, what is off, what is missing
 
@@ -560,7 +579,10 @@ on exists, and two of the pieces that look ready are not.
 | Personal email as a room | **gap** | no email channel in the bot's eight-channel roster (`bot/src/channels/registry.ts:7`); `apps/notify` sends and cannot receive |
 | Outbound SMS, voice and WhatsApp on the ORG's own carrier credential | **shipped** | `apps/notify/twilio.go:17` — channels SMS, Voice, WhatsApp, keyed by the org's own account-sid, auth-token and from-number. The closest shipped prior art for a brought number |
 | Plans as one catalog | **shipped** | `@hanzo/plans`: `subscription.json`, `embed.go:15`, normalized by `entitlements.mjs:104 fromLegacy`; cloud reads it at `apps/plan/plan.go:56` through goja rather than reimplementing it |
-| `plan.Limits` as a Go type | **does not exist** | nearest are `plane/billing.go:738 TierLimits` and `commerce/api/billing/plans.go planLimits`. Limits are data run through goja, not a type — cite the catalog, not a symbol |
+| `plan.Limits` as a Go type carrying capacity | **shipped** | `commerce/models/plan/plan.go:298 Limits`, with `Agents` at `:340` and `Bots` at `:341` — "how many of each the plan may RUN". `api/billing` aliases the type rather than declaring a second copy |
+| The hourly rate as catalog data | **shipped** | `@hanzo/plans` 1.6.0, `plans/seats.json:4 runtime.agentHourUSD`, with the capacity limits beside it at `subscription.json` `limits.agents` / `limits.bots`. Its own note states the split this section specifies |
+| Anything metering agent hours against that rate | **gap** | no reader of `agentHourUSD` anywhere in `cloud/apps`. The rate is published and nothing bills from it, so the runtime half of §13 is a standard today, not a meter |
+| Heavier compute tiers | **not published** | `plans/seats.json:6` says the rate buys the base tier and that heavier tiers are not published yet — so a bot on a bigger machine has no price to charge |
 | A per-seat price | **shipped, for one plan** | `plans/subscription.json:331` `per_seat` on `team`; real money at `commerce/api/billing/subscribe_card.go:389` |
 | Seats reconciled against the roster | **gap** | the charged quantity is caller-supplied (`subscribe_card.go:126`); the true count is computed separately at `cloud/apps/team/account_store.go:448 Seats` and only displayed. Nothing joins them |
 | One definition of "free" | **gap — four are in circulation** | the catalog tier (`plans/subscription.json:3`), a runtime daily ceiling (`cloud/apps/allowance/allowance.go`), a commerce tier granting `MaxAgents:1` and no credit (`commerce/billing/tier/tier.go:53`), and an unrelated `freeTier` flag on a compute plan (`plans/plans.json`) |
@@ -584,8 +606,11 @@ from `Buy` AND a proof of control, because a global unique index on the E.164
 makes first-claimant-wins the default and that is a hijack. Porting is a quarter
 of work and is mostly not code.
 
-For the bill, the shape needs one join that does not exist: the charged quantity
-and the counted roster have to become the same number.
+For the bill, the reprice moved the work rather than finishing it. Capacity is
+now a published limit with a Go type behind it, so enforcing it is a read. The
+runtime half has a published rate and no meter, so billing an agent-hour is the
+piece to build. The old join is still owed and is narrower now: a capacity limit
+checked against a self-reported count is not a limit.
 
 ### §15 What this asks of other specifications
 
@@ -639,7 +664,8 @@ An implementation conforms when all of these hold:
    connects, reads or disconnects one.
 10. `confirm` is never silently downgraded on a synchronous channel: on a live
     call the agent does not speak unless the level is `send`.
-11. No plan limit and no seat rate is written down anywhere but the catalog.
+11. No plan limit and no hourly rate is written down anywhere but the catalog.
+    Capacity refuses, runtime bills, and neither does the other's job.
 12. The product words stay on the product surface. Neither "App" nor "Dev"
     appears as a noun in a route, a package name, a schema field or a normative
     sentence.
