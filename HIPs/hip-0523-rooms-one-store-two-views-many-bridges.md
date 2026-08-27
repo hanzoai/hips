@@ -145,6 +145,16 @@ either appears in both because both read one store, not because anything
 reconciles them. `meet` (HIP-1252) and `todo` (HIP-1160) render inside both
 views; neither is a third surface with its own copy.
 
+**A view is not a build.** Both views come from one codebase, and HIP-0504 owns
+that rule: one substrate (`@hanzo/gui`) and one component library per brand
+(`@hanzo/ui`) across web, native and desktop. So `hanzo.ai` in a browser, Hanzo
+Desktop and Hanzo Mobile are one surface on three hosts rather than three
+implementations of it — a room renders the same in all three because it is the
+same code reading the same store. Note the direction HIP-0504 requires: an app
+imports its brand's `ui` and never the substrate directly, which it calls
+non-conformant. "One codebase" is therefore a statement about the substrate
+underneath, not a licence for an app to reach past its own library.
+
 ### §5 Two scopes, one mechanism, and the tenancy line is the storage line
 
 A room belongs to an org. That is the whole rule, and a person's own rooms are
@@ -475,6 +485,7 @@ to each other do it without stopping.
 - HIP-0026 — Identity & Access Management Standard
 - HIP-0061 — Notification & Messaging Service Standard
 - HIP-0139 — Capability
+- HIP-0504 — Unified Cross-Platform Design System (one substrate, three hosts)
 - HIP-0524 — The Personal Agent
 - HIP-1048 — Team
 - HIP-1065 — Connectors — A User's Own Credentials

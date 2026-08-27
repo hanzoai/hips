@@ -403,7 +403,7 @@ Both are the person's real identity to their correspondents. Neither is an API
 we call, so both carry the failure modes of a logged-in session rather than of a
 credential. §14 records what exists and where it runs.
 
-### §12 Where the agent is configured
+### §12 Where the agent is configured, and the product words
 
 At the product layer `hanzo.ai` shows a customize directory — **Apps · Channels ·
 Plugins · Skills** — for how a person shapes their experience. A connected
@@ -458,7 +458,20 @@ Three consequences follow, and the third is unresolved:
    One of the two has to give, and which one is a product decision this HIP
    records rather than takes.
 
-A reader should also know the family this word is joining is not tidy yet.
+**One more product word, recorded here for the same reason: agentic coding is
+"Dev", and "Code" never names it.** The offering is Hanzo Dev — the command-line
+tool, and the same thing in the cloud at `hanzo.ai/dev`. The wire keeps its own
+nouns as always. `/v1/code` is the code INDEX — search and symbols over a
+repository (HIP-1114) — which is genuinely about code and is not the product;
+the agentic run itself answers at `/v1/agents/coding`, under the capability
+HIP-0139's fold put it in. A pane showing source files may still be labelled
+Code, because that label names what is on the screen rather than what is being
+sold.
+
+The prohibition is the one above, unchanged: "Dev" is what a person calls the
+product, and it MUST NOT become a route, a package name or a schema field.
+
+A reader should also know the family the word "app" is joining is not tidy yet.
 "Provider" already means two things — an AI provider in HIP-0126 §3, the external
 service being connected to in HIP-1250 — and "Connector" already means two, a
 catalogue entry in HIP-0126 and a per-user credential row in HIP-1065. Four paths
@@ -627,8 +640,9 @@ An implementation conforms when all of these hold:
 10. `confirm` is never silently downgraded on a synchronous channel: on a live
     call the agent does not speak unless the level is `send`.
 11. No plan limit and no seat rate is written down anywhere but the catalog.
-12. "App" appears on the product surface only. No route, package, schema field
-    or normative sentence uses it as a noun.
+12. The product words stay on the product surface. Neither "App" nor "Dev"
+    appears as a noun in a route, a package name, a schema field or a normative
+    sentence.
 
 ## Rationale
 
@@ -721,6 +735,7 @@ radius of a successful injection is exactly the agent's reach.
 - HIP-1065 — Connectors — A User's Own Credentials (the pair is the key)
 - HIP-1066 — Channels — One Inbox (the envelope, and the strict send decode)
 - HIP-1103 — Audit — The Tamper-Evident Trail
+- HIP-1114 — Code — Search and Symbols (the index, not the product)
 - HIP-1141 — Pref — One Document Per Person
 - HIP-1210 — Agents — Define, Run, Keep the Run
 - HIP-1260 — Knowledge — Wiki and Agent Memory
