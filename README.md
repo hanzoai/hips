@@ -162,6 +162,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0520](./HIPs/hip-0520-serving-topology.md) | Serving Topology — Three Tiers, Horizontally Scalabl... | Standards Track | Infrastructure | Draft |
 | [HIP-0521](./HIPs/hip-0521-org-hierarchy.md) | Org Hierarchy | Standards Track | Security | Draft |
 | [HIP-0522](./HIPs/hip-0522-the-context-graph.md) | The Context Graph — Edges, Decisions and Derivation ... | Standards Track | Core | Draft |
+| [HIP-0523](./HIPs/hip-0523-rooms-one-store-two-views-many-bridges.md) | Rooms — One Store, Two Views, Many Bridges | Standards Track | Core | Draft |
+| [HIP-0524](./HIPs/hip-0524-the-personal-agent.md) | The Personal Agent — What It May Send Without You | Standards Track | Core | Draft |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Active |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |
@@ -363,9 +365,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 125 | Capability |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 126 | Capability |
 | [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 121 | The Hanzo Plugin Contract |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 119 | Identity & Access Management Standard |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 120 | Identity & Access Management Standard |
 
 ### Then the invariants
 
