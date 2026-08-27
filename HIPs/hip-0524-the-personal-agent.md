@@ -31,10 +31,12 @@ what it may do; the two never mix.
 
 This HIP specifies the one agent per person, the key it is stored under, the
 persona it wears, the three levels and where each applies, what a waiting window
-means, and the rule that every message a machine sent says so. It composes
-HIP-0523's rooms, HIP-1210's agents and HIP-1141's per-person settings, and §12
+means, the personal phone, email and WhatsApp line it answers on, where a person
+configures it, how a seat is billed, and the rule that every message a machine
+sent says so. It composes
+HIP-0523's rooms, HIP-1210's agents and HIP-1141's per-person settings, and §15
 lists the five things it asks of other specifications rather than deciding on
-their behalf. §11 marks each mechanism as shipped, partial or absent, measured in
+their behalf. §14 marks each mechanism as shipped, partial or absent, measured in
 the source on 2026-08-27.
 
 ## Motivation
@@ -84,11 +86,11 @@ and neither is the other's fallback:
 | Configured by | an org admin | that person, and only that person |
 | Authority to send | org policy | the ladder in §4 |
 
-**Provisioning is free; running is not.** Creating the agent costs nothing and
-MUST NOT require a balance. Every run it performs is metered exactly as HIP-1210
-meters any run, against the org. There is no signup grant in this estate
-(HIP-1045), so "everyone has an agent" means everyone has one that is ready, not
-that anyone has free inference.
+**Provisioning is free; running is not.** The free plan carries the one agent
+seat this section requires (§13), so creating the agent costs nothing and MUST
+NOT require a balance. Every run it performs is metered exactly as HIP-1210
+meters any run. "Everyone has an agent" means everyone has one that is ready — a
+granted seat, not free inference.
 
 ### §2 The key is the pair, and there is no org-less person
 
@@ -108,6 +110,25 @@ isolation defect. Nothing in this HIP creates such a fallback: the org is
 resolved first, from the validated principal, exactly as it is everywhere else,
 and the user narrows it. A principal with no org gets no personal agent, and that
 is a refusal rather than a default.
+
+**The org in that pair is the person's HOME org** — the owner half of their id,
+which is an org by construction (HIP-0026), and which HIP-0523 §5 makes the
+address of their personal scope. So one human may belong to many orgs and has
+exactly ONE personal agent: the one bound to them in their home org. An
+employer's org has its own ambient agent (§1) and never a second personal one.
+
+Two facts about how that org comes to exist are worth stating, because a
+specification that assumed the simpler one would be wrong. **A home org always
+resolves**, because it is a half of the id rather than a row that might be
+missing. **A chartered org — created at signup with the person as founder — is
+conditional**, happening only when the application signed up through is
+configured for it; through an application that is not, the person lands in that
+application's org and the charter is onboarding's job (§14). This HIP depends
+only on the first, which is why it says home and not founder.
+
+This is what keeps "personal" from becoming a flag. A work org cannot host a
+user-bound agent, so there is no row anywhere whose privacy depends on being
+read with the right filter — the wrong org simply has no such row.
 
 Within that key, the agent's instructions, its memory and its authority setting
 are the person's own. An org admin MAY see that a person has an agent, because
@@ -131,7 +152,7 @@ tools the job comes with, which a researcher and a marketer do not share.
 Personas come from a library. The platform ships presets; an org MAY add its own,
 and an org preset with a platform preset's name shadows it for that org alone.
 **Creating an agent from a persona is one operation**, not a copy-and-edit ritual
-— that operation is `agents`' to serve, and §12 asks HIP-1210 for it.
+— that operation is `agents`' to serve, and §15 asks HIP-1210 for it.
 
 **A persona says who an agent is. It never says what it may do without a
 person.** These are orthogonal and MUST stay so:
@@ -169,7 +190,7 @@ property is that human wiki and agent memory are one org-scoped store, indexed
 once, "so an agent retrieves exactly what the team can read", and it forbids a
 capability from opening a store of its own. A personal agent that remembers a
 person's own things has memory the team cannot read, which is the inverse of that
-property. This HIP does not resolve it unilaterally; see §12.
+property. This HIP does not resolve it unilaterally; see §15.
 
 ### §4 The ladder
 
@@ -234,7 +255,7 @@ while working, a long one while away, `instant` for a correspondent they trust.
 
 **A window shorter than the implementation's own timing resolution is a lie and
 MUST NOT be offered.** The only deferred-execution pattern in this cloud today is
-a due-time row swept by a cron (§11), and a sweep every minute cannot honour a
+a due-time row swept by a cron (§14), and a sweep every minute cannot honour a
 one-minute window. Either the sweep is finer than the smallest offered window, or
 the smallest window comes off the list.
 
@@ -280,7 +301,7 @@ Three obligations follow:
    stands. The on-behalf fact is derived from the credential the agent holds, not
    from what it says about itself.
 2. The message is stored, not only transmitted. An agent reply that is sent and
-   forgotten leaves no trail at all, which is today's behaviour (§11).
+   forgotten leaves no trail at all, which is today's behaviour (§14).
 3. The person's name may appear as the sender on an outside network that has no
    way to show anything else. That is a rendering limit, not permission to
    discard the fact internally — our record MUST still say a machine wrote it.
@@ -330,7 +351,158 @@ addressed to neither is answered by neither.
 Where HIP-0523 §10's human-first rule and this ladder meet, the stricter one
 governs.
 
-### §11 What is built, what is off, what is missing
+### §11 The personal line
+
+A person may connect their own phone number, their own email and their own
+WhatsApp, and the free plan includes doing so (§13). Inbound on any of them lands
+in that person's rooms — their own org's, per §2 and HIP-0523 §5 — and their
+agent answers under the ladder. Nothing about this is an org integration: the
+line is the person's, connected as a per-person credential (HIP-1065), and an org
+admin MUST NOT connect, read or disconnect a member's personal line.
+
+This is where the ladder stops being abstract. The same arriving text, at each
+level:
+
+| Level | What happens when a text arrives |
+|---|---|
+| `draft` | the room holds it; the agent writes a reply; the person sends it |
+| `confirm` | the agent writes the reply and asks in the room; the person picks, edits or declines; the chosen text leaves as an SMS from their number |
+| `send` | the agent posts what it is about to text, waits the person's window (§5), and sends unless they intervene |
+
+**A live call has no window, so `confirm` and `draft` behave identically on
+it — the agent does not speak.** There is no pause in a ringing call in which to
+ask a person and wait for an answer, so only `send` lets an agent take a call at
+all. An implementation MUST NOT invent a shortened window for voice: a person who
+chose `confirm` chose to be asked, and being asked is impossible here.
+
+The reply leaves as the person, from the person's own number, which is precisely
+why §7's attribution obligation is load-bearing rather than bookkeeping. The
+recipient sees a text from a human being. Our record MUST say a machine wrote it.
+
+**"Connecting your number" is three different mechanisms and they are not
+interchangeable.** Saying so plainly is the difference between a specification
+and a brochure:
+
+| Route | What it means | Honest cost |
+|---|---|---|
+| A number we provide | rented from a carrier; we own the route | least work — and it is a NEW number, not the one on the person's card |
+| The person's number, forwarded | their carrier sends us what arrives | ordinary carrier feature for VOICE; carries no SMS |
+| The person's number, ported | the number's routing moves to our carrier account | the only route that genuinely moves SMS; a multi-day carrier workflow with documents and per-country rules, not a code change |
+| A relay on the person's device | software holding their own logged-in account | how WhatsApp and iMessage are actually reached; needs the person's machine, or a Mac |
+
+**Forwarding does not carry SMS**, and the asymmetry has to be said out loud
+rather than papered over. A person can forward their calls today from their
+handset; they cannot forward their texts. So "connect your phone and we answer
+your texts" is a promise about a ported or a provided number, and a specification
+that blurs the two is selling something the carriers do not sell.
+
+The fourth row is where "your own number" is already literally true, and it is
+worth knowing which is which: WhatsApp is reached by linking the person's own
+account the way a desktop client does, and iMessage by a relay on Apple hardware.
+Both are the person's real identity to their correspondents. Neither is an API
+we call, so both carry the failure modes of a logged-in session rather than of a
+credential. §14 records what exists and where it runs.
+
+### §12 Where the agent is configured
+
+At the product layer `hanzo.ai` shows a customize directory — **Apps · Channels ·
+Plugins · Skills** — for how a person shapes their experience. A connected
+external service is an **App** there.
+
+**The personal agent is not in that directory.** An App is something a person
+connects; their agent is not a connection, it is them. It is configured under
+their personal preferences: who it is (§3), what it may send (§4), the window it
+waits (§5), and the lines it answers on (§11). Putting it in a directory of
+external services would file the one thing customized TO the person among the
+things customized BY connecting somebody else's.
+
+The same two-layer rule as HIP-0523 §1 applies, and for the same reason: **"App"
+is the product word; the wire and the specification keep their shipped nouns.**
+`/v1/integrations` and `/v1/integrations/connectors` do not move, and this HIP
+renames nothing. In the specification the umbrella noun stays **Integration**,
+with the kinds HIP-0126 §2 fixed — Connector, Provider, Tool — and "Connector"
+remains, in that HIP's words, "the ONE Hanzo term".
+
+The care matters because "app" is not carrying one spare meaning. It is carrying
+six, all shipped:
+
+| Sense | What it means | Owner |
+|---|---|---|
+| `apps/<name>` | a capability — a Go package in `hanzoai/cloud` serving one `/v1/<name>` | HIP-0139 |
+| `x-app` | the extension naming the serving capability — 2,341 occurrences, and the only `x-` key with a Go field behind it | HIP-0139 §4.1, HIP-0106 §13.2 |
+| `zip.App` | the server object every service and every plugin composes over | HIP-0122 |
+| an IAM application | a registered OIDC client under `<org>-<app>` | HIP-0026, HIP-0111 §3 |
+| a platform application | a deployed container, at `/v1/platform/apps` | HIP-1230 |
+| a frontend app | a human-facing site in the per-org apps organization | HIP-0115 |
+
+Three consequences follow, and the third is unresolved:
+
+1. **The rule that keeps this safe is a prohibition, not a preference.** "App"
+   MUST NOT appear as a noun in any route, package name, schema field, or
+   normative sentence. Confined to the product surface it renames nothing, and
+   HIP-0126 §8.4 — "never name one axis with the other's word" — is left intact,
+   because no axis in the specification is renamed. Carried back into the spec it
+   breaks that rule immediately, since `app` is the host-composition axis word.
+2. **The direction is inverted from IAM's sense.** An IAM application is a client
+   WE register so it can authenticate OUR users; an App is a credential we hold
+   for somebody else's service. Anyone reading both in one paragraph will get it
+   backwards, which is why the prohibition above is worth enforcing rather than
+   trusting to context.
+3. **"Apps" is already a live product label meaning the opposite of this one, and
+   that collision is NOT resolved here.** The shipped commerce catalogue has a
+   category `Apps` holding eight FIRST-PARTY Hanzo products — Chat, Bot, Search,
+   Crawl, Studio, Console, Referrals, Marketplace
+   (`commerce/models/catalogentry/seed/hanzo-catalog.json`). Both that label and
+   this directory are product-facing, so the two-layer rule cannot separate them:
+   one word would mean Hanzo Chat in the catalogue and Slack in the directory.
+   One of the two has to give, and which one is a product decision this HIP
+   records rather than takes.
+
+A reader should also know the family this word is joining is not tidy yet.
+"Provider" already means two things — an AI provider in HIP-0126 §3, the external
+service being connected to in HIP-1250 — and "Connector" already means two, a
+catalogue entry in HIP-0126 and a per-user credential row in HIP-1065. Four paths
+serve the same family today: `/v1/integrations`, `/v1/integrations/connectors`,
+`/v1/connectors`, and `/v1/automations/connectors`. Adding a product word on top
+of that is safe only while the prohibition in point 1 holds.
+
+### §13 The roster is the bill
+
+A seat is a member that costs, and the seat kinds are the member kinds of
+HIP-0523 §3 — human, agent, bot. There is no fourth thing to inventory: **what an
+org pays for is who is in its rooms.**
+
+The shape, which is all this HIP fixes:
+
+- A plan carries an ALLOWANCE of agent seats, as a plan limit.
+- Seats beyond the allowance are add-ons at a flat rate per kind.
+- A bot seat prices persistent compute, so its rate is a FLOOR and not a fixed
+  price: a bot on a bigger machine costs more, and the rate names the smallest
+  one. An agent seat has no such floor because an agent holds no compute between
+  runs (§1) — it is metered when it runs, exactly as HIP-1210 meters any run.
+- The free plan carries exactly one agent seat, which is the personal agent of
+  §1, and includes the personal line of §11.
+
+**The numbers live in one place and this HIP does not copy them.** Plan limits
+and per-kind rates are catalog data in `@hanzo/plans` — authored JSON, embedded
+as a Go module, normalized to a flat namespaced dictionary, and read by the cloud
+through that one package rather than reimplemented. HIP-1181 and HIP-1202 own it.
+A table of prices here would be a second copy that drifts the first time one
+changes, and the drift would be invisible because both copies would look
+authoritative. Read the catalog.
+
+Two facts about today's billing bear on this shape, and §14 records them rather
+than letting the section imply otherwise. A per-seat PRICE already exists and
+charges real money — for exactly one plan. And the seat count it charges is a
+quantity the CALLER supplies, which nothing joins to the roster the deployment
+independently counts. So "the roster is the bill" is the standard this section
+sets. It is not yet a description of what the code does.
+
+This settles what §1 leaves open. "Provisioning is free" means the free plan's
+one agent seat is granted, not that inference is free; a run still meters, and an
+org that wants a second agent buys a second seat.
+
+### §14 What is built, what is off, what is missing
 
 Measured in `hanzoai/cloud` on 2026-08-27. The personal agent itself is
 net-new — there is no per-user agent in the estate — but most of what it stands
@@ -360,6 +532,26 @@ on exists, and two of the pieces that look ready are not.
 | Wait-for-approval | **shipped, without a timeout** | `apps/auto/engine.go:120` blocks on a signal channel with no selector and no timer, so "proceed anyway after N minutes" is not expressible there |
 | The `approval` action on a message | **a renderer, not a mechanism** | `apps/channels/envelope.go:92 Approval{ID}`, validated only as non-empty and rendered as text (`envelope.go:263`). No store, no route, no resolution |
 | An authority or autonomy setting | **gap** | Nothing in `apps/` models how much an agent may do without a person. `Agent.Tools` is a capability grant; `channel_policy` is who may talk to it; neither is this |
+| A home org that always resolves | **shipped** | `iam/pkg/store/membership.go:210 MemberOrgRefs`, `:249 IsHomeOrg` — "the owner segment IS the home org", emitted whether or not a membership row exists |
+| A chartered founder org at signup | **partial, and conditional** | `iam/internal/oidc/signup.go:305` charters only when `app.OrgChoiceMode == "create"`; slug from `onboard.go:230 personalOrgSlug`; the converge at `provision.go:99` |
+| Founding a SECOND org through signup | **refused by design** | `iam/internal/oidc/provision.go:139` returns 409; additional orgs go through `cloud/apps/account/account.go:237 POST /orgs` |
+| Home membership rows backfilled | **gap, and a live landmine** | `iam/pkg/store/membership.go:155 BackfillMemberships` has no caller, so a home row exists only where an invite or a founder provision wrote one — and an empty org set is what HIP-0519 reads as a machine principal |
+| `tel` numbers | **shipped — RENTED ONLY** | `apps/tel/carrier.go:16` has six verbs: Search, Buy, Release, Call, Hangup, Send. The only path into `tel_numbers` is `apps/tel/tel.go:192 buyNumber` |
+| `tel` bring-your-own number | **gap** | no SIP, porting or forwarding verb anywhere in `apps/tel`; there is no way to attach a number an org already controls |
+| `tel` inbound | **gap** | ten routes (`apps/tel/tel.go:106-123`), all outbound or read-only. The `Webhook` field (`tel.go:257`) is forwarded to the CUSTOMER's URL (`rest.go:165`) — the carrier never posts to us |
+| `tel` tenancy | **shipped — org** | `apps/tel/store.go:41` `PRIMARY KEY (org, id)` plus a global unique index on the E.164. No user column |
+| `tel` reaching the room plane | **gap** | `apps/channels/registry.go:76` is a closed four-transport set and telephony is not in it |
+| Real PSTN, inbound and outbound | **shipped, in the wrong process** | `bot/extensions/voice-call/` — three carriers, inbound webhook at `src/webhook.ts:134`, signature verification, an inbound pairing policy. It is node-local and single-tenant, exposed through a tunnel (`src/tunnel.ts`) |
+| WhatsApp on the person's own number | **shipped, as a linked session** | `bot/src/channels/registry.ts:43` — "WhatsApp (QR link)", a web-multi-device bridge. Cloud's `apps/integrations/whatsapp.go:20` holds a Business credential with no ingress |
+| iMessage | **shipped, and it needs a Mac** | `bot/extensions/imessage/` and `bot/extensions/bluebubbles/`, both inbound and outbound relays |
+| Personal email as a room | **gap** | no email channel in the bot's eight-channel roster (`bot/src/channels/registry.ts:7`); `apps/notify` sends and cannot receive |
+| Outbound SMS, voice and WhatsApp on the ORG's own carrier credential | **shipped** | `apps/notify/twilio.go:17` — channels SMS, Voice, WhatsApp, keyed by the org's own account-sid, auth-token and from-number. The closest shipped prior art for a brought number |
+| Plans as one catalog | **shipped** | `@hanzo/plans`: `subscription.json`, `embed.go:15`, normalized by `entitlements.mjs:104 fromLegacy`; cloud reads it at `apps/plan/plan.go:56` through goja rather than reimplementing it |
+| `plan.Limits` as a Go type | **does not exist** | nearest are `plane/billing.go:738 TierLimits` and `commerce/api/billing/plans.go planLimits`. Limits are data run through goja, not a type — cite the catalog, not a symbol |
+| A per-seat price | **shipped, for one plan** | `plans/subscription.json:331` `per_seat` on `team`; real money at `commerce/api/billing/subscribe_card.go:389` |
+| Seats reconciled against the roster | **gap** | the charged quantity is caller-supplied (`subscribe_card.go:126`); the true count is computed separately at `cloud/apps/team/account_store.go:448 Seats` and only displayed. Nothing joins them |
+| One definition of "free" | **gap — four are in circulation** | the catalog tier (`plans/subscription.json:3`), a runtime daily ceiling (`cloud/apps/allowance/allowance.go`), a commerce tier granting `MaxAgents:1` and no credit (`commerce/billing/tier/tier.go:53`), and an unrelated `freeTier` flag on a compute plan (`plans/plans.json`) |
+| `pref` readable only by its subject | **shipped, deliberately** | `apps/pref/prefs.go:146,166` are the only two routes and the subject is derived server-side at `:202`; the package doc states there is no path for an org admin or a SuperAdmin |
 
 The shortest honest order of work: make the agent row's key the (org, user) pair,
 seeded beside the org personalities that already seed on login; put the level in
@@ -369,7 +561,20 @@ write the agent's reply to the store; then build the window on the
 due-time-and-sweep pattern that already works, with the sweep made finer than the
 smallest window offered.
 
-### §12 What this asks of other specifications
+For the line, the order is narrower than it looks. One signature-verified inbound
+route on `tel` is the single highest-leverage change, because without it every
+route in §11 is dead and with it both the provided and the ported number light
+up; a fifth transport in the room plane's registry then buys pairing, gating and
+inbox for free, since the transport shape is already `{id, caps, normalize,
+send}`. Attaching a number an org already controls needs a claim verb distinct
+from `Buy` AND a proof of control, because a global unique index on the E.164
+makes first-claimant-wins the default and that is a hijack. Porting is a quarter
+of work and is mostly not code.
+
+For the bill, the shape needs one join that does not exist: the charged quantity
+and the counted roster have to become the same number.
+
+### §15 What this asks of other specifications
 
 Five things this HIP needs are owned elsewhere. Each is named here as a request,
 not decided here as a fact:
@@ -396,9 +601,9 @@ not decided here as a fact:
    surface on `/v1/agents`, which HIP-1210 owns. §3 specifies what a persona IS
    and the rule that it carries no authority; the address, the preset list's
    shape, and how an org extends it are HIP-1210's to declare. The concept is
-   already in that package (§11) — what is missing is a route, not an idea.
+   already in that package (§14) — what is missing is a route, not an idea.
 
-### §13 Conformance
+### §16 Conformance
 
 An implementation conforms when all of these hold:
 
@@ -417,6 +622,13 @@ An implementation conforms when all of these hold:
 7. Lowering a level cancels every window open under the old one.
 8. No offered window is shorter than the implementation's own timing resolution,
    and no window runs on a second task engine.
+9. A personal line is connected as a per-person credential, and no org-admin path
+   connects, reads or disconnects one.
+10. `confirm` is never silently downgraded on a synchronous channel: on a live
+    call the agent does not speak unless the level is `send`.
+11. No plan limit and no seat rate is written down anywhere but the catalog.
+12. "App" appears on the product surface only. No route, package, schema field
+    or normative sentence uses it as a noun.
 
 ## Rationale
 
@@ -476,7 +688,7 @@ which is always immediately after something went wrong.
 **Attribution defends the person, not the platform.** Without a durable record of
 which messages a machine wrote, a person cannot disown one and an organisation
 cannot answer a regulator. This is why §7 requires the record even where an
-outside network renders the person's name — and why §12 asks HIP-1103 whether a
+outside network renders the person's name — and why §15 asks HIP-1103 whether a
 one-actor audit row can carry a two-principal fact, rather than assuming it can.
 
 **The personal scope is a boundary between an employee and their employer.** The

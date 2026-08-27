@@ -145,25 +145,40 @@ either appears in both because both read one store, not because anything
 reconciles them. `meet` (HIP-1252) and `todo` (HIP-1160) render inside both
 views; neither is a third surface with its own copy.
 
-### §5 Two scopes, and the tenancy line is the storage line
+### §5 Two scopes, one mechanism, and the tenancy line is the storage line
 
-A room is scoped to an org or to a person, and that choice decides its store:
+A room belongs to an org. That is the whole rule, and a person's own rooms are
+not an exception to it.
 
-- **Org scope** — the org's rooms and their whole history, canonical in the
-  org's own store. Today that is `apps/team`'s per-(org, workspace) SQLite
+Every person has a home org, and not by convention: a user's id is
+`<owner>/<name>` and the owner half IS an org, so a resolved principal always
+carries one (HIP-0026). One human may belong to many orgs, and exactly one of
+them is their home. So the two scopes are two ADDRESSES on one mechanism, never
+two mechanisms:
+
+- **Org scope** — a shared org's rooms and their whole history, canonical in
+  that org's store. Today that is `apps/team`'s per-(org, workspace) SQLite
   (`apps/team/store.go`), which already holds channels, direct messages and chat
   messages. `hanzo.ai` READS this store; it MUST NOT keep a copy.
-- **Personal scope** — a person's own rooms: their threads with their agents,
-  and anything addressed to them rather than to the org. Invisible to their
-  colleagues, including to an org admin.
+- **Personal scope** — the same mechanism at the person's own org: their threads
+  with their agents, and anything addressed to them rather than to an employer.
 
-This is the same line HIP-1065 already draws for credentials: "which accounts has
-this ORGANIZATION connected" is an administrative fact, and "which accounts has
-THIS PERSON linked" is the person's own property with no admin gate on it. A
-conversation is at least as personal as a token. The two scopes MUST NOT share a
-store, because a shared store makes the org/person distinction a query predicate,
-and a predicate is one bug away from an org admin reading their reports' direct
-messages.
+**The isolation is therefore free, and no query has to remember it.** Work rooms
+sit in the work org's file and personal rooms in the person's own org's file
+because per-org storage already puts them in different files. A colleague cannot
+read a personal room for exactly the reason one org cannot read another's — not
+because a predicate excluded them. A shared store with an `is_personal` column
+would be the same fact one bug away from an org admin reading their reports'
+direct messages, and this design never writes that column.
+
+This is the same line HIP-1065 draws for credentials: "which accounts has this
+ORGANIZATION connected" is an administrative fact, and "which accounts has THIS
+PERSON linked" is the person's own property with no admin gate on it. A
+conversation is at least as personal as a token.
+
+A person's own org is an ordinary org and gets no special case anywhere. It is
+smaller, and that is the only difference. Anything that would need to ask "is
+this the personal one" has reintroduced the predicate this section removes.
 
 Promotion is a copy, never a move: a person MAY post a personal room's content
 into an org room, and that act creates new envelopes in the org store with the

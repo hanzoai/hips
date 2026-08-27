@@ -154,6 +154,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0419](./HIPs/hip-0419-explorer-crd.md) | Explorer CRD | Standards Track | Operator | Active |
 | [HIP-0504](./HIPs/hip-0504-unified-design-system.md) | Unified Cross-Platform Design System | Standards Track | Interface | Draft |
 | [HIP-0506](./HIPs/hip-0506-hanzo-studio-agentic-creative-runtime.md) | Hanzo Studio — Agentic Multi-Modal Creative Runtime | Standards Track | Application | Draft |
+| [HIP-0510](./HIPs/hip-0510-enso-learned-router.md) | Enso — Learned Per-Request Model Routing and the Rec... | Standards Track | Core | Draft |
 | [HIP-0512](./HIPs/hip-0512-experiment-the-evidence-plane.md) | Experiment — The Evidence Plane | Standards Track | Infrastructure | Active |
 | [HIP-0516](./HIPs/hip-0516-translate.md) | Translate — One Endpoint, Two Tiers, Permissive Weights | Standards Track | Core | Active |
 | [HIP-0517](./HIPs/hip-0517-branch-naming.md) | Branch Naming — main is the Trunk, Everywhere | Process | Meta | Active |
@@ -164,6 +165,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0522](./HIPs/hip-0522-the-context-graph.md) | The Context Graph — Edges, Decisions and Derivation ... | Standards Track | Core | Draft |
 | [HIP-0523](./HIPs/hip-0523-rooms-one-store-two-views-many-bridges.md) | Rooms — One Store, Two Views, Many Bridges | Standards Track | Core | Draft |
 | [HIP-0524](./HIPs/hip-0524-the-personal-agent.md) | The Personal Agent — What It May Send Without You | Standards Track | Core | Draft |
+| [HIP-0525](./HIPs/hip-0525-rendezvous.md) | Rendezvous — When Every Participant Is a Machine | Standards Track | Core | Draft |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Active |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Draft |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Draft |
