@@ -11,11 +11,12 @@
     "postinstall": "hanzo-mdx"
   },
   "dependencies": {
-    "@hanzo/docs": "16.2.7",
-    "@hanzo/font": "^1.9.2",
-    "@hanzo/logo": "^1.0.5",
-    "@hanzo/mdx": "^14.2.5",
-    "@hanzo/ui": "^5.3.28",
+    "@hanzo/design": "0.5.24",
+    "@hanzo/docs": "17.0.4",
+    "@hanzo/font": "1.9.3",
+    "@hanzo/logo": "1.0.26",
+    "@hanzo/mdx": "14.2.6",
+    "@hanzo/ui": "8.25.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
     "@shikijs/rehype": "^3.20.0",
