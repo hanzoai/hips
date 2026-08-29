@@ -8,18 +8,25 @@
 @import "tailwindcss";
 @import "@hanzo/docs/ui/style.css";
 @import "highlight.js/styles/github-dark.css";
-/* Zen's two variable faces, self-hosted. Only the faces — the colour tokens
-   below are this site's own. */
-@import "@hanzo/design/tokens/fonts.css";
 
 /* Typography plugin for Tailwind CSS 4 */
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
+/* The two families, decided once. Unlayered, and that is the point: the
+   @hanzo/docs import above is a BUILT Tailwind sheet, so it arrives carrying
+   its own @layer theme with the stock --font-sans and --font-mono, and inside
+   @theme those beat ours. Measured on the built sheet, --font-mono came out as
+   the OS monospace stack, which is what .font-mono and every code block were
+   reading. Unlayered declarations win over any layer, so this block settles it.
+   The two properties on the right are published by next/font on <html>. */
+:root {
+  --font-sans: var(--font-zen-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-zen-mono), ui-monospace, monospace;
+}
+
 @theme inline {
-  --font-sans: "Zen", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Zen Mono", ui-monospace, monospace;
   --radius: 0.5rem;
 
   /* Colors for button component and other UI elements */

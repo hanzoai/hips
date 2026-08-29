@@ -11,12 +11,12 @@ importers:
 
   .:
     dependencies:
-      '@hanzo/design':
-        specifier: ^0.5.18
-        version: 0.5.21
       '@hanzo/docs':
         specifier: 16.2.7
         version: 16.2.7(a6848f2b11809debb6809a4f2da606bc)
+      '@hanzo/font':
+        specifier: ^1.9.2
+        version: 1.9.2(next@16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@hanzo/logo':
         specifier: ^1.0.5
         version: 1.0.5(react@19.2.0)
@@ -579,10 +579,6 @@ packages:
       prettier:
         optional: true
 
-  '@hanzo/design@0.5.21':
-    resolution: {integrity: sha512-E2g6DZCn2IUf2AQKqPMwlVV5fz2wvIpAagFRLx33gIsJfmpyubFnx0LINjFs7UoMI1ajnwSa73k7rPteVSemUw==}
-    hasBin: true
-
   '@hanzo/docs-cli@1.1.1':
     resolution: {integrity: sha512-xLtG0cVeU5c2jJmdcTco4wXjlTB1juVovQiH7bjz5kthBbv98tANXg3iVIbRG5W9ls95/eGBcodMqBMOX9p9Yw==}
     hasBin: true
@@ -765,6 +761,11 @@ packages:
     peerDependenciesMeta:
       next:
         optional: true
+
+  '@hanzo/font@1.9.2':
+    resolution: {integrity: sha512-CXKXhfRgAj9SnhRJtraS6jEToGz74hbrMSJm85Kp8y6uN64zOH+IvohpWT/Surh9Qn1KWIGXsIx216JMa++X6A==}
+    peerDependencies:
+      next: '>=13.2.0'
 
   '@hanzo/logo@1.0.5':
     resolution: {integrity: sha512-1xqOCkUDBw28ApxZoIj1XBIoPGjUUab//I6P1i46qSSCiJ+5S/M4hGP1VwRJLYwpJ9oJ9MOTkG6If0kWf+sj5g==}
@@ -3934,8 +3935,6 @@ snapshots:
     dependencies:
       js-yaml: 4.1.1
 
-  '@hanzo/design@0.5.21': {}
-
   '@hanzo/docs-cli@1.1.1':
     dependencies:
       '@clack/prompts': 0.11.0
@@ -4269,6 +4268,10 @@ snapshots:
       - waku
       - yaml
       - zod
+
+  '@hanzo/font@1.9.2(next@16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
+    dependencies:
+      next: 16.0.1(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
   '@hanzo/logo@1.0.5(react@19.2.0)':
     dependencies:

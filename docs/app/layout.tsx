@@ -1,6 +1,8 @@
 import './global.css';
 import { RootProvider } from '@hanzo/docs/ui/provider/base';
 import { NextProvider } from '@hanzo/docs/core/framework/next';
+import { Zen } from '@hanzo/font/sans';
+import { ZenMono } from '@hanzo/font/mono';
 import type { ReactNode } from 'react';
 import { SearchDialog } from '@/components/search-dialog';
 
@@ -44,10 +46,12 @@ export const metadata = {
 };
 
 export default function Layout({ children }: { children: ReactNode }) {
-  // No font loader. Zen ships inside @hanzo/design and global.css declares the
-  // faces, so there is no generated family name to bind here.
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${Zen.variable} ${ZenMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Prevent flash - respect system preference or stored preference */}
         <script
