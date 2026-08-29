@@ -16,6 +16,7 @@ so running the generator twice changes nothing and --check agrees.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -101,6 +102,22 @@ def m_no_capabilities(root):
     os.environ["HANZO_CAPABILITIES"] = os.path.join(root, "nowhere.yaml")
 
 
+def m_reissue(root):
+    """Claim a number that was published under another title and retired.
+
+    Deleting the document is right; reissuing its NUMBER is not. Every
+    reference already in the wild -- in code, in a commit, in someone else's
+    link -- would silently resolve to a different specification.
+    """
+    spent = os.path.join(root, "spent.json")
+    json.dump({"9999": "A Retired Proposal"}, open(spent, "w", encoding="utf-8"))
+    src = os.path.join(root, "HIPs", SUBJECT)
+    body = open(src, encoding="utf-8").read()
+    body = body.replace("hip: 0517", "hip: 9999", 1)
+    open(os.path.join(root, "HIPs", "hip-9999-a-different-thing.md"), "w",
+         encoding="utf-8").write(body)
+
+
 CASES = [
     ("an empty HIPs/", m_empty, None),
     ("a required front-matter field removed", m_field, None),
@@ -113,6 +130,7 @@ CASES = [
     ("a HIP deleted without saying so", m_shrink, None),
     ("README's index heading renamed", m_no_section, None),
     ("capabilities.yaml not checked out", m_no_capabilities, None),
+    ("a retired number reissued for a different proposal", m_reissue, None),
 ]
 
 

@@ -67,6 +67,7 @@ ROOT = Path(_argv[_argv.index("--root") + 1] if "--root" in _argv
 HIP_DIR = ROOT / "HIPs"
 README = ROOT / "README.md"
 VOCABULARY = ROOT / "vocabulary.json"
+SPENT = ROOT / "spent.json"
 
 # The domain grouping is hanzoai/openapi's editorial decision and this script
 # reads it rather than restating it -- a second copy of a taxonomy is a second
@@ -98,6 +99,23 @@ class Refused(Exception):
 
 def vocabulary() -> dict:
     return json.loads(VOCABULARY.read_text(encoding="utf-8"))
+
+
+def spent() -> dict[int, str]:
+    """Numbers that were published and then retired, and what each one was.
+
+    Deleting a proposal is right -- a document nobody should follow does not
+    earn a place in the index by being renamed Superseded. But deletion frees
+    the NUMBER, and a number is the one part of a proposal that outlives it:
+    it is cited in code, linked from outside, and quoted in commits. HIP-0138
+    was deleted and reissued as a different specification within hours, so
+    every existing reference to it now resolves to something it never said.
+    The document goes; the address is kept, here, where it costs one line.
+    """
+    if not SPENT.exists():
+        return {}
+    return {int(k): v for k, v in
+            json.loads(SPENT.read_text(encoding="utf-8")).items()}
 
 
 def front_matter(text: str) -> tuple[dict[str, str], str]:
@@ -160,6 +178,16 @@ def validate(hips: list[dict]) -> None:
                     f"{seen[h['number']]} and {h['file']}"
                 )
             seen[h["number"]] = h["file"]
+
+    for number, was in spent().items():
+        claim = next((h for h in hips if h["number"] == number), None)
+        if claim and claim["title"] != was:
+            raise Refused(
+                f"HIP-{number:04d} was published as {was!r} and retired. "
+                f"{claim['file']} claims it for {claim['title']!r}, so every "
+                f"reference to HIP-{number:04d} now resolves to a different "
+                f"specification. Give it an unused number."
+            )
 
     files = {h["file"] for h in hips}
     for h in hips:

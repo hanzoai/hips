@@ -1,0 +1,18 @@
+{
+  "11": "Chat Interface Standard",
+  "12": "Search Interface Standard",
+  "13": "Workflow Execution Standard",
+  "17": "Analytics Event Standard",
+  "28": "Key-Value Store Standard",
+  "29": "Relational Database Standard",
+  "30": "Event Streaming Standard",
+  "35": "Image & Video Generation Standard",
+  "42": "Vector Search Standard",
+  "46": "Embeddings Standard",
+  "47": "Analytics Datastore Standard",
+  "116": "Hanzo Plugin & VM Model",
+  "138": "Cloud \u2014 Unified Hanzo Binary",
+  "1002": "Cart \u2014 The Basket a Sale Begins In",
+  "1005": "Payments \u2014 Taking a Card",
+  "1006": "Store \u2014 Storefronts, Listings and Checkout"
+}

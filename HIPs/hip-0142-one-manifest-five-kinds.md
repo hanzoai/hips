@@ -1,5 +1,5 @@
 ---
-hip: 0138
+hip: 0142
 title: One Manifest, Five Kinds
 author: Hanzo AI Team
 type: Standards Track
@@ -9,7 +9,7 @@ created: 2026-08-28
 requires: HIP-0014, HIP-0036
 ---
 
-# HIP-0138: One Manifest, Five Kinds
+# HIP-0142: One Manifest, Five Kinds
 
 ## Abstract
 

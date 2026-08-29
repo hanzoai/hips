@@ -103,10 +103,10 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | What Is Public | Process | Governance | Living |
 | [HIP-0136](./HIPs/hip-0136-one-secret-one-path.md) | One Secret, One Path | Standards Track | Infrastructure | Final |
 | [HIP-0137](./HIPs/hip-0137-one-license.md) | One License | Process | Governance | Living |
-| [HIP-0138](./HIPs/hip-0138-one-manifest-five-kinds.md) | One Manifest, Five Kinds | Standards Track | Infrastructure | Draft |
 | [HIP-0139](./HIPs/hip-0139-capability.md) | Capability | Standards Track | Infrastructure | Final |
 | [HIP-0140](./HIPs/hip-0140-proposing-a-capability.md) | Proposing a Capability | Meta | Core | Living |
 | [HIP-0141](./HIPs/hip-0141-substitution.md) | Substitution | Standards Track | Core | Final |
+| [HIP-0142](./HIPs/hip-0142-one-manifest-five-kinds.md) | One Manifest, Five Kinds | Standards Track | Infrastructure | Draft |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | Responsible AI Principles and Commitments | Meta | - | Living |
 | [HIP-0201](./HIPs/hip-0201-model-risk-management.md) | Model Risk Management | Meta | - | Living |
 | [HIP-0210](./HIPs/hip-0210-safety-evaluation-framework.md) | Safety Evaluation Framework | Meta | - | Living |

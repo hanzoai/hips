@@ -340,8 +340,8 @@ The scale standard is enforced in:
   Dockerfile with `GOEXPERIMENT=jsonv2`.
 - `hanzoai/.github/.github/workflows/docker-build.yml` — reusable
   workflow exposes `go-experiment` build-arg (default `jsonv2`).
-- `hanzoai/hips/HIPs/hip-0138-unified-hanzo-cloud-binary.md` — cites
-  per-replica capacity budget §3.3.
+- `hanzoai/hips/HIPs/hip-0122-zip-zap-native-application-server.md` — cites
+  the per-replica capacity budget.
 - `hanzoai/hips/HIPs/hip-0110-gateway-edge-process.md` — cites memory
   profile §3.1.
 
