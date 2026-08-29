@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Command as CommandPrimitive } from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Search, FileText, Github, MessageSquare, ArrowRight, Hash, BookOpen, Layers, Shield, Coins, Bot, Brain, Cpu, Database, Link as LinkIcon, Code, Cloud, Atom, Globe, Zap } from 'lucide-react';
+import { Search, FileText, MessageSquare, ArrowRight, Hash, BookOpen, Layers, Shield, Coins, Bot, Brain, Cpu, Database, Link as LinkIcon, Code, Cloud, Atom, Globe, Zap } from 'lucide-react'
+import { Github } from '@hanzo/ui/brands';
 import { cn } from '@/lib/utils';
 import { statusClass } from '@/lib/status';
 
