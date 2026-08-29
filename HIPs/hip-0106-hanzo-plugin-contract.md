@@ -4,7 +4,7 @@ title: The Hanzo Plugin Contract
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Final
 created: 2026-05-19
 updated: 2026-08-04
 requires: HIP-0026, HIP-0027, HIP-0036, HIP-0105, HIP-0111, HIP-0119, HIP-0132, HIP-0134, HIP-0139, HIP-0302, HIP-0400
@@ -1401,7 +1401,7 @@ vault or payments operator.
 
 - HIP-0119 — Hanzo Service Conventions — **the service shape a plugin conforms
   to in full; this HIP adds only what HIP-0119 does not cover**
-- HIP-0116 — Plugin & VM Model — **SUPERSEDED by this HIP.** Its surviving
+- HIP-0106 — Plugin & VM Model — **SUPERSEDED by this HIP.** Its surviving
   truths are absorbed here: no build tags (a capability is a plugin, compiled
   once, loaded when asked); a plugin is a supervised child with crash isolation
   and per-prefix 503 degradation; ZAP is only a transport, and reachability

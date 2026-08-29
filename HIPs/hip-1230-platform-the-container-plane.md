@@ -4,7 +4,7 @@ title: Platform — The Container Plane
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0026, HIP-0027, HIP-0106, HIP-0135, HIP-0139
 capability: platform

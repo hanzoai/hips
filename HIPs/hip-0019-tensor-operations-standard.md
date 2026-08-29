@@ -4,7 +4,7 @@ title: Tensor Operations Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2025-01-09
 requires: HIP-0003
 ---
@@ -620,7 +620,7 @@ cargo build --release --features "cuda metal"
 | System | Integration | Details |
 |--------|-------------|---------|
 | **Zen Gateway** (HIP-0039) | Edge inference | Quantized Zen models served via Candle on CPU/Metal for low-latency edge nodes |
-| **Studio** (HIP-0035) | Diffusion inference | Stable Diffusion / Flux pipelines run on Candle Metal backend for Apple Silicon users |
+| **Studio** (HIP-1211) | Diffusion inference | Stable Diffusion / Flux pipelines run on Candle Metal backend for Apple Silicon users |
 | **Jin** (HIP-0003) | Multimodal backbone | Jin model architectures implemented as Candle modules in `candle-transformers` |
 | **LLM Gateway** (HIP-0004) | Local model serving | Gateway routes to local Candle inference workers for on-premise deployments |
 | **Object Storage** (HIP-0032) | Model distribution | Model weights stored in safetensors/GGUF format in Hanzo Object Storage, loaded by Candle |
@@ -820,7 +820,7 @@ fn test_quantized_load() {
 6. [HIP-0010: Model Context Protocol](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 7. [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)
 8. HIP-0032: Object Storage Standard
-9. [HIP-0035: Image & Video Generation Standard](./hip-0035-image-video-generation-standard.md)
+9. [HIP-1211: AI — The Model API](./hip-1211-ai-the-model-api.md)
 10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
 11. [HuggingFace Candle](https://github.com/huggingface/candle) -- upstream repository
 12. [safetensors format](https://huggingface.co/docs/safetensors/) -- model serialization standard

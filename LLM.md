@@ -45,20 +45,24 @@ the rules, and both a contributor and CI run the same file:
     python3 scripts/lint-hips.py          # exits 1 on any ERROR
     python3 scripts/lint-hips.py --list   # the checks, by code
     python3 scripts/test-lint-hips.py     # proves the lint FAILS when it should
+    python3 scripts/index.py              # project HIPs/ onto README
+    python3 scripts/index.py --check      # exits 1 if README has drifted
+    python3 scripts/test-index.py         # proves the generator REFUSES
 
 `.hanzo/workflows/ci.yml` used to carry its own copy of the checks as an inline
 heredoc. That meant the gate existed only on the forge and a failure could not be
 reproduced without pushing. It now calls the script, and calls the self-test
 first.
 
-The self-test copies the corpus, breaks it 22 ways — one per check — and requires
+The self-test copies the corpus, breaks it 20 ways — one per check — and requires
 the matching error code each time. It also asserts that every check the lint
 declares has a test, so adding a check without one fails. This matters here more
 than most places: the GitHub workflow this lineage replaced printed every missing
 field and then exited 0, so a HIP with no status shipped green. **A check that
 has only been seen to pass has not been shown to work.**
 
-Checks are `FM*` front matter, `ST*` structure, `IX*` index, `PL*` policy. Each
+Checks are `FM*` front matter, `ST*` structure, `LK*` links, `IX*` numbering,
+`PL*` policy. Each
 fired on a real defect when it was written: 101 H1 headings disagreeing with their
 own front matter, 16 files with no H1 at all, 9 files using a status word outside
 the vocabulary, a `requires:` pointing at a HIP that never existed, 5 duplicate
@@ -79,9 +83,28 @@ attempt and had to be narrowed:
 ## One index, generated
 
 `HIPs/*.md` front matter is the only authority for what a HIP is. The site reads
-`../HIPs` directly; `README.md`'s table is projected by `scripts/update-index.py`
-and verified row-by-row by the lint (title, type, category and status must all
-match the file).
+`../HIPs` directly; `README.md`'s two tables are projected by `scripts/index.py`.
+
+**The generator refuses far more often than it writes,** because a short table
+looks as authoritative as a complete one. Nothing is written until everything
+validates: rows must equal files exactly, a table that shrinks must say by how
+many (`--delete N`), a section that cannot be rebuilt is an error rather than an
+omission, and every `requires:` must resolve. `scripts/test-index.py` breaks the
+corpus eleven ways and requires each to both refuse AND leave `README.md`
+byte-identical — the second half being the one that matters, since a guard that
+reports after half-writing has protected nothing.
+
+`scripts/index.py --check` regenerates in memory and compares, which is how CI
+holds README to the files. The lint used to carry a second implementation of
+that comparison (`IX001`, `IX002`, `IX004`: row-by-row title, type, category and
+status); it is gone. The generator is the one statement of what the projection is.
+
+**The vocabulary lives in `vocabulary.json`,** which the lint, the generator and
+the doc site all read. It used to be written by hand in nine places — including a
+TypeScript union in `docs/lib/source.ts` that admitted a `Stagnant` no proposal
+has ever carried and omitted the one 52 proposals did, so every one of those
+rendered with the fallback badge and counted toward none of the three stat tiles
+on the home page.
 
 Four committed `hip-index.json` files used to exist alongside it. They are gone.
 `docs-old/` — 16 tracked files including its own index — described **25** HIPs
@@ -117,7 +140,11 @@ reads; GitHub's secret store is not in this path at all.
 ## Writing a HIP
 
 Copy `docs/templates/hip-template.md` to `HIPs/hip-<NNNN>-<slug>.md`, then run
-`python3 scripts/update-index.py` and `python3 scripts/lint-hips.py`.
+`python3 scripts/index.py` and `python3 scripts/lint-hips.py`.
+
+It lands as `Draft`. It becomes `Final` when the thing it specifies exists in the
+code — that is the only thing that moves a status. `Meta` and `Process` HIPs are
+`Living`: they are amended in place and never finish.
 
 The template exists now. It did not until 2026-08-04, although this file had told
 every author to copy it for months — which is the simplest explanation for why

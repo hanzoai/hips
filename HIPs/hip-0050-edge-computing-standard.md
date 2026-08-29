@@ -4,7 +4,7 @@ title: Hanzo Edge — Edge AI Runtime Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-02-23
 updated: 2026-02-24
 requires: HIP-0019, HIP-0043

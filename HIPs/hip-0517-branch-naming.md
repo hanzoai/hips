@@ -4,7 +4,7 @@ title: Branch Naming — main is the Trunk, Everywhere
 author: Hanzo AI Team
 type: Process
 category: Meta
-status: Active
+status: Living
 created: 2026-07-27
 ---
 

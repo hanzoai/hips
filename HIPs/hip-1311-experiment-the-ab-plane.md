@@ -5,9 +5,9 @@ author: Hanzo AI
 type: Standards Track
 category: Interface
 capability: experiment
-status: Draft
+status: Final
 created: 2026-08-20
-requires: HIP-0017, HIP-0026, HIP-0106, HIP-0139
+requires: HIP-1190, HIP-0026, HIP-0106, HIP-0139
 ---
 
 # HIP-1311: Experiment — Arms, Assignment, a Verdict
@@ -21,7 +21,7 @@ a decision that locks the winner. The implementation is `hanzoai/cloud`
 
 It is a **composition, not a fourth engine**. It owns the experiment registry
 and nothing else — assignment comes from `flags`, outcomes from the analytics
-warehouse (HIP-0017), evidence from the research record (HIP-1145). Each of
+warehouse (HIP-1190), evidence from the research record (HIP-1145). Each of
 those already has an owner, and none is copied here.
 
 ## Motivation
@@ -80,7 +80,7 @@ Outcomes MUST be read from the one analytics plane rather than a second exposure
 topic: the analyze fold reads each subject's outcome from the org-scoped event
 query and joins it to the arm by subject id (`apps/experiment/analyze.go`). A
 serving surface that records an exposure records an ordinary analytics event
-through the same capture endpoint as every other event (HIP-0017) — no separate
+through the same capture endpoint as every other event (HIP-1190) — no separate
 stream, no emitter in the request path.
 
 The analysis is one method: a two-proportion z-test against the control arm over
@@ -146,7 +146,7 @@ so no prompt, completion or document reaches this plane.
 
 ## References
 
-- HIP-0017 — Analytics Event Standard
+- HIP-1190 — Analytics Event Standard
 - HIP-0026 — Identity and Access Management
 - HIP-0063 — Feature Flags Standard
 - HIP-0106 — Hanzo Plugin Contract

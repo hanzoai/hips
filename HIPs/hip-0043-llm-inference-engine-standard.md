@@ -4,7 +4,7 @@ title: Hanzo Engine — LLM Inference Engine Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Active
+status: Final
 created: 2026-02-23
 updated: 2026-02-24
 requires: HIP-0004, HIP-0019, HIP-0039

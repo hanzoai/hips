@@ -4,7 +4,7 @@ title: Org Settings
 author: Hanzo AI
 type: Standards Track
 category: Security
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0118, HIP-0519
 ---

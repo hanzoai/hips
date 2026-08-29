@@ -6,7 +6,7 @@ category: Core
 status: Draft
 author: Hanzo AI
 created: 2026-01-24
-requires: HIP-0020 (Blockchain Node Standard)
+requires: HIP-0020
 ---
 
 

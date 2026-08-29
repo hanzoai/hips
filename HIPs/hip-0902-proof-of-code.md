@@ -4,7 +4,7 @@ title: Proof of Code — Consensus over Git Refs
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-07-26
 requires: HIP-0005, HIP-0901
 ---

@@ -4,7 +4,7 @@ title: Hanzo Service Conventions
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Final
 created: 2026-06-25
 requires: HIP-0027, HIP-0068, HIP-0111, HIP-0400
 ---

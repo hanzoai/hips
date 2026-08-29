@@ -5,10 +5,10 @@ tags: [sustainability, carbon, compute, emissions]
 description: Methodology for measuring and reporting carbon emissions from AI training and inference.
 author: Hanzo AI Team (@hanzoai)
 discussions-to: https://github.com/hanzoai/hips/discussions
-status: Draft
+status: Living
 type: Meta
 created: 2025-12-17
-requires: [200, 250]
+requires: HIP-0200, HIP-0250
 ---
 
 

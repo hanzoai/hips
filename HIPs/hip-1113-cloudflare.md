@@ -5,7 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Infrastructure
 capability: cloudflare
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0026, HIP-0126, HIP-0139
 ---

@@ -4,7 +4,7 @@ title: Rooms — One Store, Two Views, Many Bridges
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-08-27
 requires: HIP-0139, HIP-1048, HIP-1066, HIP-1107, HIP-1210
 ---

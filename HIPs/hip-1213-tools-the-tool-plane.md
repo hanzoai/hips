@@ -4,7 +4,7 @@ title: Tools — The Tool Plane
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0139, HIP-0106, HIP-0300
 capability: tools

@@ -3,9 +3,9 @@ hip: 250
 title: Sustainability Standards Alignment Matrix
 author: Hanzo AI Team
 type: Meta
-status: Draft
+status: Living
 created: 2025-12-16
-requires: [200]
+requires: HIP-0200
 ---
 
 

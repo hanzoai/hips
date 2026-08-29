@@ -4,9 +4,9 @@ title: HMM (Hanzo Market Maker) - Native DEX for AI Compute Resources
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2025-01-09
-requires: HIP-0, HIP-1
+requires: HIP-0000, HIP-0001
 ---
 
 

@@ -3,9 +3,9 @@ hip: 0077
 title: Mesh Identity, Gossip & Payments (PQ)
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 author: Hanzo AI
-requires: HIP-0001 (AI Coin), HIP-0005 (Post-Quantum Security), HIP-007 (ZAP), HIP-0018 (Payments), HIP-0069 (Service Discovery)
+requires: HIP-0001, HIP-0005, HIP-0007, HIP-0018, HIP-0069
 created: 2026-05-10
 ---
 

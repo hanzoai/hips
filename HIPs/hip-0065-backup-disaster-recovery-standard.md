@@ -4,9 +4,9 @@ title: Backup & Disaster Recovery Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-02-23
-requires: HIP-0027, HIP-0028, HIP-0029, HIP-0047
+requires: HIP-0027, HIP-1164, HIP-1104, HIP-1241
 ---
 
 
@@ -16,7 +16,7 @@ requires: HIP-0027, HIP-0028, HIP-0029, HIP-0047
 
 This proposal defines the unified backup and disaster recovery (DR) standard
 for all stateful services in the Hanzo ecosystem. Every data store -- SQL
-(HIP-0029), KV/KV (HIP-0028), Hanzo Datastore (HIP-0047), MinIO/S3 (HIP-0032),
+(HIP-1104), KV/KV (HIP-1164), Hanzo Datastore (HIP-1241), MinIO/S3 (HIP-0032),
 model artifacts, training checkpoints, datasets, and configuration secrets --
 MUST be backed up, verified, and recoverable through the single Hanzo Backup
 service defined here.
@@ -31,7 +31,7 @@ service defined here.
 Hanzo operates 15+ stateful services across two Kubernetes clusters (the cluster,
 lux-k8s). Each service adopted its own backup approach:
 
-- **PostgreSQL** runs a CronJob with `pg_dump` every 6 hours (HIP-0029).
+- **PostgreSQL** runs a CronJob with `pg_dump` every 6 hours (HIP-1104).
 - **KV** relies on RDB snapshots that only persist to the local PVC.
 - **Hanzo Datastore** has no automated backup; operators run manual `BACKUP` commands.
 - **MinIO** replicates buckets between clusters but has no off-site copy.
@@ -118,9 +118,9 @@ The backup controller manages the following data stores:
 ```
 Backup Controller (:8065)
   │
-  ├── PostgreSQL (HIP-0029)  ── pg_basebackup + WAL archiving
-  ├── KV/KV      (HIP-0028)  ── RDB snapshot export
-  ├── Hanzo Datastore (HIP-0047)  ── BACKUP DATABASE ... TO S3
+  ├── PostgreSQL (HIP-1104)  ── pg_basebackup + WAL archiving
+  ├── KV/KV      (HIP-1164)  ── RDB snapshot export
+  ├── Hanzo Datastore (HIP-1241)  ── BACKUP DATABASE ... TO S3
   ├── MinIO/S3   (HIP-0032)  ── mc mirror (bucket replication)
   ├── Model Weights / Checkpoints / Datasets  ── versioned S3
   └── Config / Secrets  ── Velero + KMS export
@@ -160,7 +160,7 @@ Two complementary backup mechanisms run simultaneously:
      --endpoint s3://hanzo-backups
    ```
 
-The existing `pg_dump` CronJob (HIP-0029) continues as a logical backup for
+The existing `pg_dump` CronJob (HIP-1104) continues as a logical backup for
 selective per-database restore. It supplements but does not replace PITR.
 
 #### KV/KV (Standard Tier)
@@ -492,10 +492,10 @@ cloud provider experiences a global outage.
 ## References
 
 1. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
-2. [HIP-0028: Key-Value Store Standard](./hip-0028-key-value-store-standard.md)
-3. [HIP-0029: Relational Database Standard](./hip-0029-relational-database-standard.md)
+2. [HIP-1164: Provisioning — Stores on Demand](./hip-1164-provisioning-stores-on-demand.md)
+3. [HIP-1104: Base — The Hosted Backend](./hip-1104-base-hosted-backend.md)
 4. HIP-0032: Object Storage Standard
-5. [HIP-0047: Analytics Datastore Standard](./hip-0047-analytics-datastore-standard.md)
+5. [HIP-1241: Metrics — One Native Store, Three Signals](./hip-1241-metrics-one-store-three-signals.md)
 6. [Velero Documentation](https://velero.io/docs/)
 7. [PostgreSQL PITR](https://www.postgresql.org/docs/16/continuous-archiving.html)
 8. [ClickHouse BACKUP](https://clickhouse.com/docs/en/operations/backup)

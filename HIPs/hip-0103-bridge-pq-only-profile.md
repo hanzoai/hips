@@ -3,10 +3,10 @@ hip: 0103
 title: Bridge PQ-Only Profile
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 author: Hanzo AI
 created: 2026-05-11
-requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0078, HIP-0079, HIP-0084, HIP-0085, HIP-0086, HIP-0098 (Governance / Upgrade Keys), HIP-0101 (Hanzo↔Lux Bridge), HIP-0102 (Bridge Protocol)
+requires: HIP-0005, HIP-0077, HIP-0078, HIP-0079, HIP-0084, HIP-0085, HIP-0086, HIP-0098, HIP-0101, HIP-0102
 ---
 
 

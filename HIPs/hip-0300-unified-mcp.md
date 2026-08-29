@@ -4,7 +4,7 @@ title: Unified MCP — one endpoint, and local servers that forward to it
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Review
+status: Final
 created: 2025-01-21
 updated: 2026-08-20
 requires: HIP-0010, HIP-0106, HIP-0111, HIP-0128

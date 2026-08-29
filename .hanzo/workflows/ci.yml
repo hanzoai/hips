@@ -32,12 +32,6 @@ jobs:
       # whose checks have never been seen to fail is indistinguishable from a
       # lint that returns success unconditionally -- which is exactly what the
       # GitHub workflow this replaced did.
-      - name: the lint fails when it should
-        run: python3 scripts/test-lint-hips.py
-
-      - name: every HIP is structurally sound, and the index matches
-        run: python3 scripts/lint-hips.py
-
       # The capability list is an INPUT, so it is checked out rather than
       # copied here. A snapshot committed into this repo would be a second
       # statement of which capabilities exist, and it would drift from the one
@@ -47,6 +41,27 @@ jobs:
         with:
           repository: hanzoai/openapi
           path: .capabilities
+
+      - name: the lint fails when it should
+        run: python3 scripts/test-lint-hips.py
+
+      - name: every HIP is structurally sound
+        run: python3 scripts/lint-hips.py
+
+      # The index is GENERATED. This regenerates it in memory and fails on any
+      # difference, so README cannot drift from HIPs/ -- and its own self-test
+      # runs first, because a generator that silently emits a SHORT table is
+      # worse than none. Eleven ways to break the corpus, and each must both
+      # refuse and leave README.md byte-identical.
+      - name: the generator refuses when it should
+        env:
+          HANZO_CAPABILITIES: .capabilities/capabilities.yaml
+        run: python3 scripts/test-index.py
+
+      - name: README is exactly what HIPs/ projects to
+        env:
+          HANZO_CAPABILITIES: .capabilities/capabilities.yaml
+        run: python3 scripts/index.py --check
 
       # One capability, one HIP. The ratchet (capability-coverage.txt) carries
       # what has no spec yet and may only SHRINK, so a capability shipping

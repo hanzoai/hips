@@ -4,7 +4,7 @@ title: What Is Public
 author: Hanzo AI
 type: Process
 category: Governance
-status: Active
+status: Living
 created: 2026-07-29
 ---
 

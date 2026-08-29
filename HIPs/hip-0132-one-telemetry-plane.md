@@ -4,7 +4,7 @@ title: One Telemetry Plane — One Endpoint, One Schema, Many Lenses
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-07-27
 requires: HIP-0119, HIP-0512
 ---

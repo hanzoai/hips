@@ -4,7 +4,7 @@ title: Enso — Learned Per-Request Model Routing and the Recursive Router–Mod
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-07-17
 requires: HIP-0001
 ---

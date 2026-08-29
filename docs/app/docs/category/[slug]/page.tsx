@@ -2,6 +2,7 @@ import { source } from '@/lib/source';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Brain, Layers, Database, Link2, Cpu, Bot, Shield, Coins, Code, Cloud, Atom, Globe, Zap } from 'lucide-react';
+import { STATUSES, statusClass } from '@/lib/status';
 
 const iconMap: Record<string, React.ReactNode> = {
   brain: <Brain className="size-6" />,
@@ -123,18 +124,12 @@ export default async function CategoryPage({
             <div className="text-2xl font-bold">{category.hips.length}</div>
             <div className="text-xs text-muted-foreground">Total</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-500">{statusCounts['Final'] || 0}</div>
-            <div className="text-xs text-muted-foreground">Final</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-500">{statusCounts['Review'] || 0}</div>
-            <div className="text-xs text-muted-foreground">Review</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-500">{statusCounts['Draft'] || 0}</div>
-            <div className="text-xs text-muted-foreground">Draft</div>
-          </div>
+          {STATUSES.map((s) => (
+            <div key={s} className="text-center">
+              <div className={`text-2xl font-bold ${statusClass(s).split(' ')[1]}`}>{statusCounts[s] || 0}</div>
+              <div className="text-xs text-muted-foreground">{s}</div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -158,13 +153,7 @@ export default async function CategoryPage({
                   {hip.data.title}
                 </span>
                 {hip.data.frontmatter.status && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
-                    hip.data.frontmatter.status === 'Final' ? 'bg-green-500/10 text-green-500' :
-                    hip.data.frontmatter.status === 'Draft' ? 'bg-yellow-500/10 text-yellow-500' :
-                    hip.data.frontmatter.status === 'Review' ? 'bg-blue-500/10 text-blue-500' :
-                    hip.data.frontmatter.status === 'Superseded' ? 'bg-purple-500/10 text-purple-500' :
-                    'bg-gray-500/10 text-gray-500'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${statusClass(hip.data.frontmatter.status)}`}>
                     {hip.data.frontmatter.status}
                   </span>
                 )}

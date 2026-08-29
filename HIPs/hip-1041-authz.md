@@ -4,7 +4,7 @@ title: Authz
 author: Hanzo AI
 type: Standards Track
 category: Security
-status: Draft
+status: Final
 created: 2026-08-20
 capability: authz
 requires: HIP-0026, HIP-0139, HIP-0519

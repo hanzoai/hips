@@ -4,9 +4,9 @@ title: Model Context Protocol (MCP) Integration Standards
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Active
+status: Final
 created: 2025-01-09
-requires: HIP-2, HIP-9
+requires: HIP-0002, HIP-0009
 ---
 
 
@@ -593,7 +593,7 @@ computer-control = ["enigo", "screenshots"]
 ```
 
 3. [Claude Desktop MCP](https://claude.ai/docs/mcp)
-4. [HIP-9: Agent SDK](./hip-9.md)
+4. [HIP-0009: Agent SDK - Multi-Agent Orchestration Framework](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md)
 5. [MCP Repository](https://github.com/hanzoai/mcp)
 
 ## Copyright

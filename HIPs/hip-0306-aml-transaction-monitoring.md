@@ -4,7 +4,7 @@ title: AML Transaction Monitoring, Screening and Case Management
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-07-29
 requires: HIP-0201, HIP-0230, HIP-0302
 ---

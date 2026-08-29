@@ -4,7 +4,7 @@ title: Substitution
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0137, HIP-0139
 ---

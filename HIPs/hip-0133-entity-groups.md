@@ -4,7 +4,7 @@ title: Entity Groups — Placement, Durability, Splitting and Promotion
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-07-28
 requires: HIP-0120
 ---

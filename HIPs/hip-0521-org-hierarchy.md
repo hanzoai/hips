@@ -4,7 +4,7 @@ title: Org Hierarchy
 author: Hanzo AI Team
 type: Standards Track
 category: Security
-status: Draft
+status: Final
 created: 2026-07-30
 requires: HIP-0026, HIP-0118, HIP-0519
 ---

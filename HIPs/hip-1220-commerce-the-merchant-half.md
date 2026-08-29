@@ -5,7 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Application
 capability: commerce
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0018, HIP-0026, HIP-0106, HIP-0139
 ---
@@ -41,16 +41,16 @@ as in RFC 2119.
 
 Every route commerce serves MUST be under `/v1/commerce`:
 
-- `/v1/commerce/cart` — the shopper's basket (from `/v1/cart`; HIP-1002).
+- `/v1/commerce/cart` — the shopper's basket (from `/v1/cart`; HIP-1220).
 - `/v1/commerce/catalog` — the merchant catalog rows in commerce's store,
   merging the SuperAdmin CRUD now at `/v1/catalog/*`.
 - `/v1/commerce/payments` — the typed payment endpoint (from `/v1/payments`;
-  HIP-1005).
+  HIP-1220).
 - `/v1/commerce/plans` — plan ROWS in commerce's datastore (from
   `/v1/plans/{entries,seed}`). The `/v1/plans` root is the plans capability's;
   these rows are not that catalog and take commerce's prefix.
 - `/v1/commerce/store` — storefronts, listings, checkout (from `/v1/store`;
-  HIP-1006).
+  HIP-1220).
 - the tenant-admin surface, from `/_/commerce` — HIP-0139 §3.3, nothing outside
   `/v1`; same audience, same binary. This half of the fold lands in the
   `hanzoai/commerce` module, which registers those routes (one module release).
@@ -152,7 +152,7 @@ decision in §3 refuses to boot.
 - HIP-0018 — Payment Processing Standard
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — Hanzo Plugin Contract
-- HIP-1002 — Cart · HIP-1005 — Payments · HIP-1006 — Store
+- HIP-1220 — Cart · HIP-1220 — Payments · HIP-1220 — Store
 
 ## Copyright
 

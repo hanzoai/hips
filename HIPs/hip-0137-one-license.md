@@ -4,7 +4,7 @@ title: One License
 author: Hanzo AI
 type: Process
 category: Governance
-status: Active
+status: Living
 created: 2026-08-04
 requires: HIP-0135
 ---

@@ -4,10 +4,10 @@ title: Visor — Fleet & Fabric Autoscaling Across Any Provider
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0106, HIP-0116, HIP-0117, HIP-0121, HIP-0400
+requires: HIP-0106, HIP-0117, HIP-0121, HIP-0400
 ---
 
 
@@ -27,7 +27,7 @@ themselves*, across *clusters*, across *providers*, including
 providers the **customer** brings (HIP-0121 BYOC).
 
 The target model this HIP formalizes: every service, in its plugin-VM
-shape (HIP-0116), is an independently schedulable unit; visor scales
+shape (HIP-0106), is an independently schedulable unit; visor scales
 **just the nodes running that service for that tenant** — per-service,
 per-org, per-project — on whichever provider that tenant's fleet
 lives. The realized autoscaler already keys its pools by exactly those
@@ -47,7 +47,7 @@ demand one control plane for it:
    spark/evo/dbc reference cluster of HIP-0121. No single cluster's
    autoscaler can see, size, or bill that fabric as one thing.
 2. **Tenancy must reach the node layer.** HIP-0121 gives every org a
-   fleet; HIP-0116 makes every service independently packageable. If
+   fleet; HIP-0106 makes every service independently packageable. If
    scaling stays cluster-global, one tenant's burst dilutes into
    shared pools — unattributable cost, no per-tenant ceiling, no way
    to scale *only* the service that is hot. The scaling unit must be
@@ -107,7 +107,7 @@ All of the following is real code in `hanzoai/visor` at v1.108.x:
 
 The unit visor scales is the **(service, org, project) pool**:
 
-1. **Service** — a plugin VM per HIP-0116. Because every Hanzo service
+1. **Service** — a plugin VM per HIP-0106. Because every Hanzo service
    builds as an independently deployable unit with an identical mount
    contract, "scale the ML serving plane" never implies "scale the
    whole cloud binary". The fat SaaS build stays one deployment; any
@@ -134,7 +134,7 @@ rewrite.
 
 | Concern | Owner |
 |---|---|
-| What a service IS (shapes, mount contract) | HIP-0116 |
+| What a service IS (shapes, mount contract) | HIP-0106 |
 | Where a deployment RUNS (serve / cluster init / helm) | HIP-0117 |
 | What compute a tenant ATTACHED and what it COSTS | HIP-0121 |
 | Day-2 reconciliation of service estates (CRs, GitOps) | HIP-0400 operator |
@@ -210,7 +210,7 @@ itself and bills honestly.
 - HIP-0106 — Cloud — Unified Hanzo Binary (hybrid split mode; the
   "auto-scaling per-subsystem" non-goal this HIP picks up at the
   right layer)
-- HIP-0116 — Hanzo Plugin & VM Model (the independently schedulable
+- HIP-0106 — Hanzo Plugin & VM Model (the independently schedulable
   service unit)
 - HIP-0117 — Cloud-in-a-Box (the topologies whose node supply this
   HIP manages)

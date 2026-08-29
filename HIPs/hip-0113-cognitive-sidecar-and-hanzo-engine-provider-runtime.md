@@ -4,9 +4,9 @@ title: Cognitive Sidecar & Hanzo Engine Provider Runtime for Thinking Chains
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-06-21
-requires: 0020, 0024, 0043, 0114
+requires: HIP-0020, HIP-0024, HIP-0043, HIP-0114
 ---
 
 

@@ -7,6 +7,7 @@ import { Command as CommandPrimitive } from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Search, FileText, Github, MessageSquare, ArrowRight, Hash, BookOpen, Layers, Shield, Coins, Bot, Brain, Cpu, Database, Link as LinkIcon, Code, Cloud, Atom, Globe, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { statusClass } from '@/lib/status';
 
 interface SearchResult {
   id: string;
@@ -344,13 +345,8 @@ export function SearchDialog() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             {result.structuredData?.status && (
-                              <span className={cn(
-                                'rounded px-1.5 py-0.5 text-xs',
-                                result.structuredData.status === 'Final' && 'bg-green-500/10 text-green-500',
-                                result.structuredData.status === 'Draft' && 'bg-yellow-500/10 text-yellow-500',
-                                result.structuredData.status === 'Review' && 'bg-blue-500/10 text-blue-500',
-                                !['Final', 'Draft', 'Review'].includes(result.structuredData.status || '') && 'bg-muted text-muted-foreground'
-                              )}>
+                              <span className={cn('rounded px-1.5 py-0.5 text-xs',
+                                statusClass(result.structuredData.status))}>
                                 {result.structuredData.status}
                               </span>
                             )}

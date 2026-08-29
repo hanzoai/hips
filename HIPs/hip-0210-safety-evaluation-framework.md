@@ -5,10 +5,10 @@ tags: [ai-ethics, safety, evaluation, testing]
 description: Framework for evaluating AI system safety through comprehensive testing and red teaming.
 author: Hanzo AI Team (@hanzoai)
 discussions-to: https://github.com/hanzoai/hips/discussions
-status: Draft
+status: Living
 type: Meta
 created: 2025-12-17
-requires: [200, 201]
+requires: HIP-0200, HIP-0201
 ---
 
 

@@ -4,9 +4,9 @@ title: Active Inference Integration for Hamiltonian LLMs
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2024-12-20
-requires: HIP-1, HIP-6
+requires: HIP-0001, HIP-0006
 ---
 
 
@@ -432,8 +432,8 @@ $$\dot{p}_i = \lambda(\text{demand}_i - \text{supply}_i)$$
 5. Parr, T., Pezzulo, G., & Friston, K. J. (2022). "Active Inference: The Free Energy Principle in Mind, Brain, and Behavior." MIT Press.
 6. Ramstead, M. J. D., et al. (2023). "On Bayesian Mechanics: A Physics of and by Beliefs." Interface Focus, 13(3). [doi:10.1098/rsfs.2022.0029](https://doi.org/10.1098/rsfs.2022.0029)
 7. Albarracin, M., et al. (2024). "Epistemic Communities under Active Inference." Entropy, 26(1). [doi:10.3390/e26010001](https://doi.org/10.3390/e26010001)
-8. [HIP-1: Hamiltonian Large Language Models](./hip-1.md)
-9. [HIP-6: Per-User Fine-Tuning Architecture](./hip-6.md)
+8. [HIP-0002: Hamiltonian Large Language Models (HLLMs) Specification](./hip-0002-hamiltonian-large-language-models-hllms-specification.md)
+9. [HIP-0006: Per-User Fine-Tuning Architecture for Personalized AI](./hip-0006-per-user-fine-tuning-architecture-for-personalized-ai.md)
 
 ## Copyright
 

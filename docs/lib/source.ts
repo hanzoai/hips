@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import vocabulary from '../../vocabulary.json';
+
+export type Status = keyof typeof vocabulary.status;
+export type Type = keyof typeof vocabulary.type;
 
 const HIPS_DIR = path.join(process.cwd(), '../HIPs');
 
@@ -8,8 +12,12 @@ export interface HIPMetadata {
   hip?: number | string;
   title?: string;
   description?: string;
-  status?: 'Draft' | 'Review' | 'Last Call' | 'Final' | 'Withdrawn' | 'Stagnant' | 'Superseded';
-  type?: 'Standards Track' | 'Meta' | 'Informational';
+  // Both vocabularies come from ../../vocabulary.json, so a status added there
+  // is a status the site renders. This union used to be written by hand: it
+  // admitted 'Stagnant', which no proposal has ever carried, omitted the one 52
+  // proposals did, and left out 'Process' while three proposals are Process.
+  status?: Status;
+  type?: Type;
   category?: string;
   author?: string;
   created?: string;

@@ -4,10 +4,10 @@ title: Cloud-in-a-Box — One Binary, Three Modes
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0036, HIP-0106, HIP-0116, HIP-0400
+requires: HIP-0036, HIP-0106, HIP-0400
 ---
 
 
@@ -31,7 +31,7 @@ changing the artifact:
    `cloud/helm/cloud` deploy the same image into an existing cluster.
 
 The mode is topology, not identity: same bits, same config surface,
-same product behavior. What runs is decided by HIP-0116 (plugins /
+same product behavior. What runs is decided by HIP-0106 (plugins /
 enabled subsystems); *where* it runs is decided here — and nowhere
 else.
 
@@ -75,7 +75,7 @@ The binary IS the cloud:
 - All enabled subsystems mount in-process per HIP-0106 (registry +
   fail-closed embeds). Disabled-by-default activation and 503
   blast-radius isolation apply unchanged.
-- Storage is per-tenant SQLite (HIP-0029, HIP-0302) under
+- Storage is per-tenant SQLite (HIP-1104, HIP-0302) under
   `--data-dir`. No external database exists in this mode — SQLite is
   the default, not the fallback.
 - **datastore** (columnar analytics store; the one non-Go
@@ -85,7 +85,7 @@ The binary IS the cloud:
   the same isolation rule as any broken subsystem.
 - The IAM single-replica guard (HIP-0106 realized state) is trivially
   satisfied: there is exactly one replica.
-- Consensus/replication state per HIP-0116 runs in its single-node,
+- Consensus/replication state per HIP-0106 runs in its single-node,
   in-memory shape: instant finality, zero configuration.
 
 This mode is **shipped**: it is `cloud.Serve` — the same entry the
@@ -112,7 +112,7 @@ For bare metal / VM fleets with no existing Kubernetes:
 
 HA and scale-out are properties of this mode: multiple nodes, replica
 counts on CRs, and the durable Quasar/ZapDB substrate shape from
-HIP-0116.
+HIP-0106.
 
 **Airgapped variant:** an optional **`cloud-fat`** build `go:embed`s
 the pinned k3s binary for networks that cannot fetch. It is a separate
@@ -159,7 +159,7 @@ estate topology of HIP-0112. **Shipped:** the chart exists in-tree at
 - HIP-0106 — Cloud — Unified Hanzo Binary (the artifact all three
   modes run and the product surface it serves; realized state documents
   `cloud.Serve`, the embeds, and the measured binary)
-- HIP-0116 — Hanzo Plugin & VM Model (what runs: plugins/subsystems +
+- HIP-0106 — Hanzo Plugin & VM Model (what runs: plugins/subsystems +
   the single-node vs HA state substrate)
 - HIP-0400 — Service CRD (the operator/CR family `cluster init`
   installs and defers to)

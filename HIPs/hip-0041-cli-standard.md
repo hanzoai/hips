@@ -4,7 +4,7 @@ title: The Hanzo CLI — a Projection of the Served API
 author: Hanzo AI
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2026-02-23
 updated: 2026-08-04
 requires: HIP-0040, HIP-0111, HIP-0119, HIP-0128, HIP-0135

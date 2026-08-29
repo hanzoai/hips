@@ -4,7 +4,7 @@ title: The Context Graph — Edges, Decisions and Derivation as One Noun
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0106
 ---

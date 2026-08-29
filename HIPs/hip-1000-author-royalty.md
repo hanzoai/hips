@@ -4,7 +4,7 @@ title: Author — A Royalty Bound to a Repository
 author: Hanzo AI
 type: Standards Track
 category: Application
-status: Active
+status: Final
 created: 2026-08-20
 requires: HIP-0139
 capability: author

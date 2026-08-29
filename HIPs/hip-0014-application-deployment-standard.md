@@ -4,9 +4,9 @@ title: Application Deployment Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2025-01-09
-requires: HIP-0026, HIP-0027, HIP-0029
+requires: HIP-0026, HIP-0027, HIP-1104
 ---
 
 
@@ -478,7 +478,7 @@ For users who previously logged in via GitHub (legacy Dokploy flow), Platform ma
 
 ### Database
 
-Platform uses SQL (HIP-29) to store:
+Platform uses SQL (HIP-1104) to store:
 
 - Application definitions (name, org, repo, branch, runtime configuration)
 - Deployment history (image tags, Git commits, status, timestamps)
@@ -637,7 +637,7 @@ roles:
 5. [Let's Encrypt](https://letsencrypt.org/) - Free, automated TLS certificate authority
 6. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - IAM for authentication
 7. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for secret injection
-8. [HIP-29: Relational Database Standard](./hip-0029-relational-database-standard.md) - SQL for deployment state
+8. [HIP-1104: Base — The Hosted Backend](./hip-1104-base-hosted-backend.md) - SQL for deployment state
 9. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Example service deployed via Platform
 10. [Hanzo Platform Repository](https://github.com/hanzoai/platform)
 

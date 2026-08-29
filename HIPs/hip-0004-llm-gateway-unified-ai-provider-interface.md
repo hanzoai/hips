@@ -4,9 +4,9 @@ title: LLM Gateway - Unified AI Provider Interface
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2025-01-09
-requires: HIP-1
+requires: HIP-0001
 ---
 
 

@@ -4,7 +4,7 @@ title: "V8 · Open Edition — Architecture, Distribution & the Language Seam"
 author: Hanzo AI Team
 type: Standards Track
 category: Meta
-status: Active
+status: Final
 created: 2026-07-08
 requires: HIP-0040, HIP-0041, HIP-0106, HIP-0114, HIP-0120
 ---
@@ -246,5 +246,5 @@ to run them", never as one link step over the fleet.
 - `capabilities.yaml`, `publish.py` and `hanzo.yaml` in the **`hanzoai/openapi`**
   repository · `manifest/apps.go` and `cmd/cloud/main.go` in `hanzoai/cloud` ·
   `hanzoai/platform` · `zap-proto/zap-spec` · `hanzoai/zap`.
-- HIP-0138 described the fused single-binary predecessor and is **Superseded**
+- HIP-0106 described the fused single-binary predecessor and is **Superseded**
   by HIP-0106. Do not read it as current architecture.

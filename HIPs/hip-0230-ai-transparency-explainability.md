@@ -5,10 +5,10 @@ tags: [ai-ethics, transparency, explainability, governance]
 description: Framework for ensuring transparency and explainability of Hanzo AI systems.
 author: Hanzo AI Team (@hanzoai)
 discussions-to: https://github.com/hanzoai/hips/discussions
-status: Draft
+status: Living
 type: Meta
 created: 2025-12-17
-requires: [200, 201]
+requires: HIP-0200, HIP-0201
 ---
 
 

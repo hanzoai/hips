@@ -5,7 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Platform
 capability: entitlement
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0106, HIP-0118, HIP-0139
 ---

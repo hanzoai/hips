@@ -4,7 +4,7 @@ title: Native Balance Reads
 author: Hanzo AI
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-1020
 ---

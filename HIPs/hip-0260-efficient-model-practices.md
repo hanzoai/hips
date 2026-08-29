@@ -5,10 +5,10 @@ tags: [sustainability, efficiency, optimization, energy]
 description: Best practices for developing and deploying energy-efficient AI models.
 author: Hanzo AI Team (@hanzoai)
 discussions-to: https://github.com/hanzoai/hips/discussions
-status: Draft
+status: Living
 type: Meta
 created: 2025-12-17
-requires: [200, 250, 251]
+requires: HIP-0200, HIP-0250, HIP-0251
 ---
 
 

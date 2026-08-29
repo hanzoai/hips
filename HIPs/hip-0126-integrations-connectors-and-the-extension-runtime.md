@@ -4,10 +4,10 @@ title: Integrations, Connectors & the Extension Runtime — One Registry, One Wa
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0004, HIP-0010, HIP-0105, HIP-0116
+requires: HIP-0004, HIP-0010, HIP-0105, HIP-0106
 ---
 
 
@@ -29,12 +29,12 @@ the Integration** — with exactly three kinds (**Connector**, **Provider**,
 trigger→action builder on the `@xyflow` canvas) as the consumer that wires
 Connectors together, and it names the **Extension Runtime** (HIP-0105) as the ONE
 way custom logic *runs* — four engines (native Go, goja, wazero, v8go) behind a
-single `Runtime` interface — with a **Plugin** (HIP-0116) being a code extension
+single `Runtime` interface — with a **Plugin** (HIP-0106) being a code extension
 that runs inside it.
 
 It is deliberately **orthogonal and reference-not-duplicate**: it aligns the
 existing standards (HIP-0004 providers, HIP-0010 MCP tools, HIP-0034 automation
-platform, HIP-0105 extension runtime, HIP-0116 plugin model) into one taxonomy
+platform, HIP-0105 extension runtime, HIP-0106 plugin model) into one taxonomy
 rather than restating them, and it normatively **retires "pieces" in favour of
 "connectors."**
 
@@ -56,7 +56,7 @@ Extension Runtime  (HOW custom logic runs; ONE Runtime interface, 4 engines)  (H
 ├── wazero (WASM)   hard sandbox; the Rust/TinyGo/AssemblyScript/Python path
 └── v8go  (V8)      hard sandbox; cgo; not recommended at high concurrency
 
-Plugin  (a code extension that adds platform capability; runs IN the Extension Runtime)  (HIP-0116)
+Plugin  (a code extension that adds platform capability; runs IN the Extension Runtime)  (HIP-0106)
 ```
 
 **Definitions (normative):**
@@ -74,7 +74,7 @@ Plugin  (a code extension that adds platform capability; runs IN the Extension R
   the Extension Runtime (HIP-0105). Answers *how code runs*, never *what is
   connected*.
 - **Plugin** — a code Extension that adds platform capability (the VM/subsystem
-  model, HIP-0116). A Plugin runs in the Extension Runtime.
+  model, HIP-0106). A Plugin runs in the Extension Runtime.
 
 ## Specification
 
@@ -179,7 +179,7 @@ Extension Runtime (HIP-0105)**. There is ONE execution model:
 ### 7. Plugin — a code extension in the runtime
 
 A **Plugin** is a code Extension that adds platform capability (a subsystem / VM),
-specified by **HIP-0116**. A Plugin *runs in* the Extension Runtime; "plugin" is
+specified by **HIP-0106**. A Plugin *runs in* the Extension Runtime; "plugin" is
 therefore a specialization of "extension," never a synonym for "integration" or
 "connector." The reference impl lives at
 `~/work/hanzo/base/plugins/{extruntime,gojavm,wasmvm,v8vm}` (base#3).
@@ -200,7 +200,7 @@ therefore a specialization of "extension," never a synonym for "integration" or
 5. **Four engines, one interface.** The Extension Runtime is the ONE execution
    model; no service invents a fifth in-process code host.
 6. **Reference, don't duplicate.** Provider (HIP-0004), Tool (HIP-0010), Flows
-   (HIP-0034), Runtime (HIP-0105), Plugin (HIP-0116) remain the authoritative
+   (HIP-0034), Runtime (HIP-0105), Plugin (HIP-0106) remain the authoritative
    specs; this HIP aligns them into the taxonomy and does not restate their
    internals.
 
@@ -217,7 +217,7 @@ authority for its slice.
 | HIP-0052 | Nexus integration hub | **Disambiguation:** Nexus is the INTERNAL *service* mesh/registry (K8s Services, routing, circuit-breaking). It is NOT the external Integrations registry. Orthogonal — different axis, no overlap |
 | HIP-0105 | In-process extension runtime | Owns the **4-engine Runtime**; this HIP names it the ONE execution model for integration/plugin logic |
 | HIP-0113 | Provider runtime | Provider-kind execution; referenced by the Provider kind |
-| HIP-0116 | Plugin & VM model | Owns **Plugin**; this HIP positions Plugin as an Extension in the runtime |
+| HIP-0106 | Plugin & VM model | Owns **Plugin**; this HIP positions Plugin as an Extension in the runtime |
 | HIP-0124 | BYO provider & AI | BYO Providers; a registry Provider-kind onboarding path |
 
 **Note on HIP-0052.** Its title ("Integration Hub") reads adjacent, but its
@@ -237,7 +237,7 @@ two never collide; this HIP does not modify HIP-0052.
 | Providers (unified interface, gateway, BYO) | **Shipped** | HIP-0004 gateway, HIP-0113, HIP-0124 |
 | Tools (MCP) | **Shipped** | HIP-0010; `POST /v1/automations/mcp` |
 | Extension Runtime (4 engines, manifest) | **Shipped** | base#3 `plugins/{extruntime,gojavm,wasmvm,v8vm}`; cloud `clients/gojahost`, `clients/plugin`, `clients/framework/hook.go` (HIP-0105) |
-| Plugin / VM model | **Shipped (spec)** | HIP-0116 |
+| Plugin / VM model | **Shipped (spec)** | HIP-0106 |
 | **Unified cross-kind registry surface** (one API listing Connector+Provider+Tool under one config/auth surface) | **Staged** | today: connectors in automations, providers at gateway, tools in MCP — same lifecycle, not yet one endpoint |
 | Flow-step schema aligned to connector vocabulary (`PIECE`→…, `pieceName`→…) | **Staged** | retained for builder + stored-flow back-compat; needs builder-coordinated migration |
 
@@ -290,7 +290,7 @@ two never collide; this HIP does not modify HIP-0052.
 - HIP-0106 — Unified Hanzo Cloud Binary
 - HIP-0111 — Hanzo IAM Authentication Standard
 - HIP-0113 — Cognitive Sidecar & Hanzo Engine Provider Runtime
-- HIP-0116 — Hanzo Plugin & VM Model
+- HIP-0106 — Hanzo Plugin & VM Model
 - HIP-0118 — SuperAdmin & Tenant Isolation Model
 - HIP-0124 — Bring-Your-Own Provider & AI
 

@@ -4,7 +4,7 @@ title: OpenAPI — The Served Contract
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Active
+status: Final
 created: 2026-08-20
 requires: HIP-0119, HIP-0122, HIP-0128, HIP-0135, HIP-0139
 capability: openapi

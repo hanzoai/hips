@@ -4,7 +4,7 @@ title: Serving Topology — Three Tiers, Horizontally Scalable, Pinned Per Entit
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-07-29
 requires: HIP-0519
 ---

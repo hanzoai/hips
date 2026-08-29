@@ -4,10 +4,10 @@ title: Hamiltonian Large Language Models (HLLMs) Specification
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2024-12-20
 updated: 2025-01-09
-requires: HIP-1
+requires: HIP-0001
 ---
 
 
@@ -181,8 +181,8 @@ class HLLMArchitecture:
 - **Evaluation Suite**: [github.com/hanzoai/hllm-eval](https://github.com/hanzoai/hllm-eval)
 
 3. [Gemini: A Family of Multimodal Models](https://arxiv.org/abs/2312.11805)
-4. [HIP-0: Hanzo AI Architecture](./hip-0.md)
-5. [HIP-5: Post-Quantum Security](./hip-5.md)
+4. [HIP-0000: Hanzo AI Architecture & Framework](./hip-0000-hanzo-ai-architecture-framework.md)
+5. [HIP-0005: Post-Quantum Security for AI Infrastructure](./hip-0005-post-quantum-security-for-ai-infrastructure.md)
 
 ## Copyright
 

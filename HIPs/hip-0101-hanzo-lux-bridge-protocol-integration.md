@@ -5,7 +5,7 @@ description: Lock-and-mint bridge between Hanzo's AI-optimized L1 and Lux Networ
 author: Hanzo AI Team
 type: Standards Track
 category: Bridge
-status: Draft
+status: Final
 created: 2025-01-15
 updated: 2026-02-23
 requires: HIP-0001, HIP-0005, HIP-0008, HIP-0024

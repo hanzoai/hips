@@ -4,7 +4,7 @@ title: Hanzo Studio — Agentic Multi-Modal Creative Runtime
 author: Hanzo AI Team
 type: Standards Track
 category: Application
-status: Draft
+status: Final
 created: 2026-07-15
 requires: HIP-0106, HIP-0504
 ---

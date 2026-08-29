@@ -5,7 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Core
 capability: translate
-status: Active
+status: Final
 created: 2026-07-26
 requires: HIP-0026, HIP-0139
 ---

@@ -4,10 +4,10 @@ title: Blockchain Node Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2025-01-09
 updated: 2026-02-23
-requires: 0000, 0001, 0008, 0019
+requires: HIP-0000, HIP-0001, HIP-0008, HIP-0019
 ---
 
 

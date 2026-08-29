@@ -4,7 +4,7 @@ title: "esign: shared-DB tenancy via team-where, not file-per-tenant"
 author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-06-21
 requires: HIP-0302
 ---

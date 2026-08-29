@@ -4,9 +4,9 @@ title: Computer Control Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2025-01-09
-requires: HIP-9, HIP-10
+requires: HIP-0009, HIP-0010
 ---
 
 
@@ -870,7 +870,7 @@ When Operative is deployed remotely (Docker, cloud), the connection between agen
 | HIP-9 (Agent SDK) | Agents invoke computer use through the Agent SDK's tool interface |
 | HIP-10 (MCP) | Computer use exposed as MCP tools (`computer`, `screen`, `browser`) |
 | HIP-4 (LLM Gateway) | Visual reasoning requests routed through the LLM Gateway |
-| HIP-11 (Chat Interface) | Chat UI can display computer use sessions inline |
+| HIP-1211 (Chat Interface) | Chat UI can display computer use sessions inline |
 | HIP-14 (App Deployment) | Operative containers deployed via the application platform |
 
 ### Migration from Existing Tools

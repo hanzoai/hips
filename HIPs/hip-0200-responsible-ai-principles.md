@@ -3,7 +3,7 @@ hip: 200
 title: Responsible AI Principles and Commitments
 author: Hanzo AI Team
 type: Meta
-status: Draft
+status: Living
 created: 2025-12-16
 ---
 

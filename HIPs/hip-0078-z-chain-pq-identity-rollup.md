@@ -5,7 +5,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 author: Hanzo AI
-requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity, Gossip & Payments), HIP-0079 (Q-Chain Finality Blocks), HIP-0084 (Pulsar-M DKG)
+requires: HIP-0005, HIP-0077, HIP-0079, HIP-0084
 created: 2026-05-10
 ---
 

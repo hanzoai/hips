@@ -4,7 +4,7 @@ title: ZAP-Native Transport & gRPC Elimination
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-07-07
 requires: HIP-0106, HIP-0114
 ---
@@ -258,7 +258,7 @@ enforceable: **zero first-party gRPC imports.**
 
 ## References
 
-- [HIP-0138: Cloud — Unified Hanzo Binary](./hip-0138-unified-hanzo-cloud-binary.md) — ZAP as the inter-subsystem contract; the canonical Hanzo Go stack; the "no `.capnp` in Hanzo-authored source" policy.
+- [HIP-0106: The Hanzo Plugin Contract](./hip-0106-hanzo-plugin-contract.md) — ZAP as the inter-subsystem contract; the canonical Hanzo Go stack; the "no `.capnp` in Hanzo-authored source" policy.
 - HIP-0112: Cloud Topology — `ingress → gateway → services`; the external edge where HTTP/WS terminate and identity headers are minted.
 - [HIP-0114: ZAP — Inter-VM Cognitive Transport for Thinking Chains](./hip-0114-zap-inter-vm-cognitive-transport.md) — ZAP as the inter-VM transport; "ZAP transports; proofs commit; receipts settle; VMs execute."
 - `github.com/zap-proto/{go,zip,http,ws,web,zapd,zap-spec}` — the ZAP transport and framework ecosystem.

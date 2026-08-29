@@ -4,9 +4,9 @@ title: Serverless Functions (FaaS) Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-02-23
-requires: HIP-0030, HIP-0050, HIP-0139
+requires: HIP-1061, HIP-0050, HIP-0139
 capability: functions
 ---
 
@@ -21,7 +21,7 @@ Functions are the smallest deployable unit of compute in the Hanzo platform. Whe
 
 The registry accepts six runtimes today — `node`, `python`, `go`, `deno`, `bash` and `container` (BYO image) — the closed set in `apps/functions/functions.go:52-55`, mapped to the sandbox executor's language table. The pre-warmed AI base images this paragraph used to promise (PyTorch/ONNX/Candle pre-installed) are design, not shipped artifacts.
 
-AI-specific triggers connect functions to the broader Hanzo infrastructure: model inference events from the LLM Gateway (HIP-0004), webhook delivery, scheduled retraining cycles, data pipeline stages from Hanzo Stream (HIP-0030), and async task invocation from Hanzo MQ (HIP-0055). Functions can also be deployed to the Edge (HIP-0050) for latency-sensitive invocation without GPU requirements.
+AI-specific triggers connect functions to the broader Hanzo infrastructure: model inference events from the LLM Gateway (HIP-0004), webhook delivery, scheduled retraining cycles, data pipeline stages from Hanzo Stream (HIP-1061), and async task invocation from Hanzo MQ (HIP-0055). Functions can also be deployed to the Edge (HIP-0050) for latency-sensitive invocation without GPU requirements.
 
 **Serving**: `apps/functions` in `hanzoai/cloud`, at `/v1/functions` (`manifest/apps.go:176`) — the registry and invoke endpoint ship inside the cloud binary (`plugin/functions`), not as a standalone service with its own ports, image or `hanzo-fn` binary; the CLI is the generated `hanzo functions` command group (HIP-1030)
 
@@ -69,7 +69,7 @@ Each step has different resource requirements (CPU vs. GPU), different scaling c
 
 Functions let you decompose the pipeline into independent units. The embedding step runs on a GPU function. Every other step runs on a CPU function. The GPU function scales independently based on its queue depth. If the embedding step fails, it retries independently without re-running text extraction.
 
-The glue between steps is Hanzo Stream (HIP-0030) for durable event-driven pipelines and Hanzo MQ (HIP-0055) for async task invocation. Functions subscribe to stream topics or MQ subjects and are triggered automatically when events arrive.
+The glue between steps is Hanzo Stream (HIP-1061) for durable event-driven pipelines and Hanzo MQ (HIP-0055) for async task invocation. Functions subscribe to stream topics or MQ subjects and are triggered automatically when events arrive.
 
 ### Why Not Just Use Kubernetes Jobs
 
@@ -252,7 +252,7 @@ are referenced designs, not vendored code.
      │                    │    │                    │
   ┌──┴───┐  ┌──────┐  ┌──┴──┐ │ ┌──────┐  ┌─────┐ │
   │Stream│  │  MQ  │  │HTTP │ │ │Model │  │GPU  │ │
-  │HIP-30│  │HIP-55│  │     │ │ │Cache │  │Pool │ │
+  │HIP-1061│  │HIP-55│  │     │ │ │Cache │  │Pool │ │
   └──────┘  └──────┘  └─────┘ │ └──────┘  └─────┘ │
                                └───────────────────┘
 ```
@@ -372,9 +372,9 @@ The `Context` object provides:
 | `ctx.headers` | dict | HTTP headers (for HTTP triggers) or message headers |
 | `ctx.trigger` | TriggerInfo | Trigger metadata (type, source, timestamp) |
 | `ctx.model(name)` | Model | Load a model from the GPU model cache |
-| `ctx.kv` | KVClient | KV client (HIP-0028) |
+| `ctx.kv` | KVClient | KV client (HIP-1164) |
 | `ctx.storage` | StorageClient | Object storage client (HIP-0032) |
-| `ctx.publish(subject, data)` | None | Publish to MQ (HIP-0055) or Stream (HIP-0030) |
+| `ctx.publish(subject, data)` | None | Publish to MQ (HIP-0055) or Stream (HIP-1061) |
 | `ctx.log` | Logger | Structured logger with request correlation ID |
 
 #### Go Runtime
@@ -502,7 +502,7 @@ triggers:
 
 The Trigger Manager runs a NATS consumer in the specified consumer group. When a message arrives, it invokes the function via HTTP and acknowledges the message only after the function returns successfully. If the function fails, the message is nacked and redelivered per the MQ queue's retry policy.
 
-#### Stream Trigger (HIP-0030)
+#### Stream Trigger (HIP-1061)
 
 Invokes the function when an event is published to a Kafka topic.
 
@@ -1007,8 +1007,8 @@ User function code is injected into these base images at deployment time. The co
 | **HIP-19** (Tensor Operations) | Candle library used in Rust GPU runtime for tensor operations. |
 | **HIP-26** (IAM) | Authentication for function deployment and HTTP trigger invocation. |
 | **HIP-27** (KMS) | Secret injection into function environments. |
-| **HIP-28** (KV Store) | Functions access KV via `ctx.kv` for caching and state. |
-| **HIP-30** (Event Streaming) | Stream trigger consumes Kafka topics. Functions publish to Stream. |
+| **HIP-1164** (KV Store) | Functions access KV via `ctx.kv` for caching and state. |
+| **HIP-1061** (Event Streaming) | Stream trigger consumes Kafka topics. Functions publish to Stream. |
 | **HIP-31** (Observability) | Prometheus metrics and structured logging. |
 | **HIP-32** (Object Storage) | Model cache storage. Container snapshot storage. Function access via `ctx.storage`. |
 | **HIP-106** (Cloud) | Functions are a deployment target within the Cloud platform. |
@@ -1025,7 +1025,7 @@ User function code is injected into these base images at deployment time. The co
 3. [CRIU: Checkpoint/Restore in Userspace](https://criu.org/Main_Page)
 4. [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/)
 5. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
-6. [HIP-30: Event Streaming Standard](./hip-0030-event-streaming-standard.md)
+6. [HIP-1061: MQ — Queues and Streams](./hip-1061-mq-queues-and-streams.md)
 7. [HIP-43: LLM Inference Engine Standard](./hip-0043-llm-inference-engine-standard.md)
 8. [HIP-50: Edge Computing Standard](./hip-0050-edge-computing-standard.md)
 9. HIP-55: Message Queue Standard

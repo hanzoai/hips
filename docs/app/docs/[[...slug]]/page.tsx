@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ExternalLink, Calendar, User, Tag, FileText, CheckCircle } from 'lucide-react';
+import { STATUSES, statusClass } from '@/lib/status';
 
 interface PageProps {
   params: Promise<{ slug?: string[] }>;
@@ -44,16 +45,6 @@ function DocsIndexPage() {
   const categories = source.getCategorizedPages();
   const stats = source.getStats();
 
-  const statusColors: Record<string, string> = {
-    Draft: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-    Review: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    'Last Call': 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    Final: 'bg-green-500/10 text-green-500 border-green-500/20',
-    Withdrawn: 'bg-red-500/10 text-red-500 border-red-500/20',
-    Stagnant: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-    Superseded: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">All Hanzo Improvement Proposals</h1>
@@ -68,18 +59,12 @@ function DocsIndexPage() {
           <div className="text-2xl font-bold">{stats.total}</div>
           <div className="text-xs text-muted-foreground">Total</div>
         </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-green-500">{stats.byStatus['Final'] || 0}</div>
-          <div className="text-xs text-muted-foreground">Final</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-blue-500">{stats.byStatus['Review'] || 0}</div>
-          <div className="text-xs text-muted-foreground">Review</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-yellow-500">{stats.byStatus['Draft'] || 0}</div>
-          <div className="text-xs text-muted-foreground">Draft</div>
-        </div>
+        {STATUSES.map((s) => (
+          <div key={s} className="text-center">
+            <div className={`text-2xl font-bold ${statusClass(s).split(' ')[1]}`}>{stats.byStatus[s] || 0}</div>
+            <div className="text-xs text-muted-foreground">{s}</div>
+          </div>
+        ))}
       </div>
 
       {/* Categories */}
@@ -110,12 +95,7 @@ function DocsIndexPage() {
                   {hip.data.title}
                 </span>
                 {hip.data.frontmatter.status && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
-                    hip.data.frontmatter.status === 'Final' ? 'bg-green-500/10 text-green-500' :
-                    hip.data.frontmatter.status === 'Draft' ? 'bg-yellow-500/10 text-yellow-500' :
-                    hip.data.frontmatter.status === 'Review' ? 'bg-blue-500/10 text-blue-500' :
-                    'bg-gray-500/10 text-gray-500'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${statusClass(hip.data.frontmatter.status)}`}>
                     {hip.data.frontmatter.status}
                   </span>
                 )}
@@ -145,16 +125,6 @@ export default async function Page({ params }: PageProps) {
 
   const { frontmatter, content, title } = page.data;
 
-  const statusColors: Record<string, string> = {
-    Draft: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-    Review: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    'Last Call': 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    Final: 'bg-green-500/10 text-green-500 border-green-500/20',
-    Withdrawn: 'bg-red-500/10 text-red-500 border-red-500/20',
-    Stagnant: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-    Superseded: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-  };
-
   return (
     <main className="container py-8 max-w-4xl mx-auto px-4">
       {/* Navigation */}
@@ -173,7 +143,7 @@ export default async function Page({ params }: PageProps) {
             HIP-{frontmatter.hip}
           </span>
           {frontmatter.status && (
-            <span className={`text-sm px-2 py-1 rounded border ${statusColors[frontmatter.status] || statusColors.Draft}`}>
+            <span className={`text-sm px-2 py-1 rounded border ${statusClass(frontmatter.status)}`}>
               {frontmatter.status}
             </span>
           )}

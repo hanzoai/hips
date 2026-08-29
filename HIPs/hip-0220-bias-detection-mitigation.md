@@ -5,10 +5,10 @@ tags: [ai-ethics, fairness, bias, evaluation]
 description: Framework for detecting, measuring, and mitigating bias in AI systems.
 author: Hanzo AI Team (@hanzoai)
 discussions-to: https://github.com/hanzoai/hips/discussions
-status: Draft
+status: Living
 type: Meta
 created: 2025-12-17
-requires: [200, 201]
+requires: HIP-0200, HIP-0201
 ---
 
 

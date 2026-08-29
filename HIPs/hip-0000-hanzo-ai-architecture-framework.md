@@ -3,7 +3,7 @@ hip: 0000
 title: Hanzo AI Architecture & Framework
 author: Hanzo AI Team
 type: Meta
-status: Draft
+status: Living
 created: 2024-12-20
 ---
 

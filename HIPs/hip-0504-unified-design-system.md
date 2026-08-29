@@ -4,9 +4,9 @@ title: Unified Cross-Platform Design System
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2026-06-24
-requires: HIP-36
+requires: HIP-0036
 ---
 
 

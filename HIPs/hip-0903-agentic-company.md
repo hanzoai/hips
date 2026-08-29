@@ -4,7 +4,7 @@ title: The Agentic Company — Autonomous Firms on Hanzo
 author: Hanzo AI Team
 type: Informational
 category: Meta
-status: Draft
+status: Final
 created: 2026-07-26
 requires: HIP-0902, HIP-1312
 ---

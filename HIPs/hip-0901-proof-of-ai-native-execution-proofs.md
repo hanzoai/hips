@@ -4,7 +4,7 @@ title: Proof of AI (PoAI) — Native Execution Proofs, Canonical Contract & Oper
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Active
+status: Draft
 created: 2026-06-23
 updated: 2026-06-24
 mirrors: LP-302, ZIP-0419

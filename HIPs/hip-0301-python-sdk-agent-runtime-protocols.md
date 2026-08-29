@@ -4,9 +4,9 @@ title: Agent Runtime Protocols & Cross-Platform Parity
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-03-31
-requires: HIP-9, HIP-10
+requires: HIP-0009, HIP-0010
 ---
 
 

@@ -4,7 +4,7 @@ title: Agents — Define, Run, Keep the Run
 author: Hanzo AI
 type: Standards Track
 category: Application
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0139, HIP-0026, HIP-0106
 capability: agents

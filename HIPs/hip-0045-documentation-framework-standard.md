@@ -4,7 +4,7 @@ title: Documentation Framework Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2026-02-23
 requires: HIP-0010
 ---
@@ -35,7 +35,7 @@ We forked it because we need capabilities that do not fit upstream's scope:
 
 - **Multi-brand theming**: Fumadocs assumes one site = one brand. We need a single deployment pipeline that produces five visually distinct sites from shared content structure. This requires deep changes to the theming layer (CSS variable namespacing, brand-aware component variants, per-site layout configuration).
 
-- **Custom search**: Fumadocs provides Orama-based search per site. We need cross-site federated search and integration with our own search API (HIP-0012). This requires changes to the search indexing pipeline and client.
+- **Custom search**: Fumadocs provides Orama-based search per site. We need cross-site federated search and integration with our own search API (HIP-1147). This requires changes to the search indexing pipeline and client.
 
 - **OpenAPI generation**: While Fumadocs has an OpenAPI plugin, we need tighter integration -- generating pages that match our API playground format, supporting our authentication flows, and rendering response schemas with our type table components.
 
@@ -351,7 +351,7 @@ export const { GET } = createSearchAPI({
 
 #### Custom Search API
 
-For integration with Hanzo Search (HIP-0012):
+For integration with Hanzo Search (HIP-1147):
 
 ```typescript
 import { createSearchAPI } from '@hanzo/docs-core/search/server';
@@ -958,7 +958,7 @@ pnpm build
 7. [Changesets Version Management](https://github.com/changesets/changesets)
 8. [Turbo Build System](https://turbo.build/)
 9. [HIP-0010: Model Context Protocol Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
-10. [HIP-0012: Search Interface Standard](./hip-0012-search-interface-standard.md)
+10. [HIP-1147: Search — Hybrid Retrieval](./hip-1147-search-hybrid-retrieval.md)
 11. [HIP-0036: CI/CD Build System Standard](./hip-0036-ci-cd-build-system-standard.md)
 
 ## Copyright

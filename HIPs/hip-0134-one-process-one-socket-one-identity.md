@@ -4,9 +4,9 @@ title: One Process, One Socket, One Identity
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Active
+status: Final
 created: 2026-07-28
-requires: HIP-0106, HIP-0114, HIP-0116, HIP-0120, HIP-0122
+requires: HIP-0106, HIP-0114, HIP-0120, HIP-0122
 ---
 
 
@@ -14,7 +14,7 @@ requires: HIP-0106, HIP-0114, HIP-0116, HIP-0120, HIP-0122
 
 ## Abstract
 
-Every Hanzo service is a plugin of the `cloud` binary (HIP-0106, HIP-0116).
+Every Hanzo service is a plugin of the `cloud` binary (HIP-0106, HIP-0106).
 Plugins reach each other over ZAP on unix domain sockets. IAM is the only
 thing that reads a JWT, and the principal it establishes is what every other
 plugin uses.
@@ -148,6 +148,6 @@ not a forged header, not a reachable port, not a stolen bearer token.
 - HIP-0106 — Cloud: unified Hanzo binary
 - HIP-0113 — Ops listener: health, readiness, metrics
 - HIP-0114 — ZAP inter-VM cognitive transport
-- HIP-0116 — Plugin & VM model
+- HIP-0106 — Plugin & VM model
 - HIP-0120 — ZAP-native transport, gRPC elimination
 - HIP-0122 — zip: the ZAP-native application server core

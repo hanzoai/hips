@@ -4,7 +4,7 @@ title: Post-Quantum Security for AI Infrastructure
 author: Hanzo AI Team
 type: Standards Track
 category: Security
-status: Draft
+status: Final
 created: 2024-12-20
 requires: LP-100
 ---
@@ -118,7 +118,7 @@ lementation
 
 1. [LP-100: NIST PQC Integration for Lux](https://github.com/luxfi/lps/blob/main/LPs/lp-100.md)
 2. [NIST PQC Project](https://csrc.nist.gov/projects/post-quantum-cryptography)
-3. [HIP-1: Hanzo Multimodal Models](./hip-1.md)
+3. [HIP-0003: Jin Multimodal AI Architecture](./hip-0003-jin-multimodal-ai-architecture.md)
 
 ## Copyright
 

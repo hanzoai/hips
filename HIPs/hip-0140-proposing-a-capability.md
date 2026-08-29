@@ -4,7 +4,7 @@ title: Proposing a Capability
 author: Hanzo AI
 type: Meta
 category: Core
-status: Draft
+status: Living
 created: 2026-08-20
 requires: HIP-0139
 ---

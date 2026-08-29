@@ -4,7 +4,7 @@ title: "Open-Core Split — the Tenancy Line, the Composition Root, and Lazy Sub
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-07-27
 requires: HIP-0106, HIP-0127
 ---

@@ -5,7 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Interface
 capability: skills
-status: Draft
+status: Final
 created: 2026-08-21
 requires: HIP-0106, HIP-0139
 ---

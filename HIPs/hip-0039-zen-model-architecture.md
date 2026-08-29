@@ -4,7 +4,7 @@ title: Zen Model Architecture
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2025-01-15
 requires: HIP-0002, HIP-0004
 ---
@@ -281,7 +281,7 @@ spec:
         - containerPort: 8000
 ```
 
-### Chat Integration (HIP-0011)
+### Chat Integration (HIP-1211)
 
 Hanzo Chat exposes 14 Zen model variants to end users:
 
@@ -397,7 +397,7 @@ Watermarking:
 Metering:
   Granularity: Per-request, per-token
   Fields: model, input_tokens, output_tokens, latency_ms, user_id
-  Storage: Analytics pipeline (HIP-0017)
+  Storage: Analytics pipeline (HIP-1190)
 
 Billing Integration:
   Credits: IAM user balance (HIP-0026)

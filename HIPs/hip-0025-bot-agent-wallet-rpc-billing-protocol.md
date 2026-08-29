@@ -4,9 +4,9 @@ title: Bot Agent Wallet & RPC Billing Protocol
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-02-14
-requires: HIP-1, HIP-18, HIP-24, HIP-101
+requires: HIP-0001, HIP-0018, HIP-0024, HIP-0101
 ---
 
 

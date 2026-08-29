@@ -6,7 +6,7 @@ type: Standards Track
 category: Core
 status: Draft
 created: 2026-06-21
-requires: 0113
+requires: HIP-0113
 ---
 
 

@@ -20,6 +20,7 @@ build; they are drift that is worth seeing and not worth blocking on.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -27,33 +28,21 @@ from collections import Counter, defaultdict
 
 HIP_DIR = "HIPs"
 README = "README.md"
+VOCABULARY = "vocabulary.json"
 
 # ---------------------------------------------------------------------------
-# The closed vocabularies. README documents these in prose; this is the machine
-# copy, and README's "Types of HIPs" / "HIP Process" sections must agree.
+# The closed vocabularies live in ONE file, which the doc site imports too.
+# They used to be written out by hand here, in README's prose, and again as a
+# TypeScript union in docs/lib/source.ts -- which admitted a 'Stagnant' no file
+# has ever carried and omitted the one 52 files DID carry, so every one of those
+# rendered with the fallback badge. Nine hand-kept copies of one list is eight
+# too many.
 # ---------------------------------------------------------------------------
 
-STATUS = {
-    "Draft",       # written, not yet reviewed
-    "Review",      # under review by HIP editors
-    "Last Call",   # final review window before Final
-    "Final",       # accepted as standard; changes need a new HIP
-    "Active",      # accepted and continuously updated (living standards)
-    "Superseded",  # replaced; MUST carry superseded-by
-    "Withdrawn",   # abandoned by its author
-}
 
-TYPE = {
-    "Standards Track",  # describes a thing we build and maintain
-    "Process",          # how we work: numbering, branch names, what is public
-    "Meta",             # governance and principles
-    "Informational",    # guidance that normatively requires nothing
-}
-
-CATEGORY = {
-    "Core", "Interface", "Infrastructure", "Security", "Cryptography",
-    "Operator", "Bridge", "Governance", "Meta", "Application", "Platform",
-}
+def vocabulary(root: str | None = None) -> dict:
+    path = os.path.join(root, VOCABULARY) if root else VOCABULARY
+    return json.loads(open(path, encoding="utf-8").read())
 
 REQUIRED_FIELDS = ("hip", "title", "author", "type", "status", "created")
 
@@ -135,7 +124,7 @@ CHECKS = [
     ("FM005", "type: is outside the closed vocabulary"),
     ("FM006", "category: is outside the closed vocabulary, or missing on Standards Track"),
     ("FM007", "requires: names a HIP that does not exist"),
-    ("FM008", "superseded-by is dangling, or Superseded carries no target"),
+    ("FM008", "a tombstone field: superseded-by, or a status this corpus deleted"),
     ("FM009", "filename is not hip-NNNN-kebab-case.md"),
     ("ST001", "body has no H1, or more than one"),
     ("ST002", "H1 does not read 'HIP-NNNN: <title from front matter>'"),
@@ -144,17 +133,22 @@ CHECKS = [
     ("ST005", "a required section is missing"),
     ("ST006", "an unterminated code fence swallows the rest of the file"),
     ("ST007", "a subsection number does not extend its parent section number"),
-    ("IX001", "README links a HIP file that does not exist"),
-    ("IX002", "a HIP in HIPs/ is unreachable from the README index"),
+    ("LK001", "a link into HIPs/ names a file that does not exist"),
     ("IX003", "two files claim one HIP number"),
-    ("IX004", "a README index row disagrees with the file's front matter"),
     ("PL001", "normative comparison to a third-party product"),
     ("PL002", "the spec depends on a repository in the private org"),
 ]
 
-# Where the projection lives. README holds more than one table of HIP links and
-# only this section is the index; see index_check.
-INDEX_HEADING = "## HIP Index"
+# README's index is NOT checked here any more. It is GENERATED, and
+# `scripts/index.py --check` regenerates it and compares. This file used to hold
+# a second implementation of what the projection is -- row-by-row title, type,
+# category and status comparisons -- so a change to the table's shape had to be
+# made in two places that could disagree. The generator is the one statement.
+
+# A link written as ](./hip-xxxx-....md) or ](../HIPs/hip-....md). LK001 is what
+# makes deleting a HIP safe: 16 tombstones were removed in one commit and this
+# refuses until every document that pointed at one points at its successor.
+HIP_LINK = re.compile(r"\]\(\.{1,2}/(?:HIPs/)?(hip-[0-9a-zA-Z-]+\.md)[^)]*\)")
 
 
 class Report:
@@ -228,6 +222,9 @@ def hip_numbers_in(value: str) -> list[int]:
 
 def lint() -> Report:
     rep = Report()
+    vocab = vocabulary()
+    STATUS, TYPE = set(vocab["status"]), set(vocab["type"])
+    CATEGORY = set(vocab["category"])
     files = sorted(f for f in os.listdir(HIP_DIR) if f.endswith(".md"))
 
     by_number: dict[int, list[str]] = defaultdict(list)
@@ -291,12 +288,18 @@ def lint() -> Report:
             if target not in known:
                 rep.error("FM007", name, f"requires HIP-{target:04d}, which does not exist")
 
-        superseded_by = fm.get("superseded-by", "")
-        if status == "Superseded" and not superseded_by:
-            rep.error("FM008", name, "status is Superseded but no superseded-by:")
-        for target in hip_numbers_in(superseded_by):
-            if target not in known:
-                rep.error("FM008", name, f"superseded-by HIP-{target:04d}, which does not exist")
+        # A superseded HIP is DELETED and its successor carries the text. Keeping
+        # the dead document alive in the index under a tombstone status is one
+        # concept wearing two names, which is the defect this corpus exists to
+        # remove; `superseded-by` is the field that pointed at the other name.
+        if "superseded-by" in fm:
+            rep.error("FM008", name,
+                      "carries superseded-by. A superseded HIP is deleted and its "
+                      "successor carries the text; there is no tombstone status.")
+
+        for link in HIP_LINK.findall(body):
+            if link not in set(files):
+                rep.error("LK001", name, f"links {link}, which does not exist")
 
         # ---- structure -------------------------------------------------
         heads, unterminated = headings(body)
@@ -357,12 +360,9 @@ def lint() -> Report:
                               f"{parent_num}; it should extend {parent_num}.")
             stack.append((lvl, f"{lvl}:{lineno}:{txt[:32]}", num))
 
-        # A Superseded or Withdrawn HIP is a tombstone: a pointer to whatever
-        # replaced it. Requiring it to carry a full Abstract and Specification
-        # is requiring prose that should not be written, since the live text
-        # lives in the successor. HIP-0116 is the shape -- two sections, both
-        # of which say "go read HIP-0106".
-        if fm.get("type") == "Standards Track" and fm.get("status") not in ("Superseded", "Withdrawn"):
+        # Every Standards Track HIP in the corpus is live text now -- the
+        # tombstones that were exempt from this are deleted, not statused.
+        if fm.get("type") == "Standards Track":
             present = {txt.lower() for _, lvl, txt in heads if lvl == 2}
             for want in REQUIRED_SECTIONS:
                 if want.lower() not in present:
@@ -388,63 +388,7 @@ def lint() -> Report:
                 rep.error("PL002", name,
                           f"depends on the private repository {hit.group(0)}")
 
-    index_check(files, meta, rep)
     return rep
-
-
-def index_check(files, meta, rep: Report) -> None:
-    """README's table is a projection of HIPs/. Prove it still projects.
-
-    Only the index. README carries a second table of HIP links -- the reading
-    order, the same corpus in the order it is learnable, whose columns are a
-    link, a count and a title. Reading the whole file matched those rows too and
-    compared a required-by count against a `type:`, so the projection check
-    failed on a section that is not the projection. The index starts at its own
-    heading and ends at the next one.
-    """
-    src = open(README, encoding="utf-8").read()
-    start = src.find(INDEX_HEADING)
-    if start == -1:
-        rep.error("IX001", README, f"has no {INDEX_HEADING!r} section")
-        return
-    rest = src[start + len(INDEX_HEADING):]
-    nxt = re.search(r"\n## [^#]", rest)
-    src = rest[: nxt.start()] if nxt else rest
-    rows = re.findall(
-        r"^\|\s*\[HIP-(\d{4})\]\(\./HIPs/([^)]+)\)\s*\|([^|]*)\|([^|]*)\|([^|]*)\|([^|]*)\|",
-        src, re.M)
-
-    linked = {r[1] for r in rows}
-    have = set(files)
-    for missing in sorted(linked - have):
-        rep.error("IX001", README, f"links ./HIPs/{missing}, which does not exist")
-    for unreached in sorted(have - linked):
-        rep.error("IX002", unreached, "is unreachable from the README index")
-
-    for num, fname, title, htype, category, status in rows:
-        if fname not in meta:
-            continue
-        fm = meta[fname][0]
-        title, htype, category, status = (x.strip() for x in (title, htype, category, status))
-        if htype and fm.get("type", "") != htype:
-            rep.error("IX004", f"{README} HIP-{num}",
-                      f"row says type {htype!r}, file says {fm.get('type','')!r}")
-        if status and fm.get("status", "") != status:
-            rep.error("IX004", f"{README} HIP-{num}",
-                      f"row says status {status!r}, file says {fm.get('status','')!r}")
-        want_cat = fm.get("category", "") or "-"
-        if category and category != want_cat:
-            rep.error("IX004", f"{README} HIP-{num}",
-                      f"row says category {category!r}, file says {want_cat!r}")
-        # The table truncates long titles with an ellipsis; compare the prefix.
-        want_title = fm.get("title", "")
-        if title.endswith("..."):
-            if not want_title.startswith(title[:-3]):
-                rep.error("IX004", f"{README} HIP-{num}",
-                          f"row title {title!r} is not a prefix of {want_title!r}")
-        elif title != want_title:
-            rep.error("IX004", f"{README} HIP-{num}",
-                      f"row says title {title!r}, file says {want_title!r}")
 
 
 def main() -> int:

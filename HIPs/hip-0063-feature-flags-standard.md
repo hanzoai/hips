@@ -4,9 +4,9 @@ title: Feature Flags Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2026-02-23
-requires: HIP-0017, HIP-0139, HIP-1311
+requires: HIP-1190, HIP-0139, HIP-1311
 capability: flags
 ---
 
@@ -371,7 +371,7 @@ capability-local exporter.
 ## References
 
 1. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
-2. [HIP-17: Analytics Event Standard](./hip-0017-analytics-event-standard.md)
+2. [HIP-1190: Event — The Product Analytics Plane](./hip-1190-event-product-analytics.md)
 3. HIP-44: API Gateway Standard
 4. [OpenFeature Specification](https://openfeature.dev/specification/)
 5. [OpenFeature Go SDK](https://github.com/open-feature/go-sdk)

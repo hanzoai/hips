@@ -4,9 +4,9 @@ title: Per-User Fine-Tuning Architecture for Personalized AI
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2024-12-20
-requires: HIP-1, LP-102
+requires: HIP-0001, LP-102
 ---
 
 

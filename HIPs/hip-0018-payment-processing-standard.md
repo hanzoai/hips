@@ -4,10 +4,10 @@ title: Payment Processing Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2025-01-09
 updated: 2026-02-23
-requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30, HIP-0139
+requires: HIP-0001, HIP-0004, HIP-0026, HIP-0027, HIP-1061, HIP-0139
 capability: billing
 ---
 
@@ -588,7 +588,7 @@ When a user's balance reaches zero during an API request:
 4. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) - Agent-level billing built on Commerce
 5. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - Balance storage and transaction ledger
 6. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for PSP keys and secrets
-7. [HIP-30: Event Streaming Standard](./hip-0030-event-streaming-standard.md) - Billing event distribution
+7. [HIP-1061: MQ — Queues and Streams](./hip-1061-mq-queues-and-streams.md) - Billing event distribution
 8. HIP-32: Object Storage Standard - Invoice PDF storage
 9. [HIP-101: Hanzo-Lux Bridge Protocol](./hip-0101-hanzo-lux-bridge-protocol-integration.md) - Cross-chain payment acceptance
 10. [Hanzo Pay (native PSP) — `github.com/lux-pay`](https://github.com/lux-pay) (white-labeled `lux-pay` on Lux)

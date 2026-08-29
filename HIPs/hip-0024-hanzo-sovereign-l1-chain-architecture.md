@@ -4,7 +4,7 @@ title: Hanzo Sovereign L1 Chain Architecture
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2025-12-27
 requires: LP-0011
 ---

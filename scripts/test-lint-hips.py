@@ -68,7 +68,8 @@ def m_fm007(root):
 
 def m_fm008(root):
     write(root, SUBJECT,
-          re.sub(r"^status:.*$", "status: Superseded", read(root, SUBJECT), count=1, flags=re.M))
+          re.sub(r"^status:(.*)$", r"status:\1\nsuperseded-by: HIP-0106",
+                 read(root, SUBJECT), count=1, flags=re.M))
 
 def m_fm009(root):
     os.rename(os.path.join(root, "HIPs", SUBJECT),
@@ -111,27 +112,14 @@ def m_st007(root):
           if "### §2 The entry point" in s
           else s.replace("## Specification", "## Specification\n\n### 1 One\n\n#### 4.2 Misfiled", 1))
 
-def m_ix001(root):
-    p = os.path.join(root, "README.md")
-    s = open(p, encoding="utf-8").read()
-    open(p, "w", encoding="utf-8").write(
-        s.replace("./HIPs/" + SUBJECT, "./HIPs/hip-0517-gone.md", 1))
-
-def m_ix002(root):
-    p = os.path.join(root, "README.md")
-    s = open(p, encoding="utf-8").read()
-    open(p, "w", encoding="utf-8").write(
-        re.sub(r"^\|\s*\[HIP-0517\].*$", "", s, count=1, flags=re.M))
+def m_lk001(root):
+    s = read(root, STANDARDS_SUBJECT)
+    write(root, STANDARDS_SUBJECT,
+          s.replace("## Abstract", "## Abstract\n\nSee [HIP-0106](./hip-0106-gone.md).", 1))
 
 def m_ix003(root):
     shutil.copy(os.path.join(root, "HIPs", SUBJECT),
                 os.path.join(root, "HIPs", "hip-0517-duplicate-claim.md"))
-
-def m_ix004(root):
-    p = os.path.join(root, "README.md")
-    s = open(p, encoding="utf-8").read()
-    row = re.search(r"^\|\s*\[HIP-0517\].*$", s, re.M).group(0)
-    open(p, "w", encoding="utf-8").write(s.replace(row, row.replace("| Active |", "| Draft |"), 1))
 
 def m_pl001(root):
     s = read(root, STANDARDS_SUBJECT)
@@ -152,7 +140,7 @@ CASES = [
     ("FM005", "type: set to a word not in the vocabulary", m_fm005),
     ("FM006", "category: set to a word not in the vocabulary", m_fm006),
     ("FM007", "requires: a HIP that does not exist", m_fm007),
-    ("FM008", "Superseded with no superseded-by", m_fm008),
+    ("FM008", "a superseded-by tombstone field added", m_fm008),
     ("FM009", "filename given capitals and an underscore", m_fm009),
     ("ST001", "H1 deleted", m_st001),
     ("ST002", "H1 title made to disagree with front matter", m_st002),
@@ -161,10 +149,8 @@ CASES = [
     ("ST005", "'## Abstract' renamed to '## Preface'", m_st005),
     ("ST006", "a code fence left open", m_st006),
     ("ST007", "a subsection numbered outside its parent", m_st007),
-    ("IX001", "README pointed at a file that does not exist", m_ix001),
-    ("IX002", "a HIP's README row deleted", m_ix002),
+    ("LK001", "a body link pointed at a HIP file that does not exist", m_lk001),
     ("IX003", "a second file claiming HIP-0517", m_ix003),
-    ("IX004", "README status made to disagree with the file", m_ix004),
     ("PL001", "'as good as Terraform' added", m_pl001),
     ("PL002", "a private-org repository cited", m_pl002),
 ]
@@ -177,6 +163,7 @@ def main() -> int:
         os.makedirs(clean_root)
         shutil.copytree(os.path.join(ROOT, "HIPs"), os.path.join(clean_root, "HIPs"))
         shutil.copy(os.path.join(ROOT, "README.md"), clean_root)
+        shutil.copy(os.path.join(ROOT, "vocabulary.json"), clean_root)
 
         rc, out = run(clean_root)
         if rc != 0:

@@ -4,9 +4,9 @@ title: Agent SDK - Multi-Agent Orchestration Framework
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2025-01-09
-requires: HIP-1, HIP-2, HIP-4
+requires: HIP-0001, HIP-0002, HIP-0004
 ---
 
 
@@ -422,7 +422,7 @@ const result = await orchestrator.execute({
 });
 ```
 
-4. [HIP-10: MCP Integration](./hip-10.md)
+4. [HIP-0010: Model Context Protocol (MCP) Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 5. [Agent SDK Repository](https://github.com/hanzoai/agent)
 
 ## Copyright

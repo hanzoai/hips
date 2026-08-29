@@ -6,7 +6,7 @@ type: Standards Track
 category: Core
 status: Draft
 created: 2025-01-09
-requires: HIP-1, HIP-2
+requires: HIP-0001, HIP-0002
 ---
 
 

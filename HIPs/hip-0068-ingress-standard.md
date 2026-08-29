@@ -4,7 +4,7 @@ title: Ingress Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Final
 created: 2026-02-24
 requires: HIP-0026
 ---

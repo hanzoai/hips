@@ -4,9 +4,9 @@ title: "Node Identity and the did:hanzo: DID Method"
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-05-31
-requires: HIP-0005 (Post-Quantum Security), HIP-0024 (Sovereign L1), HIP-0026 (IAM), HIP-0027 (KMS)
+requires: HIP-0005, HIP-0024, HIP-0001, HIP-0026, HIP-0027
 ---
 
 

@@ -4,7 +4,7 @@ title: Errors — The Fault Lens
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Active
+status: Final
 created: 2026-08-20
 requires: HIP-0026, HIP-0119, HIP-0128
 ---

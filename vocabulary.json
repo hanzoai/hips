@@ -1,0 +1,66 @@
+{
+  "$comment": [
+    "The closed vocabularies of this corpus, in ONE place.",
+    "",
+    "Python reads it (scripts/lint.py, scripts/index.py). TypeScript imports it",
+    "(docs/lib/status.ts). Before this file the same lists were written out by",
+    "hand in nine places -- the linter, the README prose, a status union in",
+    "docs/lib/source.ts, and badge colours hard-coded in five page components --",
+    "and they disagreed. docs/lib/source.ts admitted a 'Stagnant' no file has",
+    "ever carried and omitted the status 52 files DID carry, so every one of",
+    "those rendered with the fallback badge and counted toward nothing.",
+    "",
+    "A value is only in this file because a proposal needs it. Adding one is a",
+    "decision about the corpus, not about a renderer."
+  ],
+
+  "status": {
+    "Draft": {
+      "means": "Proposed. Nothing implements it yet, or the document itself describes work still ahead. Argue with it; do not build against it.",
+      "tone": "amber"
+    },
+    "Final": {
+      "means": "The thing it specifies exists in the code. The spec is settled -- changing it takes a new HIP.",
+      "tone": "green"
+    },
+    "Living": {
+      "means": "A document that never finishes: governance and process, amended in place rather than replaced.",
+      "tone": "blue"
+    }
+  },
+
+  "type": {
+    "Standards Track": "describes a thing we build and maintain",
+    "Process": "how we work: numbering, branch names, what is public",
+    "Meta": "governance, principles and commitments",
+    "Informational": "guidance that normatively requires nothing"
+  },
+
+  "category": [
+    "Core",
+    "Interface",
+    "Infrastructure",
+    "Security",
+    "Cryptography",
+    "Operator",
+    "Bridge",
+    "Governance",
+    "Meta",
+    "Application",
+    "Platform"
+  ],
+
+  "folded": {
+    "$comment": "Every spelling this corpus has carried, and the value it is now. Kept so a reader of an old commit, an old PR or an external link can tell what happened. Nothing may be written back into a HIP from this map.",
+    "Proposed": "Draft",
+    "Review": "Draft",
+    "Last Call": "Draft",
+    "Accepted": "Final",
+    "Implemented": "Final",
+    "Active": "Final for a Standards Track spec; Living for Meta and Process",
+    "Superseded": "deleted -- the successor carries the text",
+    "Retired": "deleted",
+    "Withdrawn": "deleted",
+    "Stagnant": "never written in a HIP; existed only in the site's type"
+  }
+}

@@ -4,7 +4,7 @@ title: KV CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
-status: Active
+status: Final
 created: 2026-05-19
 ---
 

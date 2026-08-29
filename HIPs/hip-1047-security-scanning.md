@@ -4,7 +4,7 @@ title: Security Scanning
 author: Hanzo AI
 type: Standards Track
 category: Security
-status: Draft
+status: Final
 created: 2026-08-20
 capability: security
 requires: HIP-0106, HIP-0139

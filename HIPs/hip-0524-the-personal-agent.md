@@ -4,7 +4,7 @@ title: The Personal Agent — What It May Send Without You
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-08-27
 requires: HIP-0026, HIP-0523, HIP-1041, HIP-1210
 ---

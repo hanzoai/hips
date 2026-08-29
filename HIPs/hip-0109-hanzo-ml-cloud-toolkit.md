@@ -4,7 +4,7 @@ title: Hanzo ML Cloud Toolkit
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-05-18
 requires: HIP-0026, HIP-0027, HIP-0106, HIP-0108
 ---

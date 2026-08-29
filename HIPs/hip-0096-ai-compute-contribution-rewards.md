@@ -3,10 +3,10 @@ hip: 0096
 title: AI Compute Contribution Rewards
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 author: Hanzo AI
 created: 2026-01-24
-requires: HIP-004 (HMM), HIP-006 (AI Mining Protocol), ZIP-002 (PoAI)
+requires: HIP-0004, HIP-0006, HIP-0002
 ---
 
 

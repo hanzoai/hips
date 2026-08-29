@@ -4,7 +4,7 @@ title: zip — The ZAP-Native Application Server Core
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Final
 created: 2026-07-07
 updated: 2026-07-08
 requires: HIP-0026, HIP-0105, HIP-0114, HIP-0120
@@ -28,7 +28,7 @@ the product lives; the server is what the product mounts on.
 
 This HIP specifies the zip contract — `App`, `Ctx`, transport-as-value
 `Listen`, `Mount`, `Module`, typed handlers, identity accessors, and
-shutdown lifecycle — so that HIP-0106 (the host binary), HIP-0116 (the
+shutdown lifecycle — so that HIP-0106 (the host binary), HIP-0106 (the
 plugin/VM shapes), and every `hanzoai/<repo>` service compose on one
 substrate instead of each re-deciding a framework.
 
@@ -71,7 +71,7 @@ app.Listen("http://:8080")           // HTTP only (edge/interop shape)
 
 `Mount` preserving the full path is load-bearing: a subsystem mounted
 at `/v1/iam` still sees `/v1/iam/...` — its routes are identical
-standalone, embedded, or as a plugin VM (HIP-0116's "one service,
+standalone, embedded, or as a plugin VM (HIP-0106's "one service,
 three shapes" depends on this).
 
 Adapters (`adapt.go`: `AdaptNetHTTP`, `AdaptNetHTTPFunc`,
@@ -134,7 +134,7 @@ cloud.RegisterWithShutdown(name string, order int, mount MountFunc, shutdown Shu
 
 A subsystem's `init()` calls `Register`; a blank import in `cmd/cloud`
 activates it; `MountAll` mounts onto the shared `zip.App`. This is the
-substrate HIP-0116's plugin VMs generalize: an embedded plugin is a
+substrate HIP-0106's plugin VMs generalize: an embedded plugin is a
 mount in-process, a plugin VM is the same mount behind a ZAP hop — the
 `zip.App` surface is identical.
 
@@ -148,7 +148,7 @@ adds a second server core — is nonconformant.
 **Why a framework HIP at all.** Because the 76:1 measurement is the
 architecture. When the server core is one small, shared, boring layer,
 every product decision becomes a plugin decision — independently
-mountable, testable, and (per HIP-0116) independently packageable.
+mountable, testable, and (per HIP-0106) independently packageable.
 The alternative — each service owning its own server — is how the
 pre-HIP-0106 estate accumulated N frameworks and N half-consistent
 identity parsers.
@@ -161,7 +161,7 @@ is the internal wire makes the correct thing the effortless thing —
 would make every service opt in to its own platform's transport.
 
 **Why transport-as-value.** Decomplecting "what the handler does" from
-"how bytes arrive" is the same move HIP-0116 makes for packaging
+"how bytes arrive" is the same move HIP-0106 makes for packaging
 ("what the service does" vs "what process it lives in"). Values, not
 method explosions: one `Listen`, schemes as data, `RegisterTransport`
 as the single seam.
@@ -179,7 +179,7 @@ exist). Escape hatches are how second ways in; the profiled hot path
   Module, lifecycle.
 - HIP-0106 — the **host binary**: deps wiring, subsystem registry
   policy, fail-closed embeds (its registry rides this HIP's App).
-- HIP-0116 — the **packaging shapes** mounted on this core.
+- HIP-0106 — the **packaging shapes** mounted on this core.
 - HIP-0105 — the **guest runtimes** behind `Module`.
 
 ## Decided vs shipped
@@ -203,7 +203,7 @@ module path forward.
   table, adapters, measured capacity budget)
 - HIP-0134 — One Process, One Socket, One Identity (who owns the principal)
 - HIP-0114 — ZAP — Inter-VM Cognitive Transport (the primary wire)
-- HIP-0116 — Hanzo Plugin & VM Model (the shapes mounted on this core)
+- HIP-0106 — Hanzo Plugin & VM Model (the shapes mounted on this core)
 - HIP-0120 — ZAP-Native Transport & gRPC Elimination (the permitted
   protocol set)
 - `~/work/zap/zip` — reference implementation (`transport.go`,

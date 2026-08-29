@@ -4,7 +4,7 @@ title: AI — The Model API
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-08-20
 requires: HIP-0139, HIP-0026, HIP-0106
 capability: ai
