@@ -103,6 +103,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | What Is Public | Process | Governance | Living |
 | [HIP-0136](./HIPs/hip-0136-one-secret-one-path.md) | One Secret, One Path | Standards Track | Infrastructure | Final |
 | [HIP-0137](./HIPs/hip-0137-one-license.md) | One License | Process | Governance | Living |
+| [HIP-0138](./HIPs/hip-0138-one-manifest-five-kinds.md) | One Manifest, Five Kinds | Standards Track | Infrastructure | Draft |
 | [HIP-0139](./HIPs/hip-0139-capability.md) | Capability | Standards Track | Infrastructure | Final |
 | [HIP-0140](./HIPs/hip-0140-proposing-a-capability.md) | Proposing a Capability | Meta | Core | Living |
 | [HIP-0141](./HIPs/hip-0141-substitution.md) | Substitution | Standards Track | Core | Final |
@@ -391,13 +392,13 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 7 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 6 | Model Context Protocol (MCP) Integration Standards |
+| [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 6 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0002](./HIPs/hip-0002-hamiltonian-large-language-models-hllms-specification.md) | 5 | Hamiltonian Large Language Models (HLLMs) Specification |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 5 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |
 | [HIP-0068](./HIPs/hip-0068-ingress-standard.md) | 5 | Ingress Standard |
-| [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 5 | CI/CD Build System Standard |
 | [HIP-0085](./HIPs/hip-0085-wallet-pq-account-type.md) | 5 | Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID) |
 | [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | 5 | In-Process Extension Runtime Standard |
 | [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | 5 | ZAP-Native Transport & gRPC Elimination |
