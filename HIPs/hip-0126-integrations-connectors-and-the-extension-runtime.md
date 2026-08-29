@@ -268,16 +268,9 @@ two never collide; this HIP does not modify HIP-0052.
 
 ## Backwards compatibility
 
-- **`/pieces` alias.** `GET /v1/automations/pieces` returns the identical body as
-  `/connectors` and is retained indefinitely as a `deprecated` alias. No live
-  client breaks.
-- **Flow-step wire protocol retained.** The persisted flow-graph schema
-  (`PIECE` / `PIECE_TRIGGER`, `pieceName` / `pieceVersion`) is unchanged, so
-  stored flows and the existing builder keep working. Aligning it to the connector
-  vocabulary is a staged, builder-coordinated migration; it is out of scope here.
-- **No parallel registries removed yet.** Providers (gateway) and Tools (MCP)
-  keep their current endpoints; the unified cross-kind registry surface is
-  additive when it lands.
+None. `/v1/automations/connectors` is the address; there is no
+`/pieces` to keep alive beside it, and the flow-graph schema says
+`connector` because that is what the thing is called.
 
 ## References
 

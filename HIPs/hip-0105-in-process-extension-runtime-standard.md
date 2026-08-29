@@ -453,18 +453,6 @@ at the zip / Base config level to exclude runtimes lacking hard sandbox
   v8go grows per-context isolation, the cancellation story has to be
   re-examined.
 
-## Migration path for existing services
-
-| Service | Today | Action |
-|---|---|---|
-| `hanzoai/base` plugins/jsvm | goja hooks via `.base.js` files | Keep as-is. New extensions land in `plugins/extruntime` via manifest. |
-| `hanzoai/iam` policy rules | Hardcoded Go | No action. |
-| `hanzoai/gateway` route transforms | Hardcoded Go | Open: convert to extension surface if customer authoring becomes a requirement. Until then, native Go in-repo. |
-| `hanzoai/llm` prompt filters | Hardcoded Python | Recommend native Go reimplementation; if customer-authored transforms become a feature, wazero. |
-| `hanzoai/mcp` tool functions | Per-tool Go + Rust | Already varied. New tools should land as wasm via wazero. |
-| `hanzoai/agents` custom tools | Per-tool Go | Same. |
-| Hanzo Functions (HIP-0060) | Knative pods, Python/Go/Rust/TS | Out of scope — different workload class. |
-
 ## Reference implementation
 
 - **Branch**: `hanzoai/base#3` — `feat/wasmvm-and-v8vm`

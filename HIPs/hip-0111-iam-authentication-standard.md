@@ -4,7 +4,7 @@ title: Hanzo IAM Authentication Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Draft
 created: 2026-06-16
 requires: HIP-0026, HIP-0068
 ---

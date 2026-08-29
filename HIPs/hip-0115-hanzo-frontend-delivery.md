@@ -4,7 +4,7 @@ title: Hanzo Frontend Delivery
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Draft
 created: 2026-06-25
 requires: HIP-0036, HIP-0068, HIP-0119, HIP-0504
 ---

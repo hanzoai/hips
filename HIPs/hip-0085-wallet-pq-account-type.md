@@ -26,13 +26,15 @@ single canonical PQ account format across Hanzo, Lux, and Zoo.
 
 ## Specification
 
-The canonical reference is `luxfi/consensus/protocol/auth/account.go`
-(auth-pq-surface branch). Key fields:
+The canonical reference is `luxfi/consensus/protocol/auth/account_id.go`,
+`DeriveAccountID`. Key fields:
 
 ```
-AccountID    = SHA3-384(domain || mldsa_pubkey)        // 48 bytes
-              where domain = "LUX-ACCOUNT-V1" (15-byte cust string,
-              SP 800-185 cSHAKE-style)
+AccountID    = cSHAKE256(profile_be4 || chain_be4 || u8(scheme) || pubkey,
+                         48, "", "LUX_ACCOUNT_ID_V1")   // 48 bytes
+              The four inputs are absorbed in one pass, fixed-width first
+              and the variable-length pubkey last; the customization tag
+              is the domain separator, so no length framing is needed.
 EVMAddress   = Keccak-256(mldsa_pubkey)[12:32]         // 20 bytes
 DerivationPath  m / 44' / 9000' / nid' / 0 / n         // BIP-32, slip-44 9000
 IdentityScheme  0x42 ML_DSA_65                         // FIPS 204
@@ -63,9 +65,12 @@ ML-DSA-65 primitive: `luxfi/crypto/mldsa`. KAT test vectors:
 
 ## Security considerations
 
-Domain separation: the 15-byte cust prefix `LUX-ACCOUNT-V1` prevents
-cross-domain reuse of the AccountID hash under SP 800-185 cSHAKE
-construction. ML-DSA-65 pubkeys are ~1952 B; the 48-byte AccountID is
+Domain separation: the cSHAKE256 customization tag `LUX_ACCOUNT_ID_V1`
+prevents cross-domain reuse of the AccountID hash under SP 800-185, and
+binding `profileID` and `chainID` into the preimage is what stops one
+AccountID being replayed across security postures or chains. The tag is
+the schema identity: bumping it is a hard fork of account derivation,
+with no window in which both forms resolve. ML-DSA-65 pubkeys are ~1952 B; the 48-byte AccountID is
 a collision-resistant commitment that does not leak the public key
 preimage. EVM-form 20-byte addresses provide ~80-bit collision
 resistance — sufficient for the compatibility lane but not for

@@ -873,16 +873,6 @@ When Operative is deployed remotely (Docker, cloud), the connection between agen
 | HIP-1211 (Chat Interface) | Chat UI can display computer use sessions inline |
 | HIP-14 (App Deployment) | Operative containers deployed via the application platform |
 
-### Migration from Existing Tools
-
-| Existing Tool | Migration Path |
-|---------------|---------------|
-| Selenium | Replace with `browser` tool (Playwright-based, same concepts) |
-| Puppeteer | Replace with `browser` tool (Playwright is Puppeteer's successor) |
-| PyAutoGUI | Replace with `computer` tool (same API concepts, native performance) |
-| SikuliX | Replace with `computer` tool + image location (`locate`, `waitForImage`) |
-| Anthropic Computer Use | Replace with `computer` + `screen` tools (self-hosted, MCP-integrated) |
-
 ## Test Plan
 
 ### Unit Tests

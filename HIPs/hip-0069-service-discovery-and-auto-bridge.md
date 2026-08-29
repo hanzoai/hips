@@ -136,14 +136,9 @@ the tree.
 
 ### Backwards compatibility
 
-Through 2026-Q3 a service MAY also advertise `_hanzo-zap._tcp.local.`
-(legacy ZAP-only sub-type). After 2026-Q4 the canonical
-`_hanzo._tcp.local.` is the only required record.
-
-The hard-coded port ranges and lockfile registries SHOULD be removed
-once every consumer ships a binding update. The `[9999..9995]`
-port-probe in `@hanzo/extension` MAY remain as a fallback for offline
-hosts (no mDNS responder running).
+None. `_hanzo._tcp.local.` is the record; there is no second one to
+also advertise. A host with no mDNS responder discovers nothing, which
+is the correct answer rather than a reason to keep a port probe.
 
 ## Reference implementation
 

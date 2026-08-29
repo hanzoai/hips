@@ -69,7 +69,8 @@ Acceptance:
 3. `verifying_contract == msg.sender`.
 4. `now <= deadline`.
 5. `nonce == nonces[owner]`.
-6. `AccountID == SHA3-384("LUX-ACCOUNT-V1" || owner_pubkey)`.
+6. `AccountID == cSHAKE256(profile_be4 || chain_be4 || u8(scheme) ||
+   owner_pubkey, 48, "", "LUX_ACCOUNT_ID_V1")`, per HIP-0085.
 7. `ML-DSA.Verify(owner_pubkey, transcript, signature) == true`.
 
 Failure of any check is a hard revert; no recovery.

@@ -61,7 +61,8 @@ Acceptance rule:
    reject (`ErrProfileMismatch`).
 2. `identity_scheme_id` MUST equal `0x42`; any other value rejected.
 3. `hash_suite_id` MUST equal `0x01`.
-4. `AccountID == SHA3-384("LUX-ACCOUNT-V1" || mldsa_pubkey)`.
+4. `AccountID == cSHAKE256(profile_be4 || chain_be4 || u8(scheme) || pubkey,
+   48, "", "LUX_ACCOUNT_ID_V1")`, per HIP-0085.
 5. `ML-DSA.Verify(mldsa_pubkey, transcript, mldsa_signature)` MUST
    return true under unmodified FIPS 204.
 6. `nonce` MUST equal the account's next-expected nonce.

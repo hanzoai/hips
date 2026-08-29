@@ -50,8 +50,8 @@ A service MUST bind exactly two HTTP listeners, and they MUST NOT share a port:
 
 | Listener | Port (default) | Env override | Serves | Auth |
 |----------|----------------|--------------|--------|------|
-| **app**  | `8000`         | `PORT`       | the product API, under `/v1/*` only | per HIP-0111 |
-| **ops**  | `9090`         | `OPS_PORT`   | `/healthz`, `/readyz`, `/metrics`   | none (cluster-internal) |
+| **app**  | `8080`         | `CLOUD_LISTEN` | the product API, under `/v1/*` only | per HIP-0111 |
+| **ops**  | `9090`         | `CLOUD_HEALTH_LISTEN` | `/healthz`, `/readyz`, `/metrics`   | none (cluster-internal) |
 
 The split is the contract, not an optimization. Operational traffic (probes,
 scrapes, drains) MUST NOT traverse the app listener, and the app listener MUST NOT
@@ -96,7 +96,7 @@ per HIP-0031. It MUST NOT expose `/metrics` on the app listener.
 ### §5 Configuration — environment, deterministic names
 
 Configuration is by environment variable. Names are stable and shared:
-`PORT`, `OPS_PORT`, `LOG_LEVEL`, `BRAND`, `DOMAIN`. Identity, datastore, and secret
+`CLOUD_LISTEN`, `CLOUD_HEALTH_LISTEN`, `LOG_LEVEL`, `BRAND`, `DOMAIN`. Identity, datastore, and secret
 material follow the referenced HIPs (`IAM_*` per HIP-0111, `KMS_*` per HIP-0027). A
 service MUST start with zero required flags — every input has a documented env var
 and a working default for local single-node dev. Secrets MUST come from KMS
@@ -139,7 +139,7 @@ state.
 - Health, readiness, or metrics on the **app** listener.
 - Kubernetes probes pointed at the app listener or at a product/API path.
 - A single listener serving both product and operational traffic.
-- Per-service bespoke ports for the same role (everyone's app is `:8000`, ops is
+- Per-service bespoke ports for the same role (everyone's app is `:8080`, ops is
   `:9090`).
 - Floating image tags in a CR; hand-deployed drift; a second deploy mechanism.
 
@@ -156,14 +156,15 @@ identity is the whole point: it is what makes the platform one way.
 ## Reference implementation
 
 `hanzo/cloud` (HIP-0106) is the reference: it binds the app listener (`CLOUD_LISTEN`,
-`:8000`) for `/v1/*` and the ops listener (`CLOUD_HEALTH_LISTEN`, `:9090`) for
+`:8080`) for `/v1/*` and the ops listener (`CLOUD_HEALTH_LISTEN`, `:9090`) for
 `/healthz`, `/readyz`, `/metrics`; the `cloud-api` `Service` CR probes the ops
 listener. iam and gateway follow the same split.
 
 ## Conformance checklist (build a service against this in one pass)
 
-1. App listener on `:8000` (`PORT`); every product route under `/v1/`. No `/api/`.
-2. Ops listener on `:9090` (`OPS_PORT`): `/healthz` (liveness, no deps), `/readyz`
+1. App listener on `:8080` (`CLOUD_LISTEN`); every product route under `/v1/`. No `/api/`.
+2. Ops listener on `:9090` (`CLOUD_HEALTH_LISTEN`, default
+   `127.0.0.1:9090`): `/healthz` (liveness, no deps), `/readyz`
    (readiness, deps), `/metrics` (Prometheus). Unauthenticated.
 3. Probes (in the CR) target `:9090/healthz` and `:9090/readyz`.
 4. Starts with zero required flags; secrets from KMS (HIP-0027); auth via

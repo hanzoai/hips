@@ -185,13 +185,12 @@ not a code change.
 ## Migration
 
 1. Add the resource table; generate routes and spec from it.
-2. Keep the legacy spellings alive in an explicit `compat` package — a thin
-   routing and envelope layer over the SAME store and the SAME redaction, so no
-   CRUD and no masking is reimplemented. Document why each alias exists.
-3. Migrate callers. Fix the **prefix** first (`/api/x` → `/v1/<service>/x`),
-   then the **spelling** — one variable at a time, verifying each repointed path
-   answers rather than 404s.
-4. Delete `compat` only when the caller sweep proves it has no consumers.
+2. Repoint callers. Fix the **prefix** first (`/api/x` → `/v1/<service>/x`),
+   then the **spelling** — one variable at a time, verifying each repointed
+   path answers rather than 404s.
+
+There is no alias layer, and no window in which two spellings both answer.
+One release; the old spelling stops resolving when the new one starts.
 
 Prefer a correct, proven partial over a broad change that cannot be verified.
 Authentication surfaces have no safe rollback: a false green locks every user

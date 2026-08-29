@@ -556,14 +556,10 @@ and `same_identity` (§7).
 
 ### Migration tooling
 
-* `hanzod identity migrate` — reads the node's current `@@…` identity, derives the
-  `did:hanzo:` form via §M1, re-registers it on-chain, and writes both keys until
-  Phase 3.
-* A read-only `did:hanzo:` ↔ `@@` lookup table is published by the resolver at
-  `did.hanzo.ai` for the duration of Phases 1–2.
-* Test vectors (legacy string, canonical DID, signed preimage bytes) are added to
-  `hanzo-libs/hanzo-messages/tests/hanzo_name_tests.rs` so both forms hash to the
-  expected signature inputs.
+* `hanzod identity migrate` — reads the node's current `@@…` identity, derives
+  the `did:hanzo:` form via §M1 and re-registers it on-chain. It writes one key.
+* Test vectors (canonical DID, signed preimage bytes) live in
+  `hanzo-libs/hanzo-messages/tests/hanzo_name_tests.rs`.
 
 ## Rollout
 

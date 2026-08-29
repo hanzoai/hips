@@ -503,13 +503,12 @@ when it crashes, the `expires_at` window evicts it within 5 minutes.
 
 ### Backwards compatibility
 
-A peer advertising HIP-0069 TXT without `mldsa` SHALL be accepted by
-HIP-0077 consumers when `auth=none`, refused when `auth` is anything
-else. By 2027-Q1 unsigned (in the handshake sense) peers SHOULD be
-refused for every role.
+A peer advertising HIP-0069 TXT without `mldsa` is refused for every
+role that carries authority. `auth=none` names a peer that asks for
+nothing and is answered in kind; it is not a grace period.
 
-The on-chain gossip namespace and the auto-funding pre-allocation
-are pure additions; no breaking change to existing Lux clients.
+The on-chain gossip namespace and the auto-funding pre-allocation are
+pure additions.
 Devices opting out of gossip remain visible on their own LAN only —
 degraded but functional.
 
