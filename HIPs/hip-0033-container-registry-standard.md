@@ -4,7 +4,7 @@ title: Container Registry Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Draft
 created: 2025-01-15
 ---
 
