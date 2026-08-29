@@ -182,16 +182,16 @@ AssemblyScript implementation.
 
 Every runtime maintains a per-module pool of pre-warmed instances /
 contexts so per-invocation cost stays microsecond-scale. Each runtime
-exposes an env override. **Defaults were revised after the scale study
-(see below): wazero default reduced to 4** because pool=8 produced 256K
-wasm instances at T=1000 with zero latency benefit.
+exposes an env override. Anything <=0 or unparseable falls back to the
+default.
 
 | Runtime | Env | Default | Notes |
 |---|---|---|---|
 | goja | `BASE_GOJAVM_POOL_SIZE` | 8 | Cheap per-pool-item (~9 KB Go heap); 8 is safe. |
-| wazero | `BASE_WASMVM_POOL_SIZE` | **4** | Each instance is ~80 KB linear memory; larger pools waste RAM with no throughput gain. |
+| wazero | `BASE_WASMVM_POOL_SIZE` | 8 | Wasm modules amortize compilation, so the pool exists to soak bursty hook traffic rather than to save instantiation. |
 | v8go | `BASE_V8VM_POOL_SIZE` | 8 | Sized for context pool, but see scale findings — v8go is **NOT recommended for production** at meaningful concurrency. |
 | pyvm | `BASE_PYVM_POOL_SIZE` | 4 | Each Python sub-interpreter is ~4.6 MB. Pool of 4 = ~18 MB baseline. Default tuned to balance per-module memory vs cold-start cost. |
+| starlark | `BASE_STARKVM_POOL_SIZE` | 8 | Pre-warmed `*starlark.Thread` instances. |
 
 Native doesn't pool — functions are stateless Go calls.
 
@@ -318,27 +318,24 @@ and the language constraint allows Go, write it in Go.
 **Pick another runtime only when one of these four exceptional conditions
 holds:**
 
-### Mount points where extensions run
+### How a host loads extensions
 
-Per HIP-0106, the `superbase` binary mounts extension runtimes in two
-places:
+`Loader.LoadDir(ctx, dir)` scans `dir` for subdirectories holding an
+`extension.json`, resolves each manifest's `runtime` against the
+runtimes linked into the binary, and returns the loaded modules by
+name. A manifest naming a runtime the binary does not carry is logged
+and skipped, not fatal — which is what lets one binary serve hosts
+built with different runtime sets.
 
-1. **In-process Base hooks** (the original HIP-0105 scope): per-record
-   onCreate/onUpdate/onDelete hooks, scheduled jobs, custom validators.
-   Read from `<base-data-dir>/hz_hooks/<name>/extension.json`.
+That is the whole loading contract. WHERE a host points it — a hooks
+directory, a per-service directory, a path from config — is the host's
+decision and belongs to HIP-0106, not here. This HIP specifies what a
+runtime is and how a module is loaded; it does not name directories on
+anyone's disk.
 
-2. **Web routes via `hanzoai/zip`**: ANY HIP-0105 runtime is also
-   mountable as an HTTP route via `app.Module(method+path, runtime,
-   modulePath)`. Read from `<service-dir>/hz_routes/<name>/extension.json`
-   OR registered programmatically.
-
-The runtime contract is identical in both surfaces. Same `.zap` schemas
-generate the same I/O types. Same crash isolation. Same scale
-characteristics. **One abstraction, two mount points.**
-
-Multi-tenant operators MUST set `AllowedRuntimes` (or equivalent gate)
-at the zip / Base config level to exclude runtimes lacking hard sandbox
-(pyvm, v8go-experimental).
+A host that exposes extensions to more than one tenant is responsible
+for admitting only runtimes whose isolation it accepts. pyvm and v8vm
+share process memory and have no hard sandbox.
 
 ### Decision tree
 
@@ -372,16 +369,12 @@ at the zip / Base config level to exclude runtimes lacking hard sandbox
 6. **Do you need REAL CPython (with the full ecosystem including
    numpy, pandas, cryptography) inside the Go binary, and is your
    deployment SINGLE-TENANT?** → **pyvm**. CPython 3.13 embedded via
-   a small direct cgo bridge (`plugins/pyvm/pyvm_bridge.{c,h}`, ~150
-   lines). The canonical Hanzo Go binding for embedded CPython is
-   [`github.com/hanzoai/cpy3`](https://github.com/hanzoai/cpy3) — a
-   fork of `go-python/cpy3` with Python 3.12+ removed-API polyfills,
-   a `SubInterpreter` wrapper, `IsGILDisabled()` detection, a
-   `LoadSource`+`CallJSONFunctionByName` JSON hot-path helper, and a
-   3.13t build script. pyvm chooses the inline bridge because the
-   consolidated `pyvm_invoke` (1 cgo call per Invoke) is ~30% faster
-   than routing through the cpy3 wrappers for the JSON-pipe
-   embedding contract.
+   a small direct cgo bridge: `plugins/pyvm/pyvm_bridge.{c,h}` includes
+   `<Python.h>` and calls `Py_InitializeEx(0)`, leaving signal handling
+   to Go. There is no intermediate binding library. The bridge
+   consolidates a whole invocation into one cgo call (`pyvm_invoke`),
+   which is the point: per-call cgo crossings, not CPython, dominate
+   the JSON-pipe embedding contract.
 
    Beats wazero AS by ~2× serial and has the lowest per-invocation
    memory (496 B/op) of any sandboxed runtime measured. Sub-interpreter
@@ -455,16 +448,22 @@ at the zip / Base config level to exclude runtimes lacking hard sandbox
 
 ## Reference implementation
 
-- **Branch**: `hanzoai/base#3` — `feat/wasmvm-and-v8vm`
-- **Packages**:
+- **Packages** (`hanzoai/base`, on `main`):
   - `plugins/extruntime/` — interface, manifest, native impl, loader
   - `plugins/gojavm/` — goja adapter
   - `plugins/wasmvm/` — wazero (pure Go)
-  - `plugins/v8vm/` — v8go (cgo, `-tags v8vm`, stub for default build)
-  - `plugins/extbench/` — fixtures + benchmark harness across 5 variants
-- **Tests**: extruntime 7/7 + gojavm 14/14 + wasmvm 6/6 + v8vm 9/9
-- **Verification**: `go build ./...` clean, `go build -tags v8vm` clean,
-  `go test -race ./plugins/...` clean
+  - `plugins/pyvm/` — CPython via `pyvm_bridge.{c,h}` (cgo)
+  - `plugins/starkvm/` — Starlark
+  - `plugins/v8vm/` — v8go (cgo, `-tags v8vm`, stub for the default build)
+  - `plugins/extbench/` — fixtures + benchmark harness
+- **Tests**, on the default build: extruntime 6 passed, gojavm 7 passed,
+  wasmvm 2 passed and 4 skipped, v8vm 0 — its tests are behind
+  `//go:build v8vm`, so the default build compiles the stub and runs
+  nothing.
+- **Verification**: `go build ./plugins/...` and `go test ./plugins/...`
+  are clean. The `v8vm` tag is NOT verified: `rogchap.com/v8go v0.9.0` is
+  declared in `go.mod` but absent from the module cache, so a tagged
+  build cannot reach the compiler without fetching it.
 
 ## Backwards compatibility
 
