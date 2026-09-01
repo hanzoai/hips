@@ -363,8 +363,8 @@ services:
   postgres:
     image: postgres:15
     environment:
-      - POSTGRES_DB=llm_gateway
-      - POSTGRES_PASSWORD=secret
+      - SQL_DB=llm_gateway
+      - SQL_PASSWORD=secret
       
   redis:
     image: redis:7-alpine
