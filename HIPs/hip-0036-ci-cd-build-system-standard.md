@@ -177,9 +177,9 @@ jobs:
       postgres:
         image: ghcr.io/hanzoai/sql:latest
         env:
-          POSTGRES_USER: hanzo
-          POSTGRES_PASSWORD: hanzo123
-          POSTGRES_DB: test_db
+          SQL_USER: hanzo
+          SQL_PASSWORD: hanzo123
+          SQL_DB: test_db
         ports: ["5432:5432"]
         options: >-
           --health-cmd="pg_isready -U hanzo"

@@ -45,11 +45,11 @@ spec:
     size: 20Gi
     retentionPolicy: Retain
   env:
-    - name: POSTGRES_USER
+    - name: SQL_USER
       value: hanzo
-    - name: POSTGRES_DB
+    - name: SQL_DB
       value: hanzo
-    - name: POSTGRES_PASSWORD
+    - name: SQL_PASSWORD
       valueFrom:
         secretKeyRef:
           name: postgres-credentials
