@@ -771,7 +771,7 @@ If a secret is suspected compromised:
 3. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 4. [NIST SP 800-57: Key Management](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final)
 5. [Kubernetes Secrets Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/)
-6. [SOC 2 Trust Services Criteria](https://www.aicpa.org/interestareas/frc/assuranceadvisoryservices/sorhome)
+6. [SOC 2 Trust Services Criteria](https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2)
 
 ## Copyright
 
