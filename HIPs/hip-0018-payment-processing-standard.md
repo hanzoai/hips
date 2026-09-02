@@ -1,5 +1,5 @@
 ---
-hip: 0018
+hip: "0018"
 title: Payment Processing Standard
 author: Hanzo AI Team
 type: Standards Track

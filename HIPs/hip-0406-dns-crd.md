@@ -1,5 +1,5 @@
 ---
-hip: 0406
+hip: "0406"
 title: DNS CRD
 author: Hanzo Platform Team
 type: Standards Track

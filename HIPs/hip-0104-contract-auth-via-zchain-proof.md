@@ -1,5 +1,5 @@
 ---
-hip: 0104
+hip: "0104"
 title: Contract Auth via Z-Chain Proof
 type: Standards Track
 category: Infrastructure

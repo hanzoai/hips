@@ -1,5 +1,5 @@
 ---
-hip: 0414
+hip: "0414"
 title: Network CRD
 author: Hanzo Platform Team
 type: Standards Track

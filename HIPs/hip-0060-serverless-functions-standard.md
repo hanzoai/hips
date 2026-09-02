@@ -1,5 +1,5 @@
 ---
-hip: 0060
+hip: "0060"
 title: Serverless Functions (FaaS) Standard
 author: Hanzo AI Team
 type: Standards Track

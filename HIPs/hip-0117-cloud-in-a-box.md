@@ -1,5 +1,5 @@
 ---
-hip: 0117
+hip: "0117"
 title: Cloud-in-a-Box — One Binary, Three Modes
 author: Hanzo AI Team
 type: Standards Track

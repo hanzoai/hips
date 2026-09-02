@@ -1,5 +1,5 @@
 ---
-hip: 0128
+hip: "0128"
 title: Resource Surface Standard — Generated REST over ZAP
 author: Hanzo AI Team
 type: Standards Track

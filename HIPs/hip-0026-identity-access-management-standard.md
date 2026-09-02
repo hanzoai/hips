@@ -1,5 +1,5 @@
 ---
-hip: 0026
+hip: "0026"
 title: Identity & Access Management Standard
 author: Hanzo AI Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 0125
+hip: "0125"
 title: Consensus-Backed Plugin-Placement Platform
 author: Hanzo AI Team
 type: Standards Track

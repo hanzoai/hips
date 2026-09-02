@@ -1,5 +1,5 @@
 ---
-hip: 0901
+hip: "0901"
 title: Proof of AI (PoAI) — Native Execution Proofs, Canonical Contract & Operator-LLM Governance
 author: Hanzo AI Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 0050
+hip: "0050"
 title: Hanzo Edge — Edge AI Runtime Standard
 author: Hanzo AI Team
 type: Standards Track

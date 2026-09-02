@@ -1,5 +1,5 @@
 ---
-hip: 0074
+hip: "0074"
 title: Software Bill of Materials & Git Stamp Standard
 author: Hanzo AI Team
 type: Standards Track

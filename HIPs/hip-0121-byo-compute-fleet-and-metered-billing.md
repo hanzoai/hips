@@ -1,5 +1,5 @@
 ---
-hip: 0121
+hip: "0121"
 title: BYO Compute Fleet & Metered Billing
 author: Hanzo AI Team
 type: Standards Track

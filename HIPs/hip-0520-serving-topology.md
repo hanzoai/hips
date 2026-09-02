@@ -1,5 +1,5 @@
 ---
-hip: 0520
+hip: "0520"
 title: Serving Topology — Three Tiers, Horizontally Scalable, Pinned Per Entity
 author: Hanzo AI Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 0410
+hip: "0410"
 title: LLM CRD
 author: Hanzo Platform Team
 type: Standards Track

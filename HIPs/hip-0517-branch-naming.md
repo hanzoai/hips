@@ -1,5 +1,5 @@
 ---
-hip: 0517
+hip: "0517"
 title: Branch Naming — main is the Trunk, Everywhere
 author: Hanzo AI Team
 type: Process

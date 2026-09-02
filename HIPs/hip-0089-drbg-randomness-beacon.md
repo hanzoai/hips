@@ -1,5 +1,5 @@
 ---
-hip: 0089
+hip: "0089"
 title: DRBG / Randomness Beacon (SP 800-90A/B)
 type: Standards Track
 category: Cryptography

@@ -1,5 +1,5 @@
 ---
-hip: 0115
+hip: "0115"
 title: Hanzo Frontend Delivery
 author: Hanzo AI Team
 type: Standards Track

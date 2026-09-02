@@ -1,5 +1,5 @@
 ---
-hip: 0403
+hip: "0403"
 title: KV CRD
 author: Hanzo Platform Team
 type: Standards Track

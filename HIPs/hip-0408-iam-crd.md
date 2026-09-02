@@ -1,5 +1,5 @@
 ---
-hip: 0408
+hip: "0408"
 title: IAM CRD
 author: Hanzo Platform Team
 type: Standards Track

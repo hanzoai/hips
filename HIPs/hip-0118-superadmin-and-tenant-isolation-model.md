@@ -1,5 +1,5 @@
 ---
-hip: 0118
+hip: "0118"
 title: SuperAdmin & Tenant Isolation Model
 author: Hanzo AI Team
 type: Standards Track

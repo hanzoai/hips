@@ -1,5 +1,5 @@
 ---
-hip: 0122
+hip: "0122"
 title: zip — The ZAP-Native Application Server Core
 author: Hanzo AI Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 0400
+hip: "0400"
 title: Service CRD
 author: Hanzo Platform Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 0303
+hip: "0303"
 title: "Hanzo adopts LP-0010: Brand Sovereignty and Federation Discovery"
 author: Zach Kelling (zach@hanzo.ai)
 type: Meta

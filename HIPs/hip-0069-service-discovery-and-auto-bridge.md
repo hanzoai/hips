@@ -1,5 +1,5 @@
 ---
-hip: 0069
+hip: "0069"
 title: Service Discovery & Auto-Bridge
 type: Standards Track
 category: Infrastructure

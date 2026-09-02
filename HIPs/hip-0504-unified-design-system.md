@@ -1,5 +1,5 @@
 ---
-hip: 0504
+hip: "0504"
 title: Unified Cross-Platform Design System
 author: Hanzo AI Team
 type: Standards Track

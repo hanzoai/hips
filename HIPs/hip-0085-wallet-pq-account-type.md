@@ -1,5 +1,5 @@
 ---
-hip: 0085
+hip: "0085"
 title: Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID)
 type: Standards Track
 category: Cryptography

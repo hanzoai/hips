@@ -1,5 +1,5 @@
 ---
-hip: 0136
+hip: "0136"
 title: One Secret, One Path
 author: Hanzo AI Team
 type: Standards Track

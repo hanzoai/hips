@@ -1,5 +1,5 @@
 ---
-hip: 0902
+hip: "0902"
 title: Proof of Code — Consensus over Git Refs
 author: Hanzo AI Team
 type: Standards Track

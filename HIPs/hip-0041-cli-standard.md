@@ -1,5 +1,5 @@
 ---
-hip: 0041
+hip: "0041"
 title: The Hanzo CLI — a Projection of the Served API
 author: Hanzo AI
 type: Standards Track

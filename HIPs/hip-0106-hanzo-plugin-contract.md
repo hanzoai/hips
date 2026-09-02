@@ -1,5 +1,5 @@
 ---
-hip: 0106
+hip: "0106"
 title: The Hanzo Plugin Contract
 author: Hanzo AI Team
 type: Standards Track

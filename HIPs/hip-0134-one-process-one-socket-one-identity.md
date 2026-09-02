@@ -1,5 +1,5 @@
 ---
-hip: 0134
+hip: "0134"
 title: One Process, One Socket, One Identity
 author: Hanzo AI
 type: Standards Track

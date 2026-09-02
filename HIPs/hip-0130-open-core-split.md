@@ -1,5 +1,5 @@
 ---
-hip: 0130
+hip: "0130"
 title: "Open-Core Split — the Tenancy Line, the Composition Root, and Lazy Subsystems"
 author: Hanzo AI Team
 type: Standards Track

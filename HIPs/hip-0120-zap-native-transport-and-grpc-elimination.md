@@ -1,5 +1,5 @@
 ---
-hip: 0120
+hip: "0120"
 title: ZAP-Native Transport & gRPC Elimination
 author: Hanzo AI
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 0123
+hip: "0123"
 title: Visor — Fleet & Fabric Autoscaling Across Any Provider
 author: Hanzo AI Team
 type: Standards Track

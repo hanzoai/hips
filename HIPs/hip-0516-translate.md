@@ -1,5 +1,5 @@
 ---
-hip: 0516
+hip: "0516"
 title: Translate — One Endpoint, Two Tiers, Permissive Weights
 author: Hanzo AI
 type: Standards Track

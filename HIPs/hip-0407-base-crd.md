@@ -1,5 +1,5 @@
 ---
-hip: 0407
+hip: "0407"
 title: Base CRD
 author: Hanzo Platform Team
 type: Standards Track

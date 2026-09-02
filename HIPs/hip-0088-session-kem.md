@@ -1,5 +1,5 @@
 ---
-hip: 0088
+hip: "0088"
 title: Session KEM (ML-KEM-768/1024 for P2P)
 type: Standards Track
 category: Cryptography

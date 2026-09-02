@@ -1,5 +1,5 @@
 ---
-hip: 0086
+hip: "0086"
 title: TxAuthEnvelope (typed PQ transaction signing)
 type: Standards Track
 category: Cryptography

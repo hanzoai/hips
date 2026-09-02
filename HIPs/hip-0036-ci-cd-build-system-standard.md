@@ -1,5 +1,5 @@
 ---
-hip: 0036
+hip: "0036"
 title: CI/CD Build System Standard
 author: Hanzo AI Team
 type: Standards Track

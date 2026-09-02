@@ -1,5 +1,5 @@
 ---
-hip: 0098
+hip: "0098"
 title: Governance / Upgrade Keys (ML-DSA-87 / SLH-DSA cold roots)
 type: Standards Track
 category: Cryptography

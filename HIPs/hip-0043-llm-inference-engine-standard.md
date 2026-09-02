@@ -1,5 +1,5 @@
 ---
-hip: 0043
+hip: "0043"
 title: Hanzo Engine — LLM Inference Engine Standard
 author: Hanzo AI Team
 type: Standards Track

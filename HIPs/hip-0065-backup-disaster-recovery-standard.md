@@ -1,5 +1,5 @@
 ---
-hip: 0065
+hip: "0065"
 title: Backup & Disaster Recovery Standard
 author: Hanzo AI Team
 type: Standards Track
