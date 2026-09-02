@@ -372,7 +372,7 @@ Three consequences follow, and each is a constraint rather than a feature:
 
 ### §13 What is built, what is off, what is missing
 
-Measured in `hanzoai/cloud`, `hanzoai/team`, `hanzoai/team-go` and `@hanzo/bot`
+Measured in `hanzoai/cloud`, `hanzoai/team` and `@hanzo/bot`
 on 2026-08-27. A specification claiming built things that are not built is worse
 than no specification, so each mechanism this HIP names carries its state and the
 symbol that proves it.
