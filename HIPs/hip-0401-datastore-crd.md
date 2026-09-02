@@ -1,5 +1,5 @@
 ---
-hip: 0401
+hip: "0401"
 title: Datastore CRD
 author: Hanzo Platform Team
 type: Standards Track

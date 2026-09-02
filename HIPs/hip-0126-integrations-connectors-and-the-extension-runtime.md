@@ -1,5 +1,5 @@
 ---
-hip: 0126
+hip: "0126"
 title: Integrations, Connectors & the Extension Runtime — One Registry, One Way
 author: Hanzo AI Team
 type: Standards Track

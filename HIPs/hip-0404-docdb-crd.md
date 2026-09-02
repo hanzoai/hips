@@ -1,5 +1,5 @@
 ---
-hip: 0404
+hip: "0404"
 title: DocDB CRD
 author: Hanzo Platform Team
 type: Standards Track

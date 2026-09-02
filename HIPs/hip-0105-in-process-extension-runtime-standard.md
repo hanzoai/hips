@@ -1,5 +1,5 @@
 ---
-hip: 0105
+hip: "0105"
 title: In-Process Extension Runtime Standard
 author: Hanzo AI Team
 type: Standards Track

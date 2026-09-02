@@ -1,5 +1,5 @@
 ---
-hip: 0107
+hip: "0107"
 title: Streaming Replication over VFS
 author: Hanzo AI Team
 type: Standards Track

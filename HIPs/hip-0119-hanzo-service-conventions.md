@@ -1,5 +1,5 @@
 ---
-hip: 0119
+hip: "0119"
 title: Hanzo Service Conventions
 author: Hanzo AI Team
 type: Standards Track

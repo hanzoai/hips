@@ -1,5 +1,5 @@
 ---
-hip: 0102
+hip: "0102"
 title: Omnichain Bridge Integration
 description: Cross-chain AI inference payments and model deployment via Lux Teleport omnichain bridge
 author: Hanzo AI

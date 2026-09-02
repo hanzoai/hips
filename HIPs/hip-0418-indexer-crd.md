@@ -1,5 +1,5 @@
 ---
-hip: 0418
+hip: "0418"
 title: Indexer CRD
 author: Hanzo Platform Team
 type: Standards Track

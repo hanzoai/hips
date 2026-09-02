@@ -1,5 +1,5 @@
 ---
-hip: 0015
+hip: "0015"
 title: Computer Control Standard
 author: Hanzo AI Team
 type: Standards Track

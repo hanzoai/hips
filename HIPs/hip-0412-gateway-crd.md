@@ -1,5 +1,5 @@
 ---
-hip: 0412
+hip: "0412"
 title: Gateway CRD
 author: Hanzo Platform Team
 type: Standards Track

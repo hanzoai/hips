@@ -1,5 +1,5 @@
 ---
-hip: 0512
+hip: "0512"
 title: Experiment — The Evidence Plane
 author: Hanzo AI Team
 type: Standards Track

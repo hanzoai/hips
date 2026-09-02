@@ -1,5 +1,5 @@
 ---
-hip: 0405
+hip: "0405"
 title: S3 CRD
 author: Hanzo Platform Team
 type: Standards Track

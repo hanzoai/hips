@@ -1,5 +1,5 @@
 ---
-hip: 0068
+hip: "0068"
 title: Ingress Standard
 author: Hanzo AI Team
 type: Standards Track

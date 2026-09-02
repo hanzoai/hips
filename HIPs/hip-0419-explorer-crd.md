@@ -1,5 +1,5 @@
 ---
-hip: 0419
+hip: "0419"
 title: Explorer CRD
 author: Hanzo Platform Team
 type: Standards Track

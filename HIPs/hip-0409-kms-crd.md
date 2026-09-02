@@ -1,5 +1,5 @@
 ---
-hip: 0409
+hip: "0409"
 title: KMS CRD
 author: Hanzo Platform Team
 type: Standards Track

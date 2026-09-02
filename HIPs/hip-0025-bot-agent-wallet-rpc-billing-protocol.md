@@ -1,5 +1,5 @@
 ---
-hip: 0025
+hip: "0025"
 title: Bot Agent Wallet & RPC Billing Protocol
 author: Hanzo AI Team
 type: Standards Track

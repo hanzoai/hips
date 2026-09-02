@@ -1,5 +1,5 @@
 ---
-hip: 0095
+hip: "0095"
 title: QoS Challenge System
 type: Standards Track
 category: Core

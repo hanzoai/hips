@@ -1,5 +1,5 @@
 ---
-hip: 0113
+hip: "0113"
 title: Cognitive Sidecar & Hanzo Engine Provider Runtime for Thinking Chains
 author: Hanzo AI
 type: Standards Track

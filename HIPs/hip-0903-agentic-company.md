@@ -1,5 +1,5 @@
 ---
-hip: 0903
+hip: "0903"
 title: The Agentic Company — Autonomous Firms on Hanzo
 author: Hanzo AI Team
 type: Informational

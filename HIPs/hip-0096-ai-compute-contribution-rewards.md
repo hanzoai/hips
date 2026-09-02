@@ -1,5 +1,5 @@
 ---
-hip: 0096
+hip: "0096"
 title: AI Compute Contribution Rewards
 type: Standards Track
 category: Core

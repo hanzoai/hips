@@ -1,5 +1,5 @@
 ---
-hip: 0027
+hip: "0027"
 title: Secrets Management Standard
 author: Hanzo AI Team
 type: Standards Track

@@ -1,5 +1,5 @@
 ---
-hip: 0111
+hip: "0111"
 title: Hanzo IAM Authentication Standard
 author: Hanzo AI Team
 type: Standards Track

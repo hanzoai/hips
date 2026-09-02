@@ -1,5 +1,5 @@
 ---
-hip: 0305
+hip: "0305"
 title: "esign: shared-DB tenancy via team-where, not file-per-tenant"
 author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track

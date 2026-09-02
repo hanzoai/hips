@@ -1,5 +1,5 @@
 ---
-hip: 0040
+hip: "0040"
 title: Multi-Language SDK Standard
 author: Hanzo AI Team
 type: Standards Track

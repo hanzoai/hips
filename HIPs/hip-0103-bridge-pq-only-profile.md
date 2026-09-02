@@ -1,5 +1,5 @@
 ---
-hip: 0103
+hip: "0103"
 title: Bridge PQ-Only Profile
 type: Standards Track
 category: Infrastructure

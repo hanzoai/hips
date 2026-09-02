@@ -1,5 +1,5 @@
 ---
-hip: 0402
+hip: "0402"
 title: SQL CRD
 author: Hanzo Platform Team
 type: Standards Track

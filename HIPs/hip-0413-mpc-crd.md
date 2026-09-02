@@ -1,5 +1,5 @@
 ---
-hip: 0413
+hip: "0413"
 title: MPC CRD
 author: Hanzo Platform Team
 type: Standards Track

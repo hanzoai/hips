@@ -1,5 +1,5 @@
 ---
-hip: 0039
+hip: "0039"
 title: Zen Model Architecture
 author: Hanzo AI Team
 type: Standards Track

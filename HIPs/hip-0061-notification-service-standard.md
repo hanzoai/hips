@@ -1,5 +1,5 @@
 ---
-hip: 0061
+hip: "0061"
 title: Notification & Messaging Service Standard
 author: Hanzo AI Team
 type: Standards Track

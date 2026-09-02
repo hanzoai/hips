@@ -1,5 +1,5 @@
 ---
-hip: 0033
+hip: "0033"
 title: Container Registry Standard
 author: Hanzo AI Team
 type: Standards Track

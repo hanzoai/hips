@@ -1,5 +1,5 @@
 ---
-hip: 0124
+hip: "0124"
 title: Bring-Your-Own Provider & AI — Unified Dashboard and Usage
 author: Hanzo AI Team
 type: Standards Track

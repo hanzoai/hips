@@ -1,5 +1,5 @@
 ---
-hip: 0108
+hip: "0108"
 title: On-Demand Subsystem Supervisor + Warm Pool
 author: Hanzo AI Team
 type: Standards Track

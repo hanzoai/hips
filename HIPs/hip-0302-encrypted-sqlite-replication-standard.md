@@ -1,5 +1,5 @@
 ---
-hip: 0302
+hip: "0302"
 title: "Hanzo Replicate: Encrypted SQLite Durability for Base Services"
 author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track

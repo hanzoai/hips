@@ -1,5 +1,5 @@
 ---
-hip: 0084
+hip: "0084"
 title: Pulsar-M — Threshold ML-DSA DKG & Signing
 type: Standards Track
 category: Cryptography

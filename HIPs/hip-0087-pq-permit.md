@@ -1,5 +1,5 @@
 ---
-hip: 0087
+hip: "0087"
 title: PQ Permit (replaces EIP-2612)
 type: Standards Track
 category: Cryptography

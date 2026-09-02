@@ -1,5 +1,5 @@
 ---
-hip: 0049
+hip: "0049"
 title: DNS Service Standard
 author: Hanzo AI Team
 type: Standards Track

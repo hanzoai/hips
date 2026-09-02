@@ -1,5 +1,5 @@
 ---
-hip: 0306
+hip: "0306"
 title: AML Transaction Monitoring, Screening and Case Management
 author: Hanzo AI Team
 type: Standards Track

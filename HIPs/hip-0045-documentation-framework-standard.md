@@ -1,5 +1,5 @@
 ---
-hip: 0045
+hip: "0045"
 title: Documentation Framework Standard
 author: Hanzo AI Team
 type: Standards Track
