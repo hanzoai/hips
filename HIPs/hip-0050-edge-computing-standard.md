@@ -135,7 +135,7 @@ When a task exceeds the on-device model's capability, Edge transparently falls b
 User Request
   --> Local inference attempt
   --> If confidence < threshold OR context > local_max:
-      --> Forward to Hanzo Gateway (HIP-0044) --> Engine (HIP-0043)
+      --> Forward to LLM Gateway (HIP-0004) --> Engine (HIP-0043)
   --> Cache cloud response locally for future reference
 ```
 
@@ -203,8 +203,7 @@ Edge binaries are signed with Hanzo's code signing keys. Model weights are distr
 |-----|-------------|
 | **HIP-19** (Tensor Operations) | Edge is built on the same Candle ML framework. Tensor ops are shared. |
 | **HIP-43** (Engine) | Engine is the cloud counterpart. Shared model format, shared quantization pipeline, shared `ModelPipeline` trait. Edge targets on-device; Engine targets datacenter. |
-| **HIP-44** (Gateway) | Edge uses Gateway for cloud fallback when local inference is insufficient. |
-| **HIP-4** (LLM Gateway) | Cloud fallback requests route through LLM Gateway for provider selection. |
+| **HIP-4** (LLM Gateway) | Cloud fallback requests route through LLM Gateway for provider selection; Edge uses it when local inference is insufficient. |
 | **HIP-10** (MCP) | Edge implements local MCP for on-device tool use. |
 | **HIP-32** (Object Storage) | Models are downloaded from Hanzo Object Storage. |
 | **HIP-39** (Zen Architecture) | Edge serves Zen models (zen3-nano, zen4-mini, zen3-guard, zen3-embedding). |
@@ -221,7 +220,7 @@ Edge binaries are signed with Hanzo's code signing keys. Model weights are distr
 8. [AWQ: Activation-aware Weight Quantization](https://arxiv.org/abs/2306.00978)
 9. [GPTQ: Accurate Post-Training Quantization](https://arxiv.org/abs/2210.17323)
 10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
-11. HIP-0044: Hanzo Gateway Standard
+11. [HIP-0004: LLM Gateway - Unified AI Provider Interface](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 12. [HIP-0010: MCP Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 
 ## Copyright

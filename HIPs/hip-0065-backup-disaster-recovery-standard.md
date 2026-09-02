@@ -16,7 +16,7 @@ requires: HIP-0027, HIP-1164, HIP-1104, HIP-1241
 
 This proposal defines the unified backup and disaster recovery (DR) standard
 for all stateful services in the Hanzo ecosystem. Every data store -- SQL
-(HIP-1104), Valkey/KV (HIP-1164), Hanzo Datastore (HIP-1241), MinIO/S3 (HIP-0032),
+(HIP-1104), Valkey/KV (HIP-1164), Hanzo Datastore (HIP-1241), MinIO/S3 (HIP-0405),
 model artifacts, training checkpoints, datasets, and configuration secrets --
 MUST be backed up, verified, and recoverable through the single Hanzo Backup
 service defined here.
@@ -122,7 +122,7 @@ Backup Controller (:8065)
   ├── PostgreSQL (HIP-1104)  ── pg_basebackup + WAL archiving
   ├── Valkey/KV  (HIP-1164)  ── RDB snapshot export
   ├── Hanzo Datastore (HIP-1241)  ── BACKUP DATABASE ... TO S3
-  ├── MinIO/S3   (HIP-0032)  ── mc mirror (bucket replication)
+  ├── MinIO/S3   (HIP-0405)  ── mc mirror (bucket replication)
   ├── Model Weights / Checkpoints / Datasets  ── versioned S3
   └── Config / Secrets  ── Velero + KMS export
           │
@@ -495,7 +495,7 @@ cloud provider experiences a global outage.
 1. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
 2. [HIP-1164: Provisioning — Stores on Demand](./hip-1164-provisioning-stores-on-demand.md)
 3. [HIP-1104: Base — The Hosted Backend](./hip-1104-base-hosted-backend.md)
-4. HIP-0032: Object Storage Standard
+4. [HIP-0405: S3 CRD](./hip-0405-s3-crd.md)
 5. [HIP-1241: Metrics — One Native Store, Three Signals](./hip-1241-metrics-one-store-three-signals.md)
 6. [Velero Documentation](https://velero.io/docs/)
 7. [PostgreSQL PITR](https://www.postgresql.org/docs/16/continuous-archiving.html)

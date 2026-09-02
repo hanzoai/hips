@@ -71,7 +71,7 @@ GitHub Action that pushes to a host, or a second PaaS. One control plane.
 - A `static` app's artifact MUST be published to **`hanzoai/s3`** (the object
   store) and served by **`hanzoai/ingress` + the static plugin**. nginx, caddy, and
   per-site web servers MUST NOT be used (per the platform rule).
-- A `container` app is served through `hanzoai/ingress` → the app, per HIP-0112.
+- A `container` app is served through `hanzoai/ingress` → the app, per HIP-0068.
 - DNS is Cloudflare; TLS is cert-manager/ingress. The host is `<site>.<brand-domain>`.
 - Adding a site is: new repo in `<org>-apps` → register the PaaS app (`static`,
   host) → deploy. No cluster YAML hand-editing, no new web server.
@@ -101,5 +101,5 @@ this HIP by reference and MUST NOT restate or fork it.
 
 ## References
 
-- HIP-0036 CI/CD Build System · HIP-0068 Ingress · HIP-0112 Cloud Topology
+- HIP-0036 CI/CD Build System · HIP-0068 Ingress Standard
 - HIP-0119 Service Conventions (the backend peer) · HIP-0504 Design System

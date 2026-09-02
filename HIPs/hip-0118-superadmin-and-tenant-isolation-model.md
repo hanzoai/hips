@@ -130,7 +130,7 @@ OIDC userinfo response, in every token format, scope-independent. The predicate 
 evaluated from that claim and nothing else. Concretely:
 
 - The **edge gate** (admin-guard, §7) evaluates it in `decide()`.
-- The **gateway** propagates the resolved org as `X-Org-Id` (HIP-0044); downstream
+- The **gateway** propagates the resolved org as `X-Org-Id` (HIP-0519); downstream
   subsystems read `X-Org-Id` and apply the *same* predicate for any platform action,
   and scope every tenant query to it.
 - The **console** shows platform-admin affordances under the *same* predicate.
@@ -270,7 +270,7 @@ to be renamed to SuperAdmin (IAM `IsGlobalAdmin` → `IsSuperAdmin`, console
 
 1. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) — the IAM server: the Org primitive, the `owner` field, the `isAdmin` flag.
 2. [HIP-0111: Hanzo IAM Authentication Standard](./hip-0111-iam-authentication-standard.md) — how a client obtains and reads the `owner` claim; the fail-closed tenant rule (§5).
-3. HIP-0044: Hanzo Gateway Standard — JWT validation and `X-Org-Id` propagation to subsystems.
+3. [HIP-0519: One Identity Boundary](./hip-0519-one-identity-boundary.md) — JWT validation and `X-Org-Id` propagation to subsystems.
 4. [HIP-0068: Ingress Standard](./hip-0068-ingress-standard.md) — the ForwardAuth mechanism the admin-guard plugs into.
 5. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS-managed secrets for privileged surfaces.
 6. `~/work/hanzo/gateway/cmd/admin-guard/main.go` — the reference implementation of the predicate and the two surfaces.

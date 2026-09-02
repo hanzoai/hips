@@ -38,7 +38,7 @@ Specifies how all Hanzo Base-powered services achieve durable state persistence 
 | `hanzoai/replicate` | `ghcr.io/hanzoai/replicate` | Litestream fork with age encryption (SQLite WAL) |
 | `hanzoai/zapdb-replicator` | `ghcr.io/hanzoai/zapdb-replicator` | ZapDB frame replication sidecar (ZAP binary format) |
 | `hanzoai/age` | `ghcr.io/hanzoai/age` | X25519 + ML-KEM-768 hybrid key generation |
-| `hanzoai/s3` | `ghcr.io/hanzoai/s3` | S3-compatible object storage (HIP-0032) |
+| `hanzoai/s3` | `ghcr.io/hanzoai/s3` | S3-compatible object storage (HIP-0405) |
 
 ### Recovery Objectives
 
@@ -201,5 +201,5 @@ This standard is adopted by LP-102 (Lux) and ZIP-0803 (Zoo) with ecosystem-speci
 - LP-102: Lux Encrypted Streaming Replication
 - ZIP-0803: Zoo Encrypted Streaming Replication
 - HIP-0027: Secrets Management Standard
-- HIP-0032: Object Storage Standard
 - HIP-0065: Backup & Disaster Recovery Standard
+- HIP-0405: S3 CRD

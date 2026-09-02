@@ -80,7 +80,7 @@ spec:
 
 ### Related services
 
-- HIP-0044 (API gateway standard)
+- HIP-0519 (One Identity Boundary) — the edge role this gateway holds: strip, verify, mint.
 
 ## Status
 

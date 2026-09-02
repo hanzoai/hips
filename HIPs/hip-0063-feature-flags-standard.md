@@ -372,7 +372,7 @@ capability-local exporter.
 
 1. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 2. [HIP-1190: Event — The Product Analytics Plane](./hip-1190-event-product-analytics.md)
-3. HIP-44: API Gateway Standard
+3. [HIP-519: One Identity Boundary](./hip-0519-one-identity-boundary.md)
 4. [OpenFeature Specification](https://openfeature.dev/specification/)
 5. [OpenFeature Go SDK](https://github.com/open-feature/go-sdk)
 6. [Thompson Sampling for Multi-Armed Bandits](https://arxiv.org/abs/1707.02038)
