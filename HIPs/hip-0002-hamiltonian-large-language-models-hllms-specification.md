@@ -178,7 +178,7 @@ class HLLMArchitecture:
 ### Model Checkpoints
 - **HLLM-7B Base**: [huggingface.co/hanzoai/hllm-7b](https://huggingface.co/hanzoai/hllm-7b)
 - **HLLM-32B Base**: [huggingface.co/hanzoai/hllm-32b](https://huggingface.co/hanzoai/hllm-32b)
-- **Evaluation Suite**: [github.com/hanzoai/hllm-eval](https://github.com/hanzoai/hllm-eval)
+- **Evaluation Suite**: proposed by this HIP; not yet written, so there is nothing to link to.
 
 3. [Gemini: A Family of Multimodal Models](https://arxiv.org/abs/2312.11805)
 4. [HIP-0000: Hanzo AI Architecture & Framework](./hip-0000-hanzo-ai-architecture-framework.md)

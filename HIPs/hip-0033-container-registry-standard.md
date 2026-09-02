@@ -436,7 +436,7 @@ deploy:
   needs: build
   steps:
     - name: Configure kubectl
-      run: doctl kubernetes cluster kubeconfig save the cluster
+      run: doctl kubernetes cluster kubeconfig save hanzo-k8s
 
     - name: Deploy to K8s
       run: |

@@ -23,7 +23,7 @@ This proposal defines the Model Context Protocol (MCP) integration standards for
 | **Python** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `hanzo-mcp` (PyPI) | ✅ Production |
 | **TypeScript** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `@hanzoai/mcp` (NPM) | ✅ Production |
 | **Rust** | [github.com/hanzoai/mcp/rust](https://github.com/hanzoai/mcp/tree/main/rust) | `hanzo-mcp` (crates.io) | ✅ Production |
-| **Go** | [github.com/hanzoai/mcp-go](https://github.com/hanzoai/mcp-go) | `github.com/hanzoai/mcp-go` | 🚧 In Progress |
+| **Go** | [github.com/hanzoai/mcp/go](https://github.com/hanzoai/mcp/tree/main/go) | `github.com/hanzoai/mcp/go` | 🚧 In Progress |
 
 **CLI**: `hanzo-mcp` (available via `pip install hanzo-mcp` or `cargo install hanzo-mcp`)
 

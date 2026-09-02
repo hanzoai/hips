@@ -39,7 +39,7 @@ short-lived bearer token, and fetch secrets at runtime. In Kubernetes, the
 **Repository**: [github.com/hanzoai/kms](https://github.com/hanzoai/kms)
 **Production**: https://kms.hanzo.ai
 **Docker**: `ghcr.io/hanzoai/kms:latest`
-**Cluster**: the cluster (`24.199.76.156`)
+**Cluster**: hanzo-k8s (`24.199.76.156`)
 
 ## Motivation
 
@@ -58,7 +58,7 @@ Before KMS, Hanzo secrets were managed through a patchwork of mechanisms:
 5. **No audit trail**: When a secret was accessed, changed, or leaked, there
    was no way to know who did what, when.
 
-These problems compound at scale. With 15+ services on the cluster and growing,
+These problems compound at scale. With 15+ services on hanzo-k8s and growing,
 manual secrets management became the single largest operational risk.
 
 ## Design Philosophy

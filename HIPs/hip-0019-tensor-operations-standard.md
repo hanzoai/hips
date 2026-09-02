@@ -16,9 +16,9 @@ requires: HIP-0003
 
 This proposal defines the tensor operations standard for all ML computations in the Hanzo ecosystem. It specifies the data types, device backends, operation primitives, model formats, quantization strategies, memory management, custom operations, WebAssembly compilation pipeline, and API surface that every inference workload MUST use. The reference implementation is Hanzo Candle, a fork of HuggingFace's Candle Rust ML framework extended with Apple Silicon Metal support, custom quantization kernels, Hamiltonian dynamics operations, and integration with the Hanzo model serving pipeline.
 
-**Repository**: [github.com/hanzoai/candle](https://github.com/hanzoai/candle)
-**Crates**: `candle-core`, `candle-nn`, `candle-transformers`, `candle-metal-kernels`, `candle-wasm`
-**NPM Package**: `@hanzoai/candle-wasm`
+**Repository**: [github.com/hanzoai/ml](https://github.com/hanzoai/ml)
+**Crates**: `hanzo-ml` (tensor core), `hanzo-nn`, `hanzo-transformers`, `hanzo-metal-kernels` -- the fork publishes under the `hanzo-*` prefix; the `candle-*` names used below follow the upstream layout.
+**NPM Package**: none yet -- the WASM build described below is proposed, not published.
 
 ## Motivation
 
@@ -424,7 +424,7 @@ pub trait CustomOp: Send + Sync {
 
 ### WASM Compilation Pipeline
 
-The WASM pipeline compiles Candle to WebAssembly and packages it as an npm module for browser consumption. The full pipeline:
+The WASM pipeline compiles Candle to WebAssembly and packages it as an npm module for browser consumption. The repository carries per-model WASM examples (`hanzo-ml-wasm-examples/`), but no package is published to npm yet, so the pipeline and the package name below describe what this HIP proposes rather than something you can install today:
 
 ```
 Rust source (candle-core, candle-nn, candle-transformers)
@@ -594,7 +594,7 @@ let next_token = logits.argmax(D::Minus1)?;
 
 ### Repository
 
-[github.com/hanzoai/candle](https://github.com/hanzoai/candle) -- fork of [huggingface/candle](https://github.com/huggingface/candle) with Hanzo extensions.
+[github.com/hanzoai/ml](https://github.com/hanzoai/ml) -- fork of [huggingface/candle](https://github.com/huggingface/candle) with Hanzo extensions.
 
 ### Build
 
