@@ -114,6 +114,33 @@ does not own, and it is refused unless every one of these holds:
 A join writes a member into the owning org's store. It does not copy the room,
 and it does not give the joiner's org a room of its own.
 
+#### What this costs, measured
+
+Admitting a stranger is not a matter of appending to `members`. Every read path
+resolves the space through `identity.admit` (`apps/team/account.go:1267`), which
+calls `SpaceByUUID(ctx, cl.org, wsUUID)` — **the space is looked up scoped to the
+CALLER'S org**, so a space another org owns does not resolve for a stranger at
+all, and the call returns `errNoSpace` before membership is ever consulted.
+`AccountForSubject` (`account_store.go:390`) is the same shape one layer down: it
+asks IAM whether the subject may act *in that org* and answers `false` for
+anybody who may not.
+
+So room membership across orgs cannot be added as a row. It requires a room-scope
+that exists independently of org membership — a caller admitted to one document
+in a tenant they are not a member of — and that is a change to what `admit`
+means, which is the tenant boundary itself. **It is an architecture decision and
+this HIP does not smuggle it in as an implementation detail.** Two shapes are
+worth weighing, and neither should be chosen without the owner:
+
+1. **A guest membership row in the owning org**, carrying the room it is scoped
+   to. `admit` gains a second question rather than a looser first one; the
+   boundary stays a boundary and a guest reaches exactly one document.
+2. **Grant the joiner IAM membership of the owning org.** Simpler to write and
+   much larger than it looks: it makes a channel-joiner a member of the company,
+   which is not what joining a channel means.
+
+The directory and its read (§1–§3) do not wait on this, and are shipped.
+
 ### 5. What a joined member is
 
 A member from another org is a member: they read the room's messages and write
@@ -191,9 +218,10 @@ with `/v1/bogus-control-xyz` (404) as the control:
 | `GET/POST /rooms/{id}/messages` | shipped — `message.go:103-104` |
 | `private` on a room | shipped — `teamRoomNew`, `room.go:432` |
 | org-scoped listing | shipped — `room.go:208`, via `s.db(org, space)` |
-| the directory | **absent** |
-| `GET /v1/team/public` | **absent** |
-| `POST /v1/team/rooms/{id}/join` | **absent** |
+| the directory | **shipped** — `apps/team/public.go`, system namespace |
+| `GET /v1/team/public` | **shipped** — typed, `x-tool`, published in the subset |
+| publish on open | **shipped** — `room.go`, public rooms only, best-effort |
+| `POST /v1/team/rooms/{id}/join` | **absent** — blocked on §4's decision |
 
 A local cloud's `/v1/openapi.json` listed `GET` alone on `/v1/team/rooms` while
 the route answered `403` to a `POST`. The document lagged the binary; the route
