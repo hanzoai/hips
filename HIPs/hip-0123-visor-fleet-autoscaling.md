@@ -42,7 +42,7 @@ demand one control plane for it:
 
 1. **The fabric is already plural.** The operated estate spans eight
    Kubernetes clusters across providers this cycle — Kubernetes estates
-   (`do-sfo3-the cluster`, `do-sfo3-lux-k8s`, `do-sfo3-bootnode-k8s`,
+   (`do-sfo3-hanzo-k8s`, `do-sfo3-lux-k8s`, `do-sfo3-bootnode-k8s`,
    the zoo estate, and siblings) plus BYO k3s fleets such as the
    spark/evo/dbc reference cluster of HIP-0121. No single cluster's
    autoscaler can see, size, or bill that fabric as one thing.
@@ -155,7 +155,7 @@ Honesty section. As of v1.108.11:
   project attribution labels in the scale path, the provider
   connector set (clouds + on-prem hypervisors), per-owner sealed
   credentials, the metering reporter, and the eight-cluster operated
-  fabric. Visor runs in production (`do-sfo3-the cluster`, operator CR
+  fabric. Visor runs in production (`do-sfo3-hanzo-k8s`, operator CR
   at tag v1.108.11).
 - **Decided, staged:** the full **per-tenant per-service
   cross-provider placement policy** — i.e. pools uniformly keyed by

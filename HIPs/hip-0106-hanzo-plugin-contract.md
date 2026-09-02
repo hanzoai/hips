@@ -129,6 +129,12 @@ A plugin's non-test import graph MUST contain, from first-party code, exactly:
 | `github.com/hanzoai/money` | exact decimal amounts | only if it handles money |
 | one `zip/<lang>` adaptor | a non-Go handler runtime (§5) | only if it mounts one |
 
+The third row is the one forward reference in the table. `github.com/hanzoai/plane`
+is the path §1.3(a) extracts the contract to, and that extraction has not landed:
+the module does not resolve, and the constants still live in package `plane` of
+the `hanzoai/cloud` module. The row names the destination anyway, because a
+plugin that spells the import any other way gets edited twice.
+
 It MUST NOT import `github.com/hanzoai/cloud`, any `hanzoai/cloud/...`
 subpackage, or any other host package. That is the entire rule, and it is
 checked by a gate, not by review (§8.1).
@@ -181,7 +187,9 @@ handler is the shape).
 
 `github.com/hanzoai/plane` is `hanzoai/cloud/plane` extracted verbatim to its
 own module: 74 packages, no host imports, already correct. The extraction is a
-module-path change and nothing else.
+module-path change and nothing else — and it is the part still to be done. There
+is no `hanzoai/plane` module to fetch yet; the package is one directory of
+`hanzoai/cloud` until the move lands.
 
 The *client and server halves* are already zip and MUST NOT be duplicated. Every
 helper the host currently wraps them in is deleted in the change that names its
@@ -1083,8 +1091,9 @@ therefore requires no permission and no coordination:
 Build a conforming plugin repo in one pass:
 
 1. `go.mod` requires `github.com/zap-proto/zip >= v1.18.7`, plus
-   `hanzoai/plane` if it calls a peer and `hanzoai/money` if it handles money.
-   Nothing from `hanzoai/cloud`. §8.1 proves it.
+   `hanzoai/plane` if it calls a peer — not yet fetchable, see §1.3(a) — and
+   `hanzoai/money` if it handles money. Nothing from `hanzoai/cloud`. §8.1
+   proves it.
 2. One `main` per §2: construct, register typed ops, register peer ops on the
    second app, `zip.Described()` check, `app.Listen(zip.Addr(fallback))`.
 3. `//go:generate go run github.com/zap-proto/zip/cmd/zipdoc` in every package

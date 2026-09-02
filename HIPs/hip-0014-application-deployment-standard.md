@@ -22,13 +22,13 @@ Every Hanzo service MUST be deployable through Platform. The deployment flow is:
 **Production**: https://platform.hanzo.ai
 **Port**: 3000 (Platform UI), 5173 (legacy admin)
 **Docker**: `ghcr.io/hanzoai/platform:latest`
-**Cluster**: the cluster (`24.199.76.156`)
+**Cluster**: hanzo-k8s (`24.199.76.156`)
 
 ## Motivation
 
 ### The Problem
 
-Hanzo operates 30+ services across two Kubernetes clusters (the cluster, lux-k8s). Without a standardized deployment layer, each team deploys independently:
+Hanzo operates 30+ services across two Kubernetes clusters (hanzo-k8s, lux-k8s). Without a standardized deployment layer, each team deploys independently:
 
 1. **Manual kubectl**: Engineers write Kubernetes manifests by hand, SSH into the cluster, and `kubectl apply`. Manifests drift between what is in Git and what is deployed. A typo in a resource limit brings down a service with no audit trail of who changed what.
 

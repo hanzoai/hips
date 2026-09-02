@@ -98,4 +98,4 @@ Every facade Kind (`IAM`, `KMS`, `LLM`, `Indexer`, `Explorer`) delegates to the 
 
 ## Status
 
-Implemented in `hanzoai/operator` v0.3.0+. Active in cluster `do-sfo3-the cluster` for 40+ workloads.
+Implemented in `hanzoai/operator` v0.3.0+. Active in cluster `do-sfo3-hanzo-k8s` for 40+ workloads.

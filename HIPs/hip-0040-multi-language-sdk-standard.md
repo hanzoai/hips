@@ -24,7 +24,9 @@ The API surface is OpenAI-compatible by design. Existing OpenAI SDK users can sw
 | Python | `hanzoai` | [github.com/hanzoai/python-sdk](https://github.com/hanzoai/python-sdk) | [PyPI](https://pypi.org/project/hanzoai/) |
 | TypeScript/JS | `hanzoai` | [github.com/hanzoai/js-sdk](https://github.com/hanzoai/js-sdk) | [npm](https://www.npmjs.com/package/hanzoai) |
 | Go | `github.com/hanzoai/go-sdk` | [github.com/hanzoai/go-sdk](https://github.com/hanzoai/go-sdk) | [pkg.go.dev](https://pkg.go.dev/github.com/hanzoai/go-sdk) |
-| Rust | `hanzoai` | [github.com/hanzoai/rust-sdk](https://github.com/hanzoai/rust-sdk) | [crates.io](https://crates.io/crates/hanzoai) |
+| Rust | `hanzo-client` | `hanzo-rs/sdk` | [crates.io](https://crates.io/crates/hanzo-client) |
+
+The Rust repository is not public. The crate is: [docs.rs/hanzo-client](https://docs.rs/hanzo-client).
 
 **Documentation**: [docs.hanzo.ai](https://docs.hanzo.ai)
 **Base URL**: `https://api.hanzo.ai/v1` (production)
@@ -669,7 +671,7 @@ Through the LLM Gateway (HIP-4), the SDKs provide access to 100+ AI providers in
 9. [Hanzo Python SDK](https://github.com/hanzoai/python-sdk) - Python client library
 10. [Hanzo JS SDK](https://github.com/hanzoai/js-sdk) - TypeScript/JavaScript client library
 11. [Hanzo Go SDK](https://github.com/hanzoai/go-sdk) - Go client library
-12. [Hanzo Rust SDK](https://github.com/hanzoai/rust-sdk) - Rust client library
+12. [Hanzo Rust SDK](https://crates.io/crates/hanzo-client) - Rust client library (`hanzo-client`)
 13. [Hanzo API Docs](https://docs.hanzo.ai) - Full API documentation
 
 ## Copyright

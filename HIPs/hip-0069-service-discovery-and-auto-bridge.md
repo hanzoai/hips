@@ -130,9 +130,13 @@ the tree.
 |--------------|-------------------------------------------------------------|
 | Python       | `hanzo-zap-mdns`     (`pip install`)                        |
 | TypeScript   | `@hanzo/zap-mdns`    (npm)                                  |
-| Go           | `github.com/hanzoai/zap-mdns-go`                            |
+| Go           | `github.com/zap-proto/mdns`  (not yet published)            |
 | Rust         | `hanzo-zap-mdns`     (crates.io)                            |
 | Swift        | `HanzoZapMDNS`       (SwiftPM)                              |
+
+The Go binding is written but not yet a fetchable module: the source is
+[`mdns/go` in `luxfi/zap`](https://github.com/luxfi/zap/tree/main/mdns/go),
+and the import path above is the one it declares once tagged.
 
 ### Backwards compatibility
 

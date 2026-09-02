@@ -259,7 +259,7 @@ Hanzo's proprietary multimodal AI models supporting:
 ## References
 
 1. [Hanzo AI Documentation](https://docs.hanzo.ai)
-2. [Hanzo Node Repository](https://github.com/hanzoai/hanzo-node)
+2. [Hanzo Node Repository](https://github.com/hanzoai/node)
 3. [Model Context Protocol](https://modelcontextprotocol.io)
 4. [NIST PQC Standards](https://csrc.nist.gov/projects/post-quantum-cryptography)
 

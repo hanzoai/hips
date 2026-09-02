@@ -16,19 +16,20 @@ requires: HIP-0027, HIP-1164, HIP-1104, HIP-1241
 
 This proposal defines the unified backup and disaster recovery (DR) standard
 for all stateful services in the Hanzo ecosystem. Every data store -- SQL
-(HIP-1104), KV/KV (HIP-1164), Hanzo Datastore (HIP-1241), MinIO/S3 (HIP-0032),
+(HIP-1104), Valkey/KV (HIP-1164), Hanzo Datastore (HIP-1241), MinIO/S3 (HIP-0032),
 model artifacts, training checkpoints, datasets, and configuration secrets --
 MUST be backed up, verified, and recoverable through the single Hanzo Backup
 service defined here.
 
-**Repository**: [github.com/hanzoai/backup](https://github.com/hanzoai/backup)
-**Image**: `ghcr.io/hanzoai/backup:latest`
+**Repository**: none yet -- the backup controller described below is proposed, not built.
+**Image**: none yet. The `ghcr.io/hanzoai/backup` name is already taken by an
+unrelated service, so this controller needs a different one when it ships.
 **Port**: 8065 (backup controller API)
 **License**: Apache-2.0
 
 ## Motivation
 
-Hanzo operates 15+ stateful services across two Kubernetes clusters (the cluster,
+Hanzo operates 15+ stateful services across two Kubernetes clusters (hanzo-k8s,
 lux-k8s). Each service adopted its own backup approach:
 
 - **PostgreSQL** runs a CronJob with `pg_dump` every 6 hours (HIP-1104).
@@ -105,7 +106,7 @@ Every Hanzo service is assigned one of three tiers:
 | Tier | RPO | RTO | Backup Frequency | Replication | Examples |
 |------|-----|-----|------------------|-------------|----------|
 | **Critical** | 1 minute | 5 minutes | Continuous (WAL/AOF streaming) | Synchronous cross-region | SQL (IAM, Cloud), KMS secrets |
-| **Standard** | 1 hour | 1 hour | Hourly snapshots | Async cross-region | KV/KV, Hanzo Datastore, MinIO buckets |
+| **Standard** | 1 hour | 1 hour | Hourly snapshots | Async cross-region | Valkey/KV, Hanzo Datastore, MinIO buckets |
 | **Archival** | 24 hours | 4 hours | Daily snapshots | Async, single copy | Model artifacts, training datasets, logs |
 
 RPO = Recovery Point Objective (maximum acceptable data loss).
@@ -119,7 +120,7 @@ The backup controller manages the following data stores:
 Backup Controller (:8065)
   │
   ├── PostgreSQL (HIP-1104)  ── pg_basebackup + WAL archiving
-  ├── KV/KV      (HIP-1164)  ── RDB snapshot export
+  ├── Valkey/KV  (HIP-1164)  ── RDB snapshot export
   ├── Hanzo Datastore (HIP-1241)  ── BACKUP DATABASE ... TO S3
   ├── MinIO/S3   (HIP-0032)  ── mc mirror (bucket replication)
   ├── Model Weights / Checkpoints / Datasets  ── versioned S3
@@ -163,7 +164,7 @@ Two complementary backup mechanisms run simultaneously:
 The existing `pg_dump` CronJob (HIP-1104) continues as a logical backup for
 selective per-database restore. It supplements but does not replace PITR.
 
-#### KV/KV (Standard Tier)
+#### Valkey/KV (Standard Tier)
 
 KV supports two persistence formats:
 
@@ -281,7 +282,7 @@ configurable per cluster:
 
 | Cluster | PITR Window | WAL Retention |
 |---------|-------------|---------------|
-| the cluster | 7 days | 7 days of WAL segments |
+| hanzo-k8s | 7 days | 7 days of WAL segments |
 | lux-k8s | 7 days | 7 days of WAL segments |
 
 To perform PITR:
@@ -292,7 +293,7 @@ kubectl scale statefulset postgres --replicas=0
 
 # 2. Restore base backup + replay WAL to target time
 backup-pg-restore \
-  --cluster the cluster \
+  --cluster hanzo-k8s \
   --target-time "2026-02-23 14:30:00 UTC" \
   --output /var/lib/postgresql/data
 
@@ -410,13 +411,13 @@ Scenario: A bad migration corrupts the `iam` database. RTO: 5 minutes.
 
 #### Runbook 2: Full Cluster Loss
 
-Scenario: the cluster is destroyed (provider outage). RTO: 1 hour.
+Scenario: hanzo-k8s is destroyed (provider outage). RTO: 1 hour.
 
 1. Provision new Kubernetes cluster in secondary region.
 2. `velero restore create --from-backup hanzo-cluster-backup-latest`
-3. `backup-pg-restore --cluster the cluster --latest`
-4. `backup-kv-restore --cluster the cluster --latest`
-5. `backup-ch-restore --cluster the cluster --latest`
+3. `backup-pg-restore --cluster hanzo-k8s --latest`
+4. `backup-kv-restore --cluster hanzo-k8s --latest`
+5. `backup-ch-restore --cluster hanzo-k8s --latest`
 6. Update DNS (hanzo.id, cloud.hanzo.ai, etc.) to new cluster IP.
 7. Verify all services via `/healthz` endpoints.
 
