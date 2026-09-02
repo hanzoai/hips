@@ -592,4 +592,4 @@ valid choices for different organizations.
   (https://www.kubeflow.org), MLflow (https://mlflow.org), Katib
   (https://www.kubeflow.org/docs/components/katib/), KServe
   (https://kserve.github.io), Seldon Core
-  (https://www.seldon.io/solutions/seldon-core).
+  (https://github.com/SeldonIO/seldon-core).

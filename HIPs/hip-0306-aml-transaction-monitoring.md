@@ -834,10 +834,13 @@ Citations recorded from a secondary or paraphrasing source are marked as such.
 22. SI 2017/692 reg 40(2)(b), 40(3), 40(4) — reconstruction, five years, ten-year cap
     (verified) — https://www.legislation.gov.uk/uksi/2017/692/regulation/40
 23. Federal Reserve SR 11-7, Guidance on Model Risk Management — body not extracted
-    verbatim during drafting; see [26] —
-    https://www.federalreserve.gov/supervisionreg/srletters/sr1107.htm
-24. OCC Bulletin 2011-12, Sound Practices for Model Risk Management —
-    https://www.occ.gov/news-issuances/bulletins/2011/bulletin-2011-12.html
+    verbatim during drafting; see [26]. Superseded in April 2026 by SR 26-2,
+    Revised Guidance on Model Risk Management —
+    https://www.federalreserve.gov/boarddocs/srletters/2011/sr1107.htm
+    (SR 26-2: https://www.federalreserve.gov/supervisionreg/srletters/SR2602.htm)
+24. OCC Bulletin 2011-12, Sound Practices for Model Risk Management. Rescinded in
+    2026 and replaced by OCC Bulletin 2026-13, Model Risk Management: Revised
+    Guidance — https://www.occ.gov/news-issuances/bulletins/2026/bulletin-2026-13.html
 25. FDIC FIL-22-2017, Adoption of Supervisory Guidance on Model Risk Management
     (verified by title) —
     https://www.fdic.gov/news/financial-institution-letters/2017/fil17022.html

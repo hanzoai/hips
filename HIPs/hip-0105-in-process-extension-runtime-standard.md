@@ -24,8 +24,8 @@ an `extension.json` manifest. The Runtime interface is one type with four
 implementations; switching engines is a one-line manifest change.
 
 **Reference implementation**: `~/work/hanzo/base/plugins/{extruntime,gojavm,wasmvm,v8vm}`
-([hanzoai/base#3](https://github.com/hanzoai/base/pull/3), landed
-2026-05-19). Full benchmark write-up at
+([hanzoai/base/plugins](https://github.com/hanzoai/base/tree/main/plugins),
+landed 2026-05-19). Full benchmark write-up at
 `~/work/hanzo/base/docs/EXTENSIONS_BENCHMARK.md`.
 
 ## Motivation
@@ -511,7 +511,7 @@ extension runtime is **additive** — opt in by writing an `extension.json`.
 
 ## References
 
-- Reference implementation PR: [hanzoai/base#3](https://github.com/hanzoai/base/pull/3)
+- Reference implementation: [hanzoai/base/plugins](https://github.com/hanzoai/base/tree/main/plugins)
 - Benchmark writeup: `~/work/hanzo/base/docs/EXTENSIONS_BENCHMARK.md`
 - wazero: https://github.com/tetratelabs/wazero
 - goja: https://github.com/dop251/goja
