@@ -106,7 +106,7 @@ Hugging Face Hub:
   Auth: HF_TOKEN environment variable
   Cache: ~/.cache/hanzo-engine/models/
 
-Hanzo Object Storage (HIP-0032):
+Hanzo Object Storage (HIP-0405):
   Endpoint: models.hanzo.ai/zen/{model}/{version}/{format}/
   Auth: HANZO_API_KEY
   Cache: /var/cache/hanzo-engine/models/

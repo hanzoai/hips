@@ -60,9 +60,9 @@ demand one control plane for it:
    the classic two-ways defect.
 
 Visor is where this already lives: it is the machine/cluster
-provisioner and supervisor (HIP-0053), it holds the
-per-owner sealed provider connectors (HIP-0121), and it ships the
-autoscaler. This HIP names that role and fixes its contract.
+provisioner and supervisor, it holds the per-owner sealed provider
+connectors (HIP-0121), and it ships the autoscaler. This HIP names
+that role and fixes its contract.
 
 ## Specification
 
@@ -143,8 +143,8 @@ rewrite.
 Visor does not reconcile Deployments — that is the operator's job
 (HIP-0400); it feeds the node layer those Deployments land on. It does
 not define the fleet registry or billing tiers — that is HIP-0121; it
-executes against them. It is not the monitoring standard — HIP-0053
-covers probes/alerting; the autoscaler consumes those signals.
+executes against them. It is not the telemetry plane — that is
+HIP-0132; the autoscaler reads pod and node state from the cluster.
 
 ### Decided vs shipped
 
@@ -205,8 +205,6 @@ itself and bills honestly.
 
 ## References
 
-- HIP-0053 — Visor Monitoring & Supervision Standard (probes/alerts
-  the autoscaler consumes)
 - HIP-0106 — Cloud — Unified Hanzo Binary (hybrid split mode; the
   "auto-scaling per-subsystem" non-goal this HIP picks up at the
   right layer)
@@ -216,6 +214,8 @@ itself and bills honestly.
   HIP manages)
 - HIP-0121 — BYO Compute Fleet & Metered Billing (the fleet registry,
   sealed providers, and billing tiers this HIP executes against)
+- HIP-0132 — One Telemetry Plane (the telemetry plane; this HIP is the
+  node plane)
 - HIP-0400 — Service CRD (workload reconciliation above this node
   plane)
 - `hanzoai/visor` — `autoscaler/{watcher,sizing}.go`,

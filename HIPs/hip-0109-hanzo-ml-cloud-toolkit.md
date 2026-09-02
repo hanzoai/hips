@@ -584,8 +584,6 @@ valid choices for different organizations.
   `/v1/ml/*`)
 - HIP-0108 — On-Demand Supervisor + Warm Pool (tier-2 idle eviction
   for notebooks and inference replicas)
-- HIP-0067 — Federated Learning Standard (downstream consumer of
-  `TrainingJob`)
 - HIP-0010 — MCP Integration Standards (the protocol the ML tools
   surface speaks)
 - Upstream references (do NOT vendor or fork): Kubeflow project

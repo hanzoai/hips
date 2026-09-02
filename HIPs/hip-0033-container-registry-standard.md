@@ -95,13 +95,11 @@ target; it is a runtime optimization.
 ### How It Connects to Other HIPs
 
 ```
-HIP-0032 (CI/CD Standard)
+HIP-0036 (CI/CD Build System Standard)
+  |       Defines HOW images are built (buildx, multi-arch, caching)
   |
   +---> HIP-0033 (this) Container Registry Standard
-  |       Defines WHERE images go and HOW they are authenticated
-  |
-  +---> HIP-0036 (Build Standard)
-          Defines HOW images are built (buildx, multi-arch, caching)
+          Defines WHERE images go and HOW they are authenticated
 
 HIP-0014 (Application Deployment)
   |

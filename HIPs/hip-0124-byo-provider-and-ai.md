@@ -27,7 +27,7 @@ is an existing HIP, referenced not duplicated:
    unified AI provider interface, the gateway (HIP-0004).
 3. **One console** — per-model and per-product metered usage, credit
    drawdown, and balance-floor gating in `console.hanzo.ai`
-   (HIP-0018 billing; HIP-0038 for the SuperAdmin
+   (HIP-0018 billing; HIP-0118 for the SuperAdmin
    cross-tenant board).
 
 Composed, this is the resell-ready OSS AI cloud: the customer supplies
@@ -63,8 +63,8 @@ an attribute of the usage record, never a separate code path.
 ### Leg 3 — One dashboard, one usage ledger
 
 `console.hanzo.ai` is the single self-service pane (per-org); its
-admin sibling is the SuperAdmin-gated cross-tenant board (HIP-0038,
-HIP-0118). Verified live this cycle:
+admin sibling is the SuperAdmin-gated cross-tenant board (HIP-0118).
+Verified live this cycle:
 
 - **AI usage metering is real**: per-model usage records (501 records
   on the reference org at verification), rendered with credit
@@ -95,7 +95,7 @@ nonconformant.
   BYOC 1% and monthly device billing loops (HIP-0121 roadmap),
   cross-provider per-tenant scale execution (HIP-0123), and the
   unified cross-tenant fleet+revenue admin board (HIP-0121 roadmap,
-  HIP-0038 surface).
+  HIP-0118 surface).
 
 ## References
 
@@ -105,11 +105,10 @@ nonconformant.
   gating)
 - HIP-0026 — Identity & Access Management Standard (the org identity
   on every usage record)
-- HIP-0038 — Admin Console Standard (the cross-tenant board)
 - HIP-0106 — Cloud — Unified Hanzo Binary (white-label surfaces; the
   realized metering + balance-floor edge)
-- HIP-0118 — SuperAdmin & Tenant Isolation Model (who may see the
-  cross-tenant view)
+- HIP-0118 — SuperAdmin & Tenant Isolation Model (the cross-tenant
+  board and who may see it)
 - HIP-0121 — BYO Compute Fleet & Metered Billing (attach surface,
   sealed credentials, billing tiers, one metering path)
 - HIP-0123 — Visor — Fleet & Fabric Autoscaling Across Any Provider

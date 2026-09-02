@@ -14,7 +14,7 @@ created: 2026-05-19
 
 ## Abstract
 
-The `LLM` CRD is the facade Kind for the Hanzo LLM gateway (`hanzoai/gateway`, which historically also lived as `hanzoai/llm`). It proxies 100+ upstream model providers and exposes a unified OpenAI-compatible API. The reconciler delegates to the `Service` controller. See HIP-004 and HIP-044 for design.
+The `LLM` CRD is the facade Kind for the Hanzo LLM gateway (`hanzoai/gateway`, which historically also lived as `hanzoai/llm`). It proxies 100+ upstream model providers and exposes a unified OpenAI-compatible API. The reconciler delegates to the `Service` controller. See HIP-004 for design.
 
 ## Specification
 
@@ -66,7 +66,7 @@ Deployment, Service, optional HPA.
 
 ### Related services
 
-- HIP-0004, HIP-0043, HIP-0044 (LLM gateway, inference, API gateway standards)
+- HIP-0004, HIP-0043 (LLM gateway, inference standards)
 
 ## Status
 

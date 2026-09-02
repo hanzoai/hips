@@ -16,7 +16,7 @@ requires: HIP-0002, HIP-0004
 
 This proposal defines the Zen model family, [Zoo Labs Foundation's](https://zoo.industries) frontier large language models, and how Hanzo serves them. Zen models use a **Mixture of Diverse Experts (MoDE)** architecture spanning nine sizes from 600M to 480B parameters. The family provides a single, consistent architecture across scales -- from edge devices to datacenter clusters -- with multimodal capabilities (text, vision, audio, code) in the larger variants.
 
-Zen models are served via the LLM Gateway (HIP-0004) and the dedicated Zen Gateway, which handles model-specific routing, quantization selection, and KV cache management. Model weights are hosted on Hugging Face (zenlm org) and Hanzo Object Storage (HIP-0032).
+Zen models are served via the LLM Gateway (HIP-0004) and the dedicated Zen Gateway, which handles model-specific routing, quantization selection, and KV cache management. Model weights are hosted on Hugging Face (zenlm org) and Hanzo Object Storage (HIP-0405).
 
 **Gateway Configuration**: [github.com/hanzoai/zen-gateway](https://github.com/hanzoai/zen-gateway)
 **Model Weights**: [huggingface.co/zenlm](https://huggingface.co/zenlm)
@@ -316,7 +316,7 @@ Hugging Face (zenlm org):
   Formats: SafeTensors (primary), GGUF (Ollama/llama.cpp)
   License: Apache 2.0
 
-Object Storage (HIP-0032):
+Object Storage (HIP-0405):
   Bucket: models.hanzo.ai/zen/
   Layout: /zen/{size}/{version}/{format}/
   CDN: Cloudflare R2 with regional caching

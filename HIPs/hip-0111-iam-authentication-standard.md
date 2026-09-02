@@ -237,7 +237,7 @@ These break in production and are not permitted under any circumstance:
 
 - **SPA catch-all** — IAM returns a `200 text/html` page for ANY unregistered path. A wrong path is not a `404`; it is silent breakage. Clients MUST hit the exact `/v1/iam/*` paths. This is why the SDK centralizes paths and degrades discovery to hard-coded canonical values.
 - **Discovery self-consistency** — issuer/authorize/token/userinfo/jwks share one origin (host-relative). Keep `originFrontend` empty in `app.prod.conf`.
-- **`owner` is the tenant** — the org slug. IAM emits **`owner`** (and the standard-name alias **`organization`**) in BOTH the OIDC userinfo response AND the JWT, in every token format, scope-independent — so a consumer reading either claim off either surface gets the tenant. Scope every data query to it. The gateway (HIP-0044) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT. A consumer that reads org from a non-standard field (e.g. a legacy `groups` claim) and finds nothing MUST fail closed, never silently fall back to a `"default"`/`"personal"` org — that is a tenant-isolation defect.
+- **`owner` is the tenant** — the org slug. IAM emits **`owner`** (and the standard-name alias **`organization`**) in BOTH the OIDC userinfo response AND the JWT, in every token format, scope-independent — so a consumer reading either claim off either surface gets the tenant. Scope every data query to it. The gateway (HIP-0519) propagates it as `X-Org-Id`; backends behind the gateway trust that header and do not re-parse the JWT. A consumer that reads org from a non-standard field (e.g. a legacy `groups` claim) and finds nothing MUST fail closed, never silently fall back to a `"default"`/`"personal"` org — that is a tenant-isolation defect.
 
 ### 6. The login entry point — the AS's own concern, not a client surface
 
@@ -251,7 +251,7 @@ OAuth 2.0 / OIDC deliberately do **not** specify how the authorization server au
 | Verification code | `/v1/iam/send-verification-code` |
 | Logout | `/v1/iam/oauth/logout` (§1) |
 
-This is NOT a client integration surface and NOT a set of "verbs" a client may call — it is the AS's own login UI talking to the AS. **Account claims are NOT here**: there is no `get-account` and no second `userinfo` — every consumer (including the gateway admin-guard, HIP-0044) reads the standard **OIDC UserInfo** (`/v1/iam/oauth/userinfo`, §1), which carries `sub`, `owner`/`organization`, `email`, `email_verified`, and the `isAdmin` claim the SuperAdmin predicate derives from. One account contract, and it is the RFC one.
+This is NOT a client integration surface and NOT a set of "verbs" a client may call — it is the AS's own login UI talking to the AS. **Account claims are NOT here**: there is no `get-account` and no second `userinfo` — every consumer (including the gateway admin-guard, HIP-0118) reads the standard **OIDC UserInfo** (`/v1/iam/oauth/userinfo`, §1), which carries `sub`, `owner`/`organization`, `email`, `email_verified`, and the `isAdmin` claim the SuperAdmin predicate derives from. One account contract, and it is the RFC one.
 
 Same rule as §1: `/v1/iam/*` only — no `/api/`, anywhere, including the login Worker. **Client apps use only the standard surface (§1) through the SDK**; the login API is internal to the AS.
 
@@ -344,15 +344,15 @@ the prohibition list looking satisfied.
 - **Token storage** — in-memory or httpOnly cookies. Never `localStorage`.
 - **Confidential-client secrets** — KMS only (HIP-0027). `client_secret_basic` over TLS.
 - **Refresh rotation** — handled by the SDK; refresh tokens rotate on use and the previous token is invalidated.
-- **TLS everywhere** — IAM rejects plaintext. The gateway and ingress (HIP-0044, HIP-0068) terminate and re-encrypt.
+- **TLS everywhere** — IAM rejects plaintext. The gateway and ingress (HIP-0519, HIP-0068) terminate and re-encrypt.
 
 ## References
 
 1. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) — the IAM server
-2. HIP-0044: Hanzo Gateway Standard — JWT validation + `X-Org-Id` propagation at the gateway
+2. [HIP-0519: One Identity Boundary](./hip-0519-one-identity-boundary.md) — JWT validation + `X-Org-Id` minted once at the edge
 3. [HIP-0068: Ingress Standard](./hip-0068-ingress-standard.md) — edge TLS and routing
 4. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS-managed client secrets
-5. HIP-0112: Cloud Infrastructure Topology Standard — how IAM fits the estate
+5. [HIP-0134: One Process, One Socket, One Identity](./hip-0134-one-process-one-socket-one-identity.md) — how IAM fits the estate
 6. [`@hanzo/iam`](https://github.com/hanzo-js/iam) — the SDK; `src/paths.ts` is the canonical path source
 7. Standards this surface implements (the wire contract, in full):
    - [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) OAuth 2.0 — authorize, token (authorization_code / refresh_token / client_credentials / password grants)

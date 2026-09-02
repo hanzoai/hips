@@ -33,10 +33,9 @@ single `Runtime` interface — with a **Plugin** (HIP-0106) being a code extensi
 that runs inside it.
 
 It is deliberately **orthogonal and reference-not-duplicate**: it aligns the
-existing standards (HIP-0004 providers, HIP-0010 MCP tools, HIP-0034 automation
-platform, HIP-0105 extension runtime, HIP-0106 plugin model) into one taxonomy
-rather than restating them, and it normatively **retires "pieces" in favour of
-"connectors."**
+existing standards (HIP-0004 providers, HIP-0010 MCP tools, HIP-0105 extension
+runtime, HIP-0106 plugin model) into one taxonomy rather than restating them,
+and it normatively **retires "pieces" in favour of "connectors."**
 
 ## Taxonomy
 
@@ -44,11 +43,11 @@ The single decision this HIP encodes:
 
 ```
 Integration  (umbrella: an external capability plugged in; ONE registry per org/project)
-├── Connector   external-service integration      Slack · GitHub · Stripe   (HIP-0034 Flows building block)
+├── Connector   external-service integration      Slack · GitHub · Stripe   (Flows building block)
 ├── Provider    AI model / compute provider       OpenAI · Anthropic · BYO  (HIP-0004, HIP-0113, HIP-0124)
 └── Tool        MCP / agent tool                  MCP servers · agent tools (HIP-0010)
 
-Flows  (IFTTT trigger→action on the @xyflow canvas)  — consumes Connectors as nodes  (HIP-0034)
+Flows  (IFTTT trigger→action on the @xyflow canvas)  — consumes Connectors as nodes
 
 Extension Runtime  (HOW custom logic runs; ONE Runtime interface, 4 engines)  (HIP-0105)
 ├── native (Go)     default; zero-cost, no sandbox
@@ -69,7 +68,7 @@ Plugin  (a code extension that adds platform capability; runs IN the Extension R
   HIP-0004.
 - **Tool** — an Integration of kind *MCP / agent tool*, governed by HIP-0010.
 - **Flow** — an IFTTT-style trigger→action automation authored on the `@xyflow`
-  graph canvas (HIP-0034); its nodes are Connectors.
+  graph canvas; its nodes are Connectors.
 - **Extension** — a unit of custom logic plus its `extension.json` manifest, run by
   the Extension Runtime (HIP-0105). Answers *how code runs*, never *what is
   connected*.
@@ -96,9 +95,10 @@ the tenant-isolation model (HIP-0118). The registry is the ONE place that answer
   filtering only — the connect / authorize / revoke lifecycle is identical across
   kinds.
 - **Not a service mesh.** The Integrations registry is the *external-capability*
-  registry. It is distinct from HIP-0052 Nexus, whose "registry" is the
-  *internal service* registry (K8s Services, circuit-breaking, routing). Different
-  axis, different registry; see "Relationship to existing HIPs."
+  registry. It is distinct from the *internal service* plane, which is a socket
+  per plugin resolved per call by peer name and holds no registry at all
+  (HIP-0134). Different axis, different concern; see "Relationship to existing
+  HIPs."
 
 ### 2. Kind: Connector
 
@@ -137,11 +137,10 @@ the one registry; it does not redefine MCP.
 ### 5. Flows consume Connectors
 
 **Flows** are the IFTTT-style automation builder (trigger → action) on the
-`@xyflow` graph canvas, specified by **HIP-0034** and executed by the durable
-engine in `clients/automations` (running on the ONE shared in-process
-`hanzoai/tasks` engine). A Flow's nodes are **Connectors**: a trigger node starts
-the flow, action nodes invoke connector actions. Flows are the primary consumer of
-the Connector kind.
+`@xyflow` graph canvas, executed by the durable engine in `clients/automations`
+(running on the ONE shared in-process `hanzoai/tasks` engine). A Flow's nodes are
+**Connectors**: a trigger node starts the flow, action nodes invoke connector
+actions. Flows are the primary consumer of the Connector kind.
 
 The persisted flow-graph wire schema (the node discriminants `PIECE` /
 `PIECE_TRIGGER` and the step fields `pieceName` / `pieceVersion`) is the
@@ -199,10 +198,9 @@ therefore a specialization of "extension," never a synonym for "integration" or
    other's word.
 5. **Four engines, one interface.** The Extension Runtime is the ONE execution
    model; no service invents a fifth in-process code host.
-6. **Reference, don't duplicate.** Provider (HIP-0004), Tool (HIP-0010), Flows
-   (HIP-0034), Runtime (HIP-0105), Plugin (HIP-0106) remain the authoritative
-   specs; this HIP aligns them into the taxonomy and does not restate their
-   internals.
+6. **Reference, don't duplicate.** Provider (HIP-0004), Tool (HIP-0010),
+   Runtime (HIP-0105), Plugin (HIP-0106) remain the authoritative specs; this
+   HIP aligns them into the taxonomy and does not restate their internals.
 
 ## Relationship to existing HIPs
 
@@ -213,18 +211,17 @@ authority for its slice.
 |---|---|---|
 | HIP-0004 | Unified AI provider interface | Places **Provider** as a registry kind; does not redefine |
 | HIP-0010 | MCP integration standards | Places **Tool** as a registry kind; does not redefine |
-| HIP-0034 | Automation platform | Owns **Flows**; this HIP names Connectors as Flow nodes |
-| HIP-0052 | Nexus integration hub | **Disambiguation:** Nexus is the INTERNAL *service* mesh/registry (K8s Services, routing, circuit-breaking). It is NOT the external Integrations registry. Orthogonal — different axis, no overlap |
+| HIP-0134 | One process, one socket, one identity | **Disambiguation:** owns the INTERNAL *service* plane (a socket per plugin, resolved by peer name). That is not the external Integrations registry. Orthogonal — different axis, no overlap |
 | HIP-0105 | In-process extension runtime | Owns the **4-engine Runtime**; this HIP names it the ONE execution model for integration/plugin logic |
 | HIP-0113 | Provider runtime | Provider-kind execution; referenced by the Provider kind |
 | HIP-0106 | Plugin & VM model | Owns **Plugin**; this HIP positions Plugin as an Extension in the runtime |
 | HIP-0124 | BYO provider & AI | BYO Providers; a registry Provider-kind onboarding path |
 
-**Note on HIP-0052.** Its title ("Integration Hub") reads adjacent, but its
-content is a Go service-mesh control/data plane for the 33+ internal services. Its
-"Service Registry" registers *Hanzo services*; the Integrations registry here
-registers *external capabilities* (connectors/providers/tools) for a tenant. The
-two never collide; this HIP does not modify HIP-0052.
+**Note on the internal plane.** Service-to-service inside a deployment is a
+socket per plugin, resolved per call by peer name (HIP-0134); what it resolves
+are *Hanzo plugins*. The Integrations registry here registers *external
+capabilities* (connectors/providers/tools) for a tenant. The two never collide;
+this HIP does not modify HIP-0134.
 
 ## Status: shipped vs staged
 
@@ -233,7 +230,7 @@ two never collide; this HIP does not modify HIP-0052.
 | Connector framework (native-Go, self-registering) | **Shipped** | `clients/automations/connector.go`, `connector_core.go` |
 | Connector catalogue renamed pieces→connectors + `/pieces` alias | **Shipped** | `GET /v1/automations/connectors` (this HIP's companion cloud PR) |
 | Per-org connector credentials, KMS-sealed | **Shipped** | `clients/integrations` (`integrations.TokenFor`) |
-| Flows (durable trigger→action, `@xyflow`) | **Shipped** | `clients/automations` engine on `hanzoai/tasks` (HIP-0034) |
+| Flows (durable trigger→action, `@xyflow`) | **Shipped** | `clients/automations` engine on `hanzoai/tasks` |
 | Providers (unified interface, gateway, BYO) | **Shipped** | HIP-0004 gateway, HIP-0113, HIP-0124 |
 | Tools (MCP) | **Shipped** | HIP-0010; `POST /v1/automations/mcp` |
 | Extension Runtime (4 engines, manifest) | **Shipped** | base#3 `plugins/{extruntime,gojavm,wasmvm,v8vm}`; cloud `clients/gojahost`, `clients/plugin`, `clients/framework/hook.go` (HIP-0105) |
@@ -277,8 +274,6 @@ None. `/v1/automations/connectors` is the address; there is no
 - HIP-0004 — LLM Gateway: Unified AI Provider Interface
 - HIP-0010 — Model Context Protocol (MCP) Integration Standards
 - HIP-0026 — Identity & Access Management Standard
-- HIP-0034 — Automation Platform Standard
-- HIP-0052 — Nexus Integration Hub Standard (internal service mesh — disambiguation)
 - HIP-0105 — In-Process Extension Runtime Standard
 - HIP-0106 — Unified Hanzo Cloud Binary
 - HIP-0111 — Hanzo IAM Authentication Standard
@@ -286,6 +281,7 @@ None. `/v1/automations/connectors` is the address; there is no
 - HIP-0106 — Hanzo Plugin & VM Model
 - HIP-0118 — SuperAdmin & Tenant Isolation Model
 - HIP-0124 — Bring-Your-Own Provider & AI
+- HIP-0134 — One Process, One Socket, One Identity (internal service plane — disambiguation)
 
 ## Copyright
 

@@ -462,9 +462,10 @@ closed.
 
 ## References
 
-- HIP-0031 Observability & Metrics · HIP-0106 Unified Cloud Binary · HIP-0111 IAM
+- HIP-0106 Unified Cloud Binary · HIP-0111 IAM
 - HIP-0114 ZAP Transport · HIP-0119 Service Conventions · HIP-0120 gRPC Elimination
-- HIP-0122 zip — ZAP-Native Application Server · HIP-0105/0116 Extension Runtime
+- HIP-0122 zip — ZAP-Native Application Server · HIP-0132 One Telemetry Plane
+- HIP-0105/0116 Extension Runtime
 - HIP-0139 Capability
 
 ## Copyright

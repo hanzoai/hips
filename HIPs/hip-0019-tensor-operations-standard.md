@@ -623,7 +623,7 @@ cargo build --release --features "cuda metal"
 | **Studio** (HIP-1211) | Diffusion inference | Stable Diffusion / Flux pipelines run on Candle Metal backend for Apple Silicon users |
 | **Jin** (HIP-0003) | Multimodal backbone | Jin model architectures implemented as Candle modules in `candle-transformers` |
 | **LLM Gateway** (HIP-0004) | Local model serving | Gateway routes to local Candle inference workers for on-premise deployments |
-| **Object Storage** (HIP-0032) | Model distribution | Model weights stored in safetensors/GGUF format in Hanzo Object Storage, loaded by Candle |
+| **Object Storage** (HIP-0405) | Model distribution | Model weights stored in safetensors/GGUF format in Hanzo Object Storage, loaded by Candle |
 | **MCP** (HIP-0010) | Tool inference | MCP tool servers embed Candle for classification, embedding, and small-model inference |
 | **Node** (HIP-0020) | Verified inference | Blockchain nodes use Candle for deterministic inference with reproducible outputs |
 | **HMM** (HIP-0008) | Market dynamics | Hamiltonian Market Maker uses `candle-hamiltonian` for symplectic market state evolution |
@@ -819,7 +819,7 @@ fn test_quantized_load() {
 5. [HIP-0008: HMM Hanzo Market Maker](./hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md)
 6. [HIP-0010: Model Context Protocol](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 7. [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)
-8. HIP-0032: Object Storage Standard
+8. [HIP-0405: S3 CRD](./hip-0405-s3-crd.md)
 9. [HIP-1211: AI — The Model API](./hip-1211-ai-the-model-api.md)
 10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
 11. [HuggingFace Candle](https://github.com/huggingface/candle) -- upstream repository

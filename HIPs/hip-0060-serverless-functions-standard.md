@@ -373,7 +373,7 @@ The `Context` object provides:
 | `ctx.trigger` | TriggerInfo | Trigger metadata (type, source, timestamp) |
 | `ctx.model(name)` | Model | Load a model from the GPU model cache |
 | `ctx.kv` | KVClient | KV client (HIP-1164) |
-| `ctx.storage` | StorageClient | Object storage client (HIP-0032) |
+| `ctx.storage` | StorageClient | Object storage client (HIP-0405) |
 | `ctx.publish(subject, data)` | None | Publish to MQ (HIP-0055) or Stream (HIP-1061) |
 | `ctx.log` | Logger | Structured logger with request correlation ID |
 
@@ -487,7 +487,7 @@ triggers:
 
 HTTP triggers create a Knative Route that maps the path to the function's Knative Service. Authentication is handled by the invocation proxy using IAM (HIP-0026) JWT validation.
 
-#### MQ Trigger (HIP-0055)
+#### MQ Trigger
 
 Invokes the function when a message arrives on a NATS JetStream subject.
 
@@ -582,7 +582,7 @@ Hanzo Functions uses **container snapshots** (CRIU-based checkpoint/restore) to 
 1. **Snapshot creation**: When a function is deployed, the platform runs the container, initializes the runtime (imports, CUDA setup, model loading), and creates a CRIU checkpoint of the process state.
 2. **Snapshot restore**: On cold start, instead of starting the container from scratch, the platform restores the checkpoint. All imports are loaded, CUDA is initialized, and models are in memory. The function is ready to execute in <1 second.
 
-Snapshots are stored in Object Storage (HIP-0032) and cached on local SSD at each node. They are invalidated when the function code or runtime version changes.
+Snapshots are stored in Object Storage (HIP-0405) and cached on local SSD at each node. They are invalidated when the function code or runtime version changes.
 
 ```
 Traditional cold start:  Pull image (5s) → Start container (1s) → Import torch (3s) → Load CUDA (2s) → Load model (3s) = 14s
@@ -599,7 +599,7 @@ GPU functions frequently load the same models. The model cache is a node-local L
 Model requested by function
   --> Check node-local cache (NVMe SSD)
       --> Hit: mmap into GPU memory (50-200ms)
-      --> Miss: Download from Object Storage (HIP-0032) (1-10s)
+      --> Miss: Download from Object Storage (HIP-0405) (1-10s)
               --> Cache locally
               --> mmap into GPU memory
 ```
@@ -1009,12 +1009,11 @@ User function code is injected into these base images at deployment time. The co
 | **HIP-27** (KMS) | Secret injection into function environments. |
 | **HIP-1164** (KV Store) | Functions access KV via `ctx.kv` for caching and state. |
 | **HIP-1061** (Event Streaming) | Stream trigger consumes Kafka topics. Functions publish to Stream. |
-| **HIP-31** (Observability) | Prometheus metrics and structured logging. |
-| **HIP-32** (Object Storage) | Model cache storage. Container snapshot storage. Function access via `ctx.storage`. |
+| **HIP-132** (Telemetry) | Prometheus metrics and structured logging. |
+| **HIP-405** (Object Storage) | Model cache storage. Container snapshot storage. Function access via `ctx.storage`. |
 | **HIP-106** (Cloud) | Functions are a deployment target within the Cloud platform. |
 | **HIP-43** (Inference Engine) | Persistent serving complement. Engine for steady-state; Functions for bursty. |
 | **HIP-50** (Edge Computing) | TypeScript functions sync to Edge for latency-sensitive CPU workloads. |
-| **HIP-55** (Message Queue) | MQ trigger consumes NATS subjects. Functions publish to MQ via `ctx.publish`. |
 | **HIP-57** (ML Pipeline) | Pipeline stages can be implemented as functions. Retraining triggers. |
 | **HIP-105** (In-Process Extension Runtime) | Complementary, different workload class. HIP-60 runs full containerized functions in Knative pods (cold start in seconds, GPU-attachable). HIP-105 runs in-process wasm/JS/Go extensions inside a host service (cold start in microseconds, no pod). Rule of thumb: if the work justifies a fresh pod, HIP-60; if it's a hot-path validator or per-record hook, HIP-105. |
 
@@ -1028,11 +1027,9 @@ User function code is injected into these base images at deployment time. The co
 6. [HIP-1061: MQ — Queues and Streams](./hip-1061-mq-queues-and-streams.md)
 7. [HIP-43: LLM Inference Engine Standard](./hip-0043-llm-inference-engine-standard.md)
 8. [HIP-50: Edge Computing Standard](./hip-0050-edge-computing-standard.md)
-9. HIP-55: Message Queue Standard
-10. HIP-57: ML Pipeline & Training Standard
-11. [OpenFaaS Architecture](https://docs.openfaas.com/architecture/stack/)
-12. [AWS Lambda Execution Environment](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
-13. [Hanzo Functions Repository](https://github.com/hanzoai/functions)
+9. HIP-57: ML Pipeline & Training Standard
+11. [AWS Lambda Execution Environment](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
+12. [Hanzo Functions Repository](https://github.com/hanzoai/functions)
 
 ## Copyright
 

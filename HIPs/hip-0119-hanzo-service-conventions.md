@@ -90,8 +90,8 @@ what Kubernetes probes; probes target the ops listener.
 
 ### §4 Observability — `/metrics` on the ops listener
 
-A service MUST expose Prometheus metrics at **`GET /metrics`** on the ops listener,
-per HIP-0031. It MUST NOT expose `/metrics` on the app listener.
+A service MUST expose Prometheus metrics at **`GET /metrics`** on the ops listener.
+It MUST NOT expose `/metrics` on the app listener.
 
 ### §5 Configuration — environment, deterministic names
 
@@ -175,6 +175,6 @@ listener. iam and gateway follow the same split.
 
 ## References
 
-- HIP-0027 Secrets Management · HIP-0031 Observability/Metrics · HIP-0044 API Gateway
+- HIP-0027 Secrets Management · HIP-0519 One Identity Boundary
 - HIP-0068 Ingress · HIP-0106 Unified Cloud Binary · HIP-0111 IAM Authentication
-- HIP-0112 Cloud Infrastructure Topology · HIP-0400 Service CRD
+- HIP-0132 One Telemetry Plane · HIP-0400 Service CRD

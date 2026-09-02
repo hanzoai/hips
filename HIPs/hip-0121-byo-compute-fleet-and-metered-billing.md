@@ -36,7 +36,7 @@ ciphertext), and every fleet call is scoped by the gateway-validated
 
 The fleet is the `hanzoai/cloud` `clients/fleet` registry consumed by
 `clients/visor` (the `/v1/clusters` surface) and `clients/ml` (workload
-federation), per HIP-0106. **Visor** (HIP-0053) is the machine/cluster control
+federation), per HIP-0106. **Visor** (HIP-0123) is the machine/cluster control
 plane. This HIP is the fleet + billing contract that sits on top of both.
 
 ## Specification
@@ -456,7 +456,7 @@ everywhere.
 
 1. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) — the org boundary, JWT `owner` claim
 2. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS; per-org sealed credentials
-3. HIP-0053: Visor Monitoring & Supervision Standard — the machine/cluster control plane
+3. [HIP-0123: Visor — Fleet & Fabric Autoscaling Across Any Provider](./hip-0123-visor-fleet-autoscaling.md) — the machine/cluster control plane
 4. [HIP-0106: The Hanzo Plugin Contract](./hip-0106-hanzo-plugin-contract.md) — `clients/fleet`, `clients/visor`, `clients/ml` in one binary
 5. [HIP-0107: Streaming Replication over VFS](./hip-0107-streaming-replication-over-vfs.md) — the HA substrate for the visor→cloud persistence port
 6. [HIP-0134: One Process, One Socket, One Identity](./hip-0134-one-process-one-socket-one-identity.md) — IAM establishes the org; plugins scope on it
