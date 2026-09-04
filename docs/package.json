@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@hanzo/design": "0.5.24",
-    "@hanzo/docs": "17.0.4",
+    "@hanzo/docs": "16.2.9",
     "@hanzo/font": "1.9.3",
     "@hanzo/logo": "1.0.26",
     "@hanzo/mdx": "14.2.6",
@@ -50,7 +50,8 @@
   "packageManager": "pnpm@10.12.4",
   "pnpm": {
     "overrides": {
-      "zod": "^4.2.1"
+      "zod": "^4.2.1",
+      "lucide-react": "^1.33.0"
     }
   }
 }
