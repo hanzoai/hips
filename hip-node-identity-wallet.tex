@@ -1,0 +1,1197 @@
+% hip-node-identity-wallet.tex
+% Hanzo Improvement Proposal — Node Identity: the Wallet as the Node.
+% Number assigned when this lands in HIPs/.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{claim}[definition]{Claim}
+\newtheorem{remark}[definition]{Remark}
+
+% Long identifiers are the norm here, so let the typewriter font break.
+\newcommand{\code}[1]{\texttt{\hyphenchar\font=`\-\relax #1}}
+\sloppy
+\emergencystretch=3em
+\newcommand{\Held}{\mathrm{Held}}
+\newcommand{\Ran}{\mathrm{Ran}}
+\newcommand{\Conf}{\mathrm{Conf}}
+\newcommand{\Vrfy}{\mathsf{Vrfy}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\addr}{\mathsf{addr}}
+
+\setlist[itemize]{itemsep=2pt,topsep=4pt}
+\setlist[description]{itemsep=3pt,topsep=4pt}
+
+\title{\textbf{Node Identity: the Wallet as the Node}\\[6pt]
+\large A Hanzo Improvement Proposal}
+
+\author{Hanzo AI}
+\date{4 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Number      & assigned on merge into \code{HIPs/} \\
+Type        & Standards Track \\
+Category    & Core \\
+Status      & Draft \\
+Requires    & HIP-0024 (Hanzo sovereign L1), HIP-0026 (IAM), HIP-0027 (KMS),\\
+            & HIP-0095 (QoS challenge), HIP-0096 (compute rewards),\\
+            & HIP-0097 (\code{did:hanzo:}), HIP-1325 (\code{/v1/node}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{abstract}
+\noindent
+A Hanzo node is a physical or virtual host that boots a Linux microVM, joins one
+k3s cluster, and runs the Hanzo cloud. This proposal specifies the identity of
+such a node: an account address on the Hanzo sovereign L1, held by the node's
+\code{hanzod}, used to sign what the node says about itself, named in the node's
+on-chain registration, and paid the node's rewards.
+
+The proposal is written around one distinction, because every claim the system
+can make about a node depends on it. A signature establishes that some party
+able to evaluate the signing function chose to sign a message. It does not
+establish which machine that party was, nor what software that machine was
+running. An attestation rooted in a hardware vendor's certificate chain
+establishes the second of those, conditionally, and only for platforms that have
+the hardware. We name the difference the \emph{possession--platform gap}
+(\S\ref{sec:gap}), state what falls on each side of it, and specify the custody,
+join, staking, reward, and lifecycle rules that follow from where a given node
+falls.
+
+Three properties are load-bearing. First, a node key that can be copied is an
+identity that can be forged; custody is therefore specified as a ladder with a
+derived assurance class, not as a claim an operator makes. Second, the identity
+key (on the box, signing constantly) and the stake owner (off the box, moving
+money) are two roles and two keys, because a design in which the compromised key
+can also withdraw the bond has no recovery path. Third, forfeiture on-chain is
+restricted to self-proving faults --- principally equivocation, which is exactly
+what a copied key produces --- so that slashing needs no quorum and no oracle.
+
+Section~\ref{sec:status} and Appendix~\ref{app:fleet} separate what is
+implemented from what is proposed. The measurement format, the boot digest, and
+the host-signed evidence type exist in \code{hanzoai/node}
+(\code{hanzo-libs/hanzo-attest}); the wallet custody backends exist in
+\code{hanzoai/cloud} (\code{apps/wallet}) and \code{hanzoai/cli}
+(\code{hanzo wallet}); the validator manager exists in \code{luxfi/standard}. The
+identity binding between them, the epoch statement, and forfeiture do not exist
+and are proposed here.
+\end{abstract}
+
+\tableofcontents
+
+% =====================================================================
+\section{Scope}
+
+This document specifies the identity of a node in the Hanzo decentralized AI
+cloud: how the identity is created, how it is held, what it signs, what a
+verifier may conclude from what it signs, how it stakes, how it is paid, and how
+it ends.
+
+It does not specify consensus, the scheduler, the workload API, or the
+verification of AI work. Verification of advertised capability and delivered
+service is HIP-0095 (QoS challenges) and HIP-0096 (compute rewards); this
+document states only where the identity boundary meets those and what identity
+does not supply.
+
+Throughout, \emph{observed} marks a statement about code or hardware that was
+read or measured, with the location given. \emph{Proposed} marks a change this
+document asks for. Statements with neither marker are definitions or
+consequences of the two.
+
+The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted as
+in RFC 2119.
+
+% =====================================================================
+\section{Terms}
+
+\begin{description}
+\item[Node] A host that runs \code{hanzod} and offers compute to the network.
+  Physical, and heterogeneous: Appendix~\ref{app:fleet} records three, on three
+  architectures, with three different attestation capabilities.
+
+\item[Machine] A microVM the node starts. A node serves many. The vocabulary
+  \emph{machine} $>$ \emph{cluster} $>$ \emph{vm} $>$ \emph{sandbox} is fixed
+  elsewhere in the platform; in this document \emph{machine} means a microVM the
+  node runs, and \emph{host} means the physical box.
+
+\item[Monitor] The \code{hanzo-vm} binary that builds and runs a machine. VZ on
+  macOS, cloud-hypervisor or KVM on Linux.
+
+\item[Node microVM] The one machine on each host that joins the k3s cluster and
+  runs the Hanzo cloud. It is the uniformity layer: it is why an
+  Apple-Silicon Mac and an x86 workstation present the same surface to the
+  cluster. Exactly one per node.
+
+\item[Boot] The set of inputs that determine a machine: monitor binary, OS-asset
+  version, kernel, root filesystem, shape, and argv. Observed as \code{Boot} in
+  \code{hanzo-attest/src/boot.rs}.
+
+\item[Measurement] $\mu$, the 32-byte BLAKE3 digest over the canonical encoding
+  of a \code{Boot}. Observed; the encoding is reproduced in
+  Appendix~\ref{app:encoding}.
+
+\item[Node key] The secp256k1 key whose address is the node's identity. Held by
+  \code{hanzod}. Signs the node's statements about itself.
+
+\item[Node address] $A_n = \addr(pk_n)$, the last 20 bytes of
+  $\mathrm{Keccak256}$ of the uncompressed public key. This is the identity.
+
+\item[Owner key] The key that registers the node, posts the bond, ends the
+  validation, and withdraws. Address $A_o$. Held by the operator, off the node.
+
+\item[Evidence] A signed statement about a measurement. Observed as
+  \code{Evidence} in \code{hanzo-attest/src/evidence.rs}.
+
+\item[Assurance class] What a node can \emph{prove} about the platform holding
+  its key. Derived from evidence, never declared. \S\ref{sec:class}.
+\end{description}
+
+% =====================================================================
+\section{What signatures, measurements and attestations establish}
+\label{sec:proves}
+
+This section is the foundation. Everything later --- staking, slashing, reward
+attribution, fleet enumeration --- inherits exactly the assurance established
+here and no more.
+
+Let $\Sigma = (\mathsf{Gen}, \Sign, \Vrfy)$ be a signature scheme existentially
+unforgeable under chosen-message attack. Fix a keypair $(sk, pk)$ and write
+$A = \addr(pk)$. Over a run of the system define three predicates:
+
+\begin{description}
+\item[$\Held(P, sk, t)$] party $P$ can evaluate $\Sign_{sk}(\cdot)$ at time $t$.
+\item[$\Ran(h, I, t)$] host $h$ was executing image $I$ at time $t$.
+\item[$\Conf(sk, h)$] $sk$ is confined to $h$: no party other than $h$ can
+  evaluate $\Sign_{sk}(\cdot)$.
+\end{description}
+
+\subsection{A signature}
+
+\begin{claim}[What verification gives]\label{cl:sig}
+If $\Vrfy_{pk}(m, \sigma) = 1$ then, under EUF-CMA, there exist a party $P$ and a
+time $t$ with $\Held(P, sk, t)$, and $P$ chose the message $m$.
+\end{claim}
+
+\begin{claim}[What it does not give]\label{cl:indep}
+The conclusion of Claim~\ref{cl:sig} is independent of $\Ran$ and $\Conf$. For
+any host $h$ and image $I$ a verifier believes in, there is a run in which the
+conclusion holds and $\Ran(h, I, t)$ is false.
+\end{claim}
+
+\noindent The proof is the attack: copy $sk$ to any machine and sign $m$ there.
+Nothing in $\sigma$ distinguishes the two runs, because nothing in $\sigma$
+depends on where the signing happened.
+
+Claim~\ref{cl:indep} holds for every message, including a message that is
+\emph{about} a machine. Signing a boot measurement does not make the signature
+evidence about a boot. It makes it evidence that the key-holder asserted a
+number.
+
+\subsection{A measurement}
+
+$\mu$ is a function of files on a host, computed by the host, before the machine
+starts. Two parties holding the same inputs compute the same $\mu$; a third party
+holding only $\mu$ can check a claim about those inputs. That is its entire
+content.
+
+\begin{claim}\label{cl:meas}
+$\mu$ binds inputs. It does not witness execution. A host that computes $\mu$
+over one set of files and hands the monitor a different set produces a
+measurement that verifies against the first set and describes nothing that ran.
+\end{claim}
+
+This is stated in the implementation itself
+(\code{hanzo-attest/src/boot.rs}, module documentation: ``The measurement is
+taken by the host, over files on the host, before the machine starts. It binds
+the inputs; it does not witness the execution.''). We restate it because it is
+the property most often lost in transit: a measurement in a registry looks like
+a fact about a running system and is not one.
+
+\subsection{An attestation}
+\label{sec:att}
+
+\begin{claim}[What a hardware quote gives]\label{cl:att}
+Let $Q$ be a quote over $(\mu, n, d)$ verifying under vendor root $R$, where $n$
+is a nonce the verifier chose. Then there exists a platform $h$ whose attestation
+key $R$ certifies, such that $h$'s measured state was $\mu$ at a time after $n$
+was issued, and $h$ reported the value $d$.
+\end{claim}
+
+Three things do not follow:
+
+\begin{enumerate}[label=(\alph*)]
+\item \textbf{$\mu$ is not behavior.} A measurement covers what was loaded. Code
+  loaded later, a kernel module, a \code{kexec}, a writable root filesystem, or
+  an interpreter reading a script from the network all change behavior without
+  changing $\mu$. A measured platform running a program that fetches and executes
+  arbitrary bytes measures as honestly as one that does not.
+
+\item \textbf{$d$ is not $\Conf$.} Reporting $d = H(pk_n)$ inside a quote binds
+  the key to the platform's \emph{statement}, not to the platform. $\Conf(sk_n,
+  h)$ follows only if $sk_n$ was generated inside $h$ and is non-extractable, and
+  only if the platform reports that fact in a form the verifier checks. A key
+  generated elsewhere and copied in attests exactly as well.
+
+\item \textbf{The host is in the TCB unless the VM is confidential.} Guest-side
+  measurement of a machine whose memory the hypervisor can read and write
+  establishes $\Ran$ only relative to an honest host. On AMD SEV-SNP, Intel TDX,
+  or Arm CCA the host is removed from that base. \emph{Observed:} none of the
+  three hosts in Appendix~\ref{app:fleet} runs a confidential VM today ---
+  \code{kvm\_amd.sev\_snp = N} on the x86 host, no Realm support on the aarch64
+  host, and Virtualization.framework on the Mac. Guest measurement on this fleet
+  therefore defends against a remote attacker and not against the node operator.
+\end{enumerate}
+
+Point (c) matters most for third-party nodes, where the node operator is the
+adversary of interest. On the current fleet the only hardware root that speaks
+about the \emph{host} is the TPM (\S\ref{sec:class}).
+
+\subsection{The possession--platform gap}
+\label{sec:gap}
+
+\begin{definition}[Possession--platform gap]
+The gap between $\Held$ and $\Conf$: a signature establishes that \emph{someone}
+could sign, and never that \emph{this platform} is the only one that could.
+\end{definition}
+
+Every downstream property inherits it. If the node key can be copied, then
+``which node produced this statement'' has no answer, and with it neither does
+``which node earned this reward'', ``which node's stake answers for this fault'',
+nor ``how many nodes are in the fleet''. Fleet enumeration by wallet is only as
+meaningful as the injectivity of the map from wallets to machines, and a copied
+key breaks injectivity silently: two machines answer as one node, and the console
+shows one row.
+
+Closing the gap requires two properties, both of which must be reported and
+checked, not assumed:
+
+\begin{enumerate}[label=(\roman*)]
+\item the key is generated inside a platform and is non-extractable from it, and
+\item the platform can produce, under a root the verifier trusts, a statement
+  binding that key to a measured state.
+\end{enumerate}
+
+No software arrangement supplies (i). Custody in a key-management service does
+not supply it either --- it \emph{moves} the gap, which is a real improvement and
+a different property; see \S\ref{sec:ladder}.
+
+\subsection{What an unattested but signed join does not prove}
+\label{sec:notprove}
+
+A node that signs its boot measurement with its node key and presents that to the
+network --- \code{Kind::Host} in the implemented code --- proves that the holder
+of $sk_n$ asserted $\mu$ at a stated time and that the assertion has not been
+altered since. It does not prove any of the following. Each is a distinct failure,
+and none is covered by adding more signatures of the same kind:
+
+\begin{enumerate}[label=\textbf{N\arabic*.},leftmargin=2.6em]
+\item \textbf{Not that the machine ran the measured image.} The measurement is
+  computed over files chosen by the same party that signs. A node that measures
+  image $I$ and boots image $I'$ produces evidence that verifies
+  (Claim~\ref{cl:meas}).
+\item \textbf{Not that the statement came from the host it describes.} The
+  signing key is portable; the statement can be produced anywhere, including on
+  a laptop, and relayed.
+\item \textbf{Not that the key is on any particular host at all.} $\Conf$ is not
+  established (Claim~\ref{cl:indep}).
+\item \textbf{Not that the identity is one machine.} Without an epoch-unique
+  statement (\S\ref{sec:equiv}), $N$ machines holding a copy of $sk_n$ join as
+  one node and are indistinguishable from one machine.
+\item \textbf{Not that the advertised inventory is real.} CPU, memory, and GPU
+  counts are numbers the node reports. The \code{Shape} inside the measurement is
+  what \code{hanzod} \emph{asked the monitor for}, which is what it can honestly
+  sell, and is not a statement about the physical host.
+\item \textbf{Not that the machine still runs what it reported.} The measurement
+  is taken once, before start. Nothing in the statement constrains the machine
+  afterwards.
+\item \textbf{Not that the node will do the work correctly.} Identity is
+  orthogonal to service. HIP-0095 and HIP-0096 own that.
+\item \textbf{Not that the signer is authorized.} Verification of a signature is
+  not authorization. Whether the network accepts $A_n$ is a registration question
+  (\S\ref{sec:stake}), and the implementation is right to separate them
+  (\code{hanzo-attest/src/evidence.rs}: ``Deciding that a signer is acceptable is
+  a policy question \dots\ not here'').
+\end{enumerate}
+
+\subsection{Five controls, none substitutable}
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.15\textwidth}>{\raggedright\arraybackslash}p{0.35\textwidth}>{\raggedright\arraybackslash}p{0.40\textwidth}@{}}
+\toprule
+\textbf{Control} & \textbf{Establishes} & \textbf{Does not establish} \\
+\midrule
+Signature &
+Authorship of a statement under a key &
+Which machine; which image; uniqueness \\[3pt]
+Custody &
+Who can cause a signature to exist &
+That the statement is true \\[3pt]
+Attestation &
+That a vendor-rooted platform reported a measured state, bound to a fresh nonce &
+That the state is the behavior; that the host is outside the TCB, unless the VM is confidential \\[3pt]
+Stake &
+A price for a fault, once the fault is established &
+Detection \\[3pt]
+Challenge (HIP-0095) &
+Detection of false capability and service claims &
+Prevention; identity \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Layering is not redundancy here: each control's ``does not establish'' column is
+covered by a different row, and removing any row leaves a hole no other row
+fills. A system with attestation and no stake detects faults it cannot price. A
+system with stake and no attestation prices faults it cannot detect.
+
+% =====================================================================
+\section{The identity}
+\label{sec:identity}
+
+\subsection{Two roles, one identity}
+\label{sec:roles}
+
+A single key cannot do both of the jobs a node needs done. The node key signs
+constantly, from a box that runs other people's workloads and is, for
+third-party nodes, outside our physical control. The bond must be movable only
+by someone we still trust after that box is compromised. If they are the same
+key, compromise of the node key also lets the attacker withdraw the bond, so the
+economic control intended to price the compromise is unavailable in the case it
+was posted against.
+
+Therefore:
+
+\begin{description}
+\item[Node key ($A_n$)] Lives with \code{hanzod}. Signs epoch statements and
+  machine records. \emph{Is the node identity.} Has no authority to move value.
+\item[Owner key ($A_o$)] Lives with the operator, off the node. Registers the
+  node, posts and withdraws the bond, ends the validation, changes the reward
+  recipient. Never on the box.
+\end{description}
+
+This is one identity with an explicit controller, not two identities. $A_n$ is
+what the fleet is enumerated by, what evidence is signed with, what work is
+attributed to, and what rewards are paid to. $A_o$ appears once per lifecycle
+event.
+
+\emph{Observed:} the vendored validator manager sets
+\code{\_posValidatorInfo[validationID].owner = \_msgSender()} at registration
+(\code{luxfi/standard}, \code{contracts/validators/PoSValidatorManager.sol}:440--442)
+and authorizes end-of-validation, reward withdrawal, and recipient changes against
+that one address. There is no second address field. The registration therefore
+knows $A_o$ and does not know $A_n$; supplying the binding is
+\hyperref[sec:req]{IR-3}.
+
+\begin{remark}
+For a Hanzo-operated node, $A_o$ SHOULD be a \code{KindTreasury} or
+\code{KindMPC} wallet --- threshold custody, no single holder --- and MUST NOT be
+a key present on any node. \emph{Observed:} both custody kinds exist in
+\code{hanzoai/cloud}, \code{apps/wallet/custody.go}, and a
+\code{TierValidator} wallet tier already exists in the same file.
+\end{remark}
+
+\subsection{Derivation}
+
+$A_n$ is an EVM-runtime account address: the low 20 bytes of
+$\mathrm{Keccak256}$ over the uncompressed secp256k1 public key. \emph{Observed}
+in \code{hanzoai/cli}, \code{src/commands/wallet.rs} (\code{address\_from\_vk}),
+with the canonical path
+\code{m/44\textquotesingle/60\textquotesingle/0\textquotesingle/0/0} for locally
+derived keys.
+
+The node key MUST be generated for the node and MUST NOT be derived from an
+operator seed that also derives other nodes' keys. Derivation from a shared
+mnemonic makes every node's key recoverable from one secret, which converts a
+single custody failure into a fleet-wide one. Where a fleet seed is used for
+operational reasons, each node's key MUST come from a distinct hardened account
+index and the seed MUST NOT be present on any node.
+
+\subsection{The one object}
+
+A node record is:
+\[
+  \bigl(A_n,\; A_o,\; \text{chain},\; \mu_{\text{node}},\; \text{class},\;
+  \text{validationID},\; \text{status}\bigr)
+\]
+and nothing else identifies a node anywhere in the system. \code{admin.hanzo.ai}
+enumerates by $A_n$. The scheduler selects by $A_n$ and \code{class}. Settlement
+pays $A_n$. The registry keys on $A_n$.
+
+\emph{Observed gap:} \code{hanzo-attest}'s \code{Record} carries
+\code{node: String} --- a free-form name --- and its \code{Signer} is an ed25519
+public key (\code{evidence.rs}). The node's identity secret today is an ed25519
+key held as a hex string in a plaintext \code{KEY=value} file. In
+\code{hanzoai/node}, \code{hanzo-bin/hanzo-node/src/utils/keys.rs},
+\code{generate\_or\_load\_keys} reads \code{IDENTITY\_SECRET\_KEY} from that file,
+falls back to the environment variable of the same name, and otherwise generates
+a fresh key; \code{src/runner.rs}:201--212 writes the result back with
+\code{std::fs::write}, which creates at the process umask rather than
+owner-only. (A comment at \code{keys.rs}:72 refers to Stronghold; no Stronghold
+path exists in that file.) That is L0 custody by the ladder of
+\S\ref{sec:ladder}: a copyable key, and therefore a forgeable identity.
+Replacing it is \hyperref[sec:req]{IR-1}.
+
+\emph{Relationship to HIP-0097.} HIP-0097 specifies \code{did:hanzo:<name>} as
+the DID method for every Hanzo subject. $A_n$ is the node's key material and its
+settlement address; a \code{did:hanzo:} name MAY resolve to a DID Document whose
+verification method is $A_n$. Two names for one subject is acceptable only in
+that direction --- the DID resolves to the address; the address is not derived
+from the DID --- because settlement and staking cannot depend on a resolver being
+reachable.
+
+% =====================================================================
+\section{Custody}
+\label{sec:custody}
+
+\subsection{The ladder}
+\label{sec:ladder}
+
+Custody options differ in one measurable respect: what an attacker must obtain in
+order to sign as $A_n$.
+
+\begin{center}
+\small
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.30\textwidth}>{\raggedright\arraybackslash}p{0.44\textwidth}@{}}
+\toprule
+& \textbf{Custody} & \textbf{To forge the identity, obtain} \\
+\midrule
+L0 & Plaintext file or environment variable & File read as any user that can read it. \emph{This is the current state.} \\
+L1 & OS keychain, owner-only file & Code execution as the node's user. \\
+L2 & Held by KMS/MPC; node never sees key & A credential that authorizes KMS to sign --- which is a bearer token on the node. \\
+L3 & Sealed to a platform: generated inside, non-extractable, released only under a policy over measured state & Physical compromise of the platform, or a break in its root of trust. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+L2 is where the interesting mistake lives. Moving the key into KMS is a genuine
+improvement --- the key is not on the box, so a stolen disk is not a stolen
+identity, and every signature is centrally logged and revocable. But it does not
+close the possession--platform gap; it \emph{relocates} it. The question ``which
+machine holds the key'' becomes ``which principal can make KMS sign'', and on a
+node that principal is authenticated by a credential that sits on the node. Under
+L2 the identity is exactly as strong as the custody of that credential --- which,
+absent hardware, is L0 or L1 again.
+
+\begin{claim}[The recursion]\label{cl:recursion}
+Software custody delegation does not increase assurance about \emph{location}. It
+replaces custody of a signing key with custody of an authorization credential.
+The chain terminates only at a key that some hardware refuses to export.
+\end{claim}
+
+This is not an argument against KMS. It is an argument for what KMS custody must
+be combined with, and it produces the requirement below.
+
+\subsection{Requirement}
+
+\begin{enumerate}[label=\textbf{C\arabic*.},leftmargin=2.6em]
+\item The node key MUST NOT exist in plaintext at rest anywhere: not in an
+  environment variable, not in a file, not in a container image, not in a
+  Kubernetes Secret that is not itself KMS-sealed.
+\item The node key SHOULD be held at L2 --- generated inside KMS/MPC, never
+  returned --- with \code{hanzod} holding only $A_n$ and a signing capability.
+  \emph{Observed:} this is exactly the cloud-custody model already implemented in
+  \code{hanzo wallet} (``keys are derived and held server-side \dots\ and NEVER
+  leave it --- the CLI only ever sees the address'') and in
+  \code{cloud/apps/wallet/custody.go} (\code{KindKMS}, \code{KindMPC}).
+\item Where the node key is at L2, the credential that authorizes signing MUST be
+  scoped to (a) this node's wallet only, (b) the epoch-statement and
+  machine-record message shapes only, and (c) a bounded rate. A node's signing
+  credential MUST NOT be able to sign an arbitrary transaction, because a
+  credential that can sign anything is the owner key by another name.
+\item On a platform with a TPM 2.0, the credential in C3 MUST be sealed to a PCR
+  policy, so that a credential lifted from the disk is unusable on a different
+  platform or after a boot-chain change.
+\item On a platform with a hardware enclave (SEV-SNP, TDX, CCA), the key SHOULD
+  be generated inside the enclave and its release policy bound to the enclave
+  measurement, reaching L3.
+\item Secrets MUST be stored only in Hanzo KMS. Where a digest suffices, the
+  digest is stored and the value is not.
+\end{enumerate}
+
+\emph{Observed} for the KMS envelope this relies on: secrets are sealed as
+AES-256-GCM over a per-secret DEK with the DEK wrapped by ML-KEM
+(\code{luxfi/kms}, \code{pkg/store/secrets.go}, \code{ModeStandard = "aead+mlkem"}),
+the AAD binds path, name, environment and version, and
+\code{pkg/store/crypto\_test.go:TestAADBindingPreventsSwap} demonstrates that
+swapping one secret's wrapped DEK into another fails. Transport is a ZAP
+handshake combining X25519 and ML-KEM-768 under HKDF-SHA256
+(\code{pkg/zap/handshake.go}).
+
+\subsection{Measurement-gated release}
+
+At L3 the release policy is the point of the exercise, so it is specified rather
+than left to configuration:
+
+\begin{enumerate}[label=\textbf{G\arabic*.},leftmargin=2.6em]
+\item The key material is generated inside the platform and is not exportable.
+\item A quote over $(\mu_{\text{node}}, n, H(pk_n))$, with $n$ chosen by the
+  verifier, is the only evidence that binds the key to the platform. It MUST be
+  requested with a fresh $n$ per verification; a stored quote is a statement
+  about the past.
+\item Release --- or use --- MUST be denied when the measured state is not on the
+  allowed list for the node's declared image. Denial MUST be the default on any
+  error, including an unreachable verifier.
+\item The allowed list is a set of $\mu$ values, published, and changed by a
+  release of the image --- not by an operator edit on the node.
+\end{enumerate}
+
+\subsection{Assurance class}
+\label{sec:class}
+
+A node's assurance class is derived from evidence the network verified. It is a
+field on the node record, it is visible in the console and to the scheduler, and
+a node MUST NOT be able to set it.
+
+\begin{center}
+\small
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.50\textwidth}@{}}
+\toprule
+\textbf{Class} & \textbf{Root} & \textbf{Requires} \\
+\midrule
+\code{self} & the node's own key &
+An epoch statement verifying under $A_n$. Trust in it is trust in the node
+operator. \emph{Implemented} (\code{Kind::Host}). \\[3pt]
+\code{platform} & TPM 2.0 &
+A quote over PCRs binding $H(pk_n)$ to a fresh nonce, \emph{and} an enforced
+verified boot chain. Without enforcement the PCR values are attacker-chosen and
+the class is \code{self}. \emph{Proposed.} \\[3pt]
+\code{confidential} & SEV-SNP, TDX, CCA &
+A vendor-rooted report; removes the host from the TCB. \emph{Proposed; no
+hardware on the current fleet.} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Observed} on the current fleet (Appendix~\ref{app:fleet}): the aarch64 host
+has TPM 2.0 with a SHA-256 PCR bank, an event log at
+\code{/sys/kernel/security/tpm0/binary\_bios\_measurements}, and SecureBoot
+enabled --- it can reach \code{platform}. The x86 host has TPM 2.0 with SecureBoot
+\emph{disabled} and \code{sev\_snp = N} --- it is \code{self} until SecureBoot is
+enabled, and cannot reach \code{confidential} on the running configuration. The
+Apple-Silicon host exposes no TPM and no confidential-VM facility to a Linux
+guest --- it is \code{self}, and this is a property of the platform, not a
+deficiency to be worked around.
+
+\begin{remark}[Why the Mac is in the fleet anyway]
+The microVM is the uniformity layer: it is what lets a Mac present the same k3s
+node as a Linux box. Uniformity of \emph{interface} is not uniformity of
+\emph{assurance}, and the design does not pretend otherwise. The Mac is a first-class
+node at class \code{self}, and the scheduler is what decides which workloads a
+\code{self} node may receive. One identity primitive, one enumerable field for
+the difference.
+\end{remark}
+
+The existing implementation names \code{Kind::Snp} and \code{Kind::Tdx} and
+implements neither. Given the hardware actually present, \emph{a TPM 2.0 attester
+and verifier is worth more than either}, because two of three hosts have the
+hardware today and zero have SNP or TDX. That is \hyperref[sec:req]{IR-4}.
+
+% =====================================================================
+\section{Joining}
+\label{sec:join}
+
+\subsection{The epoch statement}
+
+Let $T$ be the epoch length and $e = \lfloor t/T \rfloor$. A node publishes one
+\emph{epoch statement} per epoch:
+\[
+S = \bigl(\text{tag},\; \text{chainID},\; A_n,\; e,\; \mu_{\text{node}},\;
+\text{class evidence}\bigr),\quad \sigma = \Sign_{sk_n}(S).
+\]
+
+Four fields carry weight and none is decorative:
+
+\begin{description}
+\item[chainID] Prevents a statement made for testnet from being replayed on
+  mainnet. \emph{Observed:} the sovereign L1 uses $\text{networkID} =
+  \text{chainID}$, mainnet 36963, testnet 36962, devnet 36964
+  (\code{hanzoai/cli}, \code{src/commands/network.rs}).
+\item[$A_n$] Binds the statement to the identity it is filed under. Without it, a
+  statement can be presented under a different registration.
+\item[$e$] Makes the statement unique per epoch, which is what makes equivocation
+  provable (\S\ref{sec:equiv}) and what supplies liveness without a second
+  heartbeat protocol.
+\item[$\mu_{\text{node}}$] The measurement of the node microVM --- the one that
+  joins the cluster --- not of a tenant machine.
+\end{description}
+
+The epoch statement is distinct from the per-machine \code{Record} already
+implemented. A node serves many machines and files many records; it has exactly
+one node microVM and files exactly one epoch statement per epoch. Conflating them
+would make honest multi-tenancy look like equivocation.
+
+\emph{Observed gap:} the implemented preimage is
+$(\text{tag}, \text{kind}, \mu, \text{timestamp})$
+(\code{hanzo-attest/src/evidence.rs}, \code{preimage}). It carries no chain, no
+address, and no epoch. It is therefore presentable under any registration on any
+chain, and equivocation over it is not defined. Adding the three fields is
+\hyperref[sec:req]{IR-2}, and it is the single highest-value change in this
+document.
+
+\subsection{What the network verifies}
+
+On receiving a join or an epoch statement, the verifier MUST, in order, and
+refusing at the first failure:
+
+\begin{enumerate}[label=\textbf{V\arabic*.},leftmargin=2.6em]
+\item \textbf{Shape.} $S$ parses; \code{chainID} is this chain; $e$ is the
+  current epoch or the immediately previous one.
+\item \textbf{Signature.} $\Vrfy_{A_n}(S, \sigma) = 1$.
+\item \textbf{Coherence.} $\mu_{\text{node}}$ equals the measurement recomputed
+  from the accompanying \code{Boot}. \emph{Observed:} \code{Record::coherent}
+  already performs exactly this check.
+\item \textbf{Registration.} $A_n$ is bound to an active \code{validationID}
+  whose bond meets the minimum, and the binding was written by $A_o$.
+\item \textbf{Uniqueness.} No other statement exists for $(A_n, e)$ with a
+  different $\mu_{\text{node}}$. A second, differing statement is not an error
+  to discard --- it is evidence to keep (\S\ref{sec:equiv}).
+\item \textbf{Image.} $\mu_{\text{node}}$ is on the allowed list for the release
+  the node claims. A node running an unpublished image is admitted at class
+  \code{self} with no image assertion, or refused, according to network policy;
+  it MUST NOT be admitted as though it were running a published image.
+\item \textbf{Class.} Any hardware evidence verifies under the vendor root, is
+  bound to a nonce this verifier issued within the freshness window, and reports
+  $H(pk_n)$. The class recorded is the highest class \emph{proved}, defaulting to
+  \code{self}.
+\end{enumerate}
+
+Every failure is a refusal. A verifier that cannot reach the vendor root records
+class \code{self}; it MUST NOT record a higher class on an unverified claim, and
+it MUST NOT refuse the join for that reason alone --- the two are different
+decisions and conflating them turns an availability failure into a fleet outage.
+
+\subsection{What the network has after V1--V7}
+
+Precisely: that the holder of $sk_n$, bound to an active bonded registration,
+asserted image $\mu_{\text{node}}$ for epoch $e$ on this chain, and that at class
+\code{platform} or above a vendor-rooted platform corroborated the state and the
+key binding. Nothing in \S\ref{sec:notprove} that is not covered by class
+\code{platform} or above becomes true because V1--V7 passed.
+
+% =====================================================================
+\section{Stake and forfeiture}
+\label{sec:stake}
+
+\subsection{What exists}
+
+\emph{Observed}, in \code{luxfi/standard},
+\code{contracts/validators/} --- the vendored ACP-77 validator manager, renamed
+to Network/L1 nomenclature with the ABI preserved:
+
+\begin{itemize}
+\item \code{initializeValidatorRegistration} is \code{payable}. The native value
+  sent stays in the manager and is the bond; \code{\_lock} records the amount and
+  \code{\_unlock} returns it with \code{payable(to).sendValue(value)}
+  (\code{NativeTokenStakingManager.sol}:68--94).
+\item The registration is keyed by \code{validationID} (\code{bytes32}) and
+  records \code{owner = \_msgSender()}, a delegation fee, a minimum stake
+  duration, and an uptime counter (\code{PoSValidatorManager.sol}:440--445).
+\item \code{submitUptimeProof} and the end-of-validation path condition rewards
+  on uptime; below the threshold, rewards are forfeit and the bond is still
+  returned.
+\item The registration input carries \code{nodeID} (\code{bytes}) and
+  \code{blsPublicKey}. The contract checks the BLS key's \emph{length} (48) and
+  that \code{nodeID} is non-empty and not already registered
+  (\code{ValidatorManager.sol}:249--281). It does not verify possession of
+  either key.
+\item \textbf{There is no slashing.} A case-insensitive search for
+  \code{slash} across \code{contracts/validators/} returns nothing.
+\end{itemize}
+
+So the economic instrument that exists today is uptime-conditioned reward
+forfeiture plus bond return. Any statement that a bad attestation ``slashes the
+stake'' is, as of this writing, a proposal. This document treats it as one.
+
+\subsection{Registration binds the identity}
+
+\emph{Proposed.} A separate, minimal registry contract --- not a fork of the
+vendored manager, whose ABI is preserved deliberately for in-place upgradability:
+
+\begin{quote}\ttfamily
+mapping(bytes32 validationID => address node) nodes;\\
+mapping(address node => bytes32 validationID) registrations;\\
+\\
+function bind(bytes32 validationID, address node) external;\\
+event Bound(bytes32 indexed validationID, address indexed node);
+\end{quote}
+
+\code{bind} is callable only by the \code{owner} of \code{validationID} as the
+manager reports it, refuses a node address already bound to a live registration,
+and refuses to rebind a live registration to a different node address. One
+mapping pair, one function, one event. Everything else --- weight, churn, uptime,
+delegation --- stays where it already works.
+
+This is the minimum that makes $A_n$ mean something on-chain, and it is what lets
+the scheduler, the settlement path, and the console agree on one identifier
+without any of them trusting the others' view.
+
+\subsection{Forfeiture for self-proving faults}
+\label{sec:forfeit}
+
+\emph{Proposed.} On-chain forfeiture applies to faults that are
+\emph{self-proving}: a verifier can establish them from the submitted evidence
+alone, in constant time, without a vote, an oracle, or a trusted reporter. This
+restriction is the whole design, and it is what keeps the mechanism from becoming
+a governance surface.
+
+\begin{quote}\ttfamily
+function forfeit(bytes32 validationID, bytes calldata proof) external;\\
+event Forfeited(bytes32 indexed validationID, uint256 amount, bytes32 fault);
+\end{quote}
+
+The contract verifies \code{proof} itself and burns or redistributes the bond
+according to the network's reward policy. Anyone may submit; a submitter reward
+paid from the forfeited amount is what makes detection someone's job.
+
+Faults that are \emph{not} self-proving --- poor service, wrong answers,
+unavailability, a false inventory claim --- are handled by the mechanisms that
+already exist for them: uptime-conditioned reward forfeiture in the manager, QoS
+challenges (HIP-0095), and delisting by the scheduler. They MUST NOT be routed
+through \code{forfeit}, because each would require a trusted reporter, and a
+trusted reporter that can burn a stranger's bond is a larger risk than the
+behavior it polices.
+
+\subsection{Equivocation}
+\label{sec:equiv}
+
+\begin{definition}[Equivocation]
+Two epoch statements $S_1, S_2$ with the same $(\text{chainID}, A_n, e)$,
+$\mu_1 \neq \mu_2$, both verifying under $A_n$.
+\end{definition}
+
+\begin{claim}
+Equivocation is publicly verifiable in two signature verifications and one
+inequality, and an honest node running one node microVM cannot produce it.
+\end{claim}
+
+Equivocation is what a copied key produces on-chain. If $sk_n$ exists on two
+machines and both join, the two report different boots in the same epoch and the
+bond is forfeit. This is what makes the custody requirement enforceable rather
+than advisory: an operator who copies the node key across machines does not face
+a probability of detection, because detection requires no monitoring --- the two
+statements are the proof, and either party to the collision can submit them.
+
+The rule also gives the honest operator a defined failure mode. A node restarted with a
+new image mid-epoch produces a second statement with a different $\mu$ and would
+equivocate against itself. The rule is therefore that a node MUST NOT publish a
+second statement in an epoch it has already published in; a restart waits for the
+next epoch, or publishes an explicit \emph{supersede} that names the prior
+statement's digest and is signed by the same key --- which is a chain, not a
+fork, and is not equivocation. $T$ MUST be short enough that waiting is cheap
+(minutes, not hours) and long enough that ordinary restarts do not dominate the
+statement volume.
+
+% =====================================================================
+\section{Reward}
+
+Rewards pay $A_n$ --- the identity address --- from two independent sources:
+
+\begin{description}
+\item[Validation rewards] From the validator manager, conditioned on uptime.
+  \emph{Observed:} the manager keeps a \code{\_rewardRecipients} mapping that
+  \emph{defaults to} \code{owner} (\code{PoSValidatorManager.sol}:330) and can be
+  pointed elsewhere by \code{changeValidatorRewardRecipient}
+  (\code{PoSValidatorManager.sol}:254--266).
+\item[Work rewards] From compute settlement (HIP-0096), for AI work the node
+  actually served.
+\end{description}
+
+Two consequences follow from the observed divergence and both must be stated
+rather than assumed away:
+
+\begin{enumerate}[label=\textbf{R\arabic*.},leftmargin=2.6em]
+\item The reward recipient MUST default to the identity address. Divergence is
+  permitted --- an operator consolidating payouts is a legitimate need --- but it
+  is an explicit on-chain act, visible in the fleet view next to the node it
+  applies to.
+\item Accounting, attribution, and enumeration key on $A_n$, \textbf{never} on
+  the recipient. A recipient is where money goes; it is not who did the work, it
+  is not unique to a node, and treating it as an identifier silently merges
+  distinct nodes into one row.
+\end{enumerate}
+
+Paying the address the node signs with means ``which node earned this'' and
+``which node said this'' resolve through the same lookup. That is the practical
+content of using one primitive for attestation, staking, payment and enumeration
+instead of four identifiers that have to be reconciled. R2 is what keeps it true
+once a recipient diverges: divergence is permitted, and it must not propagate
+into the identifier.
+
+% =====================================================================
+\section{Lifecycle}
+\label{sec:lifecycle}
+
+\subsection{Rotation is succession}
+
+An EVM address is a hash of the public key. There is no operation that changes
+the key and keeps the address. A design that wanted stable identifiers across key
+changes would need a level of indirection, and indirection here would be a
+mistake: after a compromise, carrying the identifier forward carries the
+compromised node's standing forward with it.
+
+So rotation is \textbf{succession}: a new key, a new address, an explicit link.
+
+\begin{enumerate}[label=\textbf{S\arabic*.},leftmargin=2.6em]
+\item The operator generates $sk_n'$ at the target assurance class and obtains
+  $A_n'$.
+\item $A_o$ calls \code{bind} to move the registration's node address from $A_n$
+  to $A_n'$, emitting \code{Bound}. The bond does not move; the registration does
+  not end; no unbonding period is incurred.
+\item The outgoing key SHOULD sign a statement naming $A_n'$, which lets an
+  observer follow the chain without consulting the registry. It is corroboration,
+  not authority: the authority for succession is $A_o$, precisely because the
+  case that matters most is the one where $sk_n$ is in someone else's hands.
+\item Assurance class does not transfer. The successor is measured on what it can
+  prove.
+\item Accrued reputation and service history transfer only when the succession is
+  \emph{planned} --- a hardware refresh or a key-hygiene rotation. After a
+  suspected compromise they MUST NOT transfer.
+\end{enumerate}
+
+Because $A_o$ is the authority, succession works when the node key is
+compromised, which is the case it exists for. This is the concrete reason for the
+two-key split in \S\ref{sec:roles}: with one key there is no step S2 an honest
+operator can take that the attacker cannot.
+
+\subsection{Revocation}
+
+Revocation is immediate and off-chain-effective:
+
+\begin{itemize}
+\item $A_o$, or the network on a proven fault, marks $A_n$ revoked.
+\item The scheduler stops placing work on the node at once. Running work is
+  drained under the workload's own policy.
+\item Statements signed by $A_n$ after the revocation timestamp are refused.
+\item The bond does \textbf{not} unlock at revocation. It unlocks after the
+  unbonding period, so that a node cannot escape a forfeiture that is still being
+  submitted. Making revocation fast and unbonding slow is the whole point of
+  separating them.
+\end{itemize}
+
+\subsection{Decommission}
+
+The orderly path, for a node leaving without fault: drain, stop accepting work,
+publish a final epoch statement marked terminal, and let $A_o$ call the manager's
+existing end-of-validation path. Uptime is settled, rewards pay out, the bond
+returns to $A_o$ after the unbonding period, and the record is retired.
+
+$A_n$ MUST NOT be reused. A retired address has an unknowable custody history:
+whoever held the key still holds it, and nothing distinguishes a returning node
+from an old copy.
+
+\subsection{Compromise}
+
+There is no procedure that un-leaks a key. What the procedure can do is stop the
+attacker from profiting and stop the network from believing the wrong things.
+Assume $sk_n$ is disclosed at unknown time $t_c$:
+
+\begin{enumerate}[label=\textbf{K\arabic*.},leftmargin=2.6em]
+\item \textbf{Revoke immediately} (previous section). Scheduling stops; the bond
+  stays locked.
+\item \textbf{Do not use the node key.} It is the attacker's key too. Every
+  recovery action goes through $A_o$.
+\item \textbf{Treat statements as unattributable from $t_c$.} Not false ---
+  unattributable. Work attributed to $A_n$ after $t_c$ cannot be assigned to the
+  operator or the attacker on the evidence available.
+\item \textbf{Expect equivocation, and let it settle.} If the attacker runs the
+  key, the two statements collide and the bond is forfeit. That is the mechanism
+  working: the bond is what the operator posted against exactly this.
+\item \textbf{Succeed to $A_n'$} at a class at least as high as the one that
+  failed. If the failure was custody, the successor MUST be at a strictly higher
+  class, or the same failure is available again.
+\item \textbf{Rotate the credential, not only the key.} At L2 the compromise may
+  be of the signing \emph{authorization}, not the key --- see
+  Claim~\ref{cl:recursion}. Revoke the node's KMS credential, and check the KMS
+  audit log for signatures in $[t_c, \text{now}]$ that the node cannot account
+  for.
+\end{enumerate}
+
+\begin{remark}
+If $A_o$ is compromised, this is not a node incident. The bond is movable and the
+registration is controllable by the attacker. Recovery is at the operator level:
+threshold custody for $A_o$ is what makes the event survivable, which is why
+\S\ref{sec:roles} requires it rather than suggesting it.
+\end{remark}
+
+% =====================================================================
+\section{Hanzo-operated and third-party nodes}
+\label{sec:same}
+
+They are the same object. A Hanzo node is a node whose owner key Hanzo holds.
+There is no Hanzo-only field, no privileged registration path, no separate
+enumeration, and no code path that branches on who operates the box. The console
+lists them in one table; the scheduler selects from one pool; settlement pays
+them through one mechanism.
+
+Three differences remain. Each is a value on the record, and none is a difference
+in the identity:
+
+\begin{enumerate}[label=\textbf{D\arabic*.},leftmargin=2.6em]
+\item \textbf{Who can authorize signing.} For a Hanzo node, $A_o$ and the node's
+  KMS credential live in Hanzo's KMS under Hanzo's IAM org; for a third party,
+  in theirs. This changes who can cause a signature, not what the signature
+  means. Both are subject to \S\ref{sec:custody} identically.
+\item \textbf{Physical control, and therefore who the adversary is.} For a
+  third-party node, the operator is a possible adversary, and
+  \S\ref{sec:att}, point~(c), applies at full strength: without a confidential VM,
+  guest measurement does not defend against the operator. For a Hanzo node the
+  host is under our control, which is a real assurance difference and is
+  \emph{not} expressible as a cryptographic proof to a third party. It is
+  recorded as the operator org on the node record and priced by policy, not
+  asserted as a security property.
+\item \textbf{Whose money is at risk.} Hanzo's own nodes are bonded by Hanzo, so
+  a forfeiture is an internal transfer rather than a loss to a counterparty. The
+  incentive differs; the mechanism does not.
+\end{enumerate}
+
+Scheduling policy MAY restrict workloads by assurance class and by operator org
+--- for instance, requiring \code{confidential} for a tenant's sensitive
+inference, or restricting a regulated workload to a named org. That is a
+constraint over fields, evaluated by the scheduler, and it is the one place the
+difference is allowed to appear. It is not a second identity model.
+
+\begin{remark}
+No field marks a node as trusted for skipping a verification step, and none
+should be added. Such a field is a target: whoever obtains it obtains the
+assurance the network attaches to our own hardware, without the hardware. Hanzo
+nodes reach their class through the same evidence as everyone else, which is
+cheap for us because we control the hosts and can enable SecureBoot on them.
+\end{remark}
+
+% =====================================================================
+\section{Residual risk}
+
+What this design does not fix, stated plainly so nobody has to discover it later:
+
+\begin{itemize}
+\item \textbf{Class \code{self} is an honesty assumption.} Most of the fleet is
+  at \code{self} today. For those nodes, every property in
+  \S\ref{sec:notprove} stands, and the only controls are the bond and the
+  challenge system. That is a real security posture --- economic rather than
+  cryptographic --- and it must be described that way in anything a customer
+  reads.
+\item \textbf{Time-of-check to time-of-use.} A measurement describes a boot. A
+  node measured honestly at $t$ can \code{kexec}, load a module, or write its
+  root filesystem at $t + \epsilon$. Continuous attestation --- runtime
+  measurement of what is loaded, not just what was --- is out of scope here and
+  is the natural next specification.
+\item \textbf{The bond bounds the loss, not the damage.} A node that leaks a
+  tenant's data loses its bond; the tenant's data is still out. Confidentiality
+  of tenant workloads on non-confidential VMs is a scheduling policy question,
+  not an identity question.
+\item \textbf{Sybil resistance is economic.} Nothing prevents one operator from
+  running many nodes, each correctly identified. That is a feature; it becomes a
+  problem only where a protocol counts nodes rather than weighing stake. No
+  protocol specified here counts nodes.
+\item \textbf{Vendor roots are trust anchors.} At class \code{platform} and above
+  the verifier trusts a manufacturer's certificate chain and its revocation
+  behavior. That is a smaller assumption than trusting every node operator, and
+  it is not zero.
+\item \textbf{The registration does not prove possession of the consensus key.}
+  \emph{Observed}: the manager checks the BLS public key's length and the
+  \code{nodeID}'s uniqueness, and verifies possession of neither. Uniqueness
+  prevents two registrations of one \code{nodeID} on the same manager; it does
+  not establish that the registrant holds the corresponding secrets. Requiring a
+  proof of possession at \code{bind} time would close this; the primitive already
+  exists (\code{luxfi/keys}, \code{pop.go}, \code{ProofOfPossession}).
+\end{itemize}
+
+% =====================================================================
+\section{Implementation status and interface requests}
+\label{sec:status}
+
+\subsection{Implemented}
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.28\textwidth}>{\raggedright\arraybackslash}p{0.64\textwidth}@{}}
+\toprule
+\textbf{Where} & \textbf{What} \\
+\midrule
+\code{hanzoai/node},\newline \code{hanzo-libs/hanzo-attest} &
+\code{Boot}, canonical encoding, BLAKE3 \code{Measurement}; \code{Evidence} with
+domain-separated \code{Kind}; \code{Key} (ed25519) as \code{Kind::Host} attester;
+\code{Host} verifier; \code{Record} with \code{coherent()}; in-memory
+\code{Registry}. \\[3pt]
+\code{hanzoai/cli},\newline \code{src/commands/wallet.rs} &
+Two custody models, no plaintext secrets: cloud custody where the key never
+leaves KMS/MPC, and local custody in the OS keychain. EVM address derivation. \\[3pt]
+\code{hanzoai/cloud},\newline \code{apps/wallet} &
+\code{/v1/wallet/*} with four custody backends (\code{kms}, \code{mpc},
+\code{treasury}, \code{safe}), key rotation, audit emission, a
+\code{TierValidator} tier, and fail-closed behavior when the MPC cluster is
+absent. \\[3pt]
+\code{luxfi/kms} &
+AES-256-GCM with ML-KEM-wrapped DEK, AAD bound to path/name/env/version, with a
+test that a swapped DEK fails; hybrid X25519 + ML-KEM-768 transport. \\[3pt]
+\code{luxfi/standard},\newline \code{contracts/validators} &
+ACP-77 validator manager: bonded registration, \code{owner}, uptime-conditioned
+rewards, churn limits, end-of-validation. \\[3pt]
+\code{hanzoai/cloud},\newline \code{cli/link.go} &
+\code{hanzo link}: starts \code{hanzod} via \code{hanzo node up} and registers
+the host in the org's compute fleet, authorized by the IAM token. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Interface requests}
+\label{sec:req}
+
+These are changes in code owned elsewhere. They are requested here, with the
+reason and the minimal shape, and are not made by this document.
+
+\begin{description}
+\item[IR-1 --- \code{hanzod}: the identity key is the wallet key, and is never
+  plaintext.] \code{hanzo-bin/hanzo-node/src/utils/keys.rs} loads an ed25519
+  secret from a plaintext \code{KEY=value} file or the environment;
+  \code{src/runner.rs} writes it back with \code{std::fs::write}, at the umask.
+  Requested: the node identity becomes a secp256k1 key whose address is $A_n$,
+  obtained through the wallet custody path that already exists, so that
+  \code{hanzod} holds an address and a signing capability rather than a secret.
+  Rationale: \S\ref{sec:custody} C1--C2, and \S\ref{sec:gap} --- with a copyable
+  key none of the properties in this document hold. If the change must land in
+  two steps, the first step is the file mode and the second is the custody.
+
+\item[IR-2 --- \code{hanzo-attest}: bind the preimage to chain, address and
+  epoch.] \code{evidence::preimage} is
+  $(\text{tag}, \text{kind}, \mu, \text{timestamp})$. Requested: add
+  \code{chainID}, the signer's identity address, and the epoch; keep the existing
+  kind byte. Rationale: without the address the statement is presentable under
+  another registration; without the chain it crosses networks; without the epoch,
+  equivocation (\S\ref{sec:equiv}) --- the fault that detects a copied key --- is
+  undefined. Highest value of the five.
+
+\item[IR-3 --- a node-binding registry contract.] The vendored manager preserves
+  its ABI deliberately and should not be forked. Requested: the two-mapping,
+  one-function contract of \S\ref{sec:stake}, so that \code{validationID} and
+  $A_n$ agree on-chain. Optionally, require a proof of possession of $A_n$ at
+  \code{bind}.
+
+\item[IR-4 --- \code{hanzo-attest}: a TPM 2.0 kind, ahead of SNP and TDX.]
+  \code{Kind} names \code{Snp} and \code{Tdx} and implements neither. On the
+  measured fleet, two of three hosts have TPM 2.0 with a SHA-256 PCR bank and an
+  event log, and zero have SNP or TDX. Requested: \code{Kind::Tpm} with a quote
+  over PCRs and a verifier-supplied nonce, reporting $H(pk_n)$. It is the only
+  one of the three kinds any host on the measured fleet can satisfy.
+
+\item[IR-5 --- the epoch statement, separate from \code{Record}.]
+  \code{Record} is per-machine
+  and a node files many. Requested: one epoch statement per node per epoch, over
+  $\mu_{\text{node}}$, doubling as the liveness signal so there is no second
+  heartbeat protocol.
+\end{description}
+
+\subsection{Operational requests}
+
+\begin{itemize}
+\item Enable SecureBoot on the x86 host. It has a TPM 2.0 and SecureBoot is
+  currently disabled, which caps it at class \code{self} even once IR-4 lands: an
+  unenforced boot chain means the PCR values are chosen by whoever controls the
+  boot.
+\item Retire the local credential files under \code{\textasciitilde/.hanzo/} on
+  every host that runs a node. Owner-only file permissions are L1 by the ladder
+  of \S\ref{sec:ladder}; C1 requires L2 or better, and a node's credential is
+  what C3 scopes.
+\end{itemize}
+
+% =====================================================================
+\appendix
+
+\section{The fleet, as measured}
+\label{app:fleet}
+
+Measured 4 September 2026, by direct inspection of the three hosts. Recorded
+because the assurance classes in \S\ref{sec:class} are claims about real hardware
+and should be checkable.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}llll@{}}
+\toprule
+& \textbf{aarch64 host} & \textbf{x86 host} & \textbf{Apple-Silicon host} \\
+\midrule
+CPU & NVIDIA GB10 & AMD Ryzen AI MAX+ 395 & Apple M4 Max \\
+Arch & aarch64 & x86\_64 & arm64 \\
+OS & Ubuntu 24.04.4 & Ubuntu 24.04.4 & macOS 26.5.2 \\
+Kernel & 6.17.0-1031-nvidia & 7.0.0-30-generic & Darwin \\
+TPM & 2.0, SHA-256 PCR bank & 2.0 & none exposed \\
+Event log & \code{binary\_bios\_measurements} & --- & --- \\
+SecureBoot & enabled & \textbf{disabled} & n/a \\
+SEV-SNP / TDX & n/a (aarch64) & \code{sev\_snp = N} & n/a \\
+Monitor & KVM & cloud-hypervisor & Virtualization.framework \\
+k3s & control-plane, v1.35.5+k3s1 & agent, v1.35.5+k3s1 & not joined \\
+Class today & \code{self} (\code{platform} after IR-4) & \code{self} & \code{self} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The aarch64 host's PCR~0 read
+\begin{center}\small\ttfamily
+3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969
+\end{center}
+\noindent
+which is what a class-\code{platform} quote would bind against.
+
+The Apple-Silicon host carried \code{hanzo} 8.5.157 and \code{hanzo-vm} 2.0.0,
+with OS assets under \code{\textasciitilde/.hanzo/vm} at version 2.0.0: kernel
+\code{Image} (SHA-256 \code{2f71e062\dots{}3025}), \code{initramfs.cpio.gz}
+(\code{397718d0\dots{}a6ff}), and a 4~GiB \code{rootfs.ext4}. Those are the files a
+\code{Boot} measures --- Appendix~\ref{app:encoding} --- so the measurement is
+reproducible by anyone holding the same release.
+
+Two hosts are joined to one k3s cluster; the Mac is not currently a member. The
+microVM is what would let it join on the same terms, which is the architectural
+point of \S\ref{sec:class}: uniform interface, honestly non-uniform assurance.
+
+\section{The boot encoding}
+\label{app:encoding}
+
+\emph{Observed}, \code{hanzo-attest/src/boot.rs}. Reproduced because
+$\mu_{\text{node}}$ is what an epoch statement commits to, and a verifier must be
+able to recompute it from the release.
+
+\[
+\mu = \mathrm{BLAKE3}\bigl(\mathrm{enc}(B)\bigr)
+\]
+
+where $\mathrm{enc}$ is: the domain tag \code{hanzo.boot.v1}, then the monitor
+binary digest, the OS-asset version string, the kernel digest and the root
+filesystem digest --- each length-prefixed with a big-endian \code{u64} --- then
+\code{cpus}, \code{memory\_mb} and \code{disk\_mb} as big-endian \code{u64}, then
+the argv count and each argument length-prefixed.
+
+Three properties of the encoding, each with a test in the crate:
+
+\begin{itemize}
+\item \textbf{Paths do not enter.} Only digests. Moving an identical file does not
+  change $\mu$.
+\item \textbf{Length prefixes separate fields.} \code{["k3s","server"]} and
+  \code{["k3sserver"]} measure differently.
+\item \textbf{The kernel command line is pinned by the version.} It is built
+  inside the monitor as a function of the OS-asset version, so the version stands
+  for it without this crate restating a value it does not own. A verifier
+  therefore checks the version against the published release; a monitor that
+  changed the command line without changing the version would break the binding,
+  and the OS-asset release process must not permit it.
+\end{itemize}
+
+\end{document}
