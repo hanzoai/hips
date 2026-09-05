@@ -76,6 +76,18 @@ def m_no_category(root):
     write(root, STANDARDS_SUBJECT,
           re.sub(r"^category:.*$", "", read(root, STANDARDS_SUBJECT), count=1, flags=re.M))
 
+def m_progress(root):
+    write(root, SUBJECT,
+          re.sub(r"^status:(.*)$", r"status:\1\nimplementation-rust: mostly",
+                 read(root, SUBJECT), count=1, flags=re.M))
+
+def m_final_without_go(root):
+    # STANDARDS_SUBJECT is Final, which is half the contradiction already. Doing
+    # this to a Draft would prove nothing.
+    write(root, STANDARDS_SUBJECT,
+          re.sub(r"^status:(.*)$", r"status:\1\nimplementation-go: none",
+                 read(root, STANDARDS_SUBJECT), count=1, flags=re.M))
+
 def m_requires(root):
     s = read(root, STANDARDS_SUBJECT)
     write(root, STANDARDS_SUBJECT,
@@ -125,6 +137,8 @@ CASES = [
     ("a type outside the vocabulary", m_type, None),
     ("a category outside the vocabulary", m_category, None),
     ("a Standards Track HIP with no category", m_no_category, None),
+    ("an implementation progress outside the vocabulary", m_progress, None),
+    ("a Final HIP declaring implementation-go: none", m_final_without_go, None),
     ("requires: a HIP that does not exist", m_requires, None),
     ("two files claiming one number", m_duplicate, None),
     ("a HIP deleted without saying so", m_shrink, None),
