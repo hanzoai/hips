@@ -46,6 +46,11 @@ def vocabulary(root: str | None = None) -> dict:
 
 REQUIRED_FIELDS = ("hip", "title", "author", "type", "status", "created")
 
+# Go is the reference runtime. `status: Final` says the thing a HIP specifies
+# exists in the code, so a Final HIP that also says Go has none of it is making
+# two claims about one body of code, and one of them is wrong.
+REFERENCE_RUNTIME = "go"
+
 # A Standards Track HIP describes something someone else must be able to build.
 # Two sections are what make that possible at all -- what it is, and what is
 # normatively required -- so their absence fails the build.
@@ -126,6 +131,8 @@ CHECKS = [
     ("FM007", "requires: names a HIP that does not exist"),
     ("FM008", "a tombstone field: superseded-by, or a status this corpus deleted"),
     ("FM009", "filename is not hip-NNNN-kebab-case.md"),
+    ("FM010", "implementation-<runtime>: is outside the closed vocabulary"),
+    ("FM011", "status: Final contradicts implementation-go: none"),
     ("ST001", "body has no H1, or more than one"),
     ("ST002", "H1 does not read 'HIP-NNNN: <title from front matter>'"),
     ("ST003", "two headings at the same level have identical text"),
@@ -225,6 +232,12 @@ def lint() -> Report:
     vocab = vocabulary()
     STATUS, TYPE = set(vocab["status"]), set(vocab["type"])
     CATEGORY = set(vocab["category"])
+    # One key per runtime, flat and hyphenated, because parse_front_matter reads
+    # one line at a time: a nested block under `implementation:` is invisible to
+    # it, and a claim the lint cannot see is a claim nothing checks. An absent
+    # key means nobody has assessed that runtime, which is not `none`.
+    RUNTIME = vocab["implementation"]["language"]
+    PROGRESS = set(vocab["implementation"]["progress"])
     files = sorted(f for f in os.listdir(HIP_DIR) if f.endswith(".md"))
 
     by_number: dict[int, list[str]] = defaultdict(list)
@@ -283,6 +296,19 @@ def lint() -> Report:
             rep.error("FM006", name, f"category: {category!r} is not one of {sorted(CATEGORY)}")
         elif htype == "Standards Track" and not category:
             rep.error("FM006", name, "Standards Track HIP has no category:")
+
+        for runtime in RUNTIME:
+            field = f"implementation-{runtime}"
+            progress = fm.get(field)
+            if progress is None:
+                continue
+            if progress not in PROGRESS:
+                rep.error("FM010", name,
+                          f"{field}: {progress!r} is not one of {sorted(PROGRESS)}")
+            elif runtime == REFERENCE_RUNTIME and progress == "none" and status == "Final":
+                rep.error("FM011", name,
+                          f"status is Final and {field} is none; both are claims "
+                          "about the same code")
 
         for target in hip_numbers_in(fm.get("requires", "")):
             if target not in known:
