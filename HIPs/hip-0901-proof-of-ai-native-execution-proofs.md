@@ -5,6 +5,7 @@ author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Draft
+implementation-rust: partial
 created: 2026-06-23
 updated: 2026-06-24
 mirrors: LP-302, ZIP-0419

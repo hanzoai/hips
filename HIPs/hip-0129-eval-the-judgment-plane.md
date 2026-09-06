@@ -6,6 +6,7 @@ type: Standards Track
 category: Infrastructure
 capability: eval
 status: Final
+implementation-go: partial
 created: 2026-07-27
 requires: HIP-0106, HIP-0111, HIP-0114, HIP-0119, HIP-0120, HIP-0122, HIP-0139
 ---

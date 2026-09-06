@@ -4,6 +4,7 @@ title: Service Discovery & Auto-Bridge
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: partial
 author: Hanzo AI
 created: 2026-05-08
 requires: HIP-0007, HIP-0010, HIP-0068

@@ -6,6 +6,7 @@ type: Standards Track
 category: Infrastructure
 capability: kafka
 status: Final
+implementation-go: shipped
 created: 2026-08-21
 requires: HIP-0106, HIP-0139
 ---

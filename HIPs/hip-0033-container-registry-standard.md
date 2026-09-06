@@ -5,6 +5,7 @@ author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Draft
+implementation-go: partial
 created: 2025-01-15
 ---
 
