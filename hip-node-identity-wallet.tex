@@ -873,6 +873,12 @@ recompute $\beta'$ from the registers it predicted, the address on the node
 record, and the block hash it can look up, then compare to the report's caller
 field.
 
+Because $B$ changes each epoch, a report is requested once per epoch rather than
+once per boot. That is an ioctl against a guest device --- \code{/dev/sev-guest} or
+\code{/dev/tdx\_guest} --- and its cost is not a consideration at epoch lengths of
+minutes. The report is requested from inside the guest, after boot, which is where
+the driver binds and where the workload register has a value.
+
 \begin{claim}[What $\beta'$ establishes]\label{cl:bind}
 A report over $\beta'$ verifying under vendor root $R$ establishes: a platform
 certified by $R$, launched in the state its own launch measurement records, held
@@ -971,7 +977,13 @@ Six remarks, none decorative:
   distinct from the per-machine record: a node serves many machines and files many
   records; it has exactly one node microVM and files exactly one epoch statement
   per epoch. Conflating them would make honest multi-tenancy look like
-  equivocation.
+  equivocation. $L$ is fixed at launch. $W$ is the workload register \emph{as of
+  the moment the statement is made}, and an extension after that moment changes
+  $W$ without producing a new statement --- which is the time-of-check to
+  time-of-use residue, stated again here because this is the field where a reader
+  is most likely to assume otherwise. A node MUST NOT publish a second statement to
+  report the new $W$; it waits for the next epoch, for the reason in
+  \S\ref{sec:equiv}.
 \item[evidence] carries the report and not a class. A node states what it can
   show; the verifier derives the class. A statement that asserted its own class
   would be a node setting a field it MUST NOT set (\S\ref{sec:class}).
