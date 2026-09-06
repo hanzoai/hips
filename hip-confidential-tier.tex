@@ -1,0 +1,1145 @@
+% hip-confidential-tier.tex
+% Hanzo Improvement Proposal — The Confidential Tier.
+% Number assigned when this lands in HIPs/.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{claim}[definition]{Claim}
+\newtheorem{remark}[definition]{Remark}
+
+% Long identifiers are the norm here, so let the typewriter font break.
+\newcommand{\code}[1]{\texttt{\hyphenchar\font=`\-\relax #1}}
+\sloppy
+\emergencystretch=3em
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% A requirement identifier. Every normative sentence in this document carries
+% one, so conformance can be reported against a list rather than against prose.
+\newcommand{\req}[1]{\textbf{#1}}
+
+\setlist[itemize]{itemsep=2pt,topsep=4pt}
+\setlist[description]{itemsep=3pt,topsep=4pt}
+
+\title{\textbf{The Confidential Tier}\\[6pt]
+\large Evidence, verification and settlement for inference\\
+on hardware Hanzo does not own\\[4pt]
+\normalsize A Hanzo Improvement Proposal}
+
+\author{Hanzo AI}
+\date{5 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Number      & assigned on merge into \code{HIPs/} \\
+Type        & Standards Track \\
+Category    & Core \\
+Status      & Draft \\
+Requires    & HIP-0027 (KMS), HIP-0095 (QoS challenges), HIP-0096 (compute\\
+            & rewards), HIP-0121 (BYO fleet), HIP-0901 (Proof of AI),\\
+            & HIP-1325 (\code{/v1/node}) \\
+Pairs with  & \emph{Compute Settlement} \cite{hipsettle}, which specifies the ledger\\
+            & this tier's receipts settle against. That proposal decides what\\
+            & a claim is worth; this one decides what admits it. \\
+Analysis    & \emph{Attested Inference on Operator Hardware} \cite{paper}, which this\\
+            & document does not restate. Read it for why; read this for what. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{abstract}
+\noindent
+An operator who is not Hanzo runs a Hanzo image on a machine Hanzo cannot
+inspect, serves inference on it, and is paid automatically. This document is the
+contract that arrangement runs under: what evidence the operator produces, what a
+verifier checks before believing it, what settlement pays against, and what none
+of it establishes.
+
+The companion paper \cite{paper} analyses the tier and classifies its guarantees.
+It leaves three questions open that only a specification can close, and closing
+them is this document's reason to exist.
+
+First, a hardware report carries exactly one 64-byte caller field, and three
+parties in the current design each believe that field is theirs: the measurement
+layer shipping in \code{hanzoai/vm} binds the boot log there, the paper's flow
+binds the session keys and the freshness nonce there, and the settlement path
+wants the per-request receipt hash there. One field cannot carry three bindings,
+and a report is generated once per boot while receipts accrue per request.
+Section~\ref{sec:binding} fixes the field's contents, and routes the per-request
+commitment through the receipt key named inside it rather than through the field.
+
+Second, the assurance level a verifier assigns is currently derived, in
+\code{hanzo-pqc}, from the host's own account of its hardware. A level derived
+that way is an operator's claim about itself. Section~\ref{sec:levels} requires it
+to be derived from the verified report, retires the second of the two overlapping
+level enumerations, and states what each level does \emph{not} protect --- in
+particular that a CPU environment wrapped around a passthrough accelerator
+protects the control plane and not the computation.
+
+Third, this tier is routinely described, by us as much as by anyone, in language
+that belongs to a different tier. An attestation establishes that an environment
+with a stated initial state was launched on a genuine part. It does not establish
+that the environment ran the advertised model, and a model commitment does not
+establish it either: a commitment binds a name to bytes, not bytes to a
+multiplication. The claim that the advertised model produced a given output is
+\emph{inherited} from assumptions about vendors, firmware and measured software,
+and it fails silently when any of them fails. Section~\ref{sec:claims} makes the
+distinction a conformance requirement rather than a matter of taste, with one
+table that every surface reporting this tier projects from.
+
+Section~\ref{sec:conformance} states what a conformant operator, verifier and
+settlement implementation must do, and Appendix~\ref{app:tree} reports how far
+the tree is from it. Nothing in this tier settles today: the on-chain evidence
+backends are deployed with an empty voucher set and refuse everything, which is
+the correct posture for a tier whose verifier is unfinished.
+\end{abstract}
+
+\tableofcontents
+
+% =====================================================================
+\section{Scope}
+\label{sec:scope}
+
+This document specifies the confidential tier of Hanzo's compute market: the tier
+used when the served numeric path admits no exact-arithmetic check, so that
+execution integrity cannot be proved and is instead inherited under stated
+assumptions.
+
+Two properties are at stake and they are not the same property.
+
+\begin{description}[leftmargin=1.4em]
+\item[Confidentiality.] The user's prompt, the returned completion, and --- where
+the weights are not public --- the model, are not readable by the operator who
+owns the machine they run on.
+\item[Execution integrity.] The output the operator returns and bills for is the
+output the advertised model produces on the given input under the advertised
+decoding regime.
+\end{description}
+
+Confidential computing addresses the first directly. It addresses the second only
+by implication, and the implication is conditional. This document specifies both
+and labels each guarantee with the class it actually belongs to.
+
+\paragraph{In scope.} The evidence an operator produces, the checks a verifier
+performs, the release of model weights to a measured environment, the receipt
+settlement pays against, and the language every surface is permitted to use about
+the result.
+
+\paragraph{Out of scope.} Exact-arithmetic verification of a forward pass, which
+is HIP-0901's Proof of AI \cite{hip0901} and is preferred to this tier wherever the
+numeric path allows it. Training on operator hardware, which is HIP-0901's
+contribution proof. Availability and consistency, which are HIP-0095's challenges
+\cite{hip0095}. Reward and bond sizing, which is HIP-0096 \cite{hip0096};
+Section~\ref{sec:audit} states the inequality those numbers must satisfy and does
+not set them. The identity of the node itself, which is HIP-1325 \cite{hip1325}
+and its companion proposal on node identity.
+
+\paragraph{Reading the requirements.} The key words MUST, MUST NOT, SHOULD, SHOULD
+NOT and MAY are to be interpreted as in RFC 2119. Every normative sentence carries
+an identifier (\req{B3}, \req{V7}, \ldots) so that an implementation can be
+reported against a list. \emph{Observed} marks a statement about code that was
+read, with the location given; \emph{proposed} marks a change this document asks
+for. Sentences with neither marker are definitions or consequences.
+
+% =====================================================================
+\section{Terms}
+\label{sec:terms}
+
+The companion paper \cite{paper} defines measurement, attestation, trusted
+computing base, model commitment, receipt and execution integrity, and this
+document uses those definitions unchanged. Three further terms are needed because
+the requirements below turn on them.
+
+\begin{definition}[Report data]
+The 64-byte caller-supplied field of a hardware attestation report: \code{REPORT\_DATA}
+on AMD SEV-SNP \cite{snpabi} and \code{REPORTDATA} on Intel TDX \cite{tdx}. It is
+supplied by software inside the environment at the moment the report is generated
+and is covered by the platform's signature. Written $\mathrm{rd}$.
+\end{definition}
+
+\begin{definition}[Claim]
+The 32-byte value an on-chain evidence backend judges: the thing a voucher vouches
+for. Observed: \code{luxfi/standard} at \code{contracts/ai/compute/} names this
+parameter \code{reportData} in both \code{CCEvidence} and \code{TEEEvidence}.
+\end{definition}
+
+\begin{remark}[Two names, two objects]
+\label{rem:collision}
+Report data and claim are different objects of different widths at different
+layers, and the contracts currently give the second the first's name. The
+collision is not cosmetic: a reader of \code{TEEEvidence} reasonably concludes
+that the value being vouched for is the value inside the hardware report, and
+\req{B4} below says it is not and cannot be. \emph{Proposed:} the contract
+parameter is renamed \code{claim}. Until it is, a reader must hold the two apart
+by position, and this document uses \emph{claim} for the chain-side value
+throughout.
+\end{remark}
+
+\begin{definition}[Assurance level]
+An element of the ordered set of Section~\ref{sec:levels}, describing what an
+environment's evidence establishes about where a computation was protected. A
+level is a conclusion a verifier reaches, never a property a host reports.
+\end{definition}
+
+% =====================================================================
+\section{The binding}
+\label{sec:binding}
+
+This section is the document's substance. Everything else follows from it or
+checks it.
+
+\subsection{One field, three claimants}
+
+A hardware report carries one report-data field. Report generation is a firmware
+operation, rate-limited on both platforms, and happens once per boot; requests
+arrive by the thousand against that one boot. Three bindings are currently
+proposed for the same 64 bytes.
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{0.26\textwidth}L{0.40\textwidth}L{0.26\textwidth}@{}}
+\toprule
+Claimant & Binds & Scope \\
+\midrule
+\code{vm-measure} (observed: \code{hanzoai/vm}, \code{crates/vm-measure/src/lib.rs}) &
+$\mathsf{SHA\text{-}512}$ over the launch and workload registers &
+Per boot \\
+The paper's flow \cite{paper} &
+$\mathsf{keccak}(\text{tag} \,\|\, pk_e \,\|\, pk_r \,\|\, \mathrm{sid} \,\|\, n_v)$ &
+Per boot \\
+The settlement path \cite{paper} &
+The receipt hash $\rho$ &
+Per request \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The third is impossible as stated: a per-request value cannot occupy a per-boot
+field. The first two are each incomplete. A binding over the boot log alone omits
+the keys the session runs on and omits any freshness term, so the report is
+replayable by anyone holding a copy and says nothing about which key material the
+environment holds. A binding over the keys alone omits the workload log, and on
+SEV-SNP the workload log has no platform counterpart --- the platform measures the
+launch and nothing after it, so a launch-only report cannot speak for what the
+started system was told to run.
+
+\subsection{What the field carries}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{B1}] The report-data field MUST be
+\[
+\mathrm{rd} \;=\; \mathsf{SHA\text{-}512}\big(\text{``hanzo/rd/v1''} \,\|\, L \,\|\, W \,\|\, pk_e \,\|\, pk_r \,\|\, \mathrm{sid} \,\|\, n_v\big),
+\]
+where $L$ and $W$ are the launch and workload registers of the measurement
+(48 bytes each, SHA-384, as \code{vm-measure} computes them), $pk_e$ is the
+environment's X-Wing public key, $pk_r$ its receipt verifying key, $\mathrm{sid}$
+the session identifier, and $n_v$ a nonce the verifier generated.
+
+\item[\req{B2}] The report MUST be requested only after the measurement chain is
+complete. Nothing may be extended into either register afterwards. \emph{Observed:}
+\code{Measurement::observe} already enforces this ordering by taking the binding as
+its argument at the point the report is requested.
+
+\item[\req{B3}] $sk_e$ and $sk_r$ MUST be generated inside the environment, MUST
+NOT be persisted, and MUST NOT outlive the environment. A key that survives a
+reboot is a key whose binding to a report is no longer implied by the report.
+
+\item[\req{B4}] The per-request receipt MUST NOT be carried in report data. It is
+bound to the hardware through $pk_r$: the report attests $pk_r$, and $sk_r$ signs
+each receipt. A verifier follows the chain report $\rightarrow pk_r \rightarrow$
+receipt, and \req{V12} states the link it must check.
+
+\item[\req{B5}] Where the tier requires accelerator evidence, each device report's
+nonce MUST be
+$\mathsf{SHA\text{-}512}(\text{``hanzo/rd/gpu/v1''} \,\|\, \mathrm{rd} \,\|\, \text{device index})$,
+truncated to the width the device's report accepts. Deriving the device nonce from
+$\mathrm{rd}$ is what makes the CPU and device reports one statement; without it an
+operator may present a CPU report from one machine and a device report from
+another.
+\end{description}
+
+\subsection{Which digest, and why it is not two ways of doing one thing}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{B6}] Values written into the 64-byte report-data field MUST be computed
+with SHA-512. Values written into a 32-byte on-chain commitment --- the claim of
+Section~\ref{sec:terms}, the model commitment, HIP-0901's transcript fields --- MUST
+be computed with keccak-256.
+\end{description}
+
+The two are one rule, not two: \emph{the digest is chosen by the width of the field
+it fills}. A 64-byte field filled with a 32-byte digest is a field half of which is
+padding, and padding inside a signed structure is space whose contents nobody
+checks. A 32-byte on-chain word filled with a truncated 64-byte digest is a
+gratuitous divergence from the hash the EVM and HIP-0901 already use everywhere
+else. \emph{Observed:} \code{vm-measure} already reasons this way in the tree,
+choosing SHA-512 for the binding for exactly this reason, and SHA-384 for the
+registers because that is the digest both a TDX runtime measurement register and
+the SEV-SNP launch measurement use, so nothing is re-hashed at the boundary to
+hardware.
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{B7}] The measurement registers MUST be SHA-384 and MUST be extended with
+the rule
+$R_{i+1} = \mathsf{SHA\text{-}384}(R_i \,\|\, e_i)$, $e_i = \mathsf{SHA\text{-}384}(\text{name}_i \,\|\, \texttt{0x00} \,\|\, \mathsf{SHA\text{-}384}(\text{content}_i))$,
+from a register of 48 zero bytes. \emph{Observed:} implemented in
+\code{vm-measure}; this requirement pins it so a second implementation cannot
+diverge.
+
+\item[\req{B8}] A measurement event MUST hash content only. The path a file was
+read from MAY be recorded for a reader and MUST NOT enter the digest, so that the
+same assets measure identically on every host that holds them. A measurement that
+is a fingerprint of one host's filesystem cannot be predicted by a verifier, and a
+measurement a verifier cannot predict is not an allowlist entry.
+\end{description}
+
+\subsection{What the chain-side nonce is not}
+\label{sec:twononces}
+
+A companion proposal on compute settlement \cite{hipsettle} binds an operator's
+epoch claim to the 8-byte nonce of the 48-byte header the deployed verifier
+validates, so that a quote produced for one operator's epoch cannot be presented
+for another's. That binding is sound for what it does and this document does not
+displace it. The two operate at different layers and neither substitutes for the
+other, which is worth stating because both are called a nonce.
+
+$n_v$ under \req{B1} is inside a \emph{hardware} report and is therefore
+unforgeable by anyone without the platform: it says an environment holding these
+keys exists now. The header nonce is inside a structure the verifier checks only
+for a certificate chain, so it establishes that a vendor-certified key signed 48
+bytes. It prevents replay of another operator's header; it does not prevent an
+operator holding any vendor-certified key from minting a fresh header for a
+machine running no environment at all. Anti-replay and existence are different
+properties, and only the first is available from the header.
+
+\subsection{The change this asks of the tree}
+
+\emph{Observed:} \code{Measurement::bind} currently computes
+$\mathsf{SHA\text{-}512}(L \,\|\, W)$ --- the first two terms of \req{B1} and no
+others. \emph{Proposed:} it takes the session terms as arguments and computes
+\req{B1}. The registers, the extension rule and the choice of digest are unchanged;
+what changes is that the binding stops being a property of the boot alone and
+becomes a property of the boot \emph{and} the session it will serve. Reports
+produced under the current binding are not replayable-by-accident so much as
+replayable-by-construction, and no verifier check can repair that after the fact.
+
+% =====================================================================
+\section{The evidence bundle}
+\label{sec:bundle}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{E1}] An environment MUST publish its evidence as one document with the
+fields of Table~\ref{tab:bundle}, JSON-encoded, with byte strings hex-encoded
+lowercase and unpadded. \emph{Observed:} \code{vm-measure}'s measurement already
+serializes this way and refuses to deserialize a document whose registers do not
+fold from their events, or whose binding does not follow from its registers; a
+bundle inherits both refusals.
+
+\item[\req{E2}] A bundle MUST carry the raw platform report exactly as the platform
+produced it. It MUST NOT carry a parsed, re-encoded or summarised report: parsing
+belongs to the verifier, and a producer that parses on the verifier's behalf has
+placed itself inside the verifier's trust base.
+
+\item[\req{E3}] A producer MUST NOT synthesise a report. Where the platform is
+absent or will not answer, the bundle MUST say so and MUST NOT name a platform.
+\emph{Observed:} \code{vm-measure}'s \code{attest::status} is correct here --- a
+device that will not answer yields \code{none} rather than an asserted platform.
+\emph{Observed, and the reason this is a requirement:}
+\code{hanzoai/node}'s \code{hanzo-bin/hanzo-node/src/security/tee\_attestation.rs}
+carries simulation and development modes that return a fabricated SEV-SNP report
+when the hardware is absent, and its production path falls back to simulation with
+a warning rather than failing. That path MUST be removed rather than
+configured off. A fabricated report that reaches a verifier which has not yet
+implemented chain validation is indistinguishable from a real one.
+\end{description}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lL{0.56\textwidth}l@{}}
+\toprule
+Field & Contents & Required \\
+\midrule
+\code{platform} & \code{sev-snp}, \code{tdx}, or \code{none} & always \\
+\code{report} & The raw platform report & unless \code{none} \\
+\code{chain} & The certificate chain, leaf first & unless \code{none} \\
+\code{launch} & The launch log: register value and its ordered events & always \\
+\code{workload} & The workload log, same shape & always \\
+\code{bind} & $\mathrm{rd}$, per \req{B1} & always \\
+\code{ke} & $pk_e$, the X-Wing public key & always \\
+\code{kr} & $pk_r$, the receipt verifying key & always \\
+\code{sid} & The session identifier & always \\
+\code{nonce} & $n_v$, as the verifier issued it & always \\
+\code{devices} & One device report and chain per accelerator, indexed & level $\geq$ 3 \\
+\bottomrule
+\end{tabular}
+\caption{The evidence bundle. A field a producer cannot fill is omitted, never
+invented.}
+\label{tab:bundle}
+\end{table}
+
+% =====================================================================
+\section{Verification}
+\label{sec:verify}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{V0}] A verifier MUST perform every check below that applies to the
+bundle's platform and level, and MUST refuse the bundle if any of them fails or
+cannot be performed. There is no partial acceptance and no check whose failure
+downgrades rather than refuses. The order is immaterial; the totality is not.
+\end{description}
+
+Each check is silent when skipped. This is the property that makes the list
+normative rather than advisory: a verifier missing one does not error, it accepts.
+
+\subsection{Every platform}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{V1}] Recompute $\mathrm{rd}$ from the bundle's own \code{launch},
+\code{workload}, \code{ke}, \code{kr}, \code{sid} and \code{nonce} per \req{B1},
+and require it to equal the report's report-data field. A report whose caller field
+says something else is a report about a different environment.
+
+\item[\req{V2}] Require \code{nonce} to be a value this verifier generated, for
+this session, and not previously accepted. A hardware report carries no
+trustworthy notion of the present: SEV-SNP reports carry no timestamp, and any
+timestamp a payload asserts is asserted by the party being checked. Freshness comes
+from the verifier's own nonce inside the binding and from nothing else. A verifier
+that does not generate $n_v$ itself, or does not check it, has accepted a report
+that may be arbitrarily old --- and reports are public evidence, so an old one is
+not hard to obtain.
+
+\item[\req{V3}] Require the launch register to appear in the published measurement
+log of Section~\ref{sec:log}, and require the workload register to appear in the
+log entry for the workload the operator is serving.
+
+\item[\req{V4}] Record the platform's chip identifier and report identifier against
+the operator's registered identity, and refuse a bundle whose chip identifier is
+already bound to a different operator. One machine presenting itself as several
+independent operators is the Sybil case HIP-0096's reward economics assumes away;
+the attestation is what makes that assumption checkable, and only if the
+identifiers are recorded and compared.
+
+\item[\req{V5}] Refuse a bundle whose \code{platform} is \code{none}. Such a bundle
+is host-asserted evidence, which is a different and weaker object: it establishes
+that a node made a claim and that the claim has not been altered, and it does not
+establish that the node fed those files to the monitor, because nothing outside the
+node observed the boot \cite{hanzod}.
+
+This refuses host-asserted evidence \emph{at this tier}, and does not refuse it from
+the system. The settlement proposal \cite{hipsettle} admits it at an emission
+multiplier below one, which prices the difference rather than denying it, and that is
+a coherent lower tier. What \req{V5} forbids is counting it as this one: an operator
+whose evidence is its own signature must never be paid, reported, or displayed at a
+level that implies a vendor stood behind it.
+\end{description}
+
+\subsection{AMD SEV-SNP}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{V6}] Validate the chain from the VCEK through the ASK to the AMD root,
+for the chip identifier \emph{and the reported TCB version carried in the report
+itself}. The VCEK is derived from both, so a report whose \code{REPORTED\_TCB} does
+not match the key that signed it MUST fail. Distinguish VCEK-signed from
+VLEK-signed reports and accept only what policy admits. Check revocation.
+
+\item[\req{V7}] Require \code{MEASUREMENT} to equal the expected launch digest for
+the image named in the measurement log.
+
+\item[\req{V8}] Check the policy word: \code{DEBUG} MUST be clear, or the host may
+attach a debugger to the guest and every guarantee in this document is void;
+\code{MIGRATE\_MA} MUST be clear unless a migration agent is intended;
+\code{SMT} MUST match deployment policy; the minimum ABI version MUST be met. Where
+an ID block is used, check \code{ID\_KEY\_DIGEST} and \code{AUTHOR\_KEY\_DIGEST}.
+
+\item[\req{V9}] Require \code{REPORTED\_TCB} and \code{GUEST\_SVN} to meet a
+published floor, so that an operator cannot roll firmware back to a version with a
+known break. Without a floor, every other check here still passes on a knowingly
+broken platform.
+\end{description}
+
+\subsection{Intel TDX}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{V10}] Verify the quote against Intel's provisioning collateral: the
+quoting enclave identity, the TCB info, and the revocation lists. Check
+\code{MRTD} and \code{RTMR0..3} against the expected values for the image. Check
+the TD attributes --- \code{DEBUG} clear, \code{XFAM} within policy.
+
+\item[\req{V11}] Treat the TCB status strictly. \emph{Configuration needed} and
+\emph{software hardening needed} are not \emph{up to date}. A verifier MAY accept a
+degraded status only under a policy decision recorded against the bundle, and MUST
+NOT accept it by default.
+\end{description}
+
+\subsection{The receipt chain}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{V12}] For every receipt, require the signature to verify under the
+\emph{same} $pk_r$ that appears in an accepted bundle for the same $\mathrm{sid}$,
+and require the receipt's session counter to be strictly increasing within that
+session. A receipt under a key no accepted bundle names is a receipt from nowhere.
+
+\item[\req{V13}] Require each accepted bundle to have a bounded lifetime, after
+which the environment re-attests with a fresh nonce and fresh keys. Receipts under
+an expired bundle MUST NOT settle. This bounds the window a compromised $sk_r$
+covers; it does not detect the compromise, and Section~\ref{sec:residual} says why
+nothing here does.
+\end{description}
+
+\subsection{Accelerators, at level 3 and above}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{V14}] Verify each device report against the vendor's device-identity
+chain, and the reported firmware and VBIOS measurements against the published
+reference integrity manifests for that device and driver. Require confidential mode
+to be genuinely enabled rather than in a development or devtools setting. Require
+the device nonce to equal the value \req{B5} derives. Where a partitioned device is
+used, require the partition configuration to appear in the attested state rather
+than being reported by the host.
+
+\item[\req{V15}] A verifier MUST NOT assign a level above 2 on the basis of a
+device the host merely reports. Only a device that produced a report verified under
+\req{V14} counts toward a level.
+\end{description}
+
+% =====================================================================
+\section{Measurements a verifier can interpret}
+\label{sec:log}
+
+An allowlist of measurements is a list of numbers. Whether it is also a security
+control depends entirely on whether a reader outside Hanzo can map an entry back to
+source.
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{M1}] The image build MUST be reproducible: an independent party
+rebuilding from the named source revision obtains the same bytes.
+
+\item[\req{M2}] The mapping from image digest to expected launch measurement MUST
+be computable offline from published inputs, so that a verifier derives the
+expected value rather than being told it.
+
+\item[\req{M3}] The set of $(\text{revision}, \text{digest}, \text{measurement})$
+triples MUST be published in an append-only log with the lone-node promotion rule of
+RFC 6962 \cite{rfc6962}, so that a measurement quietly added is visible and a
+subtree cannot be presented as the whole log.
+
+\item[\req{M4}] A measurement MUST NOT be admitted to the allowlist by an
+administrative action alone. Without \req{M1}--\req{M3}, approving a measurement is
+an assertion by whoever holds a key that a 32-byte value is trustworthy, and the
+quorum of distinct measurements \code{TEEEvidence} enforces becomes a quorum over
+values nobody outside can interpret --- which costs an attacker one approval and
+buys a verifier nothing.
+\end{description}
+
+% =====================================================================
+\section{Weight release}
+\label{sec:release}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{K1}] Weights that are not public MUST reach the environment sealed to
+$pk_e$ under X-Wing HPKE \cite{hpke}, released by the KMS \cite{hip0027} only when
+every check of Section~\ref{sec:verify} has passed for the bundle naming that
+$pk_e$. The same envelope HIP-0901 specifies for prompt sealing is used; there is
+no second envelope.
+
+\item[\req{K2}] A release MUST be scoped to the model set the operator is licensed
+to serve, MUST carry a lifetime not exceeding the bundle's, and MUST be recorded in
+the KMS audit trail as an access by a measured environment rather than by a person.
+
+\item[\req{K3}] The environment MUST NOT write released weights back in plaintext,
+to disk or to any surface the host can read.
+
+\item[\req{K4}] A weight set whose disclosure would be unacceptable MUST NOT be
+released to third-party hardware at any level. The level ladder measures cost to an
+attacker who owns the machine, and that cost is finite; where the loss from
+disclosure exceeds it, the control is a placement decision and not a cryptographic
+one.
+\end{description}
+
+% =====================================================================
+\section{The receipt and what settles}
+\label{sec:receipt}
+
+The receipt exists to make model substitution a detectable event rather than an
+invisible one. It reuses HIP-0901's transcript fields so the system has one
+commitment format, and adds the three bindings that format does not carry.
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{R1}] For each request the environment MUST sign, under $sk_r$, a receipt
+carrying the fields of Table~\ref{tab:receipt}, over the preimage
+$\rho = \mathsf{keccak}(\text{``hanzo/receipt/v1''} \,\|\, R)$.
+
+\item[\req{R2}] The sampling seed MUST be derived, not chosen:
+$\mathsf{keccak}(\mathrm{sid} \,\|\, i \,\|\, n_v \,\|\, n_c)$, where $n_c$ is a
+nonce the client places inside the sealed request. Every term is fixed before
+generation and one of them belongs to the client, so an environment can neither
+search seeds for a favourable output nor reuse a session's randomness across
+requests.
+
+\item[\req{R3}] The engine version $\kappa$ MUST record the reduction order and
+batch-invariance settings in force, because an audit that replays a request cannot
+reproduce it otherwise. Reduction order in a fused kernel typically depends on batch
+shape, so the same model on the same input yields different logits under different
+concurrent load; a receipt that does not say which regime was in force is not
+replayable even by an honest party.
+\end{description}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lL{0.62\textwidth}@{}}
+\toprule
+Field & Meaning \\
+\midrule
+$D_w$ & Model commitment: keccak Merkle root over the quantized weight bytes as
+loaded, with the quantization discriminant per leaf. HIP-0901's \code{modelSpecHash}. \\
+$Q$ & Quantization specification. \\
+$D_t$ & Tokenizer digest. \emph{Not in HIP-0901.} \\
+$\kappa$ & Engine and kernel version, per \req{R3}. \\
+$s$ & Sampler specification, including the derived seed of \req{R2}. \emph{Seed not
+in HIP-0901.} \\
+$x_{\text{raw}}$ & Digest of the input as the user sent it, before tokenization.
+\emph{Not in HIP-0901.} \\
+$x_{\text{tok}}$ & Digest of the canonical input token identifiers. HIP-0901's
+\code{inputCommitment}. \\
+$y_{\text{tok}}, y_{\text{raw}}$ & Digests of the output token identifiers and of the
+detokenized bytes. \\
+$n_{\text{in}}, n_{\text{out}}$ & Token counts, which is what billing multiplies. \\
+$\mathrm{sid}, i$ & Session identifier and a counter monotone within the session. \\
+\bottomrule
+\end{tabular}
+\caption{Receipt fields. Three are new relative to HIP-0901's transcript and each
+closes a substitution the transcript alone admits.}
+\label{tab:receipt}
+\end{table}
+
+\paragraph{Why the tokenizer digest and the raw input.} HIP-0901 commits the input
+as canonical token identifiers. A tokenizer swap changes the map from user text to
+identifiers, and therefore the output, while leaving the model commitment, the
+quantization specification and the kernel version untouched. The committed
+identifiers do change --- but they are the identifiers \emph{the environment chose},
+so a user checking a commitment against their own text has no way to know which
+tokenizer to check with. Binding $D_t$ and $x_{\text{raw}}$ closes it: anyone
+holding the advertised tokenizer recomputes $x_{\text{tok}}$ from $x_{\text{raw}}$
+and rejects a mismatch.
+
+\subsection{Settlement}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{S1}] A billed request MUST settle against a receipt. A request whose
+receipt is absent, unsigned by a $pk_r$ named in an unexpired accepted bundle, or
+bound to a model commitment outside the operator's licensed set MUST settle at zero.
+
+\item[\req{S2}] A receipt naming a smaller model than the one advertised MUST settle
+at the smaller model's rate rather than being refused, so that substitution is
+priced rather than merely disputed.
+
+\item[\req{S3}] An implementation MUST NOT fall back to a claimed usage record when
+a receipt is missing. This is the requirement most likely to be undone for
+operational reasons, and undoing it removes the effect of every other requirement in
+this section: an operator who routes a request to a cheaper endpoint that never
+enters the environment produces no receipt at all, and a usage-record fallback pays
+for it anyway.
+
+\item[\req{S4}] The claim a voucher records on chain MUST be $\rho$, and the
+no-double-mint ledger MUST be keyed on the computation commitment, so one unit of
+work settles once network-wide. \emph{Observed:} HIP-0901's
+\code{AIComputeRegistry} already keys its ledger this way.
+
+\item[\req{S5}] A voucher MUST NOT record a vouch until it has performed
+Section~\ref{sec:verify} in full for the bundle the receipt chains to.
+\emph{Observed:} \code{TEEEvidence}'s documented contract with its voucher already
+requires a report-data equality check that the currently deployed verifier cannot
+perform, because the payload that verifier validates is a 48-byte Lux-defined header
+--- device identifier, timestamp, nonce --- with no measurement field, no policy
+word, no TCB version and no report-data field. A successful verification there
+establishes that a key certified under an embedded vendor root signed those 48
+bytes, and no more. \emph{Proposed:} the verifier parses genuine SEV-SNP and TDX
+reports, which supplies the report-data field and the measurement, policy and TCB
+fields \req{V6}--\req{V11} need, none of which the header carries either.
+\end{description}
+
+% =====================================================================
+\section{Assurance levels}
+\label{sec:levels}
+
+\subsection{One enumeration}
+
+\emph{Observed:} the tree carries two enumerations of one concept.
+\code{hanzo-pqc}'s \code{PrivacyTier} has five levels ordered by what is protected;
+\code{CCTier} has four ordered inversely and named for mechanism.
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{L1}] \code{PrivacyTier} survives. \code{CCTier} MUST be removed. Two
+enumerations of one concept are two answers to one question, and the survivor is the
+one whose order is monotone in protection, because that is the order a comparison
+like ``at least level 3'' is written against.
+\end{description}
+
+\begin{center}
+\small
+\begin{tabular}{@{}cL{0.34\textwidth}L{0.40\textwidth}@{}}
+\toprule
+Level & Requires & Does not protect \\
+\midrule
+0 & Nothing & Anything \\
+1 & Encryption at rest under a key the host does not hold & Anything in use \\
+2 & A CPU environment attested per \req{V6}--\req{V11} & \emph{Any computation on a
+discrete accelerator} \\
+3 & Level 2, and every serving device attested per \req{V14} in confidential mode &
+Metadata; physical attack \\
+4 & Level 3 with the device inside the trust domain (TEE-I/O), removing bounce
+buffers & Metadata; physical attack \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{L2}] A verifier MUST derive the level from verified evidence. A host's
+own account of its hardware MAY determine what the host attempts and MUST NOT
+determine what a verifier concludes. \emph{Observed:} \code{VendorCapabilities::max\_tier}
+in \code{hanzo-pqc} derives a level from self-reported vendor features. As a
+statement of what a host will try, that is correct and useful. As an input to a
+verifier's conclusion it is an operator grading its own work, and no caller may use
+it that way.
+
+\item[\req{L3}] A surface reporting level 2 for a workload served on a discrete
+accelerator MUST NOT describe the prompt as confidential during inference. A CPU
+environment protects memory the CPU owns; a device that is not itself a trusted
+environment cannot perform DMA into encrypted guest memory, so weights on load and
+activations and KV cache in flight cross through shared pages and are readable by
+the host. \emph{Level 2 protects the control plane and not the computation.} It is a
+real step up for CPU-side work and it is not what most readers will assume it is.
+\end{description}
+
+% =====================================================================
+\section{What may be claimed}
+\label{sec:claims}
+
+Every guarantee this tier produces belongs to one of four classes, and the class is
+not a matter of emphasis.
+
+\begin{description}[leftmargin=1.4em]
+\item[C --- cryptographic] Holds by a stated hardness assumption or
+information-theoretically, with no trust in a manufacturer.
+\item[H --- hardware trust] Holds if named vendors, firmware and measured software
+behave as specified.
+\item[E --- economic] Holds if a rational adversary finds cheating unprofitable.
+\item[O --- open] Not established by anything in this document.
+\end{description}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{C1}] Any surface that reports this tier --- an API field, a dashboard, a
+settlement record, a document --- MUST carry the class of the property it reports,
+projected from Table~\ref{tab:class}. One table, one projection; a surface that
+restates the classes in its own words will drift from them.
+
+\item[\req{C2}] The words \emph{verified}, \emph{proven} and \emph{guaranteed} MUST
+NOT be applied to a class-H property. The available honest form names the assumption:
+``attested under AMD's root at TCB $\geq v$'' is a class-H statement written
+correctly; ``verified inference'' is the same statement written as though it were
+class C.
+
+\item[\req{C3}] The phrase \emph{verifiable inference} MUST NOT be used for this
+tier at all. Where the numeric path admits Freivalds, that path is class C and the
+phrase belongs to it; where it does not, the phrase names something the system does
+not have. This applies to our own documents, of which several currently violate it.
+
+\item[\req{C4}] A surface reporting this tier's settlement MUST NOT describe the
+path as post-quantum. Hardware attestation signatures are classical elliptic-curve
+or RSA. \emph{Observed:} \code{TEEEvidence} already records this as the sole
+classical assumption in an otherwise post-quantum tier, and records that it is
+governance-removable. Until post-quantum device-identity roots exist in silicon, the
+attestation leg is not post-quantum and saying otherwise misstates the strongest
+claim in the system.
+\end{description}
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}L{0.30\textwidth}L{0.28\textwidth}cL{0.28\textwidth}@{}}
+\toprule
+Property & Mechanism & Class & What breaks it \\
+\midrule
+Prompt confidential in transit & X-Wing HPKE to $pk_e$ & C & ML-KEM-768 \emph{and}
+X25519 both broken \\
+Prompt confidential during CPU execution & CPU environment isolation & H & Vendor
+key, firmware, side channel, physical attack \\
+Prompt confidential during device execution & Device confidential mode, level $\geq$ 3
+& H & As above plus device firmware; \emph{nothing at level 2} \\
+Environment ran a specific image & Attestation against the log of \S\ref{sec:log} & H
+& Vendor key or firmware; meaningless without \req{M1}--\req{M3} \\
+Report is not a replay & $n_v$ inside \req{B1}; ephemeral keys & C & Nothing, if
+\req{V2} is performed; everything, if it is not \\
+Weights released only to a measured environment & \req{K1}--\req{K2} & H & The
+attestation base, plus KMS policy \\
+Model commitment names the advertised weights & Merkle root over loaded bytes & C &
+Second preimage on keccak \\
+\textbf{The committed weights were the operands} & Receipt signed inside the
+environment & \textbf{H} & Any assumption in \S\ref{sec:residual}; $sk_r$ extraction
+is undetectable \\
+The same, integer path & Freivalds over the opened layer (HIP-0901) & C & Nothing;
+soundness is information-theoretic \\
+Substitution is unprofitable & Sampled audit, bond, forfeit & E & Distinguishable
+audits; bond below the run before detection \\
+\textbf{Execution integrity, floating-point path} & --- & \textbf{O} & --- \\
+Metadata privacy: timing, lengths, rates & --- & O & --- \\
+Availability and consistency & HIP-0095 challenges & E & --- \\
+\bottomrule
+\end{tabular}
+\caption{The classes. \req{C1} makes this table the single source every surface
+projects from.}
+\label{tab:class}
+\end{table}
+
+\begin{remark}[The row that matters]
+The row most deployments would label ``verified inference'' is class H. It is the
+claim that the committed weights were actually multiplied, and a commitment does not
+establish it: a commitment binds a name to bytes, and says nothing about which bytes
+were the operands of a multiplication. Where the numeric tier permits, the row below
+it replaces H with C, and that is the only place in this system where the
+replacement is available.
+\end{remark}
+
+% =====================================================================
+\section{What a malicious operator retains}
+\label{sec:residual}
+
+Assume every requirement above is met. The operator can still do all of the
+following, and a conformant implementation is one that has decided what to do about
+each rather than one that has eliminated them.
+
+\begin{description}[leftmargin=1.4em]
+\item[Refuse, delay and select.] Nothing here compels service. Availability is
+HIP-0095's subject; the point is that confidentiality and integrity mechanisms do
+not touch it.
+\item[Read the metadata.] Lengths, timings, arrival rates, client identity and
+inter-token intervals are not sealed. Inter-token timing is a side channel of
+practical significance for a streaming interface. Padding and batching reduce it at
+a latency cost; this document requires neither and claims no metadata privacy.
+\item[Attack the environment from below.] The operator controls the hypervisor, the
+interrupt controller, the page tables outside the protected set, and the power
+supply. The published literature against these platforms includes ciphertext side
+channels from deterministic memory encryption \cite{cipherleaks}, single-stepping
+frameworks \cite{sevstep}, malicious interrupt injection \cite{heckler,wesee}, and
+cache-writeback manipulation \cite{cachewarp}. Each has a firmware mitigation; the
+class does not close.
+\item[Attack the machine physically.] The standard threat model for confidential
+computing assumes a privileged software attacker and largely defers physical
+attacks, on the reasonable ground that a data centre restricts physical access. Here
+the adversary owns the machine, has unlimited time with it, and is paid by the
+system's own reward schedule. Fault injection against the secure processor
+\cite{buhren2021} and memory-aliasing attacks defeating replay protection with
+inexpensive hardware \cite{badram} are published examples. Both were addressed by
+platform updates; neither is the last of its kind, because the asymmetry that
+produced them does not change.
+\item[Extract $sk_r$, once.] This is the highest-value target in the design. One
+successful extraction lets the operator author valid receipts for computations it
+never performed, indefinitely, with no observable difference from honest operation.
+Attestation cannot detect it: the attestation was genuine when it was made.
+\req{V13} bounds the window, the distinct-measurement quorum raises the cost, and
+only the audit of Section~\ref{sec:audit} detects the resulting behaviour.
+\end{description}
+
+% =====================================================================
+\section{The audit, which is the only detector}
+\label{sec:audit}
+
+Every mechanism above assumes the environment behaves. The audit is the one that
+does not, and it is therefore the one that detects a failure of the others.
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{A1}] A conformant platform MUST audit a sampled fraction of served
+requests against the reference weights it holds, on hardware the operator does not
+control.
+
+\item[\req{A2}] Audit requests MUST be indistinguishable from real ones: drawn from
+the same distribution, issued through the same client identities and routing, and
+opaque to the operator. A detector the operator can recognise has no power, because
+the rational response is to serve honestly exactly when observed. The
+confidentiality of this tier is what makes the audit undetectable, and the audit is
+what detects a failure of confidentiality's own guarantees; neither is redundant.
+
+\item[\req{A3}] Audit requests MUST be synthetic by default. Auditing a real user's
+request discloses that request to the auditor, and requires the user's consent or an
+auditor that is itself a measured environment.
+
+\item[\req{A4}] Where $\kappa$ declares batch-invariant kernels and the seed is
+committed per \req{R2}, the audit MUST be an exact replay and an equality check.
+Where it is not, the audit is a statistical test with a false-positive rate and a
+power curve, and every surface reporting its result MUST describe it as a detector
+rather than as a proof.
+
+\item[\req{A5}] The audit fraction $\alpha$, the per-audit detection probability
+$\beta$ and the bond $S$ MUST satisfy $\alpha \beta S > \Delta$, where $\Delta$ is
+the cost an operator saves per substituted request. Because $\Delta$ is a marginal
+serving cost and $S$ is a bond, $\alpha$ can be small. The assumptions carry more
+weight than the inequality: the operator is risk-neutral, cannot distinguish audited
+requests, forfeits with certainty on detection, and has not already withdrawn the
+bond. The inequality also bounds expected value and not damage --- the number of
+substitutions before the first detection is geometric with mean
+$(\alpha\beta)^{-1}$ --- so where harm is not linear in $\Delta$, $S$ MUST cover
+that run and not one request. HIP-0095 and HIP-0096 set these numbers; this document
+states the constraint they satisfy.
+\end{description}
+
+% =====================================================================
+\section{Conformance}
+\label{sec:conformance}
+
+An implementation claims conformance for one of three roles, and the roles are
+disjoint.
+
+\begin{description}[leftmargin=1.4em]
+\item[Environment.] The measured image. Conforms if it satisfies
+\req{B1}--\req{B5}, \req{B7}--\req{B8}, \req{E1}--\req{E3}, \req{K3} and
+\req{R1}--\req{R3}.
+\item[Verifier.] Whatever decides a bundle is acceptable --- a key broker, a
+scheduler, a chain-side voucher, a user's client. Conforms if it satisfies
+\req{V0}--\req{V15} and \req{L2}. A verifier is the only role permitted to assign a
+level.
+\item[Settlement.] Whatever pays. Conforms if it satisfies \req{S1}--\req{S5} and
+consumes only verifier-assigned levels.
+\end{description}
+
+\begin{description}[leftmargin=1.6em]
+\item[\req{X1}] A deployment MUST refuse to settle at this tier until a verifier
+conforming to \req{V0}--\req{V15} exists for the platform in question.
+\emph{Observed:} the deployed configuration already refuses --- \code{CCEvidence}'s
+voucher set is empty and \code{TEEEvidence}'s threshold defaults to zero, which the
+contract treats as never attesting. Nothing mis-settles today; the work is
+unfinished rather than broken, and \req{X1} says the order in which it may be
+finished.
+
+\item[\req{X2}] There MUST be one attester and one verifier. \emph{Observed:} three
+places could hold them today. The mocks in \code{hanzo-pqc} and \code{hanzo-kbs}
+return success for any input --- one accepts any quote against any expected
+measurement, the other accepts any non-empty report as an SEV-SNP attestation at
+level 2. \code{hanzo-attest} in \code{hanzoai/node} declares the two hardware roots
+and refuses them by name. \emph{Proposed:} the implementation belongs where refusal
+already is, because refusing by name is the correct behaviour for an unimplemented
+root and returning success is not. The mocks are removed at the same time, not
+deprecated.
+
+\item[\req{X3}] The vendor root pool MUST hold the root of every vendor whose
+reports the deployment accepts, MUST be embedded rather than read from a host trust
+store, and MUST NOT hold a root for a platform the verifier cannot fully check.
+\emph{Observed:} exactly one root is embedded, Intel's SGX provisioning root, so
+AMD SEV-SNP and NVIDIA device chains fail closed. That is correct behaviour and an
+incomplete pool: it means no SEV-SNP host and no confidential accelerator can attest
+at all today.
+\end{description}
+
+% =====================================================================
+\section{Unsolved}
+\label{sec:open}
+
+Stated as problems, not as a plan. The companion paper \cite{paper} argues each; this
+document records that no requirement above closes them.
+
+\begin{description}[leftmargin=1.4em]
+\item[Execution integrity in floating point.] The gap between the integer path,
+where Freivalds gives an information-theoretic guarantee, and the floating-point
+path, where nothing does, is the central open problem of this tier. A tolerance wide
+enough to admit honest reductions is wide enough to hide a substitution, which is
+why HIP-0901 routes by numeric tier rather than weakening the check, and why this
+tier exists at all.
+\item[Detecting key extraction.] $sk_r$ compromise is undetectable by construction.
+\req{V13} bounds the window and \req{A1} detects the behaviour; neither detects the
+extraction.
+\item[Physical attack by the party being attested.] Whether any composition of
+attestation, tamper evidence and bonding meaningfully raises the cost, or whether the
+honest answer is that certain models do not go on third-party hardware, is a policy
+question \req{K4} defers to a human rather than resolving.
+\item[Metadata.] Nothing here protects timing, lengths or rates.
+\item[Post-quantum attestation.] No post-quantum device-identity root exists in
+silicon. \req{C4} requires saying so.
+\end{description}
+
+% =====================================================================
+\appendix
+\section{The tree against this document}
+\label{app:tree}
+
+Observed at the time of writing, so that conformance is measured rather than
+asserted. \emph{Present} means the code exists and does what this document requires
+of it; \emph{partial} means it exists and diverges; \emph{absent} means it does not
+exist.
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{0.27\textwidth}L{0.25\textwidth}lL{0.27\textwidth}@{}}
+\toprule
+Requirement & Where & State & Divergence \\
+\midrule
+\req{B7}, \req{B8} registers & \code{hanzoai/vm}, \code{vm-measure} & present & --- \\
+\req{B1} binding & same & partial & Binds $L \,\|\, W$ only; no keys, no nonce \\
+\req{B6} digest choice & same & present & --- \\
+\req{E2} raw report & same, \code{attest.rs} & present & Request ABIs and ioctl
+encodings implemented and pinned by test; never executed, for want of hardware \\
+\req{E3} no synthesis & same & present & --- \\
+\req{E3} no synthesis & \code{hanzoai/node}, \code{tee\_attestation.rs} &
+partial & Simulation and development modes fabricate reports; production falls back
+to simulation \\
+\req{V0}--\req{V15} & \code{hanzo-pqc}, \code{hanzo-kbs} & absent & Mocks return
+success for any input \\
+\req{V0}--\req{V15} & \code{luxfi/precompile} \code{0x0301} & partial & Validates a
+chain to an embedded root over a 48-byte header carrying no measurement, policy, TCB
+or report-data field \\
+\req{L1} one enumeration & \code{hanzo-pqc} & partial & \code{PrivacyTier} and
+\code{CCTier} both present \\
+\req{L2} derived level & same & partial & \code{max\_tier} reads self-reported
+features \\
+\req{M1}--\req{M4} log & --- & absent & No build-to-measurement mapping is published \\
+\req{R1}--\req{R3} receipt & \code{hanzo-engine} transcript & absent & Transcript
+machinery present; no receipt emitted from a live forward pass \\
+\req{S1}--\req{S5} & \code{luxfi/standard} \code{contracts/ai/compute/} & partial &
+Backends present and fail closed; voucher set empty, threshold zero \\
+\req{A1}--\req{A5} audit & --- & absent & No canary traffic, no reference check, no
+batch-invariant audit path \\
+Confidential launch path & \code{hanzoai/vm} & absent & The microVM layer boots k3s
+on an ordinary hypervisor; a confidential guest is a different launch path with
+different firmware and a measurement to reproduce \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two observations about this table rather than about its rows.
+
+The audit is absent, and it is the only mechanism here that detects a compromised
+environment rather than assuming one cannot occur. That argues for building it before
+the parts that assume it away, which is the reverse of the order the table's other
+absences suggest.
+
+No requirement in this document has been exercised on confidential hardware. Both
+hosts on the bench were checked directly at the time of writing. One is x86-64, an
+AMD Ryzen AI Max+ 395, whose \code{/proc/cpuinfo} carries no \code{sev},
+\code{sev\_es}, \code{sev\_snp} or \code{tdx} flag and which has no \code{/dev/sev}
+device. The other is aarch64 with an NVIDIA GB10 and no guest device of either kind.
+Neither absence is a configuration that can be changed: one is client silicon, the
+other an Arm part, and confidential guests on both platforms require server parts
+with the feature fused on. Exercising this tier therefore requires hardware the bench
+does not have. It is specified and unexercised, and no performance claim is made for
+it.
+
+% =====================================================================
+\begin{thebibliography}{99}
+
+\bibitem{paper}
+Hanzo AI Research.
+\newblock Attested inference on operator hardware: what confidential computing
+establishes for a third-party AI operator, what the settlement commitment adds, and
+what remains unsolved.
+\newblock Hanzo Papers, \code{papers/attestation}.
+
+\bibitem{hanzod}
+Hanzo AI Research.
+\newblock Attested compute in \code{hanzod}: boot measurement, host-asserted
+evidence, and the gap to hardware attestation.
+\newblock Hanzo Papers.
+
+\bibitem{hipsettle}
+Hanzo AI.
+\newblock Compute settlement: credits in, attested work out, on a Hanzo sovereign L1
+over Lux.
+\newblock Hanzo Improvement Proposal, number assigned on merge.
+
+\bibitem{hip0901}
+Hanzo AI.
+\newblock HIP-0901: Proof of AI --- native execution proofs, canonical contract, and
+operator-LLM governance.
+
+\bibitem{hip0095}
+Hanzo AI.
+\newblock HIP-0095: QoS challenge system.
+
+\bibitem{hip0096}
+Hanzo AI.
+\newblock HIP-0096: AI compute contribution rewards.
+
+\bibitem{hip0027}
+Hanzo AI.
+\newblock HIP-0027: Secrets management standard.
+
+\bibitem{hip1325}
+Hanzo AI.
+\newblock HIP-1325: Node --- your machines on a socket.
+
+\bibitem{snpabi}
+Advanced Micro Devices.
+\newblock \emph{SEV Secure Nested Paging Firmware ABI Specification}.
+
+\bibitem{tdx}
+Intel Corporation.
+\newblock \emph{Intel Trust Domain Extensions (TDX) Module Architecture
+Specification} and \emph{Data Center Attestation Primitives}.
+
+\bibitem{hpke}
+R. Barnes, K. Bhargavan, B. Lipp, and C. Wood.
+\newblock Hybrid Public Key Encryption.
+\newblock RFC 9180, 2022.
+
+\bibitem{rfc6962}
+B. Laurie, A. Langley, and E. Kasper.
+\newblock Certificate Transparency.
+\newblock RFC 6962, 2013.
+
+\bibitem{buhren2021}
+R. Buhren, H.-N. Jacob, T. Krachenfels, and J.-P. Seifert.
+\newblock One glitch to rule them all: fault injection attacks against AMD's Secure
+Encrypted Virtualization.
+\newblock \emph{ACM Conference on Computer and Communications Security}, 2021.
+
+\bibitem{cipherleaks}
+M. Li, Y. Zhang, H. Wang, K. Li, and Y. Cheng.
+\newblock CipherLeaks: breaking constant-time cryptography on AMD SEV via the
+ciphertext side channel.
+\newblock \emph{USENIX Security Symposium}, 2021.
+
+\bibitem{sevstep}
+L. Wilke, J. Wichelmann, A. Rabich, and T. Eisenbarth.
+\newblock SEV-Step: a single-stepping framework for AMD-SEV.
+\newblock 2024.
+
+\bibitem{heckler}
+B. Schl\"uter, S. Sridhara, A. Bertschi, and S. Shinde.
+\newblock Heckler: breaking confidential VMs with malicious interrupts.
+\newblock 2024.
+
+\bibitem{wesee}
+B. Schl\"uter, S. Sridhara, M. Kuhne, A. Bertschi, and S. Shinde.
+\newblock WeSee: using malicious \#VC interrupts to break AMD SEV-SNP.
+\newblock 2024.
+
+\bibitem{cachewarp}
+R. Zhang, L. Gerlach, D. Weber, L. Hetterich, Y. Lu, A. Kogler, and M. Schwarz.
+\newblock CacheWarp: software-based fault injection using selective state reset.
+\newblock \emph{USENIX Security Symposium}, 2024.
+
+\bibitem{badram}
+J. De Meulemeester, L. Wilke, D. Oswald, T. Eisenbarth, I. Verbauwhede, and
+J. Van Bulck.
+\newblock BadRAM: practical memory aliasing attacks on trusted execution
+environments.
+\newblock 2025.
+
+\end{thebibliography}
+
+\end{document}
