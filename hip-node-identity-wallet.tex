@@ -66,8 +66,8 @@ A Hanzo node is a physical host that boots a Linux microVM, joins one k3s
 cluster, and runs the Hanzo cloud. This proposal specifies the identity of such
 a node: an account address on the Hanzo sovereign L1, held by the node's
 \code{hanzod}, used to sign what the node says about itself, named in the node's
-on-chain registration, bound into the node's hardware report, presented to the
-cluster at admission, and paid the node's rewards.
+on-chain registration, joined by signature to the node's hardware report,
+presented to the cluster at admission, and paid the node's rewards.
 
 The proposal is written around one distinction, because every claim the system
 can make about a node depends on it. A signature establishes that some party
@@ -88,9 +88,10 @@ money) are two roles and two keys, because a design in which the compromised key
 can also withdraw the bond has no recovery path. Third, forfeiture on-chain is
 restricted to self-proving faults --- principally equivocation, which is exactly
 what an uncoordinated copy of a key produces --- so that slashing needs no quorum
-and no oracle. Fourth, a hardware report whose caller-supplied field does not
-commit to the node address is transferable between nodes running the same image;
-on a fleet built for uniformity that is not a corner case but the common one.
+and no oracle. Fourth, a hardware report binds a platform to an image and to the
+ephemeral keys of a session; nothing in it reaches a durable identity, so the link
+from a bonded node to attested hardware has to be made by a signature and is
+specified here.
 
 Section~\ref{sec:status} and Appendix~\ref{app:fleet} separate what is
 implemented from what is proposed. Measurement, the SHA-384 register fold, and
@@ -645,9 +646,9 @@ Exactly one of three procedures applies, chosen by what the host has:
 
 \item[L3, where the hardware exists.] The key is generated inside the enclave, is
   not exportable, and its use is conditioned on the measured state by G1--G4. The
-  enclave reports $A_n$ inside a bind that also commits to the measured state
-  (\S\ref{sec:bind}), which is what lets a verifier record class
-  \code{confidential}.
+  enclave's session keys are attested against the measured state, and the epoch
+  statement signed by $sk_n$ names those keys (\S\ref{sec:field}), which is what
+  lets a verifier record class \code{confidential} against this identity.
 
 \item[L1, development only.] The key is generated locally and held in the OS
   keychain. \emph{Observed:} \code{hanzo wallet}'s local custody, where ``the
@@ -719,9 +720,10 @@ than left to configuration:
 
 \begin{enumerate}[label=\textbf{G\arabic*.},leftmargin=2.6em]
 \item The key material is generated inside the platform and is not exportable.
-\item A report over a bind that includes $A_n$ and a freshness input
-  (\S\ref{sec:bind}) is the only evidence that binds the key to the platform. The
-  freshness input MUST be one the node could not have chosen in advance.
+\item A report whose report-data field commits to the measured state and to keys
+  the epoch statement names (\S\ref{sec:field}) is the only evidence that reaches
+  the platform. Its freshness term MUST be one the node could not have chosen in
+  advance.
 \item Release --- or use --- MUST be denied when the measured state is not on the
   allowed list for the node's declared image. Denial MUST be the default on any
   error, including an unreachable verifier.
@@ -751,9 +753,9 @@ A quote over PCRs committing to $A_n$ and a freshness input, \emph{and} an
 enforced verified boot chain. Without enforcement the PCR values are
 attacker-chosen and the class is \code{self}. \emph{Proposed.} \\[3pt]
 \code{confidential} & SEV-SNP, TDX, CCA &
-A vendor-rooted report over a bind that commits to $A_n$ (\S\ref{sec:bind});
-removes the host from the trust base. \emph{Request path implemented, no hardware
-on the current fleet.} \\
+A vendor-rooted report, joined to $A_n$ by an epoch statement naming the session
+keys the report attests (\S\ref{sec:field}); removes the host from the trust base.
+\emph{Request path implemented, no hardware on the current fleet.} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -856,51 +858,76 @@ Together these say that the implemented path, completed, would establish
 \emph{that some platform of the right kind launched this image at some time} ---
 which is worth having, and is not node identity.
 
-\subsection{The proposed bind}
+\subsection{Who owns the field}
+\label{sec:field}
 
-\emph{Proposed.} Keep the registers, the fold, the digest and the split exactly as
-they are. Change only what the report is over:
+The confidential-tier proposal in this repository
+(\code{hip-confidential-tier.tex}) specifies the contents of the report-data field
+and reaches Claims~\ref{cl:transfer} and~\ref{cl:stale} independently: ``a binding
+over the boot log alone omits the keys the session runs on and omits any freshness
+term, so the report is replayable by anyone holding a copy''. Its requirement B1
+is
 \[
-\beta' \;=\; \sha{512}\bigl(L \,\|\, W \,\|\, A_n \,\|\, B\bigr)
+\mathrm{rd} \;=\; \sha{512}\bigl(\text{``hanzo/rd/v1''} \,\|\, L \,\|\, W \,\|\,
+pk_e \,\|\, pk_r \,\|\, \mathrm{sid} \,\|\, n_v \bigr),
 \]
-where $A_n$ is the node's 20-byte address and $B$ is a 32-byte freshness input:
-the hash of a settlement-L1 block within the current epoch (\S\ref{sec:join}), or
-a nonce a verifier chose, for an on-demand challenge.
+where $pk_e$ is the environment's key-exchange public key, $pk_r$ its receipt
+verifying key, $\mathrm{sid}$ the session identifier, and $n_v$ a verifier nonce.
+Its B3 requires $sk_e$ and $sk_r$ to be generated inside the environment and to
+die with it.
 
-The change is minimal in the code and total in the meaning. It is still 64 bytes,
-still derived and never stored, and the verifier's check is still one line:
-recompute $\beta'$ from the registers it predicted, the address on the node
-record, and the block hash it can look up, then compare to the report's caller
-field.
+There is one report-data field and it has one specification. This document does
+not propose a second. What it observes is that B1 contains no durable identity:
+$pk_e$ and $pk_r$ are ephemeral by construction, so a report under B1 establishes
+that \emph{some} confidential environment holds \emph{these session keys}, and
+nothing that ties that environment to the bonded, staked, paid node the rest of
+this document is about. The bond, the reward and the fleet row hang off $A_n$; the
+hardware evidence hangs off $pk_r$; today nothing joins the two.
 
-Because $B$ changes each epoch, a report is requested once per epoch rather than
-once per boot. That is an ioctl against a guest device --- \code{/dev/sev-guest} or
-\code{/dev/tdx\_guest} --- and its cost is not a consideration at epoch lengths of
-minutes. The report is requested from inside the guest, after boot, which is where
-the driver binds and where the workload register has a value.
+\subsection{Joining identity to hardware}
 
-\begin{claim}[What $\beta'$ establishes]\label{cl:bind}
-A report over $\beta'$ verifying under vendor root $R$ establishes: a platform
-certified by $R$, launched in the state its own launch measurement records, held
-the measurement log folding to $(L, W)$, and reported the address $A_n$ together
-with a value $B$ that did not exist before block $B$. It is not transferable to a
-node with a different address, and it is not replayable outside the epoch $B$
-belongs to.
+\emph{Proposed.} The join is a signature, not a second field. The epoch statement
+(\S\ref{sec:stmt}) carries the session terms, so that $sk_n$ endorses exactly the
+keys the report attests:
+\[
+\text{report} \;\longrightarrow\; pk_r \;\longleftarrow\; \text{epoch statement}
+\;\longrightarrow\; A_n .
+\]
+A verifier checks two links it can check separately: the report verifies under the
+vendor root and its report-data equals B1 recomputed over $(L, W, pk_e, pk_r,
+\mathrm{sid}, n_v)$; and the epoch statement naming those same $(pk_e, pk_r,
+\mathrm{sid})$ recovers to $A_n$, which is bound to an active bonded registration.
+
+\begin{claim}[What the composition establishes]\label{cl:bind}
+Under B1 plus an epoch statement naming the same session terms: a platform
+certified by $R$, launched in the recorded state, held the measurement log folding
+to $(L,W)$ and the session keys $(pk_e, pk_r)$; and the holder of $sk_n$, bonded
+under an active registration, endorsed those session keys for epoch $e$. Work
+performed under $sk_r$ is therefore attributable to $A_n$, and $A_n$'s bond answers
+for it.
 \end{claim}
 
 \begin{remark}[What it still does not establish]
-$\Conf(sk_n, h)$. Reporting an address is not proof that the corresponding secret
-is confined to the platform, and cannot be: the platform is reporting a number it
-was handed. Closing that requires generation inside the platform and a
-non-extractability statement the verifier checks --- requirement (i) of
-\S\ref{sec:gap}, and requirement G1. $\beta'$ is necessary for a
-class-\code{confidential} claim and is not sufficient for it. Stating this is the
-difference between an attestation design and an attestation story.
+$\Conf(sk_n, h)$ --- that the node key is on that platform. The composition binds
+the identity to the \emph{session}, not the identity key to the \emph{silicon}: an
+operator holding $sk_n$ off the box can endorse session keys held by a confidential
+machine they also control. That is sufficient for settlement, which needs to know
+whose bond answers for the work, and it is not the same statement as ``this node's
+key lives in this enclave''. Reaching that requires generation inside the platform
+and a non-extractability statement the verifier checks --- requirement (i) of
+\S\ref{sec:gap} and requirement G1 --- and it would additionally require $A_n$ to
+appear in the report-data preimage. Adding $A_n$ to B1 is therefore a strictly
+stronger option, at the cost of one term in a field that already has four
+claimants; it is offered as \hyperref[sec:req]{IR-2} for the confidential-tier
+proposal to take or decline, not asserted here.
 \end{remark}
 
-This is \hyperref[sec:req]{IR-2}, and it is the highest-value change in this
-document: it is small, it is in code that is being written now, and without it
-class \code{confidential} means ``someone, somewhere, runs our image''.
+Because $n_v$ is per-session and B2 fixes the report to a completed measurement
+chain, a report is requested once per session rather than once per epoch. The
+epoch statement is what carries a per-epoch freshness term for the identity
+(\S\ref{sec:join}); the two freshness inputs sit at different layers and neither
+substitutes for the other, which the confidential-tier proposal states for its own
+pair of nonces and which holds here for the same reason.
 
 % =====================================================================
 \section{Joining}
@@ -915,8 +942,9 @@ Deriving the epoch from block height rather than wall-clock time removes clock
 skew from the protocol: two verifiers agree on the current epoch because they
 agree on the chain, and a node with a fast clock cannot publish into the future.
 The block hash $B$ of any block in epoch $e$ is a value no node could have
-predicted before that block, which is what makes it usable as the freshness input
-in $\beta'$ without a round trip to a verifier.
+predicted before that block, which is what makes the epoch statement fresh without
+a round trip to a verifier. The hardware report has its own freshness term, a
+verifier nonce, at its own layer (\S\ref{sec:field}).
 
 $K$ MUST be chosen so that an epoch is minutes, not hours: short enough that a
 node restarting with a new image is unavailable for a short time
@@ -941,6 +969,7 @@ epoch      & \code{u64} big-endian & $e$. \\
 block      & 32 & $B$, a block hash in epoch $e$. \\
 launch     & 48 & $L$ of the node microVM. \\
 workload   & 48 & $W$ of the node microVM. \\
+session    & \code{field(\dots)} & $pk_e \| pk_r \| \mathrm{sid}$, or empty at class \code{self}. \\
 evidence   & \code{field(\dots)} & The raw hardware report, or empty. \\
 \bottomrule
 \end{tabular}
@@ -970,8 +999,8 @@ Six remarks, none decorative:
   performed loosely by some reader.
 \item[epoch and block] make the statement unique to an epoch and unforgeable
   ahead of it. Uniqueness is what makes equivocation provable
-  (\S\ref{sec:equiv}); the block hash is what supplies freshness both to the
-  statement and, through $\beta'$, to the hardware report.
+  (\S\ref{sec:equiv}); the block hash is what makes the statement fresh, so that a
+  node cannot pre-sign a year of epochs.
 \item[launch and workload] are the registers of the \emph{node microVM} --- the
   one that joins the cluster --- not of a tenant machine. The epoch statement is
   distinct from the per-machine record: a node serves many machines and files many
@@ -984,6 +1013,10 @@ Six remarks, none decorative:
   is most likely to assume otherwise. A node MUST NOT publish a second statement to
   report the new $W$; it waits for the next epoch, for the reason in
   \S\ref{sec:equiv}.
+\item[session] carries the environment's session keys and session identifier, so
+  that the signature under $sk_n$ endorses exactly the keys the hardware report
+  attests (\S\ref{sec:field}). Empty at class \code{self}, where there is no
+  report and no environment to hold keys.
 \item[evidence] carries the report and not a class. A node states what it can
   show; the verifier derives the class. A statement that asserted its own class
   would be a node setting a field it MUST NOT set (\S\ref{sec:class}).
@@ -1018,10 +1051,12 @@ refusing at the first failure:
   claims. A node running an unpublished image is admitted at class \code{self}
   with no image assertion, or refused, according to network policy; it MUST NOT be
   admitted as though it were running a published image.
-\item \textbf{Class.} Any hardware evidence verifies under the vendor root, and
-  its caller field equals $\beta' = \sha{512}(L \| W \| A_n \| B)$ recomputed by
-  the verifier. The class recorded is the highest class \emph{proved}, defaulting
-  to \code{self}.
+\item \textbf{Class.} Any hardware evidence verifies under the vendor root, and its
+  report-data field equals the confidential-tier proposal's B1 recomputed over
+  $(L, W)$ from this statement and the session terms in this statement's
+  \code{session} field. A report whose session terms are not the ones $sk_n$
+  signed is a report about a different environment. The class recorded is the
+  highest class \emph{proved}, defaulting to \code{self}.
 \item \textbf{Rate.} At most one accepted statement per $(A_n, e)$ enters the
   record, and unverified statements are dropped before signature verification
   exceeds a per-source budget. Signature verification is the expensive step and
@@ -1603,15 +1638,17 @@ and the minimal shape, and are not made by this document.
   forfeiture in \S\ref{sec:forfeit} cannot be verified on-chain. If the change must
   land in two steps, the first step is the file mode and the second is the custody.
 
-\item[IR-2 --- \code{vm-measure}: the bind commits to the node address and a
-  freshness input.] \code{Measurement::bind} is $\sha{512}(L \| W)$. On a fleet
-  running one release that value is the same on every node, so a report over it is
-  transferable between nodes (Claim~\ref{cl:transfer}) and never stale
-  (Claim~\ref{cl:stale}). Requested: $\beta' = \sha{512}(L \| W \| A_n \| B)$,
-  with $A_n$ the 20-byte node address and $B$ a 32-byte freshness input supplied by
-  the caller. The registers, the fold, the digest and the launch/workload split do
-  not change; \code{Measurement} gains the two values it binds, and
-  \code{attest::status} takes them. Highest value of the set, and cheapest.
+\item[IR-2 --- the report-data preimage MAY carry the node address.] The
+  confidential-tier proposal's B1 binds the boot registers, the ephemeral session
+  keys, the session identifier and a verifier nonce. It carries no durable
+  identity, so a report under it establishes that some confidential environment
+  holds these session keys and nothing that reaches the bonded node
+  (\S\ref{sec:field}). The composition of \S\ref{sec:field} closes this without
+  touching the field, and is what this document specifies. Offered, not asserted:
+  adding $A_n$ as a term of B1 would make the platform itself report the identity,
+  which is strictly stronger and costs one term. The decision belongs to the
+  confidential-tier proposal, which owns that field; this document's requirement is
+  only that the epoch statement name the same session terms the report does.
 
 \item[IR-3 --- one measurement, not two.] \code{hanzo-attest} folds a \code{Boot}
   struct with BLAKE3; \code{vm-measure} folds an event log with SHA-384. They
