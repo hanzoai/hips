@@ -5,6 +5,8 @@ author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-05-19
 ---
 

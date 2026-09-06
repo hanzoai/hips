@@ -5,6 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Security
 status: Final
+implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0118, HIP-0519, HIP-0521
 ---

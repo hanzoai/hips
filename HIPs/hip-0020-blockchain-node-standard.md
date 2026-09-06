@@ -5,6 +5,7 @@ author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Final
+implementation-rust: partial
 created: 2025-01-09
 updated: 2026-02-23
 requires: HIP-0000, HIP-0001, HIP-0008, HIP-0019

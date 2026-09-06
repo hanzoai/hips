@@ -5,6 +5,9 @@ author: Hanzo AI
 type: Standards Track
 category: Core
 status: Final
+implementation-rust: shipped
+implementation-cpp: partial
+implementation-go: shipped
 created: 2026-07-07
 requires: HIP-0106, HIP-0114
 ---

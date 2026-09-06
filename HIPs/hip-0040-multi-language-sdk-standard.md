@@ -5,6 +5,8 @@ author: Hanzo AI Team
 type: Standards Track
 category: Interface
 status: Final
+implementation-rust: partial
+implementation-go: shipped
 created: 2025-01-09
 updated: 2026-02-23
 requires: HIP-0004

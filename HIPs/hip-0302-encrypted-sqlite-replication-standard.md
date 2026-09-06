@@ -5,6 +5,7 @@ author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: partial
 created: 2026-04-09
 requires: HIP-0027, HIP-0065
 ---

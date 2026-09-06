@@ -6,6 +6,7 @@ type: Standards Track
 category: Core
 capability: translate
 status: Final
+implementation-go: shipped
 created: 2026-07-26
 requires: HIP-0026, HIP-0139
 ---

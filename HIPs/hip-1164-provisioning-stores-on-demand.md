@@ -6,6 +6,7 @@ type: Standards Track
 category: Core
 capability: provisioning
 status: Final
+implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139, HIP-0401, HIP-1134
 ---

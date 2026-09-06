@@ -5,6 +5,8 @@ author: Hanzo AI Team
 type: Standards Track
 category: Security
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2024-12-20
 requires: LP-100
 ---
