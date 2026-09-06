@@ -928,15 +928,21 @@ contract treats as never attesting. Nothing mis-settles today; the work is
 unfinished rather than broken, and \req{X1} says the order in which it may be
 finished.
 
-\item[\req{X2}] There MUST be one attester and one verifier. \emph{Observed:} three
-places could hold them today. The mocks in \code{hanzo-pqc} and \code{hanzo-kbs}
-return success for any input --- one accepts any quote against any expected
-measurement, the other accepts any non-empty report as an SEV-SNP attestation at
-level 2. \code{hanzo-attest} in \code{hanzoai/node} declares the two hardware roots
-and refuses them by name. \emph{Proposed:} the implementation belongs where refusal
-already is, because refusing by name is the correct behaviour for an unimplemented
-root and returning success is not. The mocks are removed at the same time, not
-deprecated.
+\item[\req{X2}] There MUST be one attester and one verifier. \emph{Observed:} four
+places hold something that answers to the name today, and three of them answer
+\emph{yes} to everything. \code{net/hanzo-pqc}, \code{rust-sdk/crates/hanzo-kbs} and
+\code{rust-sdk/crates/hanzo-crypto} each carry a \code{MockAttestationVerifier}:
+two return success for any quote against any expected measurement, the third
+accepts any non-empty report as an SEV-SNP attestation at level 2, and two of them
+additionally return a fabricated H100 result with confidential mode reported on. Each
+enumerates the real steps in comments. The fourth, \code{hanzo-attest} in
+\code{hanzoai/node}, declares the two hardware roots and refuses them by name.
+
+\emph{Proposed:} the implementation belongs where the refusal already is, because
+refusing by name is the correct behaviour for an unimplemented root and returning
+success is not. The three mocks are deleted at the same time rather than deprecated.
+A mock that returns success is not a placeholder for a verifier; it is a verifier
+that accepts every forgery, and it is reachable from anything that takes the trait.
 
 \item[\req{X3}] The vendor root pool MUST hold the root of every vendor whose
 reports the deployment accepts, MUST be embedded rather than read from a host trust
@@ -983,6 +989,14 @@ asserted. \emph{Present} means the code exists and does what this document requi
 of it; \emph{partial} means it exists and diverges; \emph{absent} means it does not
 exist.
 
+One row moved while this was being written, and it is worth recording because it is
+the shape the rest should take. \code{hanzo-attest} previously folded its own
+measurement over the boot inputs, which would have made two answers to the question
+of what a launch is --- one in the node, one in the monitor, drifting apart the first
+time the monitor changed what it hands the hypervisor. It now reads the monitor's
+document and signs the 64 bytes that document names. The register, the extension rule
+and the digest are the monitor's, which is what \req{B7} pins them to.
+
 \begin{center}
 \small
 \begin{tabular}{@{}L{0.27\textwidth}L{0.25\textwidth}lL{0.27\textwidth}@{}}
@@ -991,6 +1005,9 @@ Requirement & Where & State & Divergence \\
 \midrule
 \req{B7}, \req{B8} registers & \code{hanzoai/vm}, \code{vm-measure} & present & --- \\
 \req{B1} binding & same & partial & Binds $L \,\|\, W$ only; no keys, no nonce \\
+One measurement, \req{B7} & \code{hanzoai/node}, \code{hanzo-attest} & present &
+Reads the monitor's document and signs the 64 bytes it names; folds no second
+register of its own \\
 \req{B6} digest choice & same & present & --- \\
 \req{E2} raw report & same, \code{attest.rs} & present & Request ABIs and ioctl
 encodings implemented and pinned by test; never executed, for want of hardware \\
@@ -998,8 +1015,8 @@ encodings implemented and pinned by test; never executed, for want of hardware \
 \req{E3} no synthesis & \code{hanzoai/node}, \code{tee\_attestation.rs} &
 partial & Simulation and development modes fabricate reports; production falls back
 to simulation \\
-\req{V0}--\req{V15} & \code{hanzo-pqc}, \code{hanzo-kbs} & absent & Mocks return
-success for any input \\
+\req{V0}--\req{V15} & \code{hanzo-pqc}, \code{hanzo-kbs}, \code{hanzo-crypto} &
+absent & Three mock verifiers return success for any input \\
 \req{V0}--\req{V15} & \code{luxfi/precompile} \code{0x0301} & partial & Validates a
 chain to an embedded root over a 48-byte header carrying no measurement, policy, TCB
 or report-data field \\
