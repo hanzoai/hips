@@ -248,8 +248,20 @@ started system was told to run.
 \]
 where $L$ and $W$ are the launch and workload registers of the measurement
 (48 bytes each, SHA-384, as \code{vm-measure} computes them), $pk_e$ is the
-environment's X-Wing public key, $pk_r$ its receipt verifying key, $\mathrm{sid}$
-the session identifier, and $n_v$ a nonce the verifier generated.
+environment's X-Wing public key (1216 bytes: the X25519 share followed by the
+ML-KEM-768 share), $pk_r$ its ed25519 receipt verifying key (32 bytes),
+$\mathrm{sid}$ the session identifier (16 bytes) and $n_v$ the verifier's nonce
+(32 bytes). $W$ is the workload register at the instant the report is requested,
+which \req{B2} fixes as the end of the chain.
+
+\item[\req{B1a}] Every term of that preimage MUST be of the fixed width stated
+above, including the tag. Nothing is length-prefixed and nothing may be: a
+concatenation of fixed-width fields is injective, so two distinct tuples cannot
+produce one preimage, and adding length prefixes to fields that already have
+lengths is a second mechanism for a property the first already has. The
+consequence is a constraint on the session identifier rather than on the hash: an
+implementation that wants variable-length session names carries the name
+elsewhere and puts its 16-byte digest here.
 
 \item[\req{B2}] The report MUST be requested only after the measurement chain is
 complete. Nothing may be extended into either register afterwards. \emph{Observed:}
@@ -411,10 +423,11 @@ normative rather than advisory: a verifier missing one does not error, it accept
 \subsection{Every platform}
 
 \begin{description}[leftmargin=1.6em]
-\item[\req{V1}] Recompute $\mathrm{rd}$ from the bundle's own \code{launch},
-\code{workload}, \code{ke}, \code{kr}, \code{sid} and \code{nonce} per \req{B1},
-and require it to equal the report's report-data field. A report whose caller field
-says something else is a report about a different environment.
+\item[\req{V1}] Refuse a bundle any of whose \req{B1} terms is not the width
+\req{B1a} fixes, before hashing anything. Then recompute $\mathrm{rd}$ from the
+bundle's own \code{launch}, \code{workload}, \code{ke}, \code{kr}, \code{sid} and
+\code{nonce}, and require it to equal the report's report-data field. A report whose
+caller field says something else is a report about a different environment.
 
 \item[\req{V2}] Require \code{nonce} to be a value this verifier generated, for
 this session, and not previously accepted. A hardware report carries no
@@ -908,8 +921,8 @@ An implementation claims conformance for one of three roles, and the roles are
 disjoint.
 
 \begin{description}[leftmargin=1.4em]
-\item[Environment.] The measured image. Conforms if it satisfies
-\req{B1}--\req{B5}, \req{B7}--\req{B8}, \req{E1}--\req{E3}, \req{K3} and
+\item[Environment.] The measured image. Conforms if it satisfies \req{B1},
+\req{B1a}, \req{B2}--\req{B5}, \req{B7}--\req{B8}, \req{E1}--\req{E3}, \req{K3} and
 \req{R1}--\req{R3}.
 \item[Verifier.] Whatever decides a bundle is acceptable --- a key broker, a
 scheduler, a chain-side voucher, a user's client. Conforms if it satisfies
