@@ -1,13 +1,17 @@
 ---
-hip: 0120
+hip: "0120"
 title: ZAP-Native Transport & gRPC Elimination
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Review
+status: Final
+implementation-rust: shipped
+implementation-cpp: partial
+implementation-go: shipped
 created: 2026-07-07
-requires: HIP-0106, HIP-0112, HIP-0114
+requires: HIP-0106, HIP-0114
 ---
+
 
 # HIP-0120: ZAP-Native Transport & gRPC Elimination
 
@@ -153,7 +157,7 @@ ZAP.
 - **Selection is by environment; no code branches per deploy.**
   `cloud/cmd/cloud/telemetry.go` installs exactly one tracer provider:
   - `OTEL_EXPORTER_ZAP_ENDPOINT` set (or unset with a ZAP default of
-    `otel-collector.hanzo.svc:4319`) → spans ride ZAP.
+    `localhost:4319`) → spans ride ZAP.
   - Only a legacy `OTEL_EXPORTER_OTLP_*` endpoint set → spans ride OTLP-HTTP
     (the interop/loopback fallback used while the standalone collector is
     folded in). This fallback is HTTP, never gRPC.
@@ -204,128 +208,6 @@ list gRPC as an indirect requirement they never dial (§Residual & Conformance).
 A go.mod gate would be permanently red for reasons unrelated to whether any
 Hanzo code speaks gRPC. The import gate measures the real invariant: **does
 first-party Hanzo code dial or serve gRPC? No.**
-
-## Rationale
-
-### Why migration is a data-flow split, not a 1:1 rewrite
-
-A protobuf message is one type that is **built, read, and mutated** in place.
-ZAP deliberately has no such type. It splits that one role into three:
-
-```
-   *pb.Msg  (build + read + mutate, mutable, allocating)
-                        │  pb2zap + hand finish
-                        ▼
-   Input  ──marshal──▶  []byte  ──▶  View
- (build once)        (transport)   (read many, zero-copy)
-```
-
-Because the split is by *data-flow role*, it cannot be performed purely
-mechanically: pb2zap rewrites the build sites (`Input`) and the import graph,
-and it **reports** the read sites (which become `View` accessors) and the
-mutate sites (which have no ZAP analog and must be restructured). "Easy" would
-be a blind textual swap; "simple" is separating the three roles the mutable
-message had braided together.
-
-### Why there is no transparent runtime gRPC-over-ZAP shim
-
-A tempting shortcut is a drop-in `grpc.ClientConnInterface` implementation that
-"keeps speaking protobuf" but sends bytes over ZAP — no source changes, gRPC
-call sites untouched. This is rejected by design. Such a shim must accept and
-return mutable `*pb.Msg` values, which **re-introduces the exact mutable-message
-model ZAP exists to eliminate**: every call would allocate and copy a protobuf
-struct at the boundary, defeating `Input`/`View` zero-copy, and the `grpc`
-import (with its HTTP/2 stack) would remain first-party. A runtime shim would
-make the go.mod gate pass while making the *real* invariant — no mutable-message
-RPC, no grpc dependency — fail. Migration is therefore source-level (pb2zap +
-hand-written ZAP handlers), not a runtime translation layer. Transport
-elimination that leaves the data model intact is not elimination.
-
-### Why hand-rolled REST for external gRPC-only SDKs
-
-The GCP compute SDK (`cloud.google.com/go/compute/apiv1`, and the transport-
-level `google.golang.org/api`) is gRPC-native. Rather than admit that gRPC into
-the first-party graph, `visor` and `ai` replaced it with a plain `net/http`
-client against `https://compute.googleapis.com/compute/v1`, authenticated by an
-OAuth2 bearer token minted from the service-account JSON via
-`golang.org/x/oauth2/google` (`JWTConfigFromJSON` → `TokenSource`, a pure-HTTP
-token exchange), with Application Default Credentials fallback for in-cluster
-workload identity. The provider's REST surface is complete for the adapter's
-needs (`instances` GET list+get, POST `start`/`stop`), so no capability is lost
-and no gRPC is dialed.
-
-### Why the gate is import-level, not go.mod-level
-
-The invariant Hanzo cares about is behavioral: no first-party code stands up or
-dials a gRPC channel. An indirect `require google.golang.org/grpc // indirect`
-that is never linked into a dial path is inert library code, not a gRPC
-conversation. Gating on first-party imports measures the behavior; gating on
-go.mod measures the transitive closure of upstream libraries Hanzo does not
-control. The former is achievable and meaningful; the latter is neither.
-
-## Backwards Compatibility
-
-- **External clients are unaffected.** HTTP/JSON and WS at the edge are
-  permitted and unchanged. No external caller is asked to speak ZAP; the
-  gateway continues to terminate HTTP/WS and translate at the boundary.
-- **No internal caller breaks.** Nothing in the Hanzo first-party graph speaks
-  gRPC today (verified), so there is no inter-service gRPC contract to migrate
-  and no call site to cut over.
-- **OTLP interop is preserved.** The o11y collector still *exposes* standard
-  OTLP receivers for third-party emitters that only speak OTLP; the ZAP
-  receiver (`:4319`) is additive. Hanzo services simply do not *use* the OTLP
-  gRPC/HTTP client paths for their own spans.
-- **The gateway legacy (KrakenD) build is preserved.** Only its gRPC telemetry
-  was removed — `krakend-otel` (OTLP-gRPC) and the `ocagent`/`stackdriver`
-  OpenCensus gRPC exporters. Its remaining OpenCensus exporters
-  (`prometheus`, `datadog`, `influxdb`, `xray`, `zipkin`) are retained; the
-  default (`!legacy`) ZAP-relay build was already gRPC-free.
-
-## Reference Implementation
-
-Shipped across four repositories; first-party gRPC imports = zero in all four.
-
-| Repo | Commit | Change | Key files |
-|------|--------|--------|-----------|
-| `cloud` | `a4a1eb8` | `zaptrace` ships OTLP over ZAP with no gRPC dep — `protowire` hand-encodes the `ExportTraceServiceRequest` envelope from grpc-free trace messages, avoiding the generated collector type whose `*_grpc.pb.go` sibling would pull `grpc`. `go list -deps ./zaptrace` is grpc-free. | `cloud/zaptrace/zaptrace.go`, `cloud/zaptrace/zaptrace_test.go`, `cloud/cmd/cloud/telemetry.go` |
-| `gateway` | `4585583` | Drop `krakend-otel` OTLP (`otlptracegrpc`/`otlpmetricgrpc`) and the `ocagent` + `stackdriver` OpenCensus gRPC exporters; legacy telemetry rides OpenCensus (prometheus/datadog/influx/xray/zipkin) + ZAP. `go mod tidy` drops the three gRPC OTLP modules. | `gateway/executor.go`, `gateway/backend_factory.go` |
-| `visor` | `db974c8` | Hand-rolled GCP compute REST client (`net/http` + `golang.org/x/oauth2/google`); drop `google.golang.org/api` gRPC SDK from the compute path. | `visor/service/gcp.go`, `visor/service/util.go` |
-| `ai` | `f71162df` | Same hand-rolled GCP compute REST client for the `pkgmachine` adapter; drop `google.golang.org/api` from the compute path. | `ai/pkgmachine/gcp.go`, `ai/pkgmachine/util.go` |
-
-The `cloud/zaptrace/zaptrace_test.go` round-trip is the load-bearing proof: a
-real `zaphttp.Server` terminates the ZAP frame and the received body decodes
-back to the canonical `collector/trace/v1.ExportTraceServiceRequest` — the
-payload is standard OTLP; only the transport is ZAP.
-
-## Security Considerations
-
-### Reduced attack and dependency surface
-
-Removing first-party gRPC removes the HTTP/2 framing stack, the balancer/
-connection machinery, and the protoc-gen-go-grpc stub layer from the linked
-first-party graph, along with the `otlptracegrpc`/`otlpmetricgrpc`/`otelgrpc`
-and `ocagent`/`stackdriver` exporters. Fewer linked transports means fewer
-parsers exposed to hostile bytes and fewer transitive CVEs in the dial path.
-
-### No rogue outbound gRPC dial
-
-Because the telemetry exporter is ZAP (with an HTTP fallback), an operator who
-mis-sets an OTEL endpoint cannot cause a Hanzo daemon to open an outbound gRPC
-channel — the exporter has no gRPC dial path to select. The composition-root
-`OTEL_EXPORTER_OTLP_*` unset (§3) further guarantees a single tracer provider,
-closing the split-provider hole that would otherwise strand spans on a second,
-unmonitored wire.
-
-### One authenticated wire, one identity path
-
-ZAP carries an X-Wing PQ-KEM handshake at the transport layer, and the
-post-gateway identity is the single set of minted headers (HIP-0112). A bolt-on
-gRPC channel would introduce a parallel HTTP/2 metadata auth path to keep in
-lockstep — a drift surface and a second place for an identity bug to hide.
-Eliminating gRPC keeps authentication uniform and post-quantum by construction
-on the internal wire.
-
-### The gate is machine-checkable
 
 The conformance gate is a grep over source, suitable for CI. A regression — a
 new dependency that imports `google.golang.org/grpc` first-party, or a
@@ -379,12 +261,41 @@ enforceable: **zero first-party gRPC imports.**
 
 ## References
 
-- [HIP-0106: Cloud — Unified Hanzo Binary](./hip-0106-unified-hanzo-cloud-binary.md) — ZAP as the inter-subsystem contract; the canonical Hanzo Go stack; the "no `.capnp` in Hanzo-authored source" policy.
-- [HIP-0112: Cloud Topology](./hip-0112-cloud-infrastructure-topology-standard.md) — `ingress → gateway → services`; the external edge where HTTP/WS terminate and identity headers are minted.
+- [HIP-0106: The Hanzo Plugin Contract](./hip-0106-hanzo-plugin-contract.md) — ZAP as the inter-subsystem contract; the canonical Hanzo Go stack; the "no `.capnp` in Hanzo-authored source" policy.
+- HIP-0112: Cloud Topology — `ingress → gateway → services`; the external edge where HTTP/WS terminate and identity headers are minted.
 - [HIP-0114: ZAP — Inter-VM Cognitive Transport for Thinking Chains](./hip-0114-zap-inter-vm-cognitive-transport.md) — ZAP as the inter-VM transport; "ZAP transports; proofs commit; receipts settle; VMs execute."
 - `github.com/zap-proto/{go,zip,http,ws,web,zapd,zap-spec}` — the ZAP transport and framework ecosystem.
 - `github.com/zap-proto/pb2zap` — the syntactic `go/ast` protobuf→ZAP migration codemod.
 - OpenTelemetry OTLP specification — the span payload format ZAP carries unchanged (transport-substituted, not payload-modified).
+
+### 6. Same machine is a unix socket, not a network hop
+
+Cloud is one binary running plugins. When two of them sit on the same machine — which is
+the normal case, not the exception — a TCP hop to localhost is pure overhead: a syscall
+path, a checksum, a port, and a loopback round trip to reach a process sharing the same
+kernel.
+
+**ZAP over a unix socket is the PREFERRED transport for any plugin-to-plugin call inside
+cloud.** Network ZAP remains correct where the peer is genuinely on another machine.
+
+The rule, in order:
+
+1. **Same process** — a direct call. No transport at all.
+2. **Same machine** (plugin↔plugin, sidecar↔host) — **ZAP over UDS**.
+3. **Different machine** — ZAP over the network.
+
+A socket path is also an authorization boundary: filesystem permissions gate who may
+connect, with no port to scan and no interface to accidentally bind. A service reachable
+only through a socket in its own namespace cannot be reached from another pod at all.
+
+**Shipped:** `cloud/rpc.go` — the internal plane over `net.Listen("unix", path)` with a
+200ms dial probe to detect a live peer before binding, and `dial.go`/`serve.go` moving
+callers onto it (branch `feat/zap-uds-internal-plane`).
+
+**What UDS cannot do, so it is not claimed:** a per-node DaemonSet reading
+`/var/log/pods` does not share a filesystem namespace with a central service. That path
+stays network ZAP unless the reader becomes co-located with its consumer. UDS is chosen
+because processes are co-located; it never makes them so.
 
 ## Copyright
 

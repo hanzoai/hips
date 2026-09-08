@@ -8,3 +8,7 @@ node_modules/
 *.tsbuildinfo
 
 CLAUDE.md
+__pycache__/
+
+# Agent worktrees are scratch, not corpus.
+.claude/worktrees/

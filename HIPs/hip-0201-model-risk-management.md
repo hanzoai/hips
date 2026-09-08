@@ -5,13 +5,15 @@ tags: [ai-ethics, risk, governance, compliance]
 description: Framework for managing risks associated with AI model development and deployment.
 author: Hanzo AI Team (@hanzoai)
 discussions-to: https://github.com/hanzoai/hips/discussions
-status: Draft
+status: Living
 type: Meta
 created: 2025-12-17
-requires: [200]
+requires: HIP-0200
 ---
 
-# HIP-201: Model Risk Management
+
+
+# HIP-0201: Model Risk Management
 
 ## Abstract
 

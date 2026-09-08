@@ -1,18 +1,21 @@
 ---
-hip: 0402
+hip: "0402"
 title: SQL CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: shipped
 created: 2026-05-19
 ---
 
-# HIP-402: SQL CRD
+
+
+# HIP-0402: SQL CRD
 
 ## Abstract
 
-The `SQL` CRD is the facade Kind for PostgreSQL workloads (`hanzoai/sql`). It is structurally identical to `Datastore` with `type: postgresql` and exists to give Postgres a first-class API surface — `kubectl get sql` instead of `kubectl get datastore`. The reconciler delegates to the `Datastore` controller. The CR's spec is `DatastoreSpec` verbatim.
+The `SQL` CRD is the facade Kind for SQL workloads (`hanzoai/sql`). It is structurally identical to `Datastore` with `type: postgresql` and exists to give SQL a first-class API surface — `kubectl get sql` instead of `kubectl get datastore`. The reconciler delegates to the `Datastore` controller. The CR's spec is `DatastoreSpec` verbatim.
 
 ## Specification
 
@@ -43,11 +46,11 @@ spec:
     size: 20Gi
     retentionPolicy: Retain
   env:
-    - name: POSTGRES_USER
+    - name: SQL_USER
       value: hanzo
-    - name: POSTGRES_DB
+    - name: SQL_DB
       value: hanzo
-    - name: POSTGRES_PASSWORD
+    - name: SQL_PASSWORD
       valueFrom:
         secretKeyRef:
           name: postgres-credentials
@@ -66,8 +69,6 @@ Same as `Datastore`: StatefulSet, headless + ClusterIP Services, PVCs.
 
 ### Related services
 
-- HIP-502 (sql service)
-- HIP-456 (insights-sql)
 - Used as the relational store by IAM, Console, Commerce, Cloud, Platform, KMS.
 
 ## Status

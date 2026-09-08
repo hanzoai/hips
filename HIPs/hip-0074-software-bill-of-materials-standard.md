@@ -1,13 +1,16 @@
 ---
-hip: 0074
+hip: "0074"
 title: Software Bill of Materials & Git Stamp Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
+implementation-go: shipped
 created: 2026-02-23
-requires: HIP-0027, HIP-0033, HIP-0036
+requires: HIP-0027, HIP-0033, HIP-0036, HIP-0139
+capability: sbom
 ---
+
 
 # HIP-0074: Software Bill of Materials & Git Stamp Standard
 
@@ -17,10 +20,12 @@ This proposal defines the Software Bill of Materials (SBOM) and Git Stamp standa
 
 Hanzo SBOM provides automated generation of industry-standard SBOM documents in both SPDX and CycloneDX formats, cryptographic signing via Sigstore/cosign, build provenance attestations targeting SLSA Level 3, and on-chain anchoring to the Lux Network for immutable audit trails. It integrates with every stage of the Hanzo CI/CD pipeline (HIP-0036), stores signed artifacts in the Container Registry (HIP-0033), manages signing keys through KMS (HIP-0027), and publishes provenance records to the blockchain (HIP-0020/HIP-0024).
 
-**Repository**: [github.com/hanzoai/sbom](https://github.com/hanzoai/sbom)
-**API Port**: 8074
-**Production**: https://sbom.hanzo.ai
-**Docker**: `ghcr.io/hanzoai/sbom:latest`
+**Serving**: `apps/sbom` in `hanzoai/cloud`, at `/v1/sbom` — there is no
+standalone sbom service, port or image. Generation, signing and attestation run
+in CI; the capability is the component store CI posts into and the console and
+CVE queries read back. On-chain anchoring and the Sigstore chain are the target
+this HIP specifies; the addresses in this document that belong to them are
+marked where they are not yet served.
 
 ## Motivation
 
@@ -63,344 +68,8 @@ Hanzo operates 260+ repositories producing container images, Go binaries, Python
 
 This HIP solves all four problems.
 
-## Design Philosophy
-
-### Why Both SPDX and CycloneDX (Not Just One)
-
-The SBOM ecosystem has two dominant formats, and the industry has not converged on one:
-
-| Aspect | SPDX | CycloneDX |
-|--------|------|-----------|
-| Governing body | Linux Foundation (ISO/IEC 5962:2021) | OWASP Foundation |
-| Primary strength | License compliance, provenance | Vulnerability tracking, risk analysis |
-| Format options | JSON, XML, YAML, RDF, tag-value | JSON, XML, Protocol Buffers |
-| Federal adoption | NTIA references both | CISA recommends both |
-| Tooling ecosystem | Stronger in license analysis | Stronger in security scanning |
-| Version | 2.3 (current), 3.0 (in progress) | 1.6 (current) |
-
-US federal agencies accept both formats. The EU CRA does not mandate a specific format. Different customers and compliance frameworks prefer different formats. A defense contractor following NIST 800-218 may require SPDX. A European SaaS company following ENISA guidelines may prefer CycloneDX.
-
-Generating both is cheap. The internal representation is the same dependency graph -- serialization to either format is a trivial transformation. Refusing to support one format to "pick a winner" would be a false economy that costs customer deals.
-
-**Decision**: Generate and store both formats for every artifact. Serve whichever the consumer requests via content negotiation on the API.
-
-### Why Git Stamp (Not Just SBOM)
-
-An SBOM tells you what is inside an artifact. It does not tell you *how* it got there. Consider this attack scenario:
-
-1. Attacker compromises a CI runner
-2. Attacker modifies the build to inject a backdoor dependency
-3. The SBOM faithfully records the backdoor dependency as a component
-4. The SBOM is "correct" but the artifact is compromised
-
-A Git Stamp prevents this by creating a cryptographic chain of custody:
-
-```
-Source Code (git commit SHA)
-    |
-    v
-Build Environment (attested builder identity, OS, toolchain versions)
-    |
-    v
-Build Process (hermetic, with input/output hashes recorded via in-toto)
-    |
-    v
-Output Artifact (container image digest, binary hash)
-    |
-    v
-Signature (cosign keyless signing via GitHub Actions OIDC)
-    |
-    v
-On-chain Anchor (Lux L1 transaction with artifact digest + SBOM hash)
-```
-
-Each link in this chain is independently verifiable. A consumer can:
-
-- Verify the cosign signature proves the artifact was built by `hanzoai` GitHub Actions
-- Verify the in-toto attestation proves the build inputs (source + deps) produced the exact output
-- Verify the on-chain anchor proves the SBOM existed at a specific point in time and has not been modified
-
-This is the difference between "trust us, here is the ingredients list" and "here is a mathematically verifiable proof of exactly how this artifact was assembled."
-
-### Why SLSA Level 3 (Not Level 1 or Level 4)
-
-SLSA (Supply chain Levels for Software Artifacts) defines four levels of supply chain integrity:
-
-| Level | Requirement | What It Proves |
-|-------|-------------|----------------|
-| **L1** | Documented build process, provenance exists | "We have a build system" |
-| **L2** | Hosted build service, signed provenance | "A known CI system built this" |
-| **L3** | Hardened build platform, non-falsifiable provenance | "The builder cannot lie about what it built" |
-| **L4** | Hermetic, reproducible builds with two-party review | "Anyone can independently verify the build" |
-
-**Level 1** is trivially satisfied by having GitHub Actions workflows -- we already exceed it. **Level 2** adds signed provenance, which cosign keyless signing already provides. **Level 3** requires that the build platform itself cannot be subverted to produce false provenance. GitHub Actions satisfies this with its OIDC identity: the provenance token is issued by GitHub's identity provider, not by the workflow itself, so a compromised workflow cannot forge a different identity.
-
-**Level 4** requires fully hermetic, reproducible builds where two independent builders produce bit-identical output. This is aspirational for most software. Go binaries are largely reproducible, but container images contain timestamps, layer ordering variations, and non-deterministic package manager output. Achieving L4 for Docker images requires Bazel or Nix-based builds, which is a significant infrastructure investment we defer to Phase 4.
-
-**Decision**: Target SLSA Level 3 for all container images and Go binaries. Document the path to Level 4 for future work.
-
-### Why On-Chain Anchoring (Not Just a Database)
-
-Storing SBOM records in a database is sufficient for internal use. On-chain anchoring provides three properties that a database cannot:
-
-1. **Immutability**: Once a provenance record is anchored to Lux L1, it cannot be altered or deleted. Even if an attacker compromises the SBOM service, they cannot retroactively change the historical record.
-
-2. **Third-party verifiability**: Anyone with access to the Lux blockchain can independently verify that a specific SBOM existed at a specific time. No trust in Hanzo infrastructure is required.
-
-3. **Timestamping without a trusted third party**: The block timestamp proves the SBOM was generated before a certain time. This matters for vulnerability disclosure: if a CVE is announced on Tuesday and our SBOM from Monday shows we already patched it, the on-chain timestamp is proof.
-
-The anchoring is lightweight. We do not store the full SBOM on-chain -- that would be expensive and unnecessary. We store a single transaction containing:
-
-```
-{
-  artifact_digest: "sha256:abc123...",    // 32 bytes
-  sbom_spdx_hash:  "sha256:def456...",    // 32 bytes
-  sbom_cdx_hash:   "sha256:789abc...",    // 32 bytes
-  provenance_hash: "sha256:fedcba...",    // 32 bytes
-  git_commit:      "a1b2c3d4e5f6...",     // 20 bytes
-  timestamp:       1740268800             //  8 bytes
-}
-```
-
-Total on-chain cost: ~156 bytes per artifact per release. At Lux L1 transaction costs, this is negligible.
-
-### Why Sigstore/Cosign (Not GPG or Notation)
-
-Three signing approaches exist for container artifacts:
-
-| Approach | Key Management | Verification | Ecosystem Support |
-|----------|---------------|--------------|-------------------|
-| **GPG** | Manual key distribution, web of trust | Complex, requires public keyservers | Git commits, Linux packages |
-| **Notation** (Microsoft) | Azure Key Vault or custom KMS | Plugin-based, less mature | Azure/AWS-focused |
-| **Cosign** (Sigstore) | Keyless via OIDC, or KMS-backed keys | Simple CLI, broad adoption | GHCR, Docker Hub, OCI registries |
-
-Cosign with keyless signing is the clear choice for CI/CD:
-
-- **No key management**: Keyless signing uses ephemeral keys tied to the GitHub Actions OIDC identity. No long-lived signing keys to rotate, store, or protect.
-- **Identity-based trust**: The signature proves "this artifact was built by a GitHub Actions workflow in the `hanzoai` organization." The verifier trusts GitHub's identity provider, not a specific key.
-- **OCI-native**: Signatures are stored as OCI artifacts in the same registry as the image. No external signature store needed.
-- **Transparency log**: Signatures are recorded in Rekor (Sigstore's transparency log), providing an independent audit trail.
-
-For cases where keyless signing is insufficient (offline verification, air-gapped environments), we fall back to KMS-backed cosign keys managed through HIP-0027.
-
 ## Specification
 
-### SBOM Generation
-
-Every Hanzo CI/CD pipeline (HIP-0036) MUST generate an SBOM at build time. The SBOM is produced by Syft (Anchore) for container images and language-specific tools for source packages.
-
-#### Container Images
-
-```bash
-# Generate SPDX JSON
-syft ghcr.io/hanzoai/${SERVICE}@sha256:${DIGEST} \
-  -o spdx-json=sbom.spdx.json
-
-# Generate CycloneDX JSON
-syft ghcr.io/hanzoai/${SERVICE}@sha256:${DIGEST} \
-  -o cyclonedx-json=sbom.cdx.json
-```
-
-#### Language-Specific Sources
-
-| Language | Tool | Input | Output |
-|----------|------|-------|--------|
-| Go | `syft dir:.` or `go version -m` | `go.mod` + binary | Module list with versions |
-| Python | `syft dir:.` or `pip-audit` | `uv.lock` / `requirements.txt` | Package list with versions |
-| Node.js | `syft dir:.` or `npm audit` | `pnpm-lock.yaml` / `package-lock.json` | Package list with versions |
-| Rust | `syft dir:.` or `cargo-audit` | `Cargo.lock` | Crate list with versions |
-
-#### SBOM Minimum Fields (NTIA Compliance)
-
-Every SBOM document MUST include these fields per NTIA minimum elements:
-
-| Field | SPDX Path | CycloneDX Path | Example |
-|-------|-----------|----------------|---------|
-| Supplier name | `packages[].supplier` | `components[].supplier.name` | `Hanzo AI Inc` |
-| Component name | `packages[].name` | `components[].name` | `iam` |
-| Component version | `packages[].versionInfo` | `components[].version` | `1.584.0` |
-| Unique identifier | `packages[].SPDXID` | `components[].bom-ref` | `SPDXRef-Package-iam` |
-| Dependency relationship | `relationships[]` | `dependencies[]` | `DEPENDS_ON` |
-| Author of SBOM | `creationInfo.creators` | `metadata.authors` | `Tool: syft-1.x` |
-| Timestamp | `creationInfo.created` | `metadata.timestamp` | `2026-02-23T00:00:00Z` |
-
-### Git Stamp Attestation
-
-The Git Stamp is an in-toto attestation envelope that binds an artifact to its source provenance. It is generated automatically in CI after a successful build.
-
-#### Attestation Structure
-
-```json
-{
-  "_type": "https://in-toto.io/Statement/v1",
-  "subject": [
-    {
-      "name": "ghcr.io/hanzoai/iam",
-      "digest": {
-        "sha256": "abc123def456..."
-      }
-    }
-  ],
-  "predicateType": "https://slsa.dev/provenance/v1",
-  "predicate": {
-    "buildDefinition": {
-      "buildType": "https://github.com/hanzoai/sbom/build/v1",
-      "externalParameters": {
-        "source": {
-          "uri": "git+https://github.com/hanzoai/iam@refs/heads/main",
-          "digest": {
-            "sha1": "a1b2c3d4e5f6..."
-          }
-        }
-      },
-      "internalParameters": {
-        "github": {
-          "event_name": "push",
-          "repository_id": "123456789",
-          "repository_owner_id": "hanzoai"
-        }
-      }
-    },
-    "runDetails": {
-      "builder": {
-        "id": "https://github.com/hanzoai/sbom/.github/workflows/build.yml@refs/heads/main"
-      },
-      "metadata": {
-        "invocationId": "https://github.com/hanzoai/iam/actions/runs/987654321",
-        "startedOn": "2026-02-23T10:00:00Z",
-        "finishedOn": "2026-02-23T10:05:30Z"
-      }
-    }
-  }
-}
-```
-
-This attestation is SLSA v1.0 provenance format. It records:
-
-- **Subject**: The exact artifact (by digest) this attestation describes
-- **Source**: The git repository and commit that was built
-- **Builder**: The CI workflow that performed the build
-- **Invocation**: The specific CI run, with timestamps
-
-#### Signing the Attestation
-
-```bash
-# Keyless signing via GitHub Actions OIDC
-cosign attest --yes \
-  --predicate provenance.json \
-  --type slsaprovenance1 \
-  ghcr.io/hanzoai/${SERVICE}@sha256:${DIGEST}
-```
-
-The `--yes` flag enables keyless mode. Cosign requests an OIDC token from GitHub Actions, uses it to obtain a short-lived signing certificate from Sigstore's Fulcio CA, signs the attestation, and records the signature in Sigstore's Rekor transparency log.
-
-### Container Image Signing
-
-In addition to SBOM and provenance attestations, every release image MUST be signed:
-
-```bash
-# Sign the image (keyless, in CI)
-cosign sign --yes \
-  --oidc-issuer=https://token.actions.githubusercontent.com \
-  ghcr.io/hanzoai/${SERVICE}@sha256:${DIGEST}
-
-# Verify the image (anywhere)
-cosign verify \
-  --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp="github.com/hanzoai/.*" \
-  ghcr.io/hanzoai/${SERVICE}@sha256:${DIGEST}
-```
-
-### On-Chain Anchoring
-
-After SBOM generation, signing, and attestation, the provenance summary is anchored to Lux L1.
-
-```
-CI Pipeline completes
-  |
-  v
-Compute hashes: artifact digest, SBOM hashes, provenance hash
-  |
-  v
-POST sbom.hanzo.ai/api/v1/anchor
-  {
-    "artifact": "ghcr.io/hanzoai/iam@sha256:abc123...",
-    "git_commit": "a1b2c3d4e5f6...",
-    "git_ref": "refs/tags/v1.584.0",
-    "sbom_spdx_sha256": "def456...",
-    "sbom_cdx_sha256": "789abc...",
-    "provenance_sha256": "fedcba...",
-    "slsa_level": 3
-  }
-  |
-  v
-SBOM Service creates Lux L1 transaction via luxfi/coreth
-  |
-  v
-Transaction hash returned to CI as proof of anchoring
-  |
-  v
-Anchor receipt attached as OCI artifact to the image
-```
-
-The SBOM service holds a Lux wallet (key managed via KMS, HIP-0027) with sufficient LUX for transaction fees. Anchoring transactions use the `data` field of a standard transfer to the SBOM contract address.
-
-### Vulnerability Scanning
-
-Every SBOM is automatically scanned against known vulnerability databases.
-
-#### Scan Pipeline
-
-```bash
-# Scan SBOM against NVD, OSV, and GitHub Advisory Database
-grype sbom:sbom.cdx.json \
-  --output json \
-  --fail-on critical
-```
-
-Grype (Anchore) consumes the CycloneDX SBOM and matches components against:
-
-- **NVD** (National Vulnerability Database) -- US government CVE database
-- **OSV** (Open Source Vulnerabilities) -- Google's aggregated vulnerability database
-- **GitHub Advisory Database** -- GitHub's curated security advisories
-
-#### Severity Policy
-
-| Severity | CI Behavior | SLA |
-|----------|-------------|-----|
-| **Critical** (CVSS >= 9.0) | Build MUST fail | Patch within 24 hours |
-| **High** (CVSS 7.0-8.9) | Build MUST fail | Patch within 7 days |
-| **Medium** (CVSS 4.0-6.9) | Warning, build continues | Patch within 30 days |
-| **Low** (CVSS < 4.0) | Informational | Track in backlog |
-
-Exceptions to the fail policy require security team approval and are tracked in the SBOM service as time-limited exemptions with a mandatory remediation date.
-
-#### Continuous Monitoring
-
-SBOM is not a point-in-time artifact. New CVEs are disclosed daily against existing component versions. The SBOM service runs a nightly re-scan of all production SBOMs:
-
-```
-Nightly at 02:00 UTC:
-  For each deployed service:
-    1. Fetch latest SBOM from registry
-    2. Scan against updated vulnerability databases
-    3. Compare results to previous scan
-    4. If new CRITICAL/HIGH findings: create alert + Slack notification
-    5. If finding already has exemption: skip
-    6. Update dashboard
-```
-
-This catches the Log4Shell scenario: a new CVE is disclosed, and within hours, every affected Hanzo service is identified automatically.
-
-### License Compliance
-
-The SBOM enables automated license detection and compatibility checking.
-
-#### License Detection
-
-Syft identifies licenses from:
-
-- Package metadata (npm `license`, Go `LICENSE`, PyPI classifiers)
 - License files in source (SPDX license identifier matching)
 - SPDX license expressions for complex multi-license packages
 
@@ -491,82 +160,58 @@ The SBOM workflow is added as a post-build step in every Hanzo CI pipeline:
             --type slsaprovenance1 \
             ${IMAGE}@${DIGEST}
 
-      # Anchor to Lux L1
-      - name: Anchor provenance on-chain
-        env:
-          SBOM_API_URL: https://sbom.hanzo.ai
-          KMS_CLIENT_ID: ${{ secrets.KMS_CLIENT_ID }}
-          KMS_CLIENT_SECRET: ${{ secrets.KMS_CLIENT_SECRET }}
+      # Ingest into the component store — the one served endpoint
+      - name: Ingest SBOM
         run: |
-          SPDX_HASH=$(sha256sum sbom.spdx.json | cut -d' ' -f1)
-          CDX_HASH=$(sha256sum sbom.cdx.json | cut -d' ' -f1)
-          PROV_HASH=$(sha256sum provenance.json | cut -d' ' -f1)
-
-          curl -fsS -X POST "${SBOM_API_URL}/api/v1/anchor" \
+          curl -fsS -X POST "https://api.hanzo.ai/v1/sbom" \
+            -H "Authorization: Bearer ${CI_TOKEN}" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"artifact\": \"${IMAGE}@${DIGEST}\",
-              \"git_commit\": \"${GITHUB_SHA}\",
-              \"git_ref\": \"${GITHUB_REF}\",
-              \"sbom_spdx_sha256\": \"${SPDX_HASH}\",
-              \"sbom_cdx_sha256\": \"${CDX_HASH}\",
-              \"provenance_sha256\": \"${PROV_HASH}\",
-              \"slsa_level\": 3
-            }"
+            --data-binary @sbom.cdx.json
 ```
 
-### SBOM Service API
+The on-chain anchoring step this pipeline once carried posted to an
+`/api/v1/anchor` address no process serves; anchoring is target-not-yet-served
+and returns to the pipeline in the change that serves it.
 
-The SBOM service at `sbom.hanzo.ai:8074` provides a REST API for querying, verifying, and managing SBOM data.
+### The shipped surface
 
-#### Endpoints
+**sbom** (`manifest/apps.go:345`) serves three routes under `/v1/sbom`
+(`apps/sbom/sbom.go`):
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| `POST` | `/api/v1/anchor` | Submit provenance for on-chain anchoring |
-| `GET` | `/api/v1/sbom/{artifact}` | Retrieve SBOM for an artifact (content-negotiation for format) |
-| `GET` | `/api/v1/provenance/{artifact}` | Retrieve SLSA provenance for an artifact |
-| `GET` | `/api/v1/verify/{artifact}` | Verify full provenance chain (signature + SBOM + on-chain) |
-| `GET` | `/api/v1/vulnerabilities/{artifact}` | List known vulnerabilities for an artifact |
-| `GET` | `/api/v1/licenses/{artifact}` | List detected licenses for an artifact |
-| `GET` | `/api/v1/anchor/{tx_hash}` | Retrieve on-chain anchor receipt |
-| `GET` | `/api/v1/search?cve={CVE-ID}` | Find all artifacts affected by a CVE |
-| `GET` | `/api/v1/search?component={name}&version={ver}` | Find all artifacts containing a component |
-| `GET` | `/health` | Health check |
-| `GET` | `/metrics` | Prometheus metrics |
+- `POST /v1/sbom` — ingest one CycloneDX SBOM keyed by image digest.
+  SuperAdmin/CI only: the gate reads the validated principal's admin claim and
+  fails closed off the HTTP path (`apps/sbom/sbom.go:238-242`).
+- `GET /v1/sbom/{ref}` — resolve the component set by image digest or image
+  ref, for the console. A raw handler declared with prose beside the route —
+  the ref is a wildcard segment a typed op cannot carry.
+- `GET /v1/sbom/health` — liveness plus datastore connectivity, not JWT-gated.
 
-#### Content Negotiation
+The store is global by design: an SBOM belongs to an image DIGEST, not a
+tenant — the digest is content-addressed, so any tenant deploying that image
+resolves the same component set. There is deliberately no org predicate;
+ingest is admin-gated and resolve exposes only the immutable bill of materials
+of an image, no tenant data. The rows live in the shared analytics datastore,
+table `hanzo.sbom_component`, a `ReplacingMergeTree(ingested_at)` so a
+re-ingest replaces rather than stacks (`apps/sbom/sbom.go`); the package opens
+no second connection.
 
-The `/api/v1/sbom/{artifact}` endpoint respects the `Accept` header:
+Stated for HIP-0139 §6: the capability is **free**, said in those words
+(`plugin/sbom/main.go:21`, `Price: cloud.Free`). It publishes no events on the
+bus, so a customer's webhooks receive nothing from it, and it emits nothing to
+observability beyond the request span every route gets. Its stage is the one
+`manifest.App.Stage` declares and this text does not restate it (HIP-0139 §8):
+the copy here read `beta` with a line citation after the row had become `ga`,
+and a cited line number is the fastest of all copies to rot. Upstream: it forks and embeds
+nothing — syft, grype and cosign are CI tools invoked in the pipeline, never
+linked into the binary, and the CycloneDX document is a format consumed, not
+code inherited.
 
-| Accept Header | Response Format |
-|---------------|-----------------|
-| `application/spdx+json` | SPDX 2.3 JSON |
-| `application/vnd.cyclonedx+json` | CycloneDX 1.6 JSON |
-| `application/json` (default) | CycloneDX 1.6 JSON |
-| `text/xml` | CycloneDX 1.6 XML |
-
-### Storage Architecture
-
-```
-SBOM Service (sbom.hanzo.ai:8074)
-  |
-  +---> PostgreSQL (sbom database)
-  |       - Artifact metadata, scan results, exemptions
-  |       - Indexed by artifact digest for fast CVE lookups
-  |
-  +---> OCI Registry (ghcr.io/hanzoai)
-  |       - SBOM documents stored as OCI referrers
-  |       - Cosign signatures and attestations
-  |
-  +---> Lux L1 (via luxfi/coreth)
-  |       - Provenance anchors (156 bytes per artifact)
-  |       - Immutable, third-party verifiable
-  |
-  +---> Rekor (Sigstore transparency log)
-          - Cosign signature records
-          - Independent audit trail
-```
+The provenance, verification, vulnerability and license query addresses this
+HIP's earlier revisions listed (`/api/v1/provenance`, `/api/v1/verify`,
+`/api/v1/vulnerabilities`, `/api/v1/licenses`, `/api/v1/anchor`,
+`/api/v1/search`) are target-not-yet-served: no process answers them today,
+and when they land they land under `/v1/sbom` per HIP-0139 §3, not under a
+second host or an `/api/` prefix.
 
 ### Verification Flow
 
@@ -592,24 +237,16 @@ A consumer verifying an artifact follows this chain:
      ghcr.io/hanzoai/iam@sha256:abc123...
    -> Provenance valid. Built from commit a1b2c3d4 on 2026-02-23
 
-4. Fetch SBOM
-   curl -H "Accept: application/spdx+json" \
-     https://sbom.hanzo.ai/api/v1/sbom/ghcr.io/hanzoai/iam@sha256:abc123...
-   -> SPDX document with 247 components
-
-5. Verify on-chain anchor
-   curl https://sbom.hanzo.ai/api/v1/verify/ghcr.io/hanzoai/iam@sha256:abc123...
-   -> {
-        "verified": true,
-        "lux_tx": "0xdeadbeef...",
-        "block_number": 12345678,
-        "block_timestamp": "2026-02-23T10:06:00Z",
-        "sbom_hashes_match": true,
-        "provenance_hash_match": true
-      }
+4. Resolve the component set
+   curl https://api.hanzo.ai/v1/sbom/ghcr.io/hanzoai/iam@sha256:abc123...
+   -> the ingested CycloneDX component set for that digest
 ```
 
-Each step is independently verifiable. Step 2 requires only cosign and the Sigstore public infrastructure. Step 3 requires only cosign. Step 5 requires only a Lux L1 RPC endpoint. No trust in Hanzo infrastructure is required for verification.
+Steps 1–3 require only cosign and the Sigstore public infrastructure — no
+trust in Hanzo. Step 4 is the served store. The fifth step earlier revisions
+showed — verifying an on-chain anchor — is target-not-yet-served, and its
+property when it lands is the same: verification against the chain requires
+only an RPC endpoint, not this platform.
 
 ## Security
 
@@ -627,106 +264,20 @@ Each step is independently verifiable. Step 2 requires only cosign and the Sigst
 
 ### Key Management Integration (HIP-0027)
 
-The SBOM service uses two types of keys:
-
-1. **Signing keys** (cosign): Keyless by default. For offline verification scenarios, KMS-backed keys are stored at `kms.hanzo.ai` under the path `/sbom/signing`.
-
-2. **Lux wallet key** (anchoring): The wallet private key for on-chain transactions is stored in KMS at `/sbom/lux-wallet`. The SBOM service authenticates to KMS via Universal Auth.
-
-```
-SBOM Service
-  |
-  +---> KMS Universal Auth (client ID + secret)
-  |       -> Short-lived access token
-  |
-  +---> KMS /sbom/signing (cosign key, if not keyless)
-  +---> KMS /sbom/lux-wallet (Lux L1 wallet for anchoring)
-```
+Signing is keyless by default: cosign's OIDC identity, no long-lived key
+anywhere. When offline verification or on-chain anchoring lands, its keys are
+KMS refs under `/sbom/*` resolved at use — never env, never a file — per
+HIP-0027; nothing holds such a key today.
 
 ## Monitoring and Observability
 
-### Prometheus Metrics
+The capability exports no metric family of its own: there is no `sbom_*`
+metric and no `/metrics` endpoint, because there is no standalone service.
+What a customer can read back under `/v1/o11y` is the request span every route
+already gets; `GET /v1/sbom/health` answers liveness and datastore
+connectivity. CVE alerting rides the CI scan (`grype --fail-on critical`
+blocks the build) rather than a capability-local alert pipeline.
 
-The SBOM service exposes metrics at `:8074/metrics`:
-
-| Metric | Type | Description |
-|--------|------|-------------|
-| `sbom_generation_duration_seconds` | Histogram | Time to generate SBOM from image |
-| `sbom_scan_duration_seconds` | Histogram | Time to complete vulnerability scan |
-| `sbom_vulnerabilities_total` | Gauge | Current known vulnerabilities by severity |
-| `sbom_anchor_duration_seconds` | Histogram | Time to anchor provenance on-chain |
-| `sbom_anchor_failures_total` | Counter | Failed on-chain anchoring attempts |
-| `sbom_verification_requests_total` | Counter | Verification API calls by result |
-| `sbom_components_total` | Gauge | Total tracked components across all artifacts |
-| `sbom_licenses_by_category` | Gauge | Component count by license category |
-
-### Alert Thresholds
-
-| Condition | Severity | Action |
-|-----------|----------|--------|
-| New CRITICAL CVE in production artifact | P1 | Page on-call, Slack alert |
-| New HIGH CVE in production artifact | P2 | Slack alert, 7-day SLA |
-| SBOM generation failure in CI | P3 | Slack alert, investigate |
-| On-chain anchoring failure | P3 | Retry; alert after 3 consecutive failures |
-| License policy violation in build | P3 | Block build, notify legal |
-| Nightly scan database unreachable | P4 | Alert, retry next cycle |
-
-## Migration Guide
-
-### For Existing Repositories
-
-1. **Week 1**: Add the `sbom-and-sign` job to your `docker-deploy.yml` workflow. Use the template from `hanzoai/build`.
-
-2. **Week 2**: Install cosign locally and verify your images: `cosign verify --certificate-oidc-issuer=https://token.actions.githubusercontent.com ghcr.io/hanzoai/YOUR-SERVICE:latest`
-
-3. **Week 3**: Review vulnerability scan results. Address any CRITICAL/HIGH findings before enabling the fail gate.
-
-4. **Week 4**: Enable `--fail-on critical` in Grype. Enable `--fail-on high` after clearing the backlog.
-
-5. **Week 5**: Review license scan results. Address any copyleft dependencies. Enable license policy enforcement.
-
-### For New Repositories
-
-Use the `hanzoai/template` repository, which includes SBOM generation, signing, and attestation pre-configured.
-
-## Future Work
-
-### Phase 1: Foundation (Q1 2026)
-- SBOM generation for all container images (Syft)
-- Cosign keyless signing in CI
-- Vulnerability scanning with Grype
-- SBOM service API at sbom.hanzo.ai:8074
-
-### Phase 2: Attestation (Q2 2026)
-- SLSA Level 3 provenance attestations
-- On-chain anchoring to Lux L1
-- License compliance enforcement
-- Nightly re-scan pipeline
-
-### Phase 3: Ecosystem (Q3 2026)
-- SBOM for non-container artifacts (Go binaries, Python wheels, npm packages)
-- Customer-facing SBOM portal
-- Integration with Kubernetes admission controller (reject unsigned images)
-- VEX (Vulnerability Exploitability eXchange) support for false-positive management
-
-### Phase 4: Reproducibility (Q4 2026)
-- SLSA Level 4 target for Go binaries
-- Nix-based reproducible container builds
-- Independent rebuild verification
-- SBOM-to-SBOM dependency graph (transitive SBOM for composed services)
-
-## References
-
-1. [NTIA Minimum Elements for a Software Bill of Materials](https://www.ntia.gov/sites/default/files/publications/sbom_minimum_elements_report_0.pdf)
-2. [SPDX Specification v2.3](https://spdx.github.io/spdx-spec/v2.3/)
-3. [CycloneDX Specification v1.6](https://cyclonedx.org/specification/overview/)
-4. [SLSA Framework](https://slsa.dev/)
-5. [Sigstore / Cosign](https://docs.sigstore.dev/)
-6. [in-toto Attestation Framework](https://in-toto.io/)
-7. [US Executive Order 14028](https://www.whitehouse.gov/briefing-room/presidential-actions/2021/05/12/executive-order-on-improving-the-nations-cybersecurity/)
-8. [EU Cyber Resilience Act](https://digital-strategy.ec.europa.eu/en/policies/cyber-resilience-act)
-9. [Syft - SBOM Generator](https://github.com/anchore/syft)
-10. [Grype - Vulnerability Scanner](https://github.com/anchore/grype)
 11. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
 12. [HIP-0033: Container Registry Standard](./hip-0033-container-registry-standard.md)
 13. [HIP-0036: CI/CD Build System Standard](./hip-0036-ci-cd-build-system-standard.md)

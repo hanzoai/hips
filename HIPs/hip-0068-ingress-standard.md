@@ -1,15 +1,17 @@
 ---
-hip: 0068
+hip: "0068"
 title: Ingress Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Final
+implementation-go: shipped
 created: 2026-02-24
-requires: HIP-0026, HIP-0044
+requires: HIP-0026
 ---
 
-# HIP-68: Ingress Standard
+
+# HIP-0068: Ingress Standard
 
 ## Abstract
 
@@ -55,16 +57,6 @@ The NGINX Ingress Controller is the Kubernetes default. It has three problems th
 | Dashboard | None (third-party) | Built-in (disabled by default) |
 
 The tradeoff: NGINX has marginally higher raw throughput for static content. For a dynamic Kubernetes environment where routing changes frequently and services come and go, Traefik's native Kubernetes integration is decisive.
-
-### Why a Fork?
-
-Upstream Traefik is open-source and well-maintained. The fork exists for three reasons:
-
-1. **Hanzo branding**: The container image, CRD names in documentation, and dashboard reference Hanzo, not Traefik Labs.
-2. **Default configuration**: The fork ships with Hanzo-specific defaults (Cloudflare TLS, internal dashboard disabled, Prometheus metrics enabled, access log format matching Hanzo's log aggregation schema).
-3. **PaaS patches**: Minor patches for tighter integration with Dokploy's deployment lifecycle hooks.
-
-The fork tracks upstream Traefik releases. Merge conflicts are rare because changes are limited to defaults and branding.
 
 ## Specification
 
@@ -308,8 +300,8 @@ metadata:
 spec:
   ipAllowList:
     sourceRange:
-    - "10.0.0.0/8"
-    - "172.16.0.0/12"
+    - "127.0.0.1/8"
+    - "127.0.0.1/12"
 ```
 
 ### Health Checks
@@ -368,8 +360,8 @@ Structured JSON on stdout, one line per request:
   "time": "2026-02-24T12:00:00Z",
   "level": "info",
   "msg": "",
-  "ClientAddr": "10.244.0.1:54321",
-  "ClientHost": "10.244.0.1",
+  "ClientAddr": "127.0.0.1:54321",
+  "ClientHost": "127.0.0.1",
   "Duration": 12345678,
   "DownstreamStatus": 200,
   "RequestHost": "api.hanzo.ai",
@@ -577,6 +569,27 @@ In development mode, the Docker provider watches container labels for routing co
 
 Hanzo Ingress registers itself as the default IngressClass (`hanzo-ingress`). Any Ingress resource without an explicit `ingressClassName` is handled by Hanzo Ingress. Services that need a different ingress controller (e.g., for testing) can specify an alternate IngressClass.
 
+## Per-brand replication
+
+Each brand runs the identical topology with its own values:
+
+| Concern | Per-brand value |
+|---------|-----------------|
+| Identity origin | `iam.hanzo.ai` / `lux.id` / `zoo.id` / `id.bootno.de` / `pars.id` |
+| API host | `api.<brand-domain>` |
+| Apps | brand-scoped `<org>-<app>` client IDs (HIP-0111) |
+| Secrets | KMS project per brand |
+| Container registry | `ghcr.io/hanzoai/*` (Hanzo), `ghcr.io/luxfi/*` (Lux), `ghcr.io/zooai/*` (Zoo) |
+
+Nothing in the topology is brand-special-cased. A brand is a set of values
+plugged into the same shape.
+
+Ingress is configured with `ingress.kubernetes.io/*` annotations ONLY.
+A `traefik.*` annotation is silently ignored, which leaves a route believing
+it has a rate limit it does not have — the failure is invisible until load
+arrives.
+
+
 ## Relationship to Other HIPs
 
 | HIP | Relationship |
@@ -585,8 +598,8 @@ Hanzo Ingress registers itself as the default IngressClass (`hanzo-ingress`). An
 | **HIP-14** (Application Deployment) | Dokploy generates IngressRoute resources that Ingress watches and routes. |
 | **HIP-26** (IAM) | Ingress routes `hanzo.id`, `lux.id`, `zoo.id`, `pars.id` to IAM. No auth at the ingress layer; auth is handled by the API Gateway or services themselves. |
 | **HIP-27** (KMS) | Ingress routes `kms.hanzo.ai` to KMS. TLS certificates for strict SSL mode are stored as K8s Secrets provisioned by CertManager. |
-| **HIP-31** (Observability) | Ingress exports Prometheus metrics consumed by Grafana dashboards. Access logs feed into the log aggregation pipeline. |
-| **HIP-37** (AI Cloud Platform) | Ingress routes `cloud.hanzo.ai` and `cloud.lux.network` to their respective cloud services. |
+| **HIP-132** (Telemetry) | Ingress exports Prometheus metrics consumed by Grafana dashboards. Access logs feed into the log aggregation pipeline. |
+| **HIP-106** (Cloud) | Ingress routes `cloud.hanzo.ai` and `cloud.lux.network` to their respective cloud services. |
 | **HIP-44** (API Gateway) | The API Gateway (KrakenD) is a backend behind Ingress. Ingress handles L7 host routing; the API Gateway handles application-level concerns (auth, rate limiting, circuit breaking). |
 | **HIP-49** (DNS) | DNS records point domains to the DigitalOcean LoadBalancer IP. Cloudflare proxies these records for DDoS protection and edge TLS. |
 
@@ -608,7 +621,7 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 ### Network Security
 
 - Ingress listens on cluster-internal interfaces. External access is via DigitalOcean LoadBalancer only.
-- Backend connections use cluster DNS (e.g., `api-gateway.hanzo.svc`). No traffic leaves the cluster for internal routing.
+- Backend connections use cluster DNS (e.g., `localhost`). No traffic leaves the cluster for internal routing.
 - The Traefik dashboard and API are disabled by default in production. When enabled for debugging, they are accessible only via `kubectl port-forward`.
 
 ### TLS Security
@@ -647,27 +660,12 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 - Prometheus metrics on port 9100
 - JSON access logs on stdout
 
-### Phase 2: Advanced Middleware (Q1 2026)
-
-- Rate limiting middleware on high-traffic routes
-- Security headers middleware (HSTS, X-Frame-Options, CSP)
-- Circuit breaker middleware for degraded backend protection
-- Retry middleware with exponential backoff
-- IP whitelist middleware for admin services
-
 ### Phase 3: Multi-Cluster (Q2 2026)
 
 - Deploy Ingress on lux-k8s cluster
 - Cross-cluster service discovery via ExternalName services
 - Global server load balancing (GSLB) via Cloudflare DNS
 - Canary deployments with weighted IngressRoute services
-
-### Phase 4: Edge Expansion (Q3 2026)
-
-- Edge Ingress instances in multiple DigitalOcean regions
-- CertManager integration for strict SSL on all domains
-- OpenTelemetry tracing pipeline integration
-- Custom Traefik plugins for Hanzo-specific middleware
 
 ## References
 
@@ -677,9 +675,9 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 4. [Kubernetes Ingress Specification](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 5. [Cloudflare SSL/TLS Modes](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/)
 6. [DigitalOcean Load Balancer](https://docs.digitalocean.com/products/networking/load-balancers/)
-7. [HIP-44: API Gateway Standard](./hip-0044-api-gateway-standard.md)
+7. HIP-44: API Gateway Standard
 8. [HIP-26: Identity & Access Management](./hip-0026-identity-access-management-standard.md)
-9. [HIP-31: Observability & Metrics](./hip-0031-observability-metrics-standard.md)
+9. [HIP-132: One Telemetry Plane](./hip-0132-one-telemetry-plane.md)
 10. [Ingress Repository](https://github.com/hanzoai/ingress)
 
 ## Copyright

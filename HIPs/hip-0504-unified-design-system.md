@@ -1,23 +1,20 @@
 ---
-hip: 0504
+hip: "0504"
 title: Unified Cross-Platform Design System
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
 created: 2026-06-24
-requires: HIP-36
+requires: HIP-0036
 ---
 
-# HIP-504: Unified Cross-Platform Design System
+
+# HIP-0504: Unified Cross-Platform Design System
 
 ## Abstract
 
 This proposal defines the canonical design-system architecture for every Hanzo, Lux, and Zoo surface — web, native (React Native / Expo), and desktop (Tauri). It establishes one substrate (`@hanzo/gui`), one component library (`@hanzo/ui`), and brands as values (`@luxfi/ui`, `@zooai/ui`) rather than forks. A component is defined once, themed many times, and rendered everywhere. The standard is binding: per-brand component forks and brand-scoped substrates are non-conformant.
-
-## Motivation
-
-The ecosystem grew three parallel component systems for one concept: `@hanzo/gui` (a Tamagui + Tauri + React Native cross-platform substrate), a standalone `@hanzo/ui` (no relation to it), and per-brand forks (`@luxfi/ui`, `@zooai/ui`). The same `Button` existed three times, drifting independently. Every app chose a different way; brand changes meant editing N copies; cross-platform support was inconsistent. This is the complection this HIP removes.
 
 ## Specification
 

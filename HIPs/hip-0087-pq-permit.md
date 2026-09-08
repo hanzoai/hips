@@ -1,13 +1,17 @@
 ---
-hip: 0087
+hip: "0087"
 title: PQ Permit (replaces EIP-2612)
 type: Standards Track
 category: Cryptography
-status: Proposed
-author: TBD
+status: Final
+implementation-go: shipped
+author: Hanzo AI
 created: 2026-05-11
-requires: HIP-0005 (Post-Quantum Security), HIP-0077, HIP-0085 (AccountID), HIP-0086 (TxAuthEnvelope)
+requires: HIP-0005, HIP-0077, HIP-0085, HIP-0086
 ---
+
+
+# HIP-0087: PQ Permit (replaces EIP-2612)
 
 ## Abstract
 
@@ -21,15 +25,6 @@ permit via the Z-Chain auth precompile (HIP-0104) or directly via the
 `ML-DSA.Verify` precompile. The replay protection follows EIP-2612's
 per-owner nonce pattern. The whole flow is profile-gated; a
 strict-PQ chain refuses any classical `permit`.
-
-## Motivation
-
-EIP-2612 is keyed to secp256k1 ECDSA — irrecoverable under Shor. The
-DeFi `permit` flow (gasless approvals, single-tx swaps, meta-tx)
-underpins thousands of contracts. Without a PQ replacement, ERC-20
-permits become a classical island inside a PQ chain. The replacement
-must be drop-in for contract authors (one verify call) while remaining
-profile-gated at the auth boundary.
 
 ## Specification
 
@@ -75,19 +70,11 @@ Acceptance:
 3. `verifying_contract == msg.sender`.
 4. `now <= deadline`.
 5. `nonce == nonces[owner]`.
-6. `AccountID == SHA3-384("LUX-ACCOUNT-V1" || owner_pubkey)`.
+6. `AccountID == cSHAKE256(profile_be4 || chain_be4 || u8(scheme) ||
+   owner_pubkey, 48, "", "LUX_ACCOUNT_ID_V1")`, per HIP-0085.
 7. `ML-DSA.Verify(owner_pubkey, transcript, signature) == true`.
 
 Failure of any check is a hard revert; no recovery.
-
-## Rationale
-
-Reusing TupleHash256 over a profile-bound transcript matches HIP-0086.
-Domain separation by cust string (`PERMIT-V1` vs `TX-AUTH-V1`)
-prevents cross-context signature reuse. The 20-byte
-`verifying_contract` retains EVM ABI familiarity for contract
-authors. Per-owner nonce mirrors EIP-2612, so the migration cost for
-existing token contracts is a verifier swap, not a flow redesign.
 
 ## Backwards compatibility
 

@@ -1,17 +1,18 @@
 ---
-hip: 0305
+hip: "0305"
 title: "esign: shared-DB tenancy via team-where, not file-per-tenant"
 author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track
 category: Infrastructure
-status: Accepted
+status: Draft
 created: 2026-06-21
 requires: HIP-0302
 ---
 
-# HIP-305: esign — Shared-DB Tenancy via `team-where`, not File-per-Tenant
 
-## Context
+# HIP-0305: esign: shared-DB tenancy via team-where, not file-per-tenant
+
+## Abstract
 
 The canonical database architecture (`hanzoai/.github` →
 `profile/ARCHITECTURE-DATABASES.md`) mandates one Base SQLite file per
@@ -19,7 +20,7 @@ The canonical database architecture (`hanzoai/.github` →
 boundary. Do not add a tenant column."* Decision #7 of that document is explicit
 that **"Deviation needs a HIP, not a Slack thread."** This is that HIP.
 
-esign (a Documenso fork) is being migrated Postgres → Base SQLite (PR
+esign (a Documenso fork) is being migrated SQL → Base SQLite (PR
 `hanzoai/esign#7`). Its data shape does not fit file-per-tenant:
 
 1. **Bootstrap paradox.** `validateSessionToken` reads the global `Session`
@@ -40,7 +41,7 @@ esign (a Documenso fork) is being migrated Postgres → Base SQLite (PR
    resolver, so there is no request-time hook at which a file could be chosen
    the way a multi-tenant edge router would.
 
-## Decision
+## Specification
 
 esign uses **ONE Base SQLite file shared across orgs**. Tenant isolation is
 enforced in-query at the `buildTeamWhereQuery({ teamId, userId })` layer — the
@@ -63,7 +64,7 @@ file exactly as to a per-tenant one.
 - **Defense in depth (the file is not the only guard):**
   - The list-field codec (`json-array.ts`) throws — fails closed — on any
     non-array / corrupt `roles` rather than silently degrading.
-  - 68 `BEFORE INSERT/UPDATE` enum/domain triggers reconstruct the Postgres enum
+  - 68 `BEFORE INSERT/UPDATE` enum/domain triggers reconstruct the SQL enum
     domains SQLite drops, including a `User.roles` **shape** guard
     (`json_type != 'array'`) + a **domain** guard (every element ∈ Role). A
     fabricated privilege string, or a non-array masquerading as roles, can never
@@ -79,7 +80,7 @@ forgets `buildTeamWhereQuery`) can leak across orgs in a shared file, whereas a
 per-tenant file makes cross-org reads physically impossible. We accept this
 weaker boundary because per-tenant files would have required **re-architecting
 global identity** (sessions, accounts, passkeys, the many-orgs-per-user model) —
-out of scope for, and orthogonal to, a Postgres→SQLite storage migration. The
+out of scope for, and orthogonal to, a SQL→SQLite storage migration. The
 codec-throw + trigger layers are the compensating controls that keep a
 forgotten predicate from silently corrupting or leaking auth-relevant state.
 

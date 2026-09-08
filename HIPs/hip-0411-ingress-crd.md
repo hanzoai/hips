@@ -1,14 +1,17 @@
 ---
-hip: 0411
+hip: "0411"
 title: Ingress CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: shipped
 created: 2026-05-19
 ---
 
-# HIP-411: Ingress CRD
+
+
+# HIP-0411: Ingress CRD
 
 ## Abstract
 
@@ -70,7 +73,6 @@ spec:
 
 ### Related services
 
-- HIP-448 (hanzo-ingress service)
 - HIP-0068 (Ingress standard)
 
 ## Status

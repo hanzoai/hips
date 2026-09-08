@@ -1,14 +1,17 @@
 ---
-hip: 0400
+hip: "0400"
 title: Service CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: shipped
 created: 2026-05-19
 ---
 
-# HIP-400: Service CRD
+
+
+# HIP-0400: Service CRD
 
 ## Abstract
 

@@ -1,16 +1,19 @@
 ---
-hip: 0040
+hip: "0040"
 title: Multi-Language SDK Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
+implementation-rust: partial
+implementation-go: shipped
 created: 2025-01-09
 updated: 2026-02-23
 requires: HIP-0004
 ---
 
-# HIP-40: Multi-Language SDK Standard
+
+# HIP-0040: Multi-Language SDK Standard
 
 ## Abstract
 
@@ -23,7 +26,9 @@ The API surface is OpenAI-compatible by design. Existing OpenAI SDK users can sw
 | Python | `hanzoai` | [github.com/hanzoai/python-sdk](https://github.com/hanzoai/python-sdk) | [PyPI](https://pypi.org/project/hanzoai/) |
 | TypeScript/JS | `hanzoai` | [github.com/hanzoai/js-sdk](https://github.com/hanzoai/js-sdk) | [npm](https://www.npmjs.com/package/hanzoai) |
 | Go | `github.com/hanzoai/go-sdk` | [github.com/hanzoai/go-sdk](https://github.com/hanzoai/go-sdk) | [pkg.go.dev](https://pkg.go.dev/github.com/hanzoai/go-sdk) |
-| Rust | `hanzoai` | [github.com/hanzoai/rust-sdk](https://github.com/hanzoai/rust-sdk) | [crates.io](https://crates.io/crates/hanzoai) |
+| Rust | `hanzo-client` | `hanzo-rs/sdk` | [crates.io](https://crates.io/crates/hanzo-client) |
+
+The Rust repository is not public. The crate is: [docs.rs/hanzo-client](https://docs.rs/hanzo-client).
 
 **Documentation**: [docs.hanzo.ai](https://docs.hanzo.ai)
 **Base URL**: `https://api.hanzo.ai/v1` (production)
@@ -77,17 +82,6 @@ The tradeoff is reduced flexibility. If the Go SDK needs a Go-specific feature t
 | Test coverage | Varies by team | Generated from spec |
 | Maintenance burden | O(N * endpoints) | O(1 * endpoints) |
 
-### Why OpenAI-Compatible
-
-OpenAI established the de facto standard API for LLM inference. Anthropic, Google, Mistral, and dozens of other providers have adopted compatible endpoints. The AI developer ecosystem has standardized on this interface:
-
-- `POST /v1/chat/completions` for conversational inference
-- `POST /v1/embeddings` for vector embeddings
-- `POST /v1/images/generations` for image generation
-- `POST /v1/audio/transcriptions` for speech-to-text
-
-By maintaining wire-level compatibility with this interface, Hanzo achieves zero-friction adoption. A developer using `openai.ChatCompletion.create()` can switch to Hanzo by changing two configuration values:
-
 ```python
 # Before (OpenAI direct)
 client = OpenAI(api_key="sk-openai-...")
@@ -100,19 +94,6 @@ client = OpenAI(
 ```
 
 The Hanzo SDKs extend this base with platform-specific features (cost tracking, key management, team budgets, guardrails) while maintaining backward compatibility with any OpenAI-compatible client.
-
-### Why These Four Languages
-
-The language selection covers 95%+ of AI developer workflows:
-
-| Language | Use Case | Ecosystem Coverage |
-|----------|----------|-------------------|
-| **Python** | ML training, data science, Jupyter notebooks, research | ~70% of AI/ML developers |
-| **TypeScript** | Web frontends, Node.js backends, serverless functions | ~60% of web developers |
-| **Go** | Infrastructure, CLIs, cloud services, Kubernetes operators | ~30% of platform engineers |
-| **Rust** | Performance-critical systems, blockchain, edge inference | ~10% of systems developers |
-
-Ruby, Java, .NET, and other languages are supported through the OpenAI-compatible API. Any OpenAI SDK in any language works with Hanzo by changing the base URL. Official Hanzo SDKs for these languages are community-maintained and not auto-generated, as the engineering cost of maintaining Stainless configurations for low-demand languages exceeds the benefit.
 
 ### Why Typed Clients Over Raw HTTP
 
@@ -685,14 +666,14 @@ Through the LLM Gateway (HIP-4), the SDKs provide access to 100+ AI providers in
 2. [OpenAPI Specification](https://spec.openapis.org/oas/v3.1.0) - API description format
 3. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Unified AI provider interface (backend for all SDK requests)
 4. [HIP-26: Identity & Access Management](./hip-0026-identity-access-management-standard.md) - OAuth token validation for SDK authentication
-5. [HIP-38: Admin Console](./hip-0038-admin-console-standard.md) - Key management and budget UI
+5. HIP-38: Admin Console - Key management and budget UI
 6. [OpenAI API Reference](https://platform.openai.com/docs/api-reference) - Wire-compatible API specification
 7. [Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html) - Streaming protocol specification
 8. [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) - Bearer Token Usage (authentication scheme)
 9. [Hanzo Python SDK](https://github.com/hanzoai/python-sdk) - Python client library
 10. [Hanzo JS SDK](https://github.com/hanzoai/js-sdk) - TypeScript/JavaScript client library
 11. [Hanzo Go SDK](https://github.com/hanzoai/go-sdk) - Go client library
-12. [Hanzo Rust SDK](https://github.com/hanzoai/rust-sdk) - Rust client library
+12. [Hanzo Rust SDK](https://crates.io/crates/hanzo-client) - Rust client library (`hanzo-client`)
 13. [Hanzo API Docs](https://docs.hanzo.ai) - Full API documentation
 
 ## Copyright

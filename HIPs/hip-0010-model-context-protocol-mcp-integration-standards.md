@@ -1,15 +1,17 @@
 ---
-hip: 0010
+hip: "0010"
 title: Model Context Protocol (MCP) Integration Standards
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
+implementation-rust: shipped
 created: 2025-01-09
-requires: HIP-2, HIP-9
+requires: HIP-0002, HIP-0009
 ---
 
-# HIP-10: Model Context Protocol (MCP) Integration Standards
+
+# HIP-0010: Model Context Protocol (MCP) Integration Standards
 
 ## Abstract
 
@@ -17,12 +19,16 @@ This proposal defines the Model Context Protocol (MCP) integration standards for
 
 ## Implementations
 
-| Language | Repository | Package | Status |
-|----------|------------|---------|--------|
-| **Python** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `hanzo-mcp` (PyPI) | ✅ Production |
-| **TypeScript** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `@hanzoai/mcp` (NPM) | ✅ Production |
-| **Rust** | [github.com/hanzoai/mcp/rust](https://github.com/hanzoai/mcp/tree/main/rust) | `hanzo-mcp` (crates.io) | ✅ Production |
-| **Go** | [github.com/hanzoai/mcp-go](https://github.com/hanzoai/mcp-go) | `github.com/hanzoai/mcp-go` | 🚧 In Progress |
+Where the code is. How far it has got is the front matter's
+`implementation-go`, `implementation-cpp` and `implementation-rust`, which every
+HIP carries in the same three words and the index counts.
+
+| Language | Repository | Package |
+|----------|------------|---------|
+| **Python** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `hanzo-mcp` (PyPI) |
+| **TypeScript** | [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp) | `@hanzoai/mcp` (NPM) |
+| **Rust** | [github.com/hanzoai/mcp/rust](https://github.com/hanzoai/mcp/tree/main/rust) | `hanzo-mcp` (crates.io) |
+| **Go** | [github.com/hanzoai/mcp/go](https://github.com/hanzoai/mcp/tree/main/go) | `github.com/hanzoai/mcp/go` |
 
 **CLI**: `hanzo-mcp` (available via `pip install hanzo-mcp` or `cargo install hanzo-mcp`)
 
@@ -47,18 +53,7 @@ This proposal defines the Model Context Protocol (MCP) integration standards for
 - **Unified search**: Multi-modal search (Text, AST, Symbol, Vector, Memory, File)
 - **Zero-copy parsing**: Efficient JSON-RPC handling
 
-See [HIP-0300](./hip-0300-unified-mcp-tools-architecture.md) for unified tools architecture.
-
-## Motivation
-
-Current AI tool integration challenges:
-1. **Fragmented Interfaces**: Each tool has different APIs
-2. **Context Loss**: Tools don't share context effectively
-3. **Limited Extensibility**: Hard to add new capabilities
-4. **Poor Standardization**: No common protocol
-5. **Security Gaps**: Insufficient sandboxing and permissions
-
-MCP provides a unified protocol for AI-tool interaction.
+The tool surface itself is whatever `hanzo/mcp` ships; this HIP governs the protocol, not the catalogue.
 
 ## Specification
 
@@ -244,6 +239,52 @@ Core Tools:
     - semantic_search
 ```
 
+### Language Intelligence
+
+Language intelligence is one tool, not one tool per language. The `lsp` tool takes an action, a file, and a position, and returns the same shapes whichever server answers. The server for a file's language is installed and started on first use and reused for the rest of the session.
+
+| Language | Server | Features |
+|----------|--------|----------|
+| Go | `gopls` | Definition, references, rename, diagnostics, formatting |
+| Python | `pyright` | Type checking, definition, references, completions |
+| TypeScript/JavaScript | `typescript-language-server` | Full TS/JS intelligence |
+| Rust | `rust-analyzer` | Comprehensive Rust support |
+| Java | `jdtls` | Eclipse JDT-based Java support |
+| C/C++ | `clangd` | LLVM-based C/C++ intelligence |
+| Ruby | `solargraph` | Ruby language server |
+| Lua | `lua-language-server` | Lua intelligence |
+
+```python
+lsp(action="definition", file="main.go", line=42, character=15)
+# -> Starts gopls if not running
+# -> Returns: {"file": "handler.go", "line": 10, "character": 5}
+
+lsp(action="references", file="auth.py", line=20, character=8)
+# -> Starts pyright if not running
+# -> Returns: [{"file": "auth.py", "line": 20}, {"file": "test_auth.py", "line": 5}, ...]
+
+lsp(action="diagnostics", file="server.ts")
+# -> Returns: [{"line": 15, "message": "Type 'string' is not assignable to type 'number'", "severity": "error"}]
+```
+
+### Structural Search
+
+The `ast` tool parses with tree-sitter — incremental and error-tolerant, so a file that does not compile is still searchable — across Rust, JavaScript, TypeScript, Python, Go, Java, C and C++. Queries match syntax rather than text:
+
+```python
+# Find all async functions in Python files
+ast("async def", "./src", line_number=True)
+
+# Find all struct definitions in Go
+ast("type.*struct", "./pkg", line_number=True)
+
+# Find all test functions
+ast("func Test", "./tests")
+
+# Find all React components (capitalized function exports)
+ast("export.*function [A-Z]", "./components")
+```
+
 ### Tool Implementation Examples
 
 #### Web Search Tool
@@ -352,6 +393,22 @@ class MCPContext:
         
         return [list(self.entries.values())[i] for i in top_indices]
 ```
+
+### The Agent Loop
+
+A model driving these tools follows one loop, and the server enforces the order rather than trusting the model to keep it:
+
+**1. Think**: Analyze the request. Identify constraints, dependencies, and risks. Use the `think` tool to record reasoning without taking action.
+
+**2. Plan**: Outline the sequence of changes. Identify files to read, edits to make, tests to run. Summarize the plan for human review.
+
+**3. Implement**: Execute the plan through tool calls. Make changes incrementally — one file at a time, one logical edit at a time. Prefer `edit` (surgical string replacement) over `write` (full file overwrite).
+
+**4. Validate**: Run tests, linters, type checkers and build commands. Observe the output. If validation fails, return to step 1 with the error context.
+
+**5. Learn**: Record insights, architectural decisions and project conventions in the memory system, so the next session starts where this one ended.
+
+Validation cannot be skipped and planning cannot be bypassed. The agent summarizes what it did and awaits confirmation before starting the next task.
 
 ### Claude Desktop Integration
 
@@ -540,52 +597,8 @@ vector-store = ["qdrant-client"]
 computer-control = ["enigo", "screenshots"]
 ```
 
-## Implementation Roadmap
-
-### Phase 1: Core Protocol (Q1 2025)
-- JSON-RPC implementation
-- Basic tool registry
-- Simple context management
-- Claude Desktop integration
-
-### Phase 2: Standard Tools (Q2 2025)
-- File system tools
-- Network tools
-- Database tools
-- AI tools
-
-### Phase 3: Advanced Features (Q3 2025)
-- Tool composition
-- Context optimization
-- Performance caching
-- Security hardening
-
-### Phase 4: Ecosystem (Q4 2025)
-- Tool marketplace
-- Community tools
-- Enterprise features
-- Edge deployment
-
-## Security Considerations
-
-### Tool Security
-- Sandboxed execution environment
-- Resource limits (CPU, memory, network)
-- Permission-based access control
-- Input validation and sanitization
-
-### Protocol Security
-- TLS for transport encryption
-- Message authentication
-- Rate limiting
-- Audit logging
-
-## References
-
-1. [Model Context Protocol Spec](https://modelcontextprotocol.io)
-2. [JSON-RPC 2.0](https://www.jsonrpc.org/specification)
 3. [Claude Desktop MCP](https://claude.ai/docs/mcp)
-4. [HIP-9: Agent SDK](./hip-9.md)
+4. [HIP-0009: Agent SDK - Multi-Agent Orchestration Framework](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md)
 5. [MCP Repository](https://github.com/hanzoai/mcp)
 
 ## Copyright

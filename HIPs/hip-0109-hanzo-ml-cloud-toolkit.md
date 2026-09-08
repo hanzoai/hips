@@ -1,15 +1,16 @@
 ---
-hip: 0109
+hip: "0109"
 title: Hanzo ML Cloud Toolkit
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-05-18
 requires: HIP-0026, HIP-0027, HIP-0106, HIP-0108
 ---
 
-# HIP-109: Hanzo ML Cloud Toolkit
+
+# HIP-0109: Hanzo ML Cloud Toolkit
 
 ## Abstract
 
@@ -36,34 +37,6 @@ images that the operator schedules — it is not the scheduler. One way
 to do everything: `ml/` is primitives, `operator/` is control plane,
 `cloud/` is the HTTP mux, and the protocols at the edges are MCP for
 tools, A2A for federation, and ZAP between Hanzo subsystems.
-
-## Motivation
-
-Today every team that wants to ship a real ML workload on Hanzo has
-to either (a) bring in the entire open-source ML operator estate
-(seven projects, three CRD groups, two namespaces of pods, a
-PostgreSQL, a MinIO, a MySQL, a separate frontend), or (b)
-re-implement training/serving by hand. Neither is acceptable.
-
-The Hanzo platform already ships every primitive that estate
-re-invents:
-
-| Concern | Hanzo primitive | What replaces |
-|---|---|---|
-| Auth | `hanzoai/iam` | Open-source profile controller, Dex |
-| Artifact storage | `hanzoai/vfs` | MinIO, S3 directly |
-| Experiment metrics | `hanzoai/datastore` | MySQL + tracking-server |
-| Run config / registry metadata | `hanzoai/base` | MySQL, PostgreSQL |
-| Pipeline DAG runner | `hanzoai/tasks` (HIP-0108) | Argo, KFP backend |
-| Infrastructure obs | `hanzoai/o11y` | Prometheus + Grafana + Jaeger |
-| LLM/AI obs | `hanzoai/insights` | Langfuse, WhyLabs, custom |
-| Inference engine | `hanzoai/engine` | Inference servers (Triton-style) |
-| ML primitives | `hanzoai/ml` (Candle) | PyTorch as a service |
-| Control plane mux | `hanzoai/cloud` (HIP-0106) | API aggregator |
-
-What's missing is the **declarative API + reconciler** that ties them
-together. That's what HIP-0109 specifies and what
-`hanzoai/operator`'s new `ml-controller` module implements.
 
 ## Protocol boundaries (decomplect)
 
@@ -93,7 +66,7 @@ The operator owns these Kinds:
 | Kind | Plural | Short | What it owns |
 |---|---|---|---|
 | `TrainingJob` | `trainingjobs` | `mlj` | Distributed training pods. One unified type with `spec.framework: tensorflow | pytorch | mpi | xgboost | jax | candle | hanzo-ml`. Backs all training-job variants from the open-source operator family. |
-| `Experiment` | `experiments` | `mlx` | Tracking experiment. Status surfaces metric streams from `hanzoai/datastore`; artifacts via `hanzoai/vfs`; run config in per-tenant `hanzoai/base`. |
+| `Experiment` | `experiment` | `mlx` | Tracking experiment. Status surfaces metric streams from `hanzoai/datastore`; artifacts via `hanzoai/vfs`; run config in per-tenant `hanzoai/base`. |
 | `Sweep` | `sweeps` | `mls` | Hyperparameter sweep. Owns N child `TrainingJob`s with parameter assignments; runs Bayesian / grid / random search per `spec.algorithm`. |
 | `Pipeline` | `pipelines` | `mlp` | DAG of steps. Each step is a `TrainingJob`, `Inference`, or generic container task. Durable execution by delegating to `hanzoai/tasks` (HIP-0108). |
 | `Notebook` | `notebooks` | `mln` | Per-tenant JupyterLab pod with IAM SSO sidecar. Storage is a PVC backed by `hanzoai/vfs`. Idle eviction per HIP-0108 tier-2 supervisor. |
@@ -611,14 +584,10 @@ valid choices for different organizations.
   `/v1/ml/*`)
 - HIP-0108 — On-Demand Supervisor + Warm Pool (tier-2 idle eviction
   for notebooks and inference replicas)
-- HIP-0037 — AI Cloud Platform (the `ai` subsystem; ML control plane
-  is a sibling)
-- HIP-0067 — Federated Learning Standard (downstream consumer of
-  `TrainingJob`)
 - HIP-0010 — MCP Integration Standards (the protocol the ML tools
   surface speaks)
 - Upstream references (do NOT vendor or fork): Kubeflow project
   (https://www.kubeflow.org), MLflow (https://mlflow.org), Katib
   (https://www.kubeflow.org/docs/components/katib/), KServe
   (https://kserve.github.io), Seldon Core
-  (https://www.seldon.io/solutions/seldon-core).
+  (https://github.com/SeldonIO/seldon-core).

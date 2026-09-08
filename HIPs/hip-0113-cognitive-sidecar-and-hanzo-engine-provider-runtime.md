@@ -1,13 +1,15 @@
 ---
-hip: 0113
+hip: "0113"
 title: Cognitive Sidecar & Hanzo Engine Provider Runtime for Thinking Chains
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
+implementation-rust: partial
 created: 2026-06-21
-requires: 0023, 0024, 0043, 0114
+requires: HIP-0020, HIP-0024, HIP-0043, HIP-0114
 ---
+
 
 # HIP-0113: Cognitive Sidecar & Hanzo Engine Provider Runtime for Thinking Chains
 
@@ -33,9 +35,9 @@ MUST NOT hold validator keys or mutate consensus. A separate signer/policy layer
 governed by a node-local `[ai.autonomy]` policy and bounded by **human-in-the-loop
 levels 0–5**, decides what (if anything) becomes a transaction.
 
-This HIP composes with — does not replace — HIP-0023 (the decentralized compute
-swarm that supplies provider GPUs) and HIP-0024 (the Hanzo sovereign L1 that hosts
-the precompiles). It is one of four sibling artifacts sharing one canon: the Lux
+This HIP composes with — does not replace — HIP-0020 (the node that schedules the
+compute swarm and supplies provider GPUs) and HIP-0024 (the Hanzo sovereign L1
+that hosts the precompiles). It is one of four sibling artifacts sharing one canon: the Lux
 *Thinking Chains* proposal (the L0/consensus-layer primitive and bridge
 precompiles), the Zoo *Beluga L3 Thinking-Chain Architecture* ZIP (the first
 deployment), and the Zoo *Thinking Chains* paper (the conceptual treatment and
@@ -67,16 +69,6 @@ block production. The resolution is the **Cognitive Sidecar**: the agent is a pu
 can turn an artifact into a transaction, and only within an explicit autonomy
 policy and human-loop level. This is the decomplecting move — separating *what
 cognition produces* from *when the node may act on it*.
-
-### Why not just an oracle, or just an on-chain model
-
-A trusted oracle reintroduces a single point of trust and gives no provenance. A
-tiny fully-on-chain model (Tier 1, the Lux inference precompile at
-`0x0300…0003`) is real and useful for in-block classifiers and embeddings, but is
-capped at toy capability.
-The Thinking Chain pattern uses *the strongest mechanism each kind of cognition
-allows*: byte-identical execution where possible (Tier 1, not this HIP's subject),
-bonded-quorum settlement where not (Tier 2, the Hanzo Engine — this HIP).
 
 ## Specification
 
@@ -621,7 +613,7 @@ safely hashable into a decision. Constraining consensus inputs to structured out
 (and demoting prose to hash-addressed evidence) is what makes Subsampled Cognitive
 Consensus and C11 (inspectable without an LLM) possible at once.
 
-**Why this composes with HIP-0023 and HIP-0024.** HIP-0023 (compute swarm) supplies
+**Why this composes with HIP-0020 and HIP-0024.** HIP-0020 (compute swarm) supplies
 and schedules the GPUs a Tier-2 provider runs on; this HIP defines what a provider
 *does* with that GPU to settle a quorum. HIP-0024 (sovereign L1) hosts the
 precompiles and the AI-COIN economics; this HIP defines the off-chain runtime and
@@ -726,7 +718,7 @@ HANZO_FFI_MODELS="zen-nano=gguf:/models/zen-5-flash.gguf;zen-embed=embedding:/mo
 - *Thinking Chains* (Zoo paper) — the conceptual treatment and Subsampled
   Cognitive Consensus analysis.
 - [HIP-0114: ZAP — Inter-VM Cognitive Transport](./hip-0114-zap-inter-vm-cognitive-transport.md)
-- [HIP-0023: Decentralized AI Compute Swarm Protocol](./hip-0023-decentralized-ai-compute-swarm-protocol.md)
+- [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)
 - [HIP-0024: Hanzo Sovereign L1 Chain Architecture](./hip-0024-hanzo-sovereign-l1-chain-architecture.md)
 - [HIP-0043: LLM Inference Engine Standard](./hip-0043-llm-inference-engine-standard.md)
 

@@ -34,7 +34,9 @@
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.3",
-    "zod": "^4.5.2"
+    "zod": "^4.5.2",
+    "@hanzo/design": "0.5.24",
+    "@hanzo/font": "1.9.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

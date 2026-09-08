@@ -1,13 +1,14 @@
 ---
-hip: 0121
+hip: "0121"
 title: BYO Compute Fleet & Metered Billing
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Review
+status: Final
 created: 2026-07-07
-requires: HIP-0026, HIP-0027, HIP-0053, HIP-0106, HIP-0111, HIP-0112
+requires: HIP-0026, HIP-0027, HIP-0106, HIP-0111
 ---
+
 
 # HIP-0121: BYO Compute Fleet & Metered Billing
 
@@ -35,44 +36,8 @@ ciphertext), and every fleet call is scoped by the gateway-validated
 
 The fleet is the `hanzoai/cloud` `clients/fleet` registry consumed by
 `clients/visor` (the `/v1/clusters` surface) and `clients/ml` (workload
-federation), per HIP-0106. **Visor** (HIP-0053) is the machine/cluster control
+federation), per HIP-0106. **Visor** (HIP-0123) is the machine/cluster control
 plane. This HIP is the fleet + billing contract that sits on top of both.
-
-## Motivation
-
-Hanzo's compute is no longer one pool. It is a DO GPU pool, a customer's EKS
-cluster, a founder's GB10 workstation under a desk, an org's own AWS account, and
-a validator box that already secures the chain. Today each of those is a
-different code path, a different credential store, a different (or missing)
-billing rule. That does not scale, and it does not compose.
-
-The product requirement is one sentence: **anyone can bring compute, see it, use
-it, schedule work on it, and get billed fairly for it** — whether "it" is a
-managed cluster we provision, a kubeconfig they paste, a GPU box they plug in, or
-their own cloud account. And for enterprises: run the entire Hanzo cloud on their
-own metal, white-labeled, and pay a license.
-
-Three forces make this a Core standard rather than a feature:
-
-1. **One fleet, or N incompatible ones.** Managed clusters live in Visor. The
-   BYO-kubeconfig registration built this cycle could have become a parallel
-   `/v1/ml/clusters`. ML serving needs to place a workload on *whichever* cluster
-   the org chose. Without one registry, every consumer re-invents attach,
-   validate, seal, and list — and the two lists drift. There must be exactly one
-   fleet primitive per org, with exactly one surface.
-
-2. **Fair billing requires the source's *provenance*, not a flat rate.** A box on
-   AWS already pays AWS; charging it a full instance price double-charges the
-   customer. A bare-metal GPU costs the customer nothing per hour; a flat monthly
-   fee is honest. A validator already earns chain economics and secures the
-   network; taxing its spare cycles is hostile. The rate must be a *property of
-   how the compute connects* — 1% / $1 / free — resolved once, at connect.
-
-3. **Multi-tenant money safety is unforgiving.** The fleet is cross-tenant by
-   construction (every org's compute in one control plane). A kubeconfig leak
-   crosses a security boundary; a double-debit crosses a trust boundary. Both
-   must be structurally impossible, not merely unlikely — per-org KMS sealing for
-   the first, cluster-wide single-flight leases for the second.
 
 ## Specification
 
@@ -84,7 +49,7 @@ is owned by exactly one org (narrowed by project), and is served through the ONE
 
 | Source kind | How it attaches | Where it lives |
 |---|---|---|
-| **Managed cluster** | Hanzo provisions k8s (DOKS today; AWS/Azure/GCP via Visor provider backends) | Visor — merged into `GET /v1/clusters` |
+| **Managed cluster** | Hanzo provisions k8s (Kubernetes today; AWS/Azure/GCP via Visor provider backends) | Visor — merged into `GET /v1/clusters` |
 | **BYO k8s cluster** | Org pastes a kubeconfig → `POST /v1/clusters` | `fleet.Registry` (KMS-sealed) |
 | **BYO GPU / bare metal** | Box becomes a cluster via k3s + device plugins, OR a single box via `hanzo gpu connect` / desktop-link | `fleet.Registry` (cluster) / `FleetWorker` (box) |
 | **Cloud account (BYOC)** | Org connects THEIR AWS/Azure/GCP/DO/Nebius credentials; Visor provisions + manages **in their account** | Visor `Provider` (per-owner, sealed) |
@@ -169,7 +134,7 @@ plaintext.
 
 #### Tenant + project scoping via the edge JWT
 
-The org boundary is enforced by the edge, decode-once, per HIP-0110 / HIP-0112:
+The org boundary is enforced once, at the principal's owner, per HIP-0134 / HIP-0112:
 
 - The gateway **strips** any inbound `X-Org-Id` / `X-Project-Id`, then **mints**
   them from the validated JWT: the `owner` claim → `X-Org-Id`; the token's
@@ -491,12 +456,12 @@ everywhere.
 
 1. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) — the org boundary, JWT `owner` claim
 2. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS; per-org sealed credentials
-3. [HIP-0053: Visor Monitoring & Supervision Standard](./hip-0053-visor-monitoring-standard.md) — the machine/cluster control plane
-4. [HIP-0106: Unified Hanzo Cloud Binary](./hip-0106-unified-hanzo-cloud-binary.md) — `clients/fleet`, `clients/visor`, `clients/ml` in one binary
+3. [HIP-0123: Visor — Fleet & Fabric Autoscaling Across Any Provider](./hip-0123-visor-fleet-autoscaling.md) — the machine/cluster control plane
+4. [HIP-0106: The Hanzo Plugin Contract](./hip-0106-hanzo-plugin-contract.md) — `clients/fleet`, `clients/visor`, `clients/ml` in one binary
 5. [HIP-0107: Streaming Replication over VFS](./hip-0107-streaming-replication-over-vfs.md) — the HA substrate for the visor→cloud persistence port
-6. [HIP-0110: Gateway as Edge Process](./hip-0110-gateway-as-edge-process.md) — strip + mint `X-Org-Id` / `X-Project-Id`
+6. [HIP-0134: One Process, One Socket, One Identity](./hip-0134-one-process-one-socket-one-identity.md) — IAM establishes the org; plugins scope on it
 7. [HIP-0111: IAM Authentication Standard](./hip-0111-iam-authentication-standard.md) — the Bearer JWT contract
-8. [HIP-0112: Cloud Infrastructure Topology Standard](./hip-0112-cloud-infrastructure-topology-standard.md) — ingress → gateway → services, tenant scoping
+8. HIP-0112: Cloud Infrastructure Topology Standard — ingress → gateway → services, tenant scoping
 9. [HIP-0302: Encrypted SQLite Replication Standard](./hip-0302-encrypted-sqlite-replication-standard.md) — per-org data isolation for visor's Base store
 10. `cloud/clients/fleet/fleet.go`, `cloud/clients/visor/byo.go`, `cloud/resource_billing.go` — reference implementation
 11. `visor/service/{cloud_cost,cost_aws,cost_do,cost_azure,cost_gcp,metering}.go`, `visor/object/{cost_cursor,fleet_worker,billing_lease,meter_lease}.go`, `visor/chain/validator.go` — billing primitives

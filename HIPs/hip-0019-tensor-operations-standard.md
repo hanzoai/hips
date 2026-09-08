@@ -1,23 +1,26 @@
 ---
-hip: 0019
+hip: "0019"
 title: Tensor Operations Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
+implementation-rust: partial
+implementation-cpp: partial
 created: 2025-01-09
 requires: HIP-0003
 ---
 
-# HIP-19: Tensor Operations Standard
+
+# HIP-0019: Tensor Operations Standard
 
 ## Abstract
 
 This proposal defines the tensor operations standard for all ML computations in the Hanzo ecosystem. It specifies the data types, device backends, operation primitives, model formats, quantization strategies, memory management, custom operations, WebAssembly compilation pipeline, and API surface that every inference workload MUST use. The reference implementation is Hanzo Candle, a fork of HuggingFace's Candle Rust ML framework extended with Apple Silicon Metal support, custom quantization kernels, Hamiltonian dynamics operations, and integration with the Hanzo model serving pipeline.
 
-**Repository**: [github.com/hanzoai/candle](https://github.com/hanzoai/candle)
-**Crates**: `candle-core`, `candle-nn`, `candle-transformers`, `candle-metal-kernels`, `candle-wasm`
-**NPM Package**: `@hanzoai/candle-wasm`
+**Repository**: [github.com/hanzoai/ml](https://github.com/hanzoai/ml)
+**Crates**: `hanzo-ml` (tensor core), `hanzo-nn`, `hanzo-transformers`, `hanzo-metal-kernels` -- the fork publishes under the `hanzo-*` prefix; the `candle-*` names used below follow the upstream layout.
+**NPM Package**: none yet -- the WASM build described below is proposed, not published.
 
 ## Motivation
 
@@ -36,62 +39,6 @@ Hanzo Candle addresses all seven problems with a single codebase.
 ## Design Philosophy
 
 This section explains the reasoning behind every major architectural decision. These are not arbitrary choices -- each follows from a specific constraint.
-
-### Why Rust for ML
-
-Python is the ML lingua franca. Every researcher writes Python. Every training framework (PyTorch, JAX, TensorFlow) has Python as its primary interface. So why would an ML infrastructure company build its inference layer in Rust?
-
-The answer is that **training and inference have fundamentally different requirements**.
-
-Training is exploratory. Researchers iterate on architectures, loss functions, and data pipelines. They need rapid prototyping, interactive debugging, and the ability to inspect intermediate tensors. Python excels at this. The GIL does not matter because training is GPU-bound and Python is just orchestrating CUDA kernels.
-
-Inference is operational. A production inference server must:
-
-- Start in milliseconds (not seconds) for serverless cold starts
-- Handle thousands of concurrent requests without GIL contention
-- Use minimal memory so more RAM is available for model weights
-- Deploy as a single artifact without dependency chains
-- Run for months without memory leaks or GC pauses
-
-For these requirements, Rust provides:
-
-- **C-level performance**: No interpreter overhead, no garbage collector, no JIT warmup. For CPU-bound operations (tokenization, beam search, KV cache management), Rust is 10-100x faster than Python.
-- **Memory safety without GC**: Ownership and borrowing eliminate use-after-free, double-free, and data races at compile time. No garbage collection pauses during inference.
-- **Zero-cost abstractions**: Traits, generics, and iterators compile to the same machine code as hand-written C. The device abstraction layer adds no runtime overhead.
-- **Single-binary deployment**: `cargo build --release` produces one statically-linked binary. Our inference server is ~50MB, starts in <100ms, and has zero runtime dependencies.
-- **Fearless concurrency**: Rust's type system prevents data races. Concurrent request handling requires no locks on read-only model weights.
-
-The tradeoff is development velocity. Rust has a steeper learning curve than Python, and compile times are longer. We accept this tradeoff because inference code changes infrequently once correct -- the model architecture is fixed, and the serving logic is stable. The operational benefits compound over millions of inference requests.
-
-### Why Candle (HuggingFace Fork)
-
-There are several Rust ML frameworks: tch-rs (PyTorch bindings), burn, ort (ONNX Runtime bindings), and Candle. We chose Candle for specific reasons:
-
-**tch-rs** wraps libtorch via FFI. This gives you PyTorch's full operator set in Rust, but you are still shipping a 2GB libtorch dynamic library. The binary is not self-contained, and you inherit PyTorch's memory allocator behavior (including fragmentation under long-running inference). You also cannot compile to WASM.
-
-**burn** is a pure-Rust framework with its own backend system. It is well-designed but young. Its model ecosystem is small -- loading a HuggingFace checkpoint requires manual weight mapping for each architecture. It does not yet support GGUF quantized formats.
-
-**ort** wraps ONNX Runtime. ONNX is a good interchange format, but not all model architectures export cleanly to ONNX (notably: models with dynamic control flow, KV caching, or custom attention patterns). You are also limited to what ONNX operators support.
-
-**Candle** is HuggingFace's native Rust ML framework. It provides:
-
-- PyTorch-like tensor API (`Tensor::matmul`, `Tensor::softmax`, etc.)
-- Direct loading of safetensors files (HuggingFace's standard model format)
-- Pre-built model architectures (LLaMA, Mistral, Phi, Whisper, Stable Diffusion)
-- CPU, CUDA, and Metal backends in a single crate
-- WASM compilation support
-- Active maintenance by HuggingFace engineers
-
-We fork Candle to add:
-
-1. **Enhanced Metal kernels**: Custom quantized matmul kernels for Apple Silicon that outperform the upstream implementation by 2-3x on M-series chips
-2. **GGUF quantization support**: Full Q4_K_M and Q5_K_M quantization with optimized dequantization kernels
-3. **KV cache management**: Pre-allocated, ring-buffer KV caches for efficient autoregressive generation
-4. **Hanzo model registry integration**: Direct loading from Hanzo Object Storage (HIP-0032) and the Zen Gateway model cache
-5. **Batched inference**: Dynamic batching with padding-free attention for throughput optimization
-6. **Hamiltonian dynamics operations**: Symplectic integrators and energy-preserving transforms for the HMM protocol (HIP-0008) and active inference (HIP-0007)
-
-By building on HuggingFace's work, we get broad model compatibility. Any model published to HuggingFace Hub in safetensors format can be loaded with minimal effort.
 
 ### Why Not Just Use PyTorch or ONNX Runtime
 
@@ -122,29 +69,6 @@ ONNX Runtime is the wrong choice when:
 - You need to modify the inference loop (e.g., speculative decoding, guided generation)
 
 Candle fills the gap: **a minimal, embeddable ML runtime that compiles to native code or WASM, supports the model formats and quantization strategies that matter for LLM/diffusion inference, and gives the developer full control over the inference loop**.
-
-### Why WebAssembly Support
-
-Candle compiles to WASM via `wasm32-unknown-unknown`. This enables a deployment model that no other ML framework supports well: **in-browser inference with zero server infrastructure**.
-
-Concrete use cases:
-
-- **Privacy-sensitive applications**: Medical text analysis, personal document summarization, journal entry processing. The data never leaves the user's device. There is no API call, no server log, no data retention policy to worry about.
-- **Offline capability**: A WASM model works without network connectivity. Mobile web apps, field tools, and disaster-response systems benefit from this.
-- **Latency elimination**: No network round-trip. For small models (1-3B parameters with INT4 quantization), in-browser inference is faster than a cloud API call because you eliminate 50-200ms of network latency.
-- **Cost elimination**: No GPU servers to provision, no API bills, no autoscaling complexity. The user's device provides the compute.
-
-The tradeoff is model size. WASM inference is CPU-only (no GPU access from the browser) and limited by the device's RAM. In practice, this means models up to ~3B parameters with INT4 quantization (~1.5GB) work well on modern laptops and high-end phones. Larger models require server-side inference.
-
-### Why Tensor-Level Standardization
-
-Multiple systems in the Hanzo ecosystem consume tensors: Jin (HIP-0003) for multimodal inference, Node (HIP-0020) for blockchain-verified inference, browser clients for edge ML, and the LLM Gateway (HIP-0004) for model serving. Without a shared standard, each system invents its own tensor format, memory layout, and operation semantics. This leads to:
-
-- **Serialization overhead**: Converting between formats (e.g., PyTorch tensors to ONNX to TFLite) introduces bugs and performance loss.
-- **Correctness drift**: Two implementations of softmax that differ in numerical precision produce different model outputs, making inference non-reproducible.
-- **Duplicated effort**: Every team writes their own matmul, attention, and normalization kernels.
-
-By standardizing at the tensor level, all Hanzo systems share a single implementation of every operation. A tensor produced by Jin can be consumed by Node without conversion. Browser and server inference produce bit-identical results for the same model and input.
 
 ## Specification
 
@@ -502,7 +426,7 @@ pub trait CustomOp: Send + Sync {
 
 ### WASM Compilation Pipeline
 
-The WASM pipeline compiles Candle to WebAssembly and packages it as an npm module for browser consumption. The full pipeline:
+The WASM pipeline compiles Candle to WebAssembly and packages it as an npm module for browser consumption. The repository carries per-model WASM examples (`hanzo-ml-wasm-examples/`), but no package is published to npm yet, so the pipeline and the package name below describe what this HIP proposes rather than something you can install today:
 
 ```
 Rust source (candle-core, candle-nn, candle-transformers)
@@ -672,7 +596,7 @@ let next_token = logits.argmax(D::Minus1)?;
 
 ### Repository
 
-[github.com/hanzoai/candle](https://github.com/hanzoai/candle) -- fork of [huggingface/candle](https://github.com/huggingface/candle) with Hanzo extensions.
+[github.com/hanzoai/ml](https://github.com/hanzoai/ml) -- fork of [huggingface/candle](https://github.com/huggingface/candle) with Hanzo extensions.
 
 ### Build
 
@@ -698,10 +622,10 @@ cargo build --release --features "cuda metal"
 | System | Integration | Details |
 |--------|-------------|---------|
 | **Zen Gateway** (HIP-0039) | Edge inference | Quantized Zen models served via Candle on CPU/Metal for low-latency edge nodes |
-| **Studio** (HIP-0035) | Diffusion inference | Stable Diffusion / Flux pipelines run on Candle Metal backend for Apple Silicon users |
+| **Studio** (HIP-1211) | Diffusion inference | Stable Diffusion / Flux pipelines run on Candle Metal backend for Apple Silicon users |
 | **Jin** (HIP-0003) | Multimodal backbone | Jin model architectures implemented as Candle modules in `candle-transformers` |
 | **LLM Gateway** (HIP-0004) | Local model serving | Gateway routes to local Candle inference workers for on-premise deployments |
-| **Object Storage** (HIP-0032) | Model distribution | Model weights stored in safetensors/GGUF format in Hanzo Object Storage, loaded by Candle |
+| **Object Storage** (HIP-0405) | Model distribution | Model weights stored in safetensors/GGUF format in Hanzo Object Storage, loaded by Candle |
 | **MCP** (HIP-0010) | Tool inference | MCP tool servers embed Candle for classification, embedding, and small-model inference |
 | **Node** (HIP-0020) | Verified inference | Blockchain nodes use Candle for deterministic inference with reproducible outputs |
 | **HMM** (HIP-0008) | Market dynamics | Hamiltonian Market Maker uses `candle-hamiltonian` for symplectic market state evolution |
@@ -819,10 +743,6 @@ Errors are precise and actionable. A `ShapeMismatch` tells you the expected shap
 - **Supply chain**: The `candle-core` crate has minimal dependencies (num-traits, half, safetensors, memmap2). No transitive dependency on OpenSSL or other C libraries for the CPU backend.
 - **Quantized weight integrity**: GGUF files loaded from untrusted sources MUST have their header checksums verified before tensor data is accessed. Malformed block sizes or dimension metadata could cause out-of-bounds reads in dequantization kernels.
 
-## Backwards Compatibility
-
-This HIP establishes the initial tensor operations standard. Future changes to the operation set MUST be additive -- existing operations MUST NOT change signature or semantics. New DTypes and backends MAY be added. Deprecation of an operation requires a new HIP.
-
 ## Test Vectors
 
 Reference implementations MUST pass the following test cases:
@@ -901,8 +821,8 @@ fn test_quantized_load() {
 5. [HIP-0008: HMM Hanzo Market Maker](./hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md)
 6. [HIP-0010: Model Context Protocol](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 7. [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)
-8. [HIP-0032: Object Storage Standard](./hip-0032-object-storage-standard.md)
-9. [HIP-0035: Image & Video Generation Standard](./hip-0035-image-video-generation-standard.md)
+8. [HIP-0405: S3 CRD](./hip-0405-s3-crd.md)
+9. [HIP-1211: AI — The Model API](./hip-1211-ai-the-model-api.md)
 10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
 11. [HuggingFace Candle](https://github.com/huggingface/candle) -- upstream repository
 12. [safetensors format](https://huggingface.co/docs/safetensors/) -- model serialization standard

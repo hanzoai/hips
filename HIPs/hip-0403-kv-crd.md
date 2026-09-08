@@ -1,18 +1,21 @@
 ---
-hip: 0403
+hip: "0403"
 title: KV CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: shipped
 created: 2026-05-19
 ---
 
-# HIP-403: KV CRD
+
+
+# HIP-0403: KV CRD
 
 ## Abstract
 
-The `KV` CRD is the facade Kind for Valkey/Redis-compatible workloads (`hanzoai/kv`). It delegates to the `Datastore` reconciler with `type: valkey`. Used as the cache/queue substrate by the LLM gateway, console, chat, and analytics. The CR's spec is `DatastoreSpec` verbatim.
+The `KV` CRD is the facade Kind for KV-compatible workloads (`hanzoai/kv`). It delegates to the `Datastore` reconciler with `type: valkey`. Used as the cache/queue substrate by the LLM gateway, console, chat, and analytics. The CR's spec is `DatastoreSpec` verbatim.
 
 ## Specification
 
@@ -56,8 +59,6 @@ StatefulSet, headless + ClusterIP Services, PVC.
 
 ### Related services
 
-- HIP-498 (kv service)
-- HIP-454 (insights-kv)
 - Consumers: LLM gateway response cache, console queue, chat rate limiter.
 
 ## Status

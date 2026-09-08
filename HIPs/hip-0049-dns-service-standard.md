@@ -1,15 +1,17 @@
 ---
-hip: 0049
+hip: "0049"
 title: DNS Service Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
+implementation-go: shipped
 created: 2026-02-23
-requires: HIP-0014, HIP-0026, HIP-0027, HIP-0044
+requires: HIP-0014, HIP-0026, HIP-0027
 ---
 
-# HIP-49: DNS Service Standard
+
+# HIP-0049: DNS Service Standard
 
 ## Abstract
 
@@ -30,7 +32,7 @@ Hanzo operates 40+ domains across four organizations (hanzo.ai, lux.network, zoo
 
 1. **Registrar-level DNS management**: Each domain's records are edited in a registrar web UI. A PaaS deployment that takes 30 seconds is followed by a DNS change that takes 30 minutes of human coordination.
 
-2. **No service discovery**: Pods reach each other via `<service>.hanzo.svc.cluster.local` inside the cluster. Outside, developers hardcode endpoints. When an IP changes, every hardcoded reference breaks.
+2. **No service discovery**: Pods reach each other via `<service>.<namespace>.svc.cluster.local` inside the cluster. Outside, developers hardcode endpoints. When an IP changes, every hardcoded reference breaks.
 
 3. **No geo-routing**: All DNS queries resolve to the same IP regardless of location. A user in Frankfurt adds 80ms of latency hitting a New York endpoint.
 
@@ -38,177 +40,15 @@ Hanzo operates 40+ domains across four organizations (hanzo.ai, lux.network, zoo
 
 5. **Manual certificate provisioning**: Wildcard TLS certificates require DNS-01 ACME challenges, which require programmatic DNS record creation. Without a DNS API, certificate renewal breaks at 3 AM.
 
-6. **Split-horizon gap**: Internal services (PostgreSQL, Redis, KMS) should resolve to cluster-internal IPs from within the cluster and should not resolve at all from the public internet.
+6. **Split-horizon gap**: Internal services (SQL, KV, KMS) should resolve to cluster-internal IPs from within the cluster and should not resolve at all from the public internet.
 
 ### What Hanzo DNS Solves
 
-A single DNS service eliminates all six problems. Platform creates DNS records automatically on deploy. Internal services resolve via `*.hanzo.svc` without touching public DNS. DNSSEC signs every zone. Geo-routing directs users to the nearest edge. Wildcard certificates renew unattended. Engineers never log in to a registrar dashboard again.
-
-## Design Philosophy
-
-### Why CoreDNS Over BIND
-
-BIND (Berkeley Internet Name Domain) is the oldest and most widely deployed DNS server. It has served the internet since 1984. It is also a 500,000-line C codebase with a configuration language that requires a dedicated textbook to learn. CoreDNS uses a Corefile (Caddy-inspired syntax) with composable plugins -- a zone declaration with a record source, DNSSEC signing, and logging fits in 8 lines.
-
-| Factor | CoreDNS | BIND |
-|--------|---------|------|
-| Language | Go | C |
-| Configuration | Corefile (plugin chain) | Named.conf + zone files |
-| Plugin system | Compile-time Go plugins | Dynamically loaded C modules |
-| Memory at idle | ~15 MB | ~50 MB |
-| Kubernetes native | Yes (built-in plugin) | No (requires external sync) |
-| Dynamic records | Plugin API | RNDC / nsupdate (complex) |
-| DNSSEC signing | Plugin | Built-in (complex configuration) |
-| Community | CNCF graduated project | ISC maintained |
-
-The decisive factor is extensibility. Adding a custom record source to BIND means writing C code that links against BIND's internal APIs. Adding a custom record source to CoreDNS means writing a Go plugin that implements a single interface. Our custom plugins (API-driven records, geo-routing, ACME integration) are 200-400 lines of Go each. The equivalent BIND modules would be 2,000+ lines of C with manual memory management.
-
-The tradeoff: BIND has 40 years of edge-case hardening and supports every obscure DNS feature (TSIG, catalog zones, RPZ). CoreDNS covers the 95% case. For our use case -- authoritative serving, service discovery, DNSSEC, and geo-routing -- CoreDNS's feature set is sufficient.
-
-### Why CoreDNS Over PowerDNS
-
-PowerDNS is the modern alternative to BIND. It stores records in PostgreSQL, making it API-friendly out of the box. The problem is operational weight: DNS availability now depends on database availability. If PostgreSQL is down, DNS is down, and if DNS is down, nothing works -- including the monitoring that tells you PostgreSQL is down. Circular dependency.
-
-CoreDNS serves cached records from memory. The management API is an eventual-consistency layer, not a hard dependency. It can be down for hours without affecting resolution.
-
-### Why Not Just Use Cloudflare DNS
-
-Cloudflare DNS is fast, free for basic use, and offers a mature API. Many Hanzo domains already use Cloudflare as a registrar. Why build a custom DNS service?
-
-Three reasons:
-
-1. **Self-hosted infrastructure model**: Hanzo's value proposition includes self-hostable infrastructure. Enterprise customers who deploy Hanzo on-premises cannot use Cloudflare for internal DNS. A self-hosted DNS service works identically in cloud, on-premises, and air-gapped environments.
-
-2. **Split-horizon and service discovery**: Cloudflare serves public DNS only. It cannot resolve `postgres.hanzo.svc` to a cluster-internal IP for pods inside Kubernetes. We need a DNS server that serves different answers depending on whether the query originates from inside or outside the cluster. CoreDNS does this natively with its `kubernetes` plugin.
-
-3. **Deployment automation**: When Platform (HIP-14) deploys a service, it needs to create a DNS record in the same transaction as the deployment. Calling the Cloudflare API adds an external dependency to the deployment path. If Cloudflare's API is slow or down, deployments fail for a reason unrelated to our infrastructure. A co-located DNS API has sub-millisecond latency and no external dependency.
-
-Cloudflare remains the upstream resolver and CDN edge for public domains. Hanzo DNS is authoritative for zone data. The architecture is: Cloudflare delegates to `ns1.hanzo.ai` and `ns2.hanzo.ai` for authoritative answers, then caches and serves those answers through its global anycast network. We get Cloudflare's edge performance without depending on Cloudflare's API for record management.
-
-### How DNS Fits the Infrastructure Model
-
-DNS is the lowest layer of the Hanzo infrastructure stack. Every other service depends on it:
-
-```
-Layer 5: Applications (Chat, Cloud, Console)
-Layer 4: Platform (HIP-14) -- deploys applications
-Layer 3: API Gateway (HIP-44) -- routes traffic
-Layer 2: IAM (HIP-26), KMS (HIP-27) -- identity, secrets
-Layer 1: DNS (HIP-49) -- name resolution
-Layer 0: Kubernetes, networking, compute
-```
-
-DNS must have fewer dependencies than any service above it. Hanzo DNS depends only on Kubernetes (for pod scheduling) and the filesystem (for zone signing keys). It does not depend on PostgreSQL, Redis, IAM, or any other Hanzo service. This is a deliberate architectural constraint: the foundation cannot depend on the building.
+A single DNS service eliminates all six problems. Platform creates DNS records automatically on deploy. Internal services resolve via `*.<namespace>.svc` without touching public DNS. DNSSEC signs every zone. Geo-routing directs users to the nearest edge. Wildcard certificates renew unattended. Engineers never log in to a registrar dashboard again.
 
 ## Specification
 
-### Architecture
-
-```
-                    Internet
-                       |
-             +---------+---------+
-             |  Cloudflare Edge  |
-             |  (caching proxy)  |
-             +---------+---------+
-                       |
-            NS delegation to ns1/ns2.hanzo.ai
-                       |
-          +------------+------------+
-          |                         |
-  +-------+-------+       +--------+------+
-  | ns1.hanzo.ai  |       | ns2.hanzo.ai  |
-  | (CoreDNS)     |       | (CoreDNS)     |
-  | hanzo-k8s     |       | lux-k8s       |
-  | :53 external  |       | :53 external  |
-  +-------+-------+       +-------+-------+
-          |                        |
-          +------------+-----------+
-                       |
-              +--------+--------+
-              |  Management API  |
-              |     :8053        |
-              +--------+--------+
-                       |
-           +-----------+-----------+
-           |           |           |
-      +---------+ +---------+ +---------+
-      |Platform | |  CLI    | |  Edge   |
-      |(HIP-14) | | hanzo   | | (CDN)   |
-      +---------+ +---------+ +---------+
-```
-
-Two CoreDNS instances run on separate clusters for redundancy. Both serve identical zone data. The management API runs alongside CoreDNS on the primary cluster (hanzo-k8s) and synchronizes records to the secondary via zone transfer (AXFR/IXFR).
-
-### Internal Service Discovery
-
-Inside each Kubernetes cluster, CoreDNS resolves the `*.hanzo.svc` zone for internal service discovery. This replaces the default `cluster.local` domain with a shorter, consistent naming scheme.
-
-| Internal Name | Resolves To | Service |
-|---------------|-------------|---------|
-| `iam.hanzo.svc` | 10.245.x.x (ClusterIP) | IAM (HIP-26) |
-| `postgres.hanzo.svc` | 10.245.x.x | PostgreSQL (HIP-29) |
-| `redis.hanzo.svc` | 10.245.x.x | Valkey (HIP-28) |
-| `kms.hanzo.svc` | 10.245.x.x | KMS (HIP-27) |
-| `llm-gateway.hanzo.svc` | 10.245.x.x | LLM Gateway (HIP-4) |
-| `minio.hanzo.svc` | 10.245.x.x | Object Storage (HIP-32) |
-| `gateway.hanzo.svc` | 10.245.x.x | API Gateway (HIP-44) |
-| `dns-api.hanzo.svc` | 10.245.x.x | DNS Management API |
-
-The `hanzo.svc` zone is served only to queries originating from cluster pod CIDRs. External queries for `*.hanzo.svc` receive NXDOMAIN. This is the split-horizon boundary.
-
-### Split-Horizon Resolution
-
-CoreDNS evaluates the source IP of each query to determine the view:
-
-```
-Corefile (simplified):
-
-# Internal view: cluster pods
-hanzo.svc:53 {
-    acl {
-        allow net 10.244.0.0/16   # Pod CIDR (hanzo-k8s)
-        allow net 10.245.0.0/16   # Service CIDR
-        block
-    }
-    kubernetes hanzo.svc {
-        namespaces hanzo lux zoo pars
-    }
-    log
-}
-
-# External view: public internet
-hanzo.ai:53 {
-    hanzo_records {
-        api_endpoint http://dns-api.hanzo.svc:8053
-        refresh_interval 30s
-    }
-    dnssec {
-        key file /etc/coredns/keys/Khanzo.ai
-    }
-    hanzo_geo {
-        edge_config /etc/coredns/edge.json
-    }
-    log
-    cache 300
-}
-```
-
-Internal queries hit the `kubernetes` plugin, which reads Service and Endpoint objects directly from the Kubernetes API. External queries hit the `hanzo_records` plugin, which serves records loaded from the management API. The two views share no state and cannot leak records across boundaries.
-
-### DNS Record Types
-
-The management API supports the standard DNS record types needed for web infrastructure:
-
-| Type | Purpose | Example |
-|------|---------|---------|
-| A | IPv4 address | `api.hanzo.ai -> 24.199.76.156` |
-| AAAA | IPv6 address | `api.hanzo.ai -> 2604:a880:...` |
-| CNAME | Alias | `www.hanzo.ai -> hanzo.ai` |
-| MX | Mail exchange | `hanzo.ai -> 10 mail.hanzo.ai` |
-| TXT | Text records | `_dmarc.hanzo.ai -> v=DMARC1; ...` |
-| SRV | Service location | `_http._tcp.api.hanzo.ai -> ...` |
-| CAA | Certificate authority auth | `hanzo.ai -> 0 issue letsencrypt.org` |
+ CAA | Certificate authority auth | `hanzo.ai -> 0 issue letsencrypt.org` |
 | NS | Nameserver delegation | `hanzo.ai -> ns1.hanzo.ai` |
 
 DNSSEC-related types (RRSIG, DNSKEY, DS, NSEC/NSEC3) are generated automatically by the signing plugin and are not managed via the API.
@@ -217,7 +57,7 @@ DNSSEC-related types (RRSIG, DNSKEY, DS, NSEC/NSEC3) are generated automatically
 
 The management API provides CRUD operations for DNS records. It runs on port 8053 and authenticates via IAM JWT tokens (HIP-26).
 
-**Base URL**: `http://dns-api.hanzo.svc:8053/v1` (internal), `https://api.hanzo.ai/v1/dns` (external, via API Gateway)
+**Base URL**: `http://localhost:8053/v1` (internal), `https://api.hanzo.ai/v1/dns` (external, via API Gateway)
 
 #### Endpoints
 
@@ -392,7 +232,7 @@ hanzo_sync:github.com/hanzoai/dns/plugin/sync
 
 ### Management API Implementation
 
-The management API is a standalone Go binary that stores records in an embedded BoltDB database. BoltDB was chosen over PostgreSQL to maintain the zero-external-dependency constraint -- DNS cannot depend on the database it helps other services discover. The API and CoreDNS run as separate containers in the same pod, communicating over localhost on port 8053.
+The management API is a standalone Go binary that stores records in an embedded BoltDB database. BoltDB was chosen over SQL to maintain the zero-external-dependency constraint -- DNS cannot depend on the database it helps other services discover. The API and CoreDNS run as separate containers in the same pod, communicating over localhost on port 8053.
 
 On each record mutation, the API: (1) validates the JWT against IAM JWKS, (2) checks org membership matches zone ownership, (3) validates the record format, (4) writes to BoltDB, (5) notifies the CoreDNS plugin to refresh its in-memory zone, and (6) triggers an IXFR to the secondary if configured.
 
@@ -487,7 +327,7 @@ The DNS server enforces per-source rate limits to mitigate DNS amplification att
 9. [HIP-14: Application Deployment Standard](./hip-0014-application-deployment-standard.md)
 10. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md)
 11. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md)
-12. [HIP-44: API Gateway Standard](./hip-0044-api-gateway-standard.md)
+12. HIP-44: API Gateway Standard
 13. [Hanzo DNS Repository](https://github.com/hanzoai/dns)
 
 ## Copyright

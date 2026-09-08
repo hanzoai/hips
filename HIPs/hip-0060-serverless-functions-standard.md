@@ -1,30 +1,30 @@
 ---
-hip: 0060
+hip: "0060"
 title: Serverless Functions (FaaS) Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
+implementation-go: shipped
 created: 2026-02-23
-requires: HIP-0030, HIP-0050, HIP-0055
+requires: HIP-1061, HIP-0050, HIP-0139
+capability: functions
 ---
 
-# HIP-60: Serverless Functions (FaaS) Standard
+
+# HIP-0060: Serverless Functions (FaaS) Standard
 
 ## Abstract
 
-This proposal defines the Serverless Functions standard for the Hanzo ecosystem. **Hanzo Functions** is a Function-as-a-Service platform for event-driven AI workloads, built on Knative Serving with a custom AI runtime that supports GPU-attached execution and sub-second cold starts.
+This proposal defines the Serverless Functions standard for the Hanzo ecosystem. **Hanzo Functions** is a Function-as-a-Service platform for event-driven AI workloads. What ships today is a per-org function registry plus sandboxed invocation; the Knative execution plane, GPU pools and snapshotting specified further down are the design for where that execution grows, and each such section says so where it diverges from the code.
 
 Functions are the smallest deployable unit of compute in the Hanzo platform. Where the Inference Engine (HIP-0043) runs persistent model-serving processes and the Edge layer (HIP-0050) runs V8 isolates for lightweight request processing, Functions occupy the middle ground: containerized, stateless units of work that spin up on demand, execute, and disappear. They are the correct abstraction for bursty, event-driven AI workloads that do not justify a long-running service.
 
-The platform supports four function runtimes: **Python**, **Go**, **Rust**, and **TypeScript**. Each runtime ships as a pre-built base image with AI-specific dependencies (PyTorch, ONNX Runtime, Candle, transformers.js) pre-installed and pre-warmed, eliminating the dependency installation tax that plagues cold starts on generic FaaS platforms.
+The registry accepts six runtimes today — `node`, `python`, `go`, `deno`, `bash` and `container` (BYO image) — the closed set in `apps/functions/functions.go:52-55`, mapped to the sandbox executor's language table. The pre-warmed AI base images this paragraph used to promise (PyTorch/ONNX/Candle pre-installed) are design, not shipped artifacts.
 
-AI-specific triggers connect functions to the broader Hanzo infrastructure: model inference events from the LLM Gateway (HIP-0004), webhook delivery, scheduled retraining cycles, data pipeline stages from Hanzo Stream (HIP-0030), and async task invocation from Hanzo MQ (HIP-0055). Functions can also be deployed to the Edge (HIP-0050) for latency-sensitive invocation without GPU requirements.
+AI-specific triggers connect functions to the broader Hanzo infrastructure: model inference events from the LLM Gateway (HIP-0004), webhook delivery, scheduled retraining cycles, data pipeline stages from Hanzo Stream (HIP-1061), and async task invocation from Hanzo MQ (HIP-0055). Functions can also be deployed to the Edge (HIP-0050) for latency-sensitive invocation without GPU requirements.
 
-**Repository**: [github.com/hanzoai/functions](https://github.com/hanzoai/functions)
-**Port**: 8060 (API), 8061 (function invocation proxy)
-**Docker**: `ghcr.io/hanzoai/functions:latest`
-**Binary**: `hanzo-fn`
+**Serving**: `apps/functions` in `hanzoai/cloud`, at `/v1/functions` (`manifest/apps.go:176`) — the registry and invoke endpoint ship inside the cloud binary (`plugin/functions`), not as a standalone service with its own ports, image or `hanzo-fn` binary; the CLI is the generated `hanzo functions` command group (HIP-1030)
 
 ## Motivation
 
@@ -70,7 +70,7 @@ Each step has different resource requirements (CPU vs. GPU), different scaling c
 
 Functions let you decompose the pipeline into independent units. The embedding step runs on a GPU function. Every other step runs on a CPU function. The GPU function scales independently based on its queue depth. If the embedding step fails, it retries independently without re-running text extraction.
 
-The glue between steps is Hanzo Stream (HIP-0030) for durable event-driven pipelines and Hanzo MQ (HIP-0055) for async task invocation. Functions subscribe to stream topics or MQ subjects and are triggered automatically when events arrive.
+The glue between steps is Hanzo Stream (HIP-1061) for durable event-driven pipelines and Hanzo MQ (HIP-0055) for async task invocation. Functions subscribe to stream topics or MQ subjects and are triggered automatically when events arrive.
 
 ### Why Not Just Use Kubernetes Jobs
 
@@ -159,6 +159,70 @@ Training/fine-tuning   │ ML Pipeline (HIP-57) │ Minutes     │ Yes │ Hour
 
 ## Specification
 
+### The shipped surface
+
+Every address is under `/v1/functions` — nine paths, published in
+`plugin/functions/openapi.json` and documented route-by-route in the package
+doc (`apps/functions/functions.go:11-27`):
+
+```
+GET    /v1/functions                    list
+POST   /v1/functions                    create / redeploy
+GET    /v1/functions/metrics            invocation chart + cost (derived from real rows)
+GET    /v1/functions/triggers           all triggers (HTTP)
+GET    /v1/functions/deployments        current deployments
+GET    /v1/functions/secrets            mounted secret NAMES (values live in KMS)
+GET    /v1/functions/{name}             detail
+DELETE /v1/functions/{name}             delete, with its invocations
+GET    /v1/functions/{name}/invocations recent invocations
+GET    /v1/functions/{name}/logs        last invocation output
+POST   /v1/functions/{name}/invoke      run it
+```
+
+**Store.** The per-org function registry: runtime, source (≤256 KiB), resource
+limits, and the NAMES of mounted secrets — never a secret value
+(`apps/functions/store.go`, `apps/functions/functions.go:4-9`). Invocation
+rows live beside it, and every metric shown is derived from them; nothing is
+interpolated.
+
+**Execution.** Invoke delegates to a sandbox through `apps/exec` — the binary
+NEVER runs org code in-process, and an unconfigured sandbox fails closed with
+503 rather than fabricating a result (`apps/functions/functions.go:26-29`,
+`apps/functions/invoke.go:20-38`).
+
+**Tenancy.** The org is the validated principal (HIP-0026); the registry's
+org column is enforced on every query, and the billing subject is
+`principal.Ledger`, never a caller-supplied field.
+
+**Meter.** Functions is **metered** — the plugin declares `Price:
+cloud.Metered` (`plugin/functions/main.go:21`), so a write to this surface
+requires commercial standing before it runs (`spend.go:302`). Two debits land
+on the caller's org ledger through the ONE shared `cloud.ResourceMeter`, and
+either is independently free at a zero rate:
+
+- the flat per-invocation fee, `CLOUD_FUNCTION_FEE_CENTS`
+  (`apps/functions/functions.go:61-69`), gated BEFORE the sandbox runs — an
+  org that cannot cover it gets 402 and no work happens
+  (`apps/functions/invoke.go:169-171`);
+- the compute fee in GB-seconds — (memory GB) × (wall-clock s), the unit the
+  industry bills serverless on — at `CLOUD_FUNCTION_GBSEC_CENTS`, default
+  $1.00/GB-s, integer-exact with half-up rounding
+  (`apps/functions/gbseconds.go`).
+
+**Events.** None: the capability publishes nothing on the bus, so a
+customer's webhooks receive nothing from it.
+
+**Observability.** Nothing beyond the request span every route gets;
+`GET /v1/functions/metrics` is a read over the org's own invocation rows,
+not a telemetry exporter.
+
+**Stage.** **ga** (HIP-0139 §8): functions is agentic-OS core — the unit of
+compute agents deploy to.
+
+**Upstreams.** None: no OSS project is forked, embedded or mirrored in
+`apps/functions`; Knative, CRIU and the runtime images named in this document
+are referenced designs, not vendored code.
+
 ### Architecture
 
 ```
@@ -189,7 +253,7 @@ Training/fine-tuning   │ ML Pipeline (HIP-57) │ Minutes     │ Yes │ Hour
      │                    │    │                    │
   ┌──┴───┐  ┌──────┐  ┌──┴──┐ │ ┌──────┐  ┌─────┐ │
   │Stream│  │  MQ  │  │HTTP │ │ │Model │  │GPU  │ │
-  │HIP-30│  │HIP-55│  │     │ │ │Cache │  │Pool │ │
+  │HIP-1061│  │HIP-55│  │     │ │ │Cache │  │Pool │ │
   └──────┘  └──────┘  └─────┘ │ └──────┘  └─────┘ │
                                └───────────────────┘
 ```
@@ -309,9 +373,9 @@ The `Context` object provides:
 | `ctx.headers` | dict | HTTP headers (for HTTP triggers) or message headers |
 | `ctx.trigger` | TriggerInfo | Trigger metadata (type, source, timestamp) |
 | `ctx.model(name)` | Model | Load a model from the GPU model cache |
-| `ctx.kv` | KVClient | Valkey client (HIP-0028) |
-| `ctx.storage` | StorageClient | Object storage client (HIP-0032) |
-| `ctx.publish(subject, data)` | None | Publish to MQ (HIP-0055) or Stream (HIP-0030) |
+| `ctx.kv` | KVClient | KV client (HIP-1164) |
+| `ctx.storage` | StorageClient | Object storage client (HIP-0405) |
+| `ctx.publish(subject, data)` | None | Publish to MQ (HIP-0055) or Stream (HIP-1061) |
 | `ctx.log` | Logger | Structured logger with request correlation ID |
 
 #### Go Runtime
@@ -424,7 +488,7 @@ triggers:
 
 HTTP triggers create a Knative Route that maps the path to the function's Knative Service. Authentication is handled by the invocation proxy using IAM (HIP-0026) JWT validation.
 
-#### MQ Trigger (HIP-0055)
+#### MQ Trigger
 
 Invokes the function when a message arrives on a NATS JetStream subject.
 
@@ -439,7 +503,7 @@ triggers:
 
 The Trigger Manager runs a NATS consumer in the specified consumer group. When a message arrives, it invokes the function via HTTP and acknowledges the message only after the function returns successfully. If the function fails, the message is nacked and redelivered per the MQ queue's retry policy.
 
-#### Stream Trigger (HIP-0030)
+#### Stream Trigger (HIP-1061)
 
 Invokes the function when an event is published to a Kafka topic.
 
@@ -467,7 +531,7 @@ triggers:
     payload: '{"type": "full_reconcile"}'
 ```
 
-The Trigger Manager uses an internal scheduler (backed by PostgreSQL, not Kubernetes CronJobs) to fire cron triggers. This avoids the Kubernetes CronJob limitation of 1-minute granularity and provides better observability through the management API.
+The Trigger Manager uses an internal scheduler (backed by SQL, not Kubernetes CronJobs) to fire cron triggers. This avoids the Kubernetes CronJob limitation of 1-minute granularity and provides better observability through the management API.
 
 #### Inference Event Trigger
 
@@ -519,7 +583,7 @@ Hanzo Functions uses **container snapshots** (CRIU-based checkpoint/restore) to 
 1. **Snapshot creation**: When a function is deployed, the platform runs the container, initializes the runtime (imports, CUDA setup, model loading), and creates a CRIU checkpoint of the process state.
 2. **Snapshot restore**: On cold start, instead of starting the container from scratch, the platform restores the checkpoint. All imports are loaded, CUDA is initialized, and models are in memory. The function is ready to execute in <1 second.
 
-Snapshots are stored in Object Storage (HIP-0032) and cached on local SSD at each node. They are invalidated when the function code or runtime version changes.
+Snapshots are stored in Object Storage (HIP-0405) and cached on local SSD at each node. They are invalidated when the function code or runtime version changes.
 
 ```
 Traditional cold start:  Pull image (5s) → Start container (1s) → Import torch (3s) → Load CUDA (2s) → Load model (3s) = 14s
@@ -536,7 +600,7 @@ GPU functions frequently load the same models. The model cache is a node-local L
 Model requested by function
   --> Check node-local cache (NVMe SSD)
       --> Hit: mmap into GPU memory (50-200ms)
-      --> Miss: Download from Object Storage (HIP-0032) (1-10s)
+      --> Miss: Download from Object Storage (HIP-0405) (1-10s)
               --> Cache locally
               --> mmap into GPU memory
 ```
@@ -555,26 +619,13 @@ hanzo_fn_model_load_duration_seconds{model}
 
 ### Control Plane API
 
-The control plane runs on port 8060 and manages function lifecycle.
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/functions` | GET | List all functions (paginated, filterable by runtime/trigger type) |
-| `/v1/functions` | POST | Create a new function (accepts function.yaml + source archive) |
-| `/v1/functions/{name}` | GET | Function detail: revisions, triggers, scaling config |
-| `/v1/functions/{name}` | PUT | Update function (creates new revision) |
-| `/v1/functions/{name}` | DELETE | Delete function and all revisions |
-| `/v1/functions/{name}/revisions` | GET | List revisions with traffic allocation |
-| `/v1/functions/{name}/revisions/{rev}` | GET | Revision detail: instances, metrics |
-| `/v1/functions/{name}/invoke` | POST | Synchronous invocation (waits for response) |
-| `/v1/functions/{name}/invoke-async` | POST | Asynchronous invocation (returns task ID) |
-| `/v1/functions/{name}/logs` | GET | Function execution logs (streaming SSE) |
-| `/v1/functions/{name}/metrics` | GET | Per-function metrics (invocations, latency, errors) |
-| `/v1/functions/{name}/traffic` | PUT | Update traffic split between revisions |
-| `/v1/triggers` | GET | List all active triggers |
-| `/v1/triggers/{id}` | GET | Trigger detail: source, function, status |
-| `/v1/gpu-pool` | GET | GPU pool status: warm pods, cache utilization |
-| `/health` | GET | Control plane health |
+The management surface this section used to table — ports 8060/8061,
+revisions, traffic splits, async invocation, a GPU-pool read — is design the
+shipped registry does not serve. The served control surface is exactly the
+eleven operations of "The shipped surface" above, and the served document
+(HIP-1030) is its enumeration; an operation absent there is not callable and
+MUST NOT be assumed by a client. Revision management and traffic splitting
+arrive, if they arrive, with the Knative execution plane.
 
 ### Invocation Protocol
 
@@ -638,31 +689,25 @@ traffic:
     percent: 10
 ```
 
-### Prometheus Metrics
+### Metrics
 
-Metrics are exported on port 9060 with namespace `hanzo_fn`:
-
-| Metric | Type | Description |
-|--------|------|-------------|
-| `hanzo_fn_invocations_total` | Counter | Total invocations by function, trigger type, status |
-| `hanzo_fn_duration_seconds` | Histogram | End-to-end execution time (includes cold start) |
-| `hanzo_fn_cold_start_duration_seconds` | Histogram | Cold start time by function, runtime |
-| `hanzo_fn_cold_starts_total` | Counter | Cold starts by function (vs. warm invocations) |
-| `hanzo_fn_errors_total` | Counter | Errors by function, error type |
-| `hanzo_fn_concurrent_executions` | Gauge | Currently executing instances per function |
-| `hanzo_fn_gpu_utilization` | Gauge | GPU utilization per function (GPU functions only) |
-| `hanzo_fn_gpu_memory_bytes` | Gauge | GPU memory usage per function |
-| `hanzo_fn_gpu_pool_available` | Gauge | Available warm GPU pods in pool |
-| `hanzo_fn_gpu_pool_in_use` | Gauge | GPU pods currently executing functions |
-| `hanzo_fn_model_cache_hit_rate` | Gauge | Model cache hit ratio per node |
-| `hanzo_fn_trigger_lag` | Gauge | Lag between event arrival and function invocation |
-| `hanzo_fn_snapshot_restore_seconds` | Histogram | CRIU snapshot restore time |
+There is no `hanzo_fn_*` Prometheus family: the shipped metrics surface is
+`GET /v1/functions/metrics`, a windowed series of REAL invocation counts,
+statuses and cost derived from the org's own invocation rows
+(`apps/functions/metrics.go`) — nothing interpolated, nothing invented. A
+node-level exporter for pools, caches and snapshot restore times belongs to
+the execution plane that would own those mechanisms.
 
 ## Implementation
 
 ### CLI
 
-The `hanzo-fn` CLI is the primary developer interface:
+There is no `hanzo-fn` binary: the developer interface is the generated
+`hanzo functions` command group, projected from the served document like
+every other capability's CLI (HIP-1030). The verbs below are the intended
+ergonomics for that group; the deployment and compose manifests that follow
+describe the standalone service this HIP no longer ships and are retained
+only as the execution-plane design.
 
 ```bash
 # Initialize a new function project
@@ -728,9 +773,9 @@ spec:
               name: hanzo-functions-db
               key: url
         - name: NATS_URL
-          value: nats://nats-mq.hanzo.svc:4222
+          value: nats://localhost:4222
         - name: KAFKA_BROKERS
-          value: insights-kafka-0.insights-kafka.hanzo.svc:9092
+          value: localhost:9092
         volumeMounts:
         - name: config
           mountPath: /etc/functions
@@ -842,7 +887,7 @@ triggers:
     brokers: ${KAFKA_BROKERS}
     group_prefix: fn-
   cron:
-    store: database       # Cron state in PostgreSQL
+    store: database       # Cron state in SQL
 
 gpu_pool:
   enabled: true
@@ -885,61 +930,16 @@ observability:
   metrics_namespace: hanzo_fn
 ```
 
-### Implementation Roadmap
-
-#### Phase 1: Core Platform (Q1 2026)
-- Knative Serving integration with Hanzo control plane
-- Python and TypeScript runtimes with CPU execution
-- HTTP triggers with IAM authentication
-- CLI for deploy/invoke/logs
-- Prometheus metrics export
-
-#### Phase 2: Event Triggers (Q1 2026)
-- MQ trigger (NATS JetStream consumer)
-- Stream trigger (Kafka consumer)
-- Cron trigger with PostgreSQL-backed scheduler
-- Async invocation with task status tracking
-
-#### Phase 3: GPU Functions (Q2 2026)
-- Pre-warmed GPU pool with CUDA-initialized containers
-- Model cache with LRU eviction on NVMe SSD
-- Python + CUDA and Rust + Candle GPU runtimes
-- Container snapshots (CRIU) for Python GPU functions
-
-#### Phase 4: Edge Integration (Q2 2026)
-- Sync TypeScript functions to Edge (HIP-0050) as V8 isolates
-- Unified deployment: single function.yaml deploys to both origin and edge
-- Latency-based routing: edge for CPU functions, origin for GPU functions
-
-#### Phase 5: Advanced Features (Q3 2026)
-- Go runtime with ONNX bindings
-- Traffic splitting and canary deployments
-- Function composition (output of one function triggers another)
-- Cost attribution per function per org (integrated with billing)
-
 ## Security Considerations
 
-### Function Isolation
-
-Each function instance runs in its own Kubernetes pod with:
-- **Network namespace isolation**: Functions cannot communicate with each other directly. All inter-function communication goes through MQ or Stream.
-- **Filesystem isolation**: Read-only root filesystem. Writable `/tmp` with size limits (512MB default).
-- **Resource limits**: CPU, memory, and GPU limits enforced by Kubernetes. Functions that exceed limits are OOM-killed.
-- **Service account**: Each function runs with a dedicated Kubernetes service account with minimal RBAC permissions.
-
-### Secret Management
-
-Function secrets are sourced from KMS (HIP-0027) and injected as environment variables. Secrets are never stored in function.yaml, the control plane database, or container images.
-
-```yaml
-secrets:
-  - name: hanzo-api-key        # KMS secret name
-    env: HANZO_API_KEY          # Environment variable name in function
-  - name: db-connection-string
-    env: DATABASE_URL
-```
-
-The control plane fetches secrets from KMS at deployment time and creates Kubernetes Secrets that are mounted into function pods. Secret rotation triggers a rolling update of function pods.
+What an attacker gets from the wrong implementation: an invoke path that runs
+org code in-process is arbitrary code execution inside the binary that holds
+every tenant's stores — which is why execution is delegated to the sandbox
+and fails closed when the sandbox is absent; a registry that stored secret
+VALUES would turn a function listing into credential disclosure — it stores
+names, and values stay in KMS; and an invoke gated after the work instead of
+before it is free compute for an unfunded org — the gate runs first and 402s
+(`apps/functions/invoke.go:169-171`).
 
 ### Authentication and Authorization
 
@@ -975,11 +975,11 @@ spec:
     - protocol: TCP
       port: 9092    # Kafka
     - protocol: TCP
-      port: 6379    # Valkey
+      port: 6379    # KV
     - protocol: TCP
       port: 9000    # MinIO
     - protocol: TCP
-      port: 5432    # PostgreSQL
+      port: 5432    # SQL
   policyTypes:
   - Egress
 ```
@@ -1008,14 +1008,13 @@ User function code is injected into these base images at deployment time. The co
 | **HIP-19** (Tensor Operations) | Candle library used in Rust GPU runtime for tensor operations. |
 | **HIP-26** (IAM) | Authentication for function deployment and HTTP trigger invocation. |
 | **HIP-27** (KMS) | Secret injection into function environments. |
-| **HIP-28** (KV Store) | Functions access Valkey via `ctx.kv` for caching and state. |
-| **HIP-30** (Event Streaming) | Stream trigger consumes Kafka topics. Functions publish to Stream. |
-| **HIP-31** (Observability) | Prometheus metrics and structured logging. |
-| **HIP-32** (Object Storage) | Model cache storage. Container snapshot storage. Function access via `ctx.storage`. |
-| **HIP-37** (AI Cloud) | Functions are a deployment target within the Cloud platform. |
+| **HIP-1164** (KV Store) | Functions access KV via `ctx.kv` for caching and state. |
+| **HIP-1061** (Event Streaming) | Stream trigger consumes Kafka topics. Functions publish to Stream. |
+| **HIP-132** (Telemetry) | Prometheus metrics and structured logging. |
+| **HIP-405** (Object Storage) | Model cache storage. Container snapshot storage. Function access via `ctx.storage`. |
+| **HIP-106** (Cloud) | Functions are a deployment target within the Cloud platform. |
 | **HIP-43** (Inference Engine) | Persistent serving complement. Engine for steady-state; Functions for bursty. |
 | **HIP-50** (Edge Computing) | TypeScript functions sync to Edge for latency-sensitive CPU workloads. |
-| **HIP-55** (Message Queue) | MQ trigger consumes NATS subjects. Functions publish to MQ via `ctx.publish`. |
 | **HIP-57** (ML Pipeline) | Pipeline stages can be implemented as functions. Retraining triggers. |
 | **HIP-105** (In-Process Extension Runtime) | Complementary, different workload class. HIP-60 runs full containerized functions in Knative pods (cold start in seconds, GPU-attachable). HIP-105 runs in-process wasm/JS/Go extensions inside a host service (cold start in microseconds, no pod). Rule of thumb: if the work justifies a fresh pod, HIP-60; if it's a hot-path validator or per-record hook, HIP-105. |
 
@@ -1026,14 +1025,12 @@ User function code is injected into these base images at deployment time. The co
 3. [CRIU: Checkpoint/Restore in Userspace](https://criu.org/Main_Page)
 4. [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/)
 5. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
-6. [HIP-30: Event Streaming Standard](./hip-0030-event-streaming-standard.md)
+6. [HIP-1061: MQ — Queues and Streams](./hip-1061-mq-queues-and-streams.md)
 7. [HIP-43: LLM Inference Engine Standard](./hip-0043-llm-inference-engine-standard.md)
 8. [HIP-50: Edge Computing Standard](./hip-0050-edge-computing-standard.md)
-9. [HIP-55: Message Queue Standard](./hip-0055-message-queue-standard.md)
-10. [HIP-57: ML Pipeline & Training Standard](./hip-0057-ml-pipeline-standard.md)
-11. [OpenFaaS Architecture](https://docs.openfaas.com/architecture/stack/)
-12. [AWS Lambda Execution Environment](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
-13. [Hanzo Functions Repository](https://github.com/hanzoai/functions)
+9. HIP-57: ML Pipeline & Training Standard
+11. [AWS Lambda Execution Environment](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
+12. [Hanzo Functions Repository](https://github.com/hanzoai/functions)
 
 ## Copyright
 

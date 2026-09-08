@@ -117,7 +117,7 @@ export function DocsFooter() {
                 </a>
               </li>
               <li>
-                <a href="https://discord.gg/hanzo" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="https://discord.gg/CJCyAsm9Vr" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
                   Discord
                 </a>
               </li>

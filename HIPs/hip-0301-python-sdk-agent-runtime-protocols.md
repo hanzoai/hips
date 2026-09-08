@@ -1,13 +1,14 @@
 ---
-hip: 0301
+hip: "0301"
 title: Agent Runtime Protocols & Cross-Platform Parity
 author: Hanzo AI
 type: Standards Track
 category: Core
-status: Draft
+status: Final
 created: 2026-03-31
-requires: HIP-9, HIP-10, HIP-300
+requires: HIP-0009, HIP-0010
 ---
+
 
 # HIP-0301: Agent Runtime Protocols & Cross-Platform Parity
 
@@ -602,28 +603,6 @@ Unified conformance test suite verifying that Python, Rust, and JS implementatio
 
 **CI:** A single CI job runs all three platform test suites against the shared vectors. A platform cannot merge if its output diverges from the vectors.
 
-## Rationale
-
-**Protocol abstractions** enable mock-based testing without network calls. The current SDK requires a live API connection to test agent loop logic.
-
-**Hierarchical config** follows the established pattern used by git and VS Code. Teams share project-level MCP server configurations while individual developers override locally.
-
-**Session compaction** prevents unbounded context growth in long-running agent sessions. Without compaction, agents that run for more than ~30 turns hit context limits and fail.
-
-**PKCE** is required by OAuth 2.1 (RFC 9126) and prevents authorization code interception attacks.
-
-**SSE frame buffering** fixes a class of bugs where network chunking splits an SSE event across two TCP segments.
-
-**Permission data model** enables both interactive and policy-driven permission management.
-
-**LSP integration** gives agents the same code intelligence humans get from IDEs, reducing hallucinated symbol names and missed type errors.
-
-**Hook runner** enables enterprise policy enforcement (e.g., blocking writes to production configs) without modifying the agent runtime itself.
-
-**Sandbox** prevents filesystem escapes. Container detection avoids double-sandboxing overhead.
-
-**Cross-platform parity** ensures users get identical behavior regardless of which platform they use. The shared test vectors are the specification.
-
 ## Reference Implementation
 
 ### Python SDK (`hanzoai` package, `python-sdk/pkg/hanzoai/`)
@@ -687,7 +666,7 @@ Unified conformance test suite verifying that Python, Rust, and JS implementatio
 
 1. [HIP-9: Agent SDK](./hip-0009-agent-sdk-multi-agent-orchestration-framework.md)
 2. [HIP-10: MCP Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
-3. [HIP-300: Unified MCP Tools Architecture](./hip-0300-unified-mcp-tools-architecture.md)
+3. [HIP-0010: Model Context Protocol Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 4. [RFC 7636: PKCE for OAuth](https://datatracker.ietf.org/doc/html/rfc7636)
 5. [RFC 9126: OAuth 2.0 Pushed Authorization Requests](https://datatracker.ietf.org/doc/html/rfc9126)
 6. [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)

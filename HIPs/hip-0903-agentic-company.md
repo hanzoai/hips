@@ -1,15 +1,17 @@
 ---
-hip: 0903
+hip: "0903"
 title: The Agentic Company — Autonomous Firms on Hanzo
 author: Hanzo AI Team
 type: Informational
 category: Meta
-status: Draft
+status: Final
 created: 2026-07-26
-requires: HIP-0902
+requires: HIP-0902, HIP-1312
 ---
 
-# HIP-903: The Agentic Company
+
+
+# HIP-0903: The Agentic Company — Autonomous Firms on Hanzo
 
 ## Preamble
 
@@ -39,7 +41,7 @@ gaps, and an agent that is confused or captured walks through the gap.
 The right primitive is a **guarded state machine**. The illegal move does not
 exist. It is not forbidden, it is *unrepresentable*.
 
-This is already how formation works in `clients/company/machine.go`:
+This is already how formation works in `apps/company/machine.go`:
 
 ```go
 var transitions = []transition{
@@ -76,11 +78,11 @@ What an autonomous firm actually requires, and where it lives:
 | **Legal** | Hold and sign agreements | `/v1/legal` |
 | **Ownership** | Record who owns what | `/v1/captable` |
 | **Capital** | Raise | `/v1/company/fundraise` |
-| **Money** | Hold, move, settle | `/v1/finance`, `/v1/x402`, `/v1/wallets` |
+| **Money** | Hold, move, settle | `/v1/finance`, `/v1/x402`, `/v1/wallet` |
 | **Commerce** | Charge for things | `/v1/commerce`, `/v1/billing`, `/v1/pricing` |
 | **Product** | Build and run software | `/v1/git`, `/v1/deploy`, `/v1/paas`, `/v1/functions` |
 | **Demand** | Find and keep customers | `/v1/guide`, `/v1/crm`, `/v1/campaign` |
-| **Observation** | Know its own state | `/v1/o11y`, `/v1/analytics`, `/v1/usage` |
+| **Observation** | Know its own state | `/v1/o11y`, `/v1/event`, `/v1/usage` |
 | **Compliance** | Stay legal | `/v1/compliance`, `/v1/audit`, `/v1/sbom` |
 | **Custody** | Hold secrets | `/v1/kms` |
 
@@ -101,9 +103,21 @@ them, record the equity genesis, and terminate as an incorporated company.
 cap table and documents (`/import/captable`, `/import/documents`) and skips
 straight to terminal. Companies that already exist are not second-class.
 
-The endpoints are the machine's edges: `/genesis`, `/founders`, `/kyc`,
-`/kyc/decision`, `/kyc/refresh`, `/payment`, `/documents`, `/esign`,
-`/esign/complete`, `/advance`, `/skip`.
+The endpoints are the machine's edges: `PUT /structure`, `/genesis`,
+`/founders`, `/kyc`, `/kyc/decision`, `/kyc/refresh`, `/payment`,
+`/documents`, `/esign`, `/esign/complete`, `/advance`, `/skip`, plus the
+import pair (`/import/captable`, `/import/documents`), the fundraise trio
+(`/fundraise/safe`, `/fundraise/round`, `/fundraise/deck`, section 6), the
+platform register (`/register`, `/register/summary`, `/review`) and the
+`GET|POST /v1/company` root — twenty-one paths, every one under `/v1/company`
+(`manifest/apps.go:426`), published in `plugin/company/openapi.json`.
+
+### The capability contract
+
+The formation surface's contract — its store, its typed and declared operations,
+its tenant, its meter, its stage and what an attacker gets from the wrong
+implementation — is HIP-1312. What follows here is the argument, not the
+specification.
 
 ### The genesis anchor
 
@@ -183,18 +197,20 @@ experience for the tenant.
 
 ### Tracking formations platform-side
 
-If the obligation is Hanzo's, the **record** must be Hanzo's. Today it is not.
+If the obligation is Hanzo's, the **record** must be Hanzo's.
 
-`clients/company/store.go` exposes `Get(ctx, org)`, `Put`, `Delete` — keyed by
-org, every time. There is no list, no scan, no prefix. The consequence is blunt:
-**Hanzo cannot enumerate its own formations.** You can answer "what is this
-tenant's formation state" and cannot answer "how many founders are awaiting
-review", "which formations have been sitting at `documents` for three weeks", or
-"show me every entity we formed this quarter" — which is the question a regulator
-asks.
+`apps/company/store.go` answers two questions under two keys. `Get(ctx, org)` is
+one tenant's formation. `List`, `Count` and `Pending` read across the whole book,
+which is what answers "how many founders are awaiting review", "which formations
+have been sitting at `documents` for three weeks", and "show me every entity we
+formed this quarter" — the question a regulator asks.
 
-The register is the missing organ, and it is small: a cross-tenant list over the
-same table, SuperAdmin-scoped, with the review queue as one filtered view of it.
+That book is `/v1/company/register`, its shape in one read is
+`/register/summary`, and the founders whose KYC is unsettled are `/review`,
+oldest first, so the queue drains in the order they have waited. All three are
+platform operations over the same table: a caller who is not a platform reviewer
+gets 403, and none of them advances a stage. The register reads, the machine
+runs, and the orthogonality above survives the register existing.
 
 ### Two clocks
 
@@ -283,7 +299,7 @@ storefront. This one can.
 A SAFE is a document plus a cap-table entry — both organs already present, so
 the endpoint is composition rather than new machinery. `/fundraise/deck`
 generates the narrative from state the company already holds: its metrics live
-in `/v1/analytics` and `/v1/usage`, its ownership in `/v1/captable`, its revenue
+in `/v1/event` and `/v1/usage`, its ownership in `/v1/captable`, its revenue
 in `/v1/commerce`. A deck assembled from live state instead of a founder's
 recollection is strictly more honest, which is an underrated argument for
 automating it.
@@ -292,7 +308,7 @@ automating it.
 
 **Money.** `/v1/finance/accounts`, `/v1/finance/treasury`, with admin sweep,
 policy, and anchoring under `/v1/admin/treasury`. Ledger discipline through
-`clients/treasury/ledger`. On-chain settlement via `/v1/wallets` and
+`apps/treasury/ledger`. On-chain settlement via `/v1/wallet` and
 `/v1/smart-wallets`. And `/v1/x402` — HTTP-native payment, where a request
 carrying insufficient funds gets `402` and a settlement path rather than a
 rejection. That matters more than it sounds: **x402 is how one agent pays
@@ -303,7 +319,7 @@ The payer is one value in one place — `hanzoai/account.Payer` — because the
 alternative was four copies disagreeing and `402`-ing funded customers.
 
 **Commerce.** `/v1/commerce`, `/v1/billing`, `/v1/pricing`, `/v1/plans`,
-`/v1/entitlements`, `/v1/marketplace`, `/v1/referrals`, `/v1/affiliates`. Price,
+`/v1/entitlement`, `/v1/marketplace`, `/v1/referral`, `/v1/affiliate`. Price,
 meter, invoice, collect, gate on entitlement, pay partners.
 
 **Product.** `/v1/git` (native, no forge dependency), `/v1/builds`, `/v1/deploy`,
@@ -312,10 +328,9 @@ enters at `/v1/git` and leaves as something serving traffic, with no vendor in
 the path.
 
 **Demand.** `/v1/guide` — the GTM autopilot — plus `/v1/crm`, `/v1/campaign`,
-`/v1/marketing`, `/v1/ads`, `/v1/social`, `/v1/content`.
+`/v1/marketing`, `/v1/ad`, `/v1/social`, `/v1/content`.
 
-**Observation.** `/v1/o11y`, `/v1/analytics`, `/v1/usage`, `/v1/costs`,
-`/v1/insights`. A firm that cannot read its own state cannot govern itself, and
+**Observation.** `/v1/o11y`, `/v1/event`, `/v1/usage`, `/v1/costs`. A firm that cannot read its own state cannot govern itself, and
 autonomy without self-observation is just an unattended process.
 
 ## 8. What still requires a human, and why
@@ -431,18 +446,16 @@ mechanical fraction should run without people, so the human fraction is judgment
    Correct, and it means ownership verifiability is best-effort until confirmed.
 6. **Autonomy needs an off switch that agents cannot reach.** `Mode` must be
    settable only by a human quorum, or the dial governs nothing.
-7. **No formation register.** `store.go` is org-keyed with no list, so Hanzo
-   cannot enumerate the entities it formed. This blocks the review queue, the
-   filing tracker, and any compliance report. It is the first thing to build.
-8. **Third-party clocks are unautomatable.** Delaware, the IRS, agents and banks
+7. **Third-party clocks are unautomatable.** Delaware, the IRS, agents and banks
    respond on their own schedule through human channels. Track them honestly;
    do not model them as guards.
 
 ## References
 
+- HIP-1312 — Company — The Formation Machine, the capability this argues for
 - HIP-0902 — Proof of Code, consensus over git refs
 - HIP-0901 — Proof of AI, native execution proofs
-- `clients/company/machine.go` — the formation machine, single source of truth
-- `clients/company/genesis.go` — equity genesis anchor, Hanzo L1 `36963`
-- `clients/captable`, `clients/legal`, `clients/treasury`, `clients/x402`
+- `apps/company/machine.go` — the formation machine, single source of truth
+- `apps/company/genesis.go` — equity genesis anchor, Hanzo L1 `36963`
+- `apps/captable`, `apps/legal`, `apps/treasury`, `apps/x402`
 - `hanzoai/account.Payer` — one payer, one place

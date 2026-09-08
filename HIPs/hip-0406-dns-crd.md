@@ -1,14 +1,17 @@
 ---
-hip: 0406
+hip: "0406"
 title: DNS CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
 created: 2026-05-19
 ---
 
-# HIP-406: DNS CRD
+
+
+# HIP-0406: DNS CRD
 
 ## Abstract
 
@@ -76,7 +79,6 @@ spec:
 
 ### Related services
 
-- HIP-440 (dns service)
 - HIP-0049 (DNS Service Standard) — overarching design doc.
 
 ## Status

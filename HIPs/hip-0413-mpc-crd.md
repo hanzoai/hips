@@ -1,14 +1,17 @@
 ---
-hip: 0413
+hip: "0413"
 title: MPC CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
 created: 2026-05-19
 ---
 
-# HIP-413: MPC CRD
+
+
+# HIP-0413: MPC CRD
 
 ## Abstract
 
@@ -69,7 +72,6 @@ spec:
 
 ### Related services
 
-- HIP-497 (hanzo-mpc service)
 - HIP-0084 (Pulsar M-DKG)
 
 ## Status

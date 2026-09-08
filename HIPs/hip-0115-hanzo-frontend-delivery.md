@@ -1,15 +1,16 @@
 ---
-hip: 0115
+hip: "0115"
 title: Hanzo Frontend Delivery
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Draft
 created: 2026-06-25
-requires: HIP-0036, HIP-0068, HIP-0112, HIP-0119, HIP-0504
+requires: HIP-0036, HIP-0068, HIP-0119, HIP-0504
 ---
 
-# HIP-115: Hanzo Frontend Delivery
+
+# HIP-0115: Hanzo Frontend Delivery
 
 ## Abstract
 
@@ -70,7 +71,7 @@ GitHub Action that pushes to a host, or a second PaaS. One control plane.
 - A `static` app's artifact MUST be published to **`hanzoai/s3`** (the object
   store) and served by **`hanzoai/ingress` + the static plugin**. nginx, caddy, and
   per-site web servers MUST NOT be used (per the platform rule).
-- A `container` app is served through `hanzoai/ingress` → the app, per HIP-0112.
+- A `container` app is served through `hanzoai/ingress` → the app, per HIP-0068.
 - DNS is Cloudflare; TLS is cert-manager/ingress. The host is `<site>.<brand-domain>`.
 - Adding a site is: new repo in `<org>-apps` → register the PaaS app (`static`,
   host) → deploy. No cluster YAML hand-editing, no new web server.
@@ -89,17 +90,6 @@ this HIP by reference and MUST NOT restate or fork it.
 - A bespoke deploy pipeline; a second PaaS; nginx/caddy/per-site servers.
 - Static artifacts served from anywhere but `hanzoai/s3` via ingress+static.
 
-## Migration
-
-Existing scattered frontends are migrated into the apps org one site at a time:
-
-1. Pick the canonical repo for the site (the live, current one — e.g. `hanzoai/docs`
-   for `docs.hanzo.ai`); confirm the alternates carry no unique content.
-2. Move it to `<org>-apps/<name>` (transfer or re-home), clone to
-   `~/work/<org>/apps/<name>`.
-3. Register the PaaS app (`static`, host) → deploy → cut DNS.
-4. Archive the retired alternates. One project per site, achieved.
-
 ## Conformance checklist
 
 1. The site is exactly one repo in `<org>-apps`; no alternate implementations.
@@ -111,5 +101,5 @@ Existing scattered frontends are migrated into the apps org one site at a time:
 
 ## References
 
-- HIP-0036 CI/CD Build System · HIP-0068 Ingress · HIP-0112 Cloud Topology
+- HIP-0036 CI/CD Build System · HIP-0068 Ingress Standard
 - HIP-0119 Service Conventions (the backend peer) · HIP-0504 Design System

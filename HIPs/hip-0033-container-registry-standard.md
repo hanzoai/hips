@@ -1,15 +1,16 @@
 ---
-hip: 0033
+hip: "0033"
 title: Container Registry Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Draft
+implementation-go: partial
 created: 2025-01-15
-requires: HIP-0032
 ---
 
-# HIP-33: Container Registry Standard
+
+# HIP-0033: Container Registry Standard
 
 ## Abstract
 
@@ -24,17 +25,6 @@ distribution channel, and an in-cluster self-hosted registry for fast K8s pulls.
 Every container artifact produced by Hanzo MUST flow through this standard.
 The goal is simple: one build, three destinations, zero ambiguity about where
 images live or how they are authenticated.
-
-## Motivation
-
-We need ONE standard way to:
-
-- Build multi-architecture container images
-- Push images to multiple registries with clear priority semantics
-- Pull images into Kubernetes clusters at maximum speed
-- Authenticate registry access through Hanzo IAM
-- Sign and verify images for supply chain integrity
-- Store non-container OCI artifacts (Helm charts, ML models, WASM modules)
 
 ## Design Philosophy
 
@@ -65,31 +55,6 @@ continue running, and new pods can still be scheduled from cached layers.
 The self-hosted registry acts as both a primary pull source and a pull-through
 cache for upstream images. Kubernetes is configured to try the in-cluster
 registry first, falling back to GHCR only if the local copy is missing.
-
-### Why OCI Over Docker Registry v2 Only
-
-The Docker Registry HTTP API v2 was designed for one thing: container images.
-The OCI Distribution Specification v1.1 generalizes this to any content-addressable
-artifact. This matters because Hanzo stores more than container images:
-
-| Artifact Type | Docker v2 | OCI v1.1 |
-|---|---|---|
-| Container images | Yes | Yes |
-| Helm charts | No | Yes |
-| WASM modules | No | Yes |
-| ML model weights | No | Yes |
-| Signed metadata | No | Yes |
-| SBOMs | No | Yes |
-
-By standardizing on OCI, we get a single registry that stores container images
-alongside Helm charts for deployment, ML model artifacts for inference servers,
-and WASM modules for edge compute. One address scheme, one authentication
-system, one garbage collection policy.
-
-The OCI spec is also the direction the industry is moving. Docker itself now
-implements OCI distribution. Helm 3 stores charts as OCI artifacts. Sigstore
-signs OCI artifacts. Building on OCI means we are building on the convergent
-standard, not a legacy protocol.
 
 ### Why Multi-Registry Strategy
 
@@ -131,13 +96,11 @@ target; it is a runtime optimization.
 ### How It Connects to Other HIPs
 
 ```
-HIP-0032 (CI/CD Standard)
+HIP-0036 (CI/CD Build System Standard)
+  |       Defines HOW images are built (buildx, multi-arch, caching)
   |
   +---> HIP-0033 (this) Container Registry Standard
-  |       Defines WHERE images go and HOW they are authenticated
-  |
-  +---> HIP-0036 (Build Standard)
-          Defines HOW images are built (buildx, multi-arch, caching)
+          Defines WHERE images go and HOW they are authenticated
 
 HIP-0014 (Application Deployment)
   |
@@ -175,7 +138,7 @@ ghcr.io/hanzoai/{service}:{branch}-{sha}
 docker.io/hanzoai/{service}:{tag}
 
 # Tertiary (in-cluster) - runtime cache
-registry.hanzo.svc:5000/hanzoai/{service}:{tag}
+localhost:5000/hanzoai/{service}:{tag}
 ```
 
 The `{service}` name MUST match the GitHub repository name. Examples:
@@ -458,7 +421,7 @@ http:
     X-Content-Type-Options: [nosniff]
 ```
 
-When a node requests an image from `registry.hanzo.svc:5000`, the registry
+When a node requests an image from `localhost:5000`, the registry
 checks its local storage first. On a cache miss, it pulls from GHCR, caches
 the layers locally, and serves them to the node. Subsequent pulls from any
 node in the cluster hit the local cache.
@@ -476,14 +439,14 @@ deploy:
 
     - name: Deploy to K8s
       run: |
-        kubectl -n hanzo set image deployment/iam \
+        kubectl set image deployment/iam \
           iam=ghcr.io/hanzoai/iam:latest
-        kubectl -n hanzo rollout status deployment/iam --timeout=300s
+        kubectl rollout status deployment/iam --timeout=300s
 
     - name: Verify health
       run: |
         kubectl wait --for=condition=available deployment/iam \
-          -n hanzo --timeout=120s
+          --timeout=120s
 ```
 
 ## Security
@@ -494,9 +457,9 @@ Registry authentication flows through Hanzo IAM. The Docker registry v2
 authentication protocol works as follows:
 
 ```
-1. Client attempts: docker pull registry.hanzo.ai/myimage
+1. Client attempts: docker pull oci.hanzo.ai/hanzoai/myimage
 2. Registry returns: 401 with WWW-Authenticate header
-3. Client requests token: GET /api/registry/token?service=registry.hanzo.ai&scope=repository:myimage:pull
+3. Client requests token: GET /v1/iam/registry/token?service=oci.hanzo.ai&scope=repository:hanzoai/myimage:pull
    (with Basic auth credentials)
 4. IAM validates credentials against user database
 5. IAM returns signed JWT with access claims
@@ -510,7 +473,7 @@ IAM implements this via `GetRegistryToken` (see `controllers/registry_token.go`)
 - Admin users receive all requested actions (pull, push, delete)
 - Non-admin users receive pull-only access regardless of request
 - Returns a 15-minute RS256-signed JWT with access claims
-- Registry verifies tokens via the JWKS endpoint at `/api/registry/jwks`
+- Registry verifies tokens via the JWKS endpoint at `/v1/iam/registry/jwks`
 
 ### Signing Key Management
 
@@ -654,16 +617,6 @@ The in-cluster registry is a cache, not a source of truth. If it is lost:
 
 GHCR and Docker Hub are managed by GitHub and Docker respectively. Our disaster
 recovery concern is limited to the in-cluster tier.
-
-### Migration Path
-
-For teams currently using ad-hoc image management:
-
-1. **Week 1**: Adopt GHCR naming convention (`ghcr.io/hanzoai/{service}`)
-2. **Week 2**: Add Docker Hub as secondary push target
-3. **Week 3**: Deploy in-cluster registry, configure pull-through
-4. **Week 4**: Add Trivy scanning and cosign signing to CI
-5. **Week 5**: Enable webhook-driven deployments
 
 ## Reference Implementation
 

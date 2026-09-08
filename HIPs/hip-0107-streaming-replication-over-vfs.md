@@ -1,15 +1,17 @@
 ---
-hip: 0107
+hip: "0107"
 title: Streaming Replication over VFS
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Review
+status: Final
+implementation-go: partial
 created: 2026-05-18
-requires: HIP-0026, HIP-0027, HIP-0032, HIP-0302
+requires: HIP-0026, HIP-0027, HIP-0302
 ---
 
-# HIP-107: Streaming Replication over VFS
+
+# HIP-0107: Streaming Replication over VFS
 
 ## Abstract
 
@@ -56,32 +58,6 @@ superseded by streaming for the replication path; election (now `ha`) and
 the hydrate/adopt primitives stay. See
 "HA-SQLite substrate" and "Relationship to HIP-0302 and hanzoai/replicate"
 below.
-
-## Motivation
-
-Today Hanzo has **two parallel "where bytes live" abstractions**
-inside the same codebase:
-
-- `~/work/hanzo/replicate` carries seven sink backends (`s3`, `gs`,
-  `abs`, `nats`, `oss`, `sftp`, `webdav`). Each is a separately-typed
-  client and credential surface.
-- `~/work/hanzo/vfs` carries a similar but **distinct** set of
-  object-store backends, plus a Go-native `vfs.Backend` interface that
-  every other Hanzo service has been migrating onto.
-
-Meanwhile:
-
-- `~/work/hanzo/zapdb-replicator` is a **separate sidecar image**
-  (`ghcr.io/hanzoai/zapdb-replicator`) that re-implements the
-  age-encryption + frame-pump loop for ZapDB instead of plugging into
-  `replicate` as a source.
-- Blockchain state replication is **ad-hoc per chain** — Lux primary
-  network ships its own snapshot pump, regulated EVM L1 ships its own,
-  Z-Chain ships its own. Each invented its own age-recipient scheme,
-  its own bucket layout, its own restore tool.
-
-Three "almost-the-same" pipelines, three on-call burdens, three
-audit surfaces. This HIP unifies them.
 
 ## Specification
 
@@ -241,7 +217,7 @@ shard, a singleton job name):
   (`ha/k8s`, roadmap) or single-process `Static` for dev and tests.
 - **Fail-closed:** empty membership yields `ok=false` — never a wrong
   writer. No election protocol, no lock service, no service discovery,
-  **no Postgres, no Redis.** Pure Go, stdlib only.
+  **no SQL, no KV.** Pure Go, stdlib only.
 
 Ownership is PER-ORG: the owning replica writes ALL of an org's DBs (root +
 every per-project + per-user file) so an org's data has locality and moves
@@ -317,7 +293,7 @@ as follows — **this is the decision, stated plainly:**
 | Concern | Winner | Why |
 |---|---|---|
 | Durability / replication transport | **`hanzoai/replicate`** (Litestream fork) | Continuous streaming WAL → object store (converted to immutable LTX, shipped as age-encrypted `.zap.age`) is strictly better than whole-object snapshots: lower RPO, incremental bytes, no periodic full-DB rewrite. CGO-free (`modernc.org/sqlite`). Canonical replication path. |
-| Single-writer coordination | **`hanzoai/ha`** | Litestream / `replicate` do NOT elect a writer. HRW / Rendezvous election is the genuinely-novel piece — coordinator-free, fail-closed, no Postgres/Redis. Extracted from `vfs/replica` so a non-SQLite singleton (cron, queue drain) elects without importing a storage library. |
+| Single-writer coordination | **`hanzoai/ha`** | Litestream / `replicate` do NOT elect a writer. HRW / Rendezvous election is the genuinely-novel piece — coordinator-free, fail-closed, no SQL/KV. Extracted from `vfs/replica` so a non-SQLite singleton (cron, queue drain) elects without importing a storage library. |
 | Adoption / hydrate / restore | **`hanzoai/vfs/replica`** (`SnapshotFile` / `RestoreFile`) | Handle-less primitives let any service hydrate-on-open and adopt HA regardless of its own DB library. |
 | Whole-object `VACUUM INTO` snapshot | **superseded for replication** | Kept as the consistent-copy primitive behind `SnapshotFile` and as the currently-shipped ship path; replaced by streaming as the durability transport as services migrate. |
 
@@ -343,10 +319,10 @@ follows the phases below.
 
 ## Non-goals
 
-- **`hanzoai/datastore` (ClickHouse fork).** ClickHouse already uses
+- **`hanzoai/datastore` (Hanzo Datastore fork).** Datastore already uses
   ReplicatedMergeTree + S3-disk for its own replication. HIP-0107 does
   not touch it. The two systems share an S3 bucket via `vfs` prefix
-  separation: `s3://bucket/datastore/...` is ClickHouse-owned;
+  separation: `s3://bucket/datastore/...` is Datastore-owned;
   `s3://bucket/replicate/...` is HIP-0107-owned. No collision.
 - **Cross-region replication patterns.** Active-active, geo-failover,
   read replicas across regions — separate concern. HIP-0107 ships
@@ -384,11 +360,11 @@ follows the phases below.
 
 - HIP-0027 — Secrets Management Standard (the KMS that holds the
   age master key per service/per org)
-- HIP-0032 — Object Storage Standard (the `vfs.Backend` interface
-  contract this HIP standardizes on)
 - HIP-0302 — Hanzo Replicate: Encrypted SQLite + ZapDB Durability
   for Base Services (the predecessor for the SQLite/ZapDB substrate;
   HIP-0107 adds the unified pipeline on top — HIP-0302 stays Final)
+- HIP-0405 — S3 CRD (the `hanzoai/s3` workload behind the `s3://`
+  sink this pipeline writes to in production)
 - Reference implementations:
   - `~/work/hanzo/ha` (SHIPPED) — `github.com/hanzoai/ha`, HRW single-writer
     election (`Owner`/`IsOwner`/`Replicas`/`Member`) + the `Membership` seam

@@ -1,17 +1,19 @@
 ---
-hip: 0303
+hip: "0303"
 title: "Hanzo adopts LP-0010: Brand Sovereignty and Federation Discovery"
 author: Zach Kelling (zach@hanzo.ai)
 type: Meta
 category: Governance
-status: Final
+status: Living
 created: 2026-05-29
 requires: HIP-0014, HIP-0018
 references: LP-0010
 tags: [brand, white-label, federation, governance, pointer]
 ---
 
-# HIP-0303: Hanzo adopts LP-0010 — Brand Sovereignty and Federation Discovery
+
+
+# HIP-0303: Hanzo adopts LP-0010: Brand Sovereignty and Federation Discovery
 
 ## Abstract
 
@@ -40,7 +42,6 @@ This document records Hanzo-specific adoption details and the commit log; the no
 
 - [LP-0010](https://github.com/luxfi/lps/blob/main/LPs/lp-0010-brand-sovereignty-and-federation-discovery.md) — canonical spec
 - [ZIP-0031](https://github.com/zooai/zips/blob/main/ZIPs/zip-0031-brand-sovereignty-and-federation-discovery.md) — Zoo's adoption pointer
-- HIP-0304 — onchain registry sibling (adopts LP-0011)
 - HIP-0005 — Post-Quantum Security for AI Infrastructure
 - HIP-0010 — Model Context Protocol (MCP) Integration Standards
 - HIP-0014 — Application Deployment Standard
