@@ -1,10 +1,11 @@
 ---
-hip: 0413
+hip: "0413"
 title: MPC CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
 created: 2026-05-19
 ---
 

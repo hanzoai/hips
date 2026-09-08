@@ -1,10 +1,11 @@
 ---
-hip: 0409
+hip: "0409"
 title: KMS CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
 created: 2026-05-19
 ---
 

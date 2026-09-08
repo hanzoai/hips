@@ -1,10 +1,11 @@
 ---
-hip: 0404
+hip: "0404"
 title: DocDB CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
 created: 2026-05-19
 ---
 
@@ -59,7 +60,7 @@ StatefulSet, headless + ClusterIP Services, PVC (small — DocumentDB itself is 
 
 ### Related services
 
-- No standalone DocDB CR currently runs in `do-sfo3-the cluster` (DocumentDB is invoked via library by services that need a DocumentDB-compatible layer).
+- No standalone DocDB CR currently runs in `do-sfo3-hanzo-k8s` (DocumentDB is invoked via library by services that need a DocumentDB-compatible layer).
 
 ## Status
 

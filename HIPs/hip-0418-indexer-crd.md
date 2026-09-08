@@ -1,10 +1,12 @@
 ---
-hip: 0418
+hip: "0418"
 title: Indexer CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-05-19
 ---
 

@@ -1,10 +1,11 @@
 ---
-hip: 0033
+hip: "0033"
 title: Container Registry Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Draft
+implementation-go: partial
 created: 2025-01-15
 ---
 
@@ -95,13 +96,11 @@ target; it is a runtime optimization.
 ### How It Connects to Other HIPs
 
 ```
-HIP-0032 (CI/CD Standard)
+HIP-0036 (CI/CD Build System Standard)
+  |       Defines HOW images are built (buildx, multi-arch, caching)
   |
   +---> HIP-0033 (this) Container Registry Standard
-  |       Defines WHERE images go and HOW they are authenticated
-  |
-  +---> HIP-0036 (Build Standard)
-          Defines HOW images are built (buildx, multi-arch, caching)
+          Defines WHERE images go and HOW they are authenticated
 
 HIP-0014 (Application Deployment)
   |
@@ -436,7 +435,7 @@ deploy:
   needs: build
   steps:
     - name: Configure kubectl
-      run: doctl kubernetes cluster kubeconfig save the cluster
+      run: doctl kubernetes cluster kubeconfig save hanzo-k8s
 
     - name: Deploy to K8s
       run: |

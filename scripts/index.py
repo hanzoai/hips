@@ -89,6 +89,11 @@ ORDER_HEADING = "## Reading order"
 REQUIRED = ("hip", "title", "author", "type", "status", "created")
 TITLE_WIDTH = 55
 
+# Go is the reference runtime: `status: Final` says the thing a HIP specifies
+# exists in the code, so a Final HIP declaring Go has none of it states two
+# things about one body of code.
+REFERENCE_RUNTIME = "go"
+
 
 class Refused(Exception):
     """The projection is not safe to write. Nothing has been written."""
@@ -211,6 +216,26 @@ def validate(hips: list[dict]) -> None:
         if h["type"] == "Standards Track" and not category:
             raise Refused(f"{where} is Standards Track and has no category:")
 
+        # One key per runtime. An absent key means nobody has assessed that
+        # runtime; `none` means somebody read it and found nothing. The table
+        # below counts the two apart, so a value it cannot render is refused
+        # rather than projected as itself.
+        for runtime in vocab["implementation"]["language"]:
+            field = f"implementation-{runtime}"
+            progress = h.get(field)
+            if progress is None:
+                continue
+            if progress not in vocab["implementation"]["progress"]:
+                raise Refused(
+                    f"{where} has {field} {progress!r}; the vocabulary is "
+                    f"{sorted(vocab['implementation']['progress'])}"
+                )
+            if runtime == REFERENCE_RUNTIME and progress == "none" and h["status"] == "Final":
+                raise Refused(
+                    f"{where} is Final and declares {field}: none. Final says the "
+                    f"thing it specifies exists in the code; both cannot hold."
+                )
+
         for target in numbers_in(h.get("requires", "")):
             if target not in known:
                 raise Refused(f"{where} requires HIP-{target:04d}, which does not exist")
@@ -228,10 +253,29 @@ def validate(hips: list[dict]) -> None:
 
 
 def index(hips: list[dict]) -> str:
+    impl = vocabulary()["implementation"]
+    runtimes, progress = impl["language"], list(impl["progress"])
+    cell = lambda h, runtime: h.get(f"implementation-{runtime}") or "-"
+
     lines = [
         INDEX_HEADING + "\n",
-        "| Number | Title | Type | Category | Status |",
-        "|:-------|:------|:-----|:---------|:-------|",
+        "`status:` is one word for a whole proposal, so it cannot say that Go has a "
+        "thing and Rust does not. A HIP may also carry "
+        + ", ".join(f"`implementation-{r}`" for r in runtimes)
+        + ". An empty cell is not `none` — it means nobody has read that runtime yet, "
+        "and the two are counted apart here.\n",
+        "| | " + " | ".join(progress) + " | not assessed |",
+        "|:--|" + "--:|" * (len(progress) + 1),
+    ]
+    for runtime, label in runtimes.items():
+        seen = [h.get(f"implementation-{runtime}", "") for h in hips]
+        counts = [seen.count(p) for p in progress] + [seen.count("")]
+        lines.append(f"| {label} | " + " | ".join(str(n) for n in counts) + " |")
+
+    lines += [
+        "",
+        "| Number | Title | Type | Category | Status | " + " | ".join(runtimes.values()) + " |",
+        "|:-------|:------|:-----|:---------|:-------|" + ":--|" * len(runtimes),
     ]
     for h in hips:
         title = h["title"]
@@ -239,7 +283,8 @@ def index(hips: list[dict]) -> str:
             title = title[: TITLE_WIDTH - 3] + "..."
         lines.append(
             f"| [HIP-{h['number']:04d}](./HIPs/{h['file']}) | {title} | "
-            f"{h['type']} | {h.get('category') or '-'} | {h['status']} |"
+            f"{h['type']} | {h.get('category') or '-'} | {h['status']} | "
+            + " | ".join(cell(h, r) for r in runtimes) + " |"
         )
     return "\n".join(lines)
 

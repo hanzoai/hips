@@ -1,5 +1,5 @@
 ---
-hip: 0101
+hip: "0101"
 title: Hanzo-Lux Bridge Protocol Integration
 description: Lock-and-mint bridge between Hanzo's AI-optimized L1 and Lux Network's settlement layer
 author: Hanzo AI Team

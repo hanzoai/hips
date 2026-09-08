@@ -1,11 +1,12 @@
 ---
-hip: 0129
+hip: "0129"
 title: Eval — A Score Over Model Output
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 capability: eval
 status: Final
+implementation-go: partial
 created: 2026-07-27
 requires: HIP-0106, HIP-0111, HIP-0114, HIP-0119, HIP-0120, HIP-0122, HIP-0139
 ---
@@ -462,9 +463,10 @@ closed.
 
 ## References
 
-- HIP-0031 Observability & Metrics · HIP-0106 Unified Cloud Binary · HIP-0111 IAM
+- HIP-0106 Unified Cloud Binary · HIP-0111 IAM
 - HIP-0114 ZAP Transport · HIP-0119 Service Conventions · HIP-0120 gRPC Elimination
-- HIP-0122 zip — ZAP-Native Application Server · HIP-0105/0116 Extension Runtime
+- HIP-0122 zip — ZAP-Native Application Server · HIP-0132 One Telemetry Plane
+- HIP-0105/0116 Extension Runtime
 - HIP-0139 Capability
 
 ## Copyright

@@ -6,6 +6,7 @@ type: Standards Track
 category: Application
 capability: treasury
 status: Final
+implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0026, HIP-0027, HIP-0139
 ---

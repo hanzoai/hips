@@ -1,5 +1,5 @@
 ---
-hip: 0024
+hip: "0024"
 title: Hanzo Sovereign L1 Chain Architecture
 author: Hanzo AI
 type: Standards Track

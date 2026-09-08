@@ -5,6 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Application
 status: Final
+implementation-go: shipped
 created: 2026-08-20
 capability: risk
 requires: HIP-0106, HIP-0139, HIP-0519

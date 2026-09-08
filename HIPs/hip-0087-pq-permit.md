@@ -1,9 +1,10 @@
 ---
-hip: 0087
+hip: "0087"
 title: PQ Permit (replaces EIP-2612)
 type: Standards Track
 category: Cryptography
 status: Final
+implementation-go: shipped
 author: Hanzo AI
 created: 2026-05-11
 requires: HIP-0005, HIP-0077, HIP-0085, HIP-0086

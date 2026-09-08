@@ -1,0 +1,657 @@
+% hip-measured-boot.tex
+% Hanzo Improvement Proposal — Measured Boot for the Hanzo microVM.
+% Number assigned when this lands in HIPs/.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{claim}[definition]{Claim}
+\newtheorem{remark}[definition]{Remark}
+
+% Long identifiers are the norm here, so let the typewriter font break.
+\newcommand{\code}[1]{\texttt{\hyphenchar\font=`\-\relax #1}}
+\sloppy
+\emergencystretch=3em
+\newcommand{\sha}[1]{\mathrm{SHA\text{-}#1}}
+\newcommand{\zero}{\mathbf{0}}
+
+\setlist[itemize]{itemsep=2pt,topsep=4pt}
+\setlist[description]{itemsep=3pt,topsep=4pt}
+
+\title{\textbf{Measured Boot: What a Machine Is, Stated as a Number}\\[6pt]
+\large A Hanzo Improvement Proposal}
+
+\author{Hanzo AI}
+\date{6 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Number      & assigned on merge into \code{HIPs/} \\
+Type        & Standards Track \\
+Category    & Security \\
+Status      & Draft \\
+Requires    & HIP-0005 (post-quantum security), HIP-0027 (KMS) \\
+Referenced by & \code{hip-node-identity-wallet.tex}, \code{hip-confidential-tier.tex} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{abstract}
+\noindent
+A Hanzo microVM is started by a launcher on a host, boots a Linux kernel from a
+root image, and runs a workload. This document specifies how that launch and
+that workload are reduced to two numbers, how the numbers are recorded, how a
+second party recomputes them from the same inputs, and how they are carried into
+a hardware attestation report on platforms that produce one.
+
+The construction is an ordered log of events folded into an extend-only SHA-384
+register. It is chosen to match, exactly, the extend rule Intel TDX applies to a
+runtime measurement register, so a register computed by the launcher is the value
+an RTMR would hold had it started at zero and received the same events in the same
+order. SHA-384 is the digest both TDX registers and the AMD SEV-SNP launch
+measurement use.
+
+Three properties are load-bearing and each is a consequence of the encoding rather
+than of an implementation choice. An event's name is inside its own digest, so an
+event cannot be replayed under a different name. The register commits to order, so
+a prefix of a log and the whole log are distinct values. Only content is hashed ---
+the filesystem path an image was read from is recorded for a reader and never
+enters a digest --- so the same kernel and the same root image measure identically
+on every machine that holds them, and a measurement is reproducible by any party
+with the assets rather than being a fingerprint of one host's filesystem.
+
+The document is explicit about what a measurement computed on a host does not
+establish. It is a statement about what was launched, not evidence against the
+host that launched it: a host able to substitute the kernel is also able to
+substitute the program that hashes it. It becomes evidence only when bound to a
+report signed by hardware the host does not control. Section~\ref{sec:hardware}
+specifies that binding, states what hardware is required, and states precisely
+which parts are implemented and which are not. None of the three machines the
+implementation was built and measured on has the hardware, so the report path is
+implemented and unexercised; Section~\ref{sec:status} says so, and says what the
+tests do check in its place.
+\end{abstract}
+
+\tableofcontents
+
+% =====================================================================
+\section{Scope}
+\label{sec:scope}
+
+This document specifies the measurement of a Hanzo microVM: the event encoding,
+the register fold, the division into a launch log and a workload log, the
+document these are recorded in, the 64-byte value carried into a hardware report,
+and the request by which a guest obtains that report.
+
+It does not specify what a verifier does with a report --- the certificate chains,
+the freshness terms, and the session binding are the subject of
+\code{hip-confidential-tier.tex}, and identity is the subject of
+\code{hip-node-identity-wallet.tex}. Where those documents and this one touch the
+same object, this one defers: \S\ref{sec:field} states the relationship rather
+than restating either.
+
+Throughout, \emph{observed} marks a statement about code that was read or
+behaviour that was measured, with the location or the number given. \emph{Proposed}
+marks a change this document asks for. Statements with neither marker are
+definitions or consequences of the two.
+
+The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted as
+in RFC 2119.
+
+% =====================================================================
+\section{Terms}
+\label{sec:terms}
+
+\begin{description}
+\item[Launcher] The process that configures a hypervisor and starts a microVM.
+  \emph{Observed}: the \code{hanzo-vm} binary, \code{hanzoai/vm},
+  \code{crates/vm-cli}.
+
+\item[Guest] The Linux system the launcher starts. Its first process is
+  \code{vm-guest} (\code{crates/vm-guest}), reached from the host over vsock.
+
+\item[Event] A named piece of content that was loaded. Written
+  $e = (\mathit{name}, \mathit{source}, d)$ where $d$ is the SHA-384 of the
+  content. \emph{source} records where the content came from or is going and is
+  never hashed.
+
+\item[Log] A finite ordered sequence of events.
+
+\item[Register] The fold of a log, defined in \S\ref{sec:register}. Written $L$
+  for the launch register and $W$ for the workload register.
+
+\item[Launch] What the hypervisor was handed: kernel, kernel command line,
+  initramfs where one is used, source root image, and shape. The launch log is
+  the log of those events, in that order.
+
+\item[Workload] What the started system was told to run. The workload log is
+  extended by whatever drives the machine, after the guest is up.
+
+\item[Shape] The machine the guest wakes up on, as the text
+  \code{cpus=$N$ memory=$M$MB disk=$D$MB}.
+
+\item[Source root image] The base image or checkpoint the per-instance working
+  copy is cloned from. The working copy is written to during the run; the source
+  is the object two parties can compare.
+
+\item[Bind] The 64 bytes a hardware report carries as its caller-supplied field
+  (REPORT\_DATA on SEV-SNP, the report data field on TDX). \S\ref{sec:bind}.
+
+\item[Platform] A confidential-computing implementation that will sign a report
+  for a guest it protects: AMD SEV-SNP or Intel TDX.
+\end{description}
+
+% =====================================================================
+\section{The register}
+\label{sec:register}
+
+\subsection{Definition}
+
+\begin{definition}[Event digest]
+For an event $e = (\mathit{name}, \mathit{source}, d)$,
+\[
+  \varepsilon(e) \;=\; \sha{384}\bigl(\mathit{name} \,\|\, \mathtt{0x00} \,\|\, d\bigr),
+\]
+where $\mathit{name}$ is its UTF-8 bytes and $d$ is 48 bytes.
+\end{definition}
+
+\begin{definition}[Register]
+For a log $\langle e_1, \dots, e_n \rangle$,
+\[
+  R_0 = \zero_{48}, \qquad
+  R_i = \sha{384}\bigl(R_{i-1} \,\|\, \varepsilon(e_i)\bigr), \qquad
+  R = R_n .
+\]
+\end{definition}
+
+The recurrence is the extend rule TDX applies to an RTMR, so $R$ is the value an
+RTMR would hold had it started at zero and been extended, in order, with each
+$\varepsilon(e_i)$. \emph{Observed}: \code{crates/vm-measure/src/lib.rs},
+\code{Log::register}; the rule is pinned by a test that computes one step by hand
+rather than by calling the implementation.
+
+A register is derived from its log on every read and never stored as an
+independent field. \emph{Observed}: \code{Log} serializes as its value together
+with its events, and deserializing recomputes the fold and refuses a document
+whose stated value does not follow from its events.
+
+\subsection{Three properties}
+
+\begin{claim}[Names are not interchangeable]
+\label{cl:name}
+If $e$ and $e'$ have equal content digests and different names, then
+$\varepsilon(e) \ne \varepsilon(e')$, except with the probability of a SHA-384
+collision.
+\end{claim}
+\noindent The name is inside the preimage, and the $\mathtt{0x00}$ separator makes
+the concatenation injective over a name set containing no NUL byte. Every name
+this specification defines (\S\ref{sec:logs}) is a lowercase ASCII word. An
+implementation MUST NOT admit a name containing $\mathtt{0x00}$.
+
+\begin{claim}[Order is committed to]
+\label{cl:order}
+Two logs over the same multiset of events in different orders have different
+registers, except with the probability of a SHA-384 collision.
+\end{claim}
+
+\begin{claim}[A prefix is not the whole]
+\label{cl:prefix}
+Extending a log always changes its register, except with the probability of a
+SHA-384 collision.
+\end{claim}
+\noindent Claims~\ref{cl:order} and~\ref{cl:prefix} follow from $R_i$ being a
+function of $R_{i-1}$; both are covered by tests.
+
+\subsection{What is not hashed}
+\label{sec:notpath}
+
+An event records a \emph{source} for a reader --- the filesystem path an image was
+read from, the path a manifest is written to, or the text itself when the content
+is text --- and the source does not enter $\varepsilon$. Two consequences:
+
+\begin{itemize}
+\item The same kernel and the same root image measure identically on every machine
+  that holds them, whatever they are called there. A measurement is therefore
+  reproducible by any party holding the assets.
+\item A file event's digest is an ordinary SHA-384 of the file's bytes, with no
+  framing. \emph{Observed}: \code{shasum -a 384 \textasciitilde/.hanzo/vm/Image}
+  prints the \code{kernel} event's digest, byte for byte.
+\end{itemize}
+
+The second is a deliberate constraint on the design and not a coincidence. A
+measurement a second party cannot recompute with tools they already have is a
+measurement they have to take on trust.
+
+% =====================================================================
+\section{The two logs}
+\label{sec:logs}
+
+A measurement is two logs, not one. They are extended by different programs at
+different times --- the launcher, and then whatever drives the started machine ---
+and on TDX they map onto separate runtime measurement registers. Folding them
+into one chain would lose which half a verifier is entitled to predict.
+
+\subsection{The launch log}
+
+The launch log MUST contain exactly these events, in this order:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Name & Content & Source recorded \\
+\midrule
+\code{kernel}  & the kernel image's bytes            & its path \\
+\code{cmdline} & the kernel command line, UTF-8      & the same text \\
+\code{initrd}  & the initramfs bytes \emph{(present only when one is used)} & its path \\
+\code{root}    & the source root image's bytes       & its path \\
+\code{shape}   & the shape text                      & the same text \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{Observed}: \code{crates/vm-cli/src/measure.rs}, \code{launch}. Three
+decisions in that list are worth stating explicitly.
+
+The \emph{command line} is measured because it is part of what the guest is: the
+same kernel told \code{root=/dev/vdb} is a different machine. It is produced by
+one function (\code{vm::command\_line}) which is also the only thing that tells
+the hypervisor, so the measured string and the handed string cannot differ.
+
+The \emph{root} event measures the SOURCE image, never the per-instance working
+copy. The copy is a clone of the source extended with zeros to the requested disk
+size and is written to throughout the run; nothing about it is comparable between
+two machines. The source is.
+
+The \emph{shape} is measured because a platform that signs for a launch signs for
+its vCPU count and its memory. A verifier that checked only the software would
+accept the same kernel on a machine it never agreed to.
+
+An \code{initrd} event is present only when an initramfs is actually used. The
+alternative --- a zero digest when there is none --- would make ``no initramfs''
+and ``an initramfs whose content hashes to zero'' the same measurement, and by
+Claim~\ref{cl:prefix} the absence already moves the register.
+
+\subsection{The workload log}
+
+The workload log is extended by whatever drives the machine. This document fixes
+its contents for exactly one driver, \code{hanzo up} (\code{hanzoai/cli},
+\code{commands/up.rs}), which starts a k3s cluster and deploys the Hanzo cloud
+into it:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Name & Content & Source recorded \\
+\midrule
+\code{image}    & the pinned image reference, UTF-8 & the same text \\
+\code{manifest} & the manifest text applied         & its path in the guest \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\code{image} is a digest reference (\code{registry/repository@sha256:\dots}),
+resolved from whatever the caller named before the manifest is written. What the
+manifest names, what the container runtime verifies on pull, and what the register
+covers are then the same bytes by construction. \code{manifest} is the exact text
+the cluster applies, because the same image deployed under a different Deployment
+is a different cluster.
+
+\begin{remark}[Per-instance state is excluded, on purpose]
+The cluster's at-rest key --- 32 bytes from the operating system's generator, fresh
+per cluster --- is written to the guest in a \emph{separate} file which is not
+measured. A register is a statement about software identity; per-instance state in
+it would make two clusters running identical software measure differently, which
+defeats the reproducibility of \S\ref{sec:notpath}. \emph{Observed}: the two files
+are \code{cloud-key.yaml} and \code{cloud.yaml}, and only the second is measured.
+\end{remark}
+
+An implementation extending the workload log for a different driver MUST NOT
+include per-instance secrets, timestamps, or host-specific paths in any event's
+content.
+
+% =====================================================================
+\section{The document}
+\label{sec:document}
+
+A measurement is recorded as one JSON document:
+
+\begin{quote}\small
+\begin{verbatim}
+{ "algorithm": "sha384",
+  "launch":   { "value": <hex 48>, "events": [ {name, source, digest}, ... ] },
+  "workload": { "value": <hex 48>, "events": [ ... ] },
+  "bind":     <hex 64>,
+  "hardware": { "platform": "none" | "sev-snp" | "tdx",
+                "report": <hex, present only with a platform> } }
+\end{verbatim}
+\end{quote}
+
+Both registers and the bind are written for a reader who wants the numbers
+without folding, and are \emph{verified} on the way back in: reading a document
+recomputes each register from its events and recomputes the bind from the
+registers, and refuses the document if either disagrees. A reader therefore never
+has to decide whether to believe a stated value. \emph{Observed}:
+\code{Measurement::from\_json}; a test edits a register and a bind in a serialized
+document and asserts both are refused.
+
+\code{hardware} is an observation carried alongside the chain and never folded
+into it. \S\ref{sec:hardware}.
+
+% =====================================================================
+\section{The bind}
+\label{sec:bind}
+
+\begin{definition}[Bind]
+\[
+  \beta \;=\; \sha{512}\bigl(L \,\|\, W\bigr),
+\]
+64 bytes, over the two 48-byte registers.
+\end{definition}
+
+SHA-512 because the caller-supplied field in both report formats is exactly 64
+bytes. A construction producing fewer would leave the remainder to be padded by
+something, and padding nobody chose is a preimage nobody can reproduce.
+
+\subsection{Who owns the caller field}
+\label{sec:field}
+
+A hardware report has one caller-supplied field, and more than one part of this
+system would like to put something in it. \code{hip-confidential-tier.tex}
+specifies its contents for a served-inference session (its requirement B1a),
+fixing each term to a width and including the session key-exchange key, the
+receipt verifying key, a session identifier and a verifier nonce alongside $L$ and
+$W$. That specification governs wherever a session exists. This document does not
+propose a second.
+
+What this document specifies is narrower and, by construction, compatible: the
+launcher's request interface takes 64 \emph{opaque} bytes and asks the platform
+for a report over exactly those. The launcher has no opinion about their
+derivation. $\beta$ is what a caller with nothing but a boot to describe should
+send; a caller with a session sends B1a's value through the same interface.
+
+\emph{Observed}: the vsock request payload is 64 raw bytes with no structure, and
+the guest hands them to the platform unmodified
+(\code{crates/vm-guest/src/main.rs}, \code{ATTEST\_REQ}).
+
+\begin{remark}[What $\beta$ alone establishes]
+$\beta$ is a function of the release. Two machines running the same launch and the
+same workload produce the same $\beta$, and a report over it carries no freshness
+term. \code{hip-node-identity-wallet.tex} states both consequences formally (its
+Claims on transferability and staleness) and neither is disputed here: a report
+over $\beta$ establishes that \emph{a} platform of the stated kind launched
+\emph{this} image at \emph{some} time. That is worth having and it is not
+identity, and it is why the session terms in B1a exist.
+\end{remark}
+
+% =====================================================================
+\section{The hardware request}
+\label{sec:hardware}
+
+\subsection{Where the request is made, and why there}
+
+Both platforms expose the same primitive: a guest asks its firmware for a report
+over 64 caller-supplied bytes, and the report also carries the platform's own
+measurement of how that guest was started. The request is made through a guest
+device --- \code{/dev/sev-guest} or \code{/dev/tdx\_guest} --- which exists only
+inside a guest the platform protects.
+
+The request MUST therefore be made from inside the guest. A request made on the
+host answers a different question: whether the machine running the launcher is
+itself somebody's confidential guest. A report obtained that way, over our bind,
+says nothing about the VM we started.
+
+\emph{Observed}: \code{vm\_measure::attest::status} is called by \code{vm-guest},
+reached over vsock. The launcher's \code{hanzo-vm measure}, which states what a
+boot \emph{would} be and starts nothing, records \code{platform: none} and asks no
+device --- there is no guest to ask.
+
+\subsection{The wire}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Frame & Type byte & Payload \\
+\midrule
+\code{ATTEST\_REQ}  & \code{0x60} & the 64 bytes, raw \\
+\code{ATTEST\_RESP} & \code{0x61} & JSON \code{\{platform, report?\}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A guest receiving an \code{ATTEST\_REQ} whose payload is not exactly 64 bytes MUST
+answer with an error frame rather than pad or truncate: the payload is the field
+the report is taken over, and either adjustment produces a report over bytes
+nobody chose.
+
+A guest that predates this frame drops it in silence (its dispatch ignores unknown
+types). A host MUST therefore bound the read. \emph{Observed}: five seconds,
+\code{Sandbox::attest}.
+
+\subsection{The two ABIs}
+
+\emph{Observed}, \code{crates/vm-measure/src/attest.rs}. The request structures and
+ioctl numbers are those of \code{linux/sev-guest.h} and \code{linux/tdx-guest.h}:
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Platform & Device & ioctl & Report \\
+\midrule
+SEV-SNP & \code{/dev/sev-guest}  & \code{SNP\_GET\_REPORT}, \code{0xC0205300}     & 1184 B \\
+TDX     & \code{/dev/tdx\_guest} & \code{TDX\_CMD\_GET\_REPORT0}, \code{0xC4405401} & 1024 B \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Both numbers are computed in the source by the \code{\_IOWR} encoding rather than
+copied as literals, so a structure that drifts from the kernel's would produce a
+number no driver answers, and the drift is caught rather than sent. The report is
+recorded exactly as the platform produced it; parsing belongs to the verifier.
+
+Detection is device presence and nothing else --- the drivers bind only inside a
+guest the platform actually protects. A device that will not answer records
+\code{none} rather than asserting a platform that produced nothing.
+
+\subsection{What hardware is required}
+\label{sec:hw}
+
+The path requires, together:
+
+\begin{enumerate}[label=(\roman*)]
+\item A CPU with the feature: AMD EPYC, Milan (3rd generation) or later, with
+  SEV-SNP enabled in firmware; or an Intel Xeon with TDX enabled.
+\item A VMM that starts guests of that kind --- for SEV-SNP, cloud-hypervisor
+  driving an IGVM image, or QEMU with SNP support; for TDX, a TDX-aware VMM.
+\item A guest kernel carrying the corresponding driver, so the device node exists.
+\end{enumerate}
+
+None of the three machines the implementation was built and measured on satisfies
+(i). Apple Silicon has no third-party equivalent; NVIDIA's Grace-Blackwell
+workstation parts have none exposed to a VMM of ours; the x86 workstation is not
+an SEV-SNP part. The launcher's three backends --- Virtualization.framework, the
+arm64 KVM backend, and cloud-hypervisor as we drive it --- all start ordinary
+guests, so (ii) is unmet as well.
+
+\emph{Proposed.} Reaching an exercised path requires exactly two things and
+neither is in this document's tree: an SEV-SNP-capable host in the fleet, and the
+launcher's cloud-hypervisor backend configured to start an SNP guest from an IGVM
+image. Everything above it --- the request, the wire, the guest handler, the
+document field --- is in place and would begin returning reports without a change.
+
+% =====================================================================
+\section{Reproducibility and cost}
+\label{sec:cost}
+
+\subsection{Recomputing a measurement}
+
+A second party holding the same kernel, root image, command line and shape
+recomputes both registers with a SHA-384 implementation and nothing else. The
+file digests are checkable with \code{shasum}; the fold is four lines.
+
+\subsection{The digest cache}
+
+A root image is gigabytes. \emph{Observed}: hashing a 4~GB root image takes
+19.3~s; answering from a remembered digest takes 9~ms. A launcher that re-read the
+image on every boot would cost more in measurement than in boot.
+
+Digests are therefore remembered against the identity the filesystem reports for
+each file --- device, inode, length, modification time --- and recomputed the
+moment any of those move. The cache is warmed where a slow path is already being
+paid: after an image is downloaded, and after a checkpoint is saved.
+
+The cache carries no authority and is not part of this specification's security
+argument. It lives on the same disk as the images it describes, so a party able to
+rewrite one is able to rewrite the other; it saves time and proves nothing. An
+implementation MUST provide a way to bypass it (\emph{observed}:
+\code{hanzo-vm measure --recompute}), and a verifier reproducing a measurement
+MUST NOT use one.
+
+% =====================================================================
+\section{Security considerations}
+\label{sec:security}
+
+\subsection{What a host-computed measurement is}
+
+A measurement computed by a launcher is a statement about what the launcher
+loaded. A host able to substitute the kernel is also able to substitute the
+program that hashes it, so the measurement is not evidence \emph{against} the host
+that produced it. This is stated once in the source, at the top of the crate, and
+is repeated here because it is the boundary the rest of the design is arranged
+around.
+
+What it is good for, on its own:
+
+\begin{itemize}
+\item \emph{Reproducibility.} Two parties can agree on what a release is, and
+  disagree with a machine that claims to be running it.
+\item \emph{Change detection.} A register that moves when nothing was meant to
+  change is a fact about the machine, whoever computed it.
+\item \emph{A predicate a verifier can state in advance.} An expected register can
+  be published before a machine is asked for one.
+\end{itemize}
+
+What it is not: an authenticated statement. That requires \S\ref{sec:hardware},
+and on hardware that does not exist in our fleet today.
+
+\subsection{The measurement and the workload}
+
+The workload register commits to what the driver \emph{deployed}, not to what the
+cluster subsequently ran. A cluster whose control plane is reachable can be given
+a second workload afterwards, and no register moves. The register bounds the
+cluster's initial state; continuous integrity of a running cluster is a different
+mechanism and is out of scope.
+
+\subsection{The digest}
+
+SHA-384 is chosen for interoperability with the two platform formats
+(\S\ref{sec:register}) and not because 384 bits is required. It is truncated
+SHA-512 and therefore not vulnerable to length extension, which matters here
+because $\varepsilon$ and the fold both hash concatenations. The bind uses
+SHA-512 for the width of the field it fills. Neither choice is post-quantum; a
+measurement is a commitment rather than a signature, so the relevant property is
+collision resistance, and SHA-384's is not reduced below any threshold this system
+depends on by known quantum algorithms.
+
+% =====================================================================
+\section{Implementation status}
+\label{sec:status}
+
+\emph{Observed}, \code{hanzoai/vm} v2.0.1 and \code{hanzoai/cli} v8.5.158.
+
+In \code{hanzoai/vm} (paths relative to \code{crates/}):
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Part & Where & State \\
+\midrule
+Encoding, fold, document    & \code{vm-measure/src/lib.rs}    & implemented, tested \\
+Digest cache                & \code{vm-measure/src/lib.rs}    & implemented, tested \\
+SEV-SNP / TDX ioctls        & \code{vm-measure/src/attest.rs} & implemented, unexercised \\
+Launch log                  & \code{vm-cli/src/measure.rs}    & implemented, tested \\
+\code{hanzo-vm measure}     & \code{vm-cli/src/main.rs}       & implemented \\
+Launch report over the wire & \code{vm-cli/src/stdio.rs}      & implemented \\
+Report request, host side   & \code{vm/src/sandbox.rs}        & implemented \\
+Report request, guest side  & \code{vm-guest/src/main.rs}     & implemented \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent In \code{hanzoai/cli}, all of it in \code{src/commands/up.rs}: the
+workload log, the document filed at \code{\textasciitilde/.hanzo/up/measure.json},
+and \code{hanzo up --attest}. Implemented and tested.
+
+``Unexercised'' is exact: no machine available to the implementation can make the
+ioctl succeed (\S\ref{sec:hw}). What is checked in its place is the part a machine
+without the hardware can check --- the three request structures are asserted to be
+the sizes the kernel headers define (96, 32 and 1088 bytes), and both ioctl numbers
+are asserted to equal the documented values. An ioctl number encodes the size of
+the structure it carries, so a structure that drifted would send a number no driver
+answers, and that is the failure these tests exist to catch.
+
+% =====================================================================
+\section{Conformance}
+\label{sec:conformance}
+
+An implementation conforms to this document if:
+
+\begin{enumerate}[label=C\arabic*.,leftmargin=2.5em]
+\item It computes $\varepsilon$ and the fold as defined in \S\ref{sec:register},
+  from a 48-byte zero register.
+\item Its launch log carries the events of \S\ref{sec:logs} with those names, in
+  that order, and includes \code{initrd} exactly when an initramfs is used.
+\item It measures the source root image, not a per-instance copy.
+\item No event's content includes a filesystem path, a per-instance secret, or a
+  timestamp.
+\item It derives every register from its log on read and refuses a document whose
+  stated register or bind does not follow.
+\item It computes $\beta$ as in \S\ref{sec:bind} and requests a report over 64
+  bytes it does not interpret.
+\item It makes the report request inside the guest, and records \code{none} where
+  no platform device is present rather than asserting one.
+\item It provides a way to compute a measurement without a digest cache.
+\end{enumerate}
+
+% =====================================================================
+\section{Unsolved}
+\label{sec:unsolved}
+
+\begin{enumerate}[label=U\arabic*.,leftmargin=2.5em]
+\item \textbf{No hardware.} \S\ref{sec:hw}. Until the fleet holds an SEV-SNP or
+  TDX host and the launcher can start such a guest, every document this system
+  produces records \code{platform: none}, and the measurement is a reproducibility
+  mechanism rather than an evidence one.
+
+\item \textbf{The launcher is not measured.} The launch log covers what the
+  hypervisor was handed, not the hypervisor. On a confidential VM that is
+  correct --- the platform's own launch measurement covers the VMM-supplied state,
+  so measuring the launcher from inside would duplicate a value the hardware
+  already signs. Where there is no platform, nothing covers it, and a host that
+  swaps its launcher binary produces the same register.
+
+\item \textbf{Nothing binds a measurement to a machine.} $\beta$ is a function of
+  the release; two hosts running the same release produce the same value. The
+  binding of a measurement to an identity is
+  \code{hip-node-identity-wallet.tex}'s subject and is not attempted here.
+
+\item \textbf{The workload register is a commitment to a first state.}
+  \S\ref{sec:security}. A cluster that is subsequently changed does not move a
+  register.
+\end{enumerate}
+
+\end{document}

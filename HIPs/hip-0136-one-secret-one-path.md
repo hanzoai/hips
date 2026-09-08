@@ -1,10 +1,11 @@
 ---
-hip: 0136
+hip: "0136"
 title: One Secret, One Path
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: partial
 created: 2026-08-03
 requires: HIP-0027, HIP-0119
 ---
@@ -81,7 +82,7 @@ every `hostAPI` repoints there, and the standalone is scaled to zero.
 resolves to this same API with Lux branding, as `kms.hanzo.ai` does with Hanzo's;
 the org boundary already separates the data. A brand does not earn a deployment.
 An operator that needs its own MPC root — a Lux committee signing in `lux-k8s`
-rather than `the cluster` — configures that under one API too; the REK's location
+rather than `hanzo-k8s` — configures that under one API too; the REK's location
 is deployment configuration, not a fork of the service.
 
 ## Specification

@@ -1,10 +1,11 @@
 ---
-hip: 0107
+hip: "0107"
 title: Streaming Replication over VFS
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: partial
 created: 2026-05-18
 requires: HIP-0026, HIP-0027, HIP-0302
 ---
@@ -359,11 +360,11 @@ follows the phases below.
 
 - HIP-0027 — Secrets Management Standard (the KMS that holds the
   age master key per service/per org)
-- HIP-0032 — Object Storage Standard (the `vfs.Backend` interface
-  contract this HIP standardizes on)
 - HIP-0302 — Hanzo Replicate: Encrypted SQLite + ZapDB Durability
   for Base Services (the predecessor for the SQLite/ZapDB substrate;
   HIP-0107 adds the unified pipeline on top — HIP-0302 stays Final)
+- HIP-0405 — S3 CRD (the `hanzoai/s3` workload behind the `s3://`
+  sink this pipeline writes to in production)
 - Reference implementations:
   - `~/work/hanzo/ha` (SHIPPED) — `github.com/hanzoai/ha`, HRW single-writer
     election (`Owner`/`IsOwner`/`Replicas`/`Member`) + the `Membership` seam

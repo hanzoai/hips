@@ -1,10 +1,11 @@
 ---
-hip: 0061
+hip: "0061"
 title: Notification & Messaging Service Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
 status: Final
+implementation-go: shipped
 created: 2026-02-23
 requires: HIP-0026, HIP-0027, HIP-0106, HIP-0139
 capability: notify

@@ -1,10 +1,12 @@
 ---
-hip: 0132
+hip: "0132"
 title: One Telemetry Plane — One Endpoint, One Schema, Many Lenses
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-07-27
 requires: HIP-0119, HIP-0512
 ---

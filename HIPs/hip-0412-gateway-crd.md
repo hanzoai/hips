@@ -1,10 +1,12 @@
 ---
-hip: 0412
+hip: "0412"
 title: Gateway CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-05-19
 ---
 
@@ -80,7 +82,7 @@ spec:
 
 ### Related services
 
-- HIP-0044 (API gateway standard)
+- HIP-0519 (One Identity Boundary) — the edge role this gateway holds: strip, verify, mint.
 
 ## Status
 

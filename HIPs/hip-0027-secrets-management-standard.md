@@ -1,10 +1,11 @@
 ---
-hip: 0027
+hip: "0027"
 title: Secrets Management Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Draft
+implementation-go: partial
 created: 2025-01-15
 ---
 
@@ -39,7 +40,7 @@ short-lived bearer token, and fetch secrets at runtime. In Kubernetes, the
 **Repository**: [github.com/hanzoai/kms](https://github.com/hanzoai/kms)
 **Production**: https://kms.hanzo.ai
 **Docker**: `ghcr.io/hanzoai/kms:latest`
-**Cluster**: the cluster (`24.199.76.156`)
+**Cluster**: hanzo-k8s (`24.199.76.156`)
 
 ## Motivation
 
@@ -58,7 +59,7 @@ Before KMS, Hanzo secrets were managed through a patchwork of mechanisms:
 5. **No audit trail**: When a secret was accessed, changed, or leaked, there
    was no way to know who did what, when.
 
-These problems compound at scale. With 15+ services on the cluster and growing,
+These problems compound at scale. With 15+ services on hanzo-k8s and growing,
 manual secrets management became the single largest operational risk.
 
 ## Design Philosophy
@@ -771,7 +772,7 @@ If a secret is suspected compromised:
 3. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md)
 4. [NIST SP 800-57: Key Management](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final)
 5. [Kubernetes Secrets Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/)
-6. [SOC 2 Trust Services Criteria](https://www.aicpa.org/interestareas/frc/assuranceadvisoryservices/sorhome)
+6. [SOC 2 Trust Services Criteria](https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2)
 
 ## Copyright
 

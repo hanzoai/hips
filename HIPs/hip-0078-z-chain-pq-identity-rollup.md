@@ -1,5 +1,5 @@
 ---
-hip: 0078
+hip: "0078"
 title: Z-Chain — Post-Quantum Identity & Attestation Rollup
 type: Standards Track
 category: Infrastructure

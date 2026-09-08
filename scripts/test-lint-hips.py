@@ -75,6 +75,18 @@ def m_fm009(root):
     os.rename(os.path.join(root, "HIPs", SUBJECT),
               os.path.join(root, "HIPs", "hip-0517-Branch_Naming.md"))
 
+def m_fm010(root):
+    write(root, SUBJECT,
+          re.sub(r"^status:(.*)$", r"status:\1\nimplementation-rust: mostly",
+                 read(root, SUBJECT), count=1, flags=re.M))
+
+def m_fm011(root):
+    # STANDARDS_SUBJECT is Final, which is the half of the contradiction that
+    # is already there. Adding the other half to a Draft would prove nothing.
+    write(root, STANDARDS_SUBJECT,
+          re.sub(r"^status:(.*)$", r"status:\1\nimplementation-go: none",
+                 read(root, STANDARDS_SUBJECT), count=1, flags=re.M))
+
 def m_st001(root):
     write(root, SUBJECT, re.sub(r"^# HIP-.*$", "", read(root, SUBJECT), count=1, flags=re.M))
 
@@ -142,6 +154,8 @@ CASES = [
     ("FM007", "requires: a HIP that does not exist", m_fm007),
     ("FM008", "a superseded-by tombstone field added", m_fm008),
     ("FM009", "filename given capitals and an underscore", m_fm009),
+    ("FM010", "implementation-rust: set to a word not in the vocabulary", m_fm010),
+    ("FM011", "a Final HIP declaring implementation-go: none", m_fm011),
     ("ST001", "H1 deleted", m_st001),
     ("ST002", "H1 title made to disagree with front matter", m_st002),
     ("ST003", "a second '## Abstract' introduced", m_st003),

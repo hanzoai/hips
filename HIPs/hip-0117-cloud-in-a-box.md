@@ -1,10 +1,11 @@
 ---
-hip: 0117
+hip: "0117"
 title: Cloud-in-a-Box — One Binary, Three Modes
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: partial
 created: 2026-07-07
 updated: 2026-07-08
 requires: HIP-0036, HIP-0106, HIP-0400
@@ -136,7 +137,7 @@ The chart deploys the same `ghcr.io/hanzoai/cloud` image with the same
 config surface (`--enable` / `CLOUD_*` per HIP-0106) and pins
 `replicas=1` while the embedded IAM is enabled (the session
 single-replica guard). BYO ingress-controller integration follows the
-estate topology of HIP-0112. **Shipped:** the chart exists in-tree at
+edge routing standard of HIP-0068. **Shipped:** the chart exists in-tree at
 `cloud/helm/cloud`.
 
 ### Mode invariants
@@ -165,8 +166,8 @@ estate topology of HIP-0112. **Shipped:** the chart exists in-tree at
   installs and defers to)
 - HIP-0036 — CI/CD Build System Standard (the lanes that build the
   images the operator pulls)
-- HIP-0112 — Cloud Infrastructure Topology Standard (the estate shape
-  Mode 2/3 converge to)
+- HIP-0068 — Ingress Standard (the edge routing shape Mode 2/3
+  converge to)
 - HIP-0107 / HIP-0302 — replication used for serve→cluster graduation
   concern)
 - k3sup, Coder — prior art for fetch-on-bootstrap orchestrator

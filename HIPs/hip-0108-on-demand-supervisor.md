@@ -1,10 +1,11 @@
 ---
-hip: 0108
+hip: "0108"
 title: On-Demand Subsystem Supervisor + Warm Pool
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: shipped
 created: 2026-05-18
 requires: HIP-0105, HIP-0106, HIP-0107, HIP-0302
 ---

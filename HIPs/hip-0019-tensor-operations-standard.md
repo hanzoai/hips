@@ -1,10 +1,12 @@
 ---
-hip: 0019
+hip: "0019"
 title: Tensor Operations Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Final
+implementation-rust: partial
+implementation-cpp: partial
 created: 2025-01-09
 requires: HIP-0003
 ---
@@ -16,9 +18,9 @@ requires: HIP-0003
 
 This proposal defines the tensor operations standard for all ML computations in the Hanzo ecosystem. It specifies the data types, device backends, operation primitives, model formats, quantization strategies, memory management, custom operations, WebAssembly compilation pipeline, and API surface that every inference workload MUST use. The reference implementation is Hanzo Candle, a fork of HuggingFace's Candle Rust ML framework extended with Apple Silicon Metal support, custom quantization kernels, Hamiltonian dynamics operations, and integration with the Hanzo model serving pipeline.
 
-**Repository**: [github.com/hanzoai/candle](https://github.com/hanzoai/candle)
-**Crates**: `candle-core`, `candle-nn`, `candle-transformers`, `candle-metal-kernels`, `candle-wasm`
-**NPM Package**: `@hanzoai/candle-wasm`
+**Repository**: [github.com/hanzoai/ml](https://github.com/hanzoai/ml)
+**Crates**: `hanzo-ml` (tensor core), `hanzo-nn`, `hanzo-transformers`, `hanzo-metal-kernels` -- the fork publishes under the `hanzo-*` prefix; the `candle-*` names used below follow the upstream layout.
+**NPM Package**: none yet -- the WASM build described below is proposed, not published.
 
 ## Motivation
 
@@ -424,7 +426,7 @@ pub trait CustomOp: Send + Sync {
 
 ### WASM Compilation Pipeline
 
-The WASM pipeline compiles Candle to WebAssembly and packages it as an npm module for browser consumption. The full pipeline:
+The WASM pipeline compiles Candle to WebAssembly and packages it as an npm module for browser consumption. The repository carries per-model WASM examples (`hanzo-ml-wasm-examples/`), but no package is published to npm yet, so the pipeline and the package name below describe what this HIP proposes rather than something you can install today:
 
 ```
 Rust source (candle-core, candle-nn, candle-transformers)
@@ -594,7 +596,7 @@ let next_token = logits.argmax(D::Minus1)?;
 
 ### Repository
 
-[github.com/hanzoai/candle](https://github.com/hanzoai/candle) -- fork of [huggingface/candle](https://github.com/huggingface/candle) with Hanzo extensions.
+[github.com/hanzoai/ml](https://github.com/hanzoai/ml) -- fork of [huggingface/candle](https://github.com/huggingface/candle) with Hanzo extensions.
 
 ### Build
 
@@ -623,7 +625,7 @@ cargo build --release --features "cuda metal"
 | **Studio** (HIP-1211) | Diffusion inference | Stable Diffusion / Flux pipelines run on Candle Metal backend for Apple Silicon users |
 | **Jin** (HIP-0003) | Multimodal backbone | Jin model architectures implemented as Candle modules in `candle-transformers` |
 | **LLM Gateway** (HIP-0004) | Local model serving | Gateway routes to local Candle inference workers for on-premise deployments |
-| **Object Storage** (HIP-0032) | Model distribution | Model weights stored in safetensors/GGUF format in Hanzo Object Storage, loaded by Candle |
+| **Object Storage** (HIP-0405) | Model distribution | Model weights stored in safetensors/GGUF format in Hanzo Object Storage, loaded by Candle |
 | **MCP** (HIP-0010) | Tool inference | MCP tool servers embed Candle for classification, embedding, and small-model inference |
 | **Node** (HIP-0020) | Verified inference | Blockchain nodes use Candle for deterministic inference with reproducible outputs |
 | **HMM** (HIP-0008) | Market dynamics | Hamiltonian Market Maker uses `candle-hamiltonian` for symplectic market state evolution |
@@ -819,7 +821,7 @@ fn test_quantized_load() {
 5. [HIP-0008: HMM Hanzo Market Maker](./hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md)
 6. [HIP-0010: Model Context Protocol](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 7. [HIP-0020: Blockchain Node Standard](./hip-0020-blockchain-node-standard.md)
-8. HIP-0032: Object Storage Standard
+8. [HIP-0405: S3 CRD](./hip-0405-s3-crd.md)
 9. [HIP-1211: AI — The Model API](./hip-1211-ai-the-model-api.md)
 10. [HIP-0039: Zen Model Architecture](./hip-0039-zen-model-architecture.md)
 11. [HuggingFace Candle](https://github.com/huggingface/candle) -- upstream repository
