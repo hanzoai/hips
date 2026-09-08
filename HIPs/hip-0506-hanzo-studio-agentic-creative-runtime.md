@@ -1,5 +1,5 @@
 ---
-hip: 0506
+hip: "0506"
 title: Hanzo Studio — Agentic Multi-Modal Creative Runtime
 author: Hanzo AI Team
 type: Standards Track

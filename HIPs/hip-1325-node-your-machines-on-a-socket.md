@@ -6,6 +6,7 @@ type: Standards Track
 category: Infrastructure
 capability: node
 status: Final
+implementation-go: shipped
 created: 2026-08-21
 requires: HIP-0026, HIP-0106, HIP-0135, HIP-0139, HIP-1107
 ---

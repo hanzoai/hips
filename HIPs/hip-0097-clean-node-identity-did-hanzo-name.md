@@ -1,5 +1,5 @@
 ---
-hip: 0097
+hip: "0097"
 title: "Node Identity and the did:hanzo: DID Method"
 author: Hanzo AI Team
 type: Standards Track

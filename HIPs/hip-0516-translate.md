@@ -1,11 +1,12 @@
 ---
-hip: 0516
+hip: "0516"
 title: Translate — One Endpoint, Two Tiers, Permissive Weights
 author: Hanzo AI
 type: Standards Track
 category: Core
 capability: translate
 status: Final
+implementation-go: shipped
 created: 2026-07-26
 requires: HIP-0026, HIP-0139
 ---

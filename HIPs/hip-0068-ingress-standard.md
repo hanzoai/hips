@@ -1,10 +1,11 @@
 ---
-hip: 0068
+hip: "0068"
 title: Ingress Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: shipped
 created: 2026-02-24
 requires: HIP-0026
 ---
@@ -29,7 +30,7 @@ This HIP is explicitly distinct from **HIP-44 (API Gateway)**, which is the appl
 
 ### The Edge Routing Problem
 
-Hanzo operates two Kubernetes clusters (`the cluster` and `lux-k8s`) serving 30+ domains across multiple services. Each domain needs:
+Hanzo operates two Kubernetes clusters (`hanzo-k8s` and `lux-k8s`) serving 30+ domains across multiple services. Each domain needs:
 
 1. **Host-based routing**: `api.hanzo.ai` goes to the API Gateway, `platform.hanzo.ai` goes to Dokploy, `kms.hanzo.ai` goes to KMS. Each domain is a separate routing decision at the edge.
 2. **TLS termination**: Every domain needs HTTPS. Managing 30+ TLS certificates manually is operationally unsustainable.
@@ -156,17 +157,17 @@ spec:
 
 | Host | Backend Service | Port | Cluster |
 |------|----------------|------|---------|
-| `api.hanzo.ai` | API Gateway (HIP-44) | 8080 | the cluster |
-| `llm.hanzo.ai` | LLM Gateway (HIP-4) | 4000 | the cluster |
-| `hanzo.id` | Hanzo IAM | 8000 | the cluster |
-| `lux.id` | Hanzo IAM | 8000 | the cluster |
-| `zoo.id` | Hanzo IAM | 8000 | the cluster |
-| `pars.id` | Hanzo IAM | 8000 | the cluster |
-| `kms.hanzo.ai` | KMS (Hanzo KMS) | 8080 | the cluster |
-| `platform.hanzo.ai` | Platform (Dokploy) | 3000 | the cluster |
-| `console.hanzo.ai` | Console | 3001 | the cluster |
-| `cloud.hanzo.ai` | Cloud | 3002 | the cluster |
-| `hanzo.app` | Main App | 3000 | the cluster |
+| `api.hanzo.ai` | API Gateway (HIP-44) | 8080 | hanzo-k8s |
+| `llm.hanzo.ai` | LLM Gateway (HIP-4) | 4000 | hanzo-k8s |
+| `hanzo.id` | Hanzo IAM | 8000 | hanzo-k8s |
+| `lux.id` | Hanzo IAM | 8000 | hanzo-k8s |
+| `zoo.id` | Hanzo IAM | 8000 | hanzo-k8s |
+| `pars.id` | Hanzo IAM | 8000 | hanzo-k8s |
+| `kms.hanzo.ai` | KMS (Hanzo KMS) | 8080 | hanzo-k8s |
+| `platform.hanzo.ai` | Platform (Dokploy) | 3000 | hanzo-k8s |
+| `console.hanzo.ai` | Console | 3001 | hanzo-k8s |
+| `cloud.hanzo.ai` | Cloud | 3002 | hanzo-k8s |
+| `hanzo.app` | Main App | 3000 | hanzo-k8s |
 | `api.lux.network` | Lux Gateway (KrakenD) | 8080 | lux-k8s |
 | `cloud.lux.network` | Lux Cloud | 3000 | lux-k8s |
 | `markets.lux.network` | Markets | 3000 | lux-k8s |
@@ -597,7 +598,7 @@ arrives.
 | **HIP-14** (Application Deployment) | Dokploy generates IngressRoute resources that Ingress watches and routes. |
 | **HIP-26** (IAM) | Ingress routes `hanzo.id`, `lux.id`, `zoo.id`, `pars.id` to IAM. No auth at the ingress layer; auth is handled by the API Gateway or services themselves. |
 | **HIP-27** (KMS) | Ingress routes `kms.hanzo.ai` to KMS. TLS certificates for strict SSL mode are stored as K8s Secrets provisioned by CertManager. |
-| **HIP-31** (Observability) | Ingress exports Prometheus metrics consumed by Grafana dashboards. Access logs feed into the log aggregation pipeline. |
+| **HIP-132** (Telemetry) | Ingress exports Prometheus metrics consumed by Grafana dashboards. Access logs feed into the log aggregation pipeline. |
 | **HIP-106** (Cloud) | Ingress routes `cloud.hanzo.ai` and `cloud.lux.network` to their respective cloud services. |
 | **HIP-44** (API Gateway) | The API Gateway (KrakenD) is a backend behind Ingress. Ingress handles L7 host routing; the API Gateway handles application-level concerns (auth, rate limiting, circuit breaking). |
 | **HIP-49** (DNS) | DNS records point domains to the DigitalOcean LoadBalancer IP. Cloudflare proxies these records for DDoS protection and edge TLS. |
@@ -652,7 +653,7 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 ### Phase 1: Core Deployment (Complete)
 
 - Traefik v3.6 fork with Hanzo defaults
-- Deployment on the cluster with DigitalOcean LoadBalancer
+- Deployment on hanzo-k8s with DigitalOcean LoadBalancer
 - KubernetesIngress and KubernetesCRD providers
 - Host routing for all production domains
 - Cloudflare Flexible SSL for TLS termination
@@ -676,7 +677,7 @@ Each layer has a single responsibility. Ingress does not authenticate requests. 
 6. [DigitalOcean Load Balancer](https://docs.digitalocean.com/products/networking/load-balancers/)
 7. HIP-44: API Gateway Standard
 8. [HIP-26: Identity & Access Management](./hip-0026-identity-access-management-standard.md)
-9. HIP-31: Observability & Metrics
+9. [HIP-132: One Telemetry Plane](./hip-0132-one-telemetry-plane.md)
 10. [Ingress Repository](https://github.com/hanzoai/ingress)
 
 ## Copyright

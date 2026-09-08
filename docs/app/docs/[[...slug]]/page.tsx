@@ -206,9 +206,13 @@ export default async function Page({ params }: PageProps) {
           <div className="mt-4 p-3 rounded-lg bg-muted/50">
             <span className="text-sm text-muted-foreground">Requires: </span>
             <span className="text-sm">
-              {Array.isArray(frontmatter.requires)
-                ? frontmatter.requires.map((r: number) => `HIP-${r}`).join(', ')
-                : `HIP-${frontmatter.requires}`}
+              {(Array.isArray(frontmatter.requires)
+                ? frontmatter.requires
+                : String(frontmatter.requires).split(','))
+                .map((r) => String(r).trim())
+                .filter(Boolean)
+                .map((r) => (r.startsWith('HIP-') ? r : `HIP-${r}`))
+                .join(', ')}
             </span>
           </div>
         )}
@@ -268,7 +272,7 @@ export default async function Page({ params }: PageProps) {
       <div className="mt-12 pt-8 border-t">
         <div className="flex flex-wrap gap-4 text-sm">
           <a
-            href={`https://github.com/hanzoai/hips/edit/main/HIPs/hip-${frontmatter.hip}.md`}
+            href={`https://github.com/hanzoai/hips/edit/main/HIPs/${page.file}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
@@ -277,7 +281,7 @@ export default async function Page({ params }: PageProps) {
             <ExternalLink className="size-3" />
           </a>
           <a
-            href={`https://github.com/hanzoai/hips/blob/main/HIPs/hip-${frontmatter.hip}.md`}
+            href={`https://github.com/hanzoai/hips/blob/main/HIPs/${page.file}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"

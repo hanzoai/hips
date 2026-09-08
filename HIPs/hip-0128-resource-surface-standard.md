@@ -1,10 +1,11 @@
 ---
-hip: 0128
+hip: "0128"
 title: Resource Surface Standard — Generated REST over ZAP
 author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Final
+implementation-go: shipped
 created: 2026-07-27
 requires: HIP-0106, HIP-0127
 ---

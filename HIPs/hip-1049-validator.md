@@ -5,6 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: shipped
 created: 2026-08-20
 capability: validator
 requires: HIP-0027, HIP-0106, HIP-0139

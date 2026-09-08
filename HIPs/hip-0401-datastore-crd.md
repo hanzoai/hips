@@ -1,10 +1,11 @@
 ---
-hip: 0401
+hip: "0401"
 title: Datastore CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: shipped
 created: 2026-05-19
 ---
 
@@ -81,4 +82,4 @@ spec:
 
 ## Status
 
-Implemented in `hanzoai/operator` v0.3.0+. Backs all stateful workloads in `do-sfo3-the cluster`.
+Implemented in `hanzoai/operator` v0.3.0+. Backs all stateful workloads in `do-sfo3-hanzo-k8s`.

@@ -1,10 +1,11 @@
 ---
-hip: 0403
+hip: "0403"
 title: KV CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: shipped
 created: 2026-05-19
 ---
 

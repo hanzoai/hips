@@ -1,10 +1,11 @@
 ---
-hip: 0113
+hip: "0113"
 title: Cognitive Sidecar & Hanzo Engine Provider Runtime for Thinking Chains
 author: Hanzo AI
 type: Standards Track
 category: Core
 status: Final
+implementation-rust: partial
 created: 2026-06-21
 requires: HIP-0020, HIP-0024, HIP-0043, HIP-0114
 ---

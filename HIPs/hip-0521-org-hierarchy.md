@@ -1,5 +1,5 @@
 ---
-hip: 0521
+hip: "0521"
 title: Org Hierarchy
 author: Hanzo AI Team
 type: Standards Track

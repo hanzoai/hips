@@ -5,6 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Core
 status: Final
+implementation-go: partial
 created: 2026-08-27
 requires: HIP-0139, HIP-1048, HIP-1066, HIP-1107, HIP-1210
 ---
@@ -372,7 +373,7 @@ Three consequences follow, and each is a constraint rather than a feature:
 
 ### §13 What is built, what is off, what is missing
 
-Measured in `hanzoai/cloud`, `hanzoai/team`, `hanzoai/team-go` and `@hanzo/bot`
+Measured in `hanzoai/cloud`, `hanzoai/team` and `@hanzo/bot`
 on 2026-08-27. A specification claiming built things that are not built is worse
 than no specification, so each mechanism this HIP names carries its state and the
 symbol that proves it.

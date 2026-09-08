@@ -6,6 +6,7 @@ type: Standards Track
 category: Interface
 capability: content
 status: Final
+implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0026, HIP-0139
 ---

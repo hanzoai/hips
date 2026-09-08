@@ -1,10 +1,11 @@
 ---
-hip: 0519
+hip: "0519"
 title: One Identity Boundary
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: shipped
 created: 2026-07-29
 requires: HIP-0026
 ---

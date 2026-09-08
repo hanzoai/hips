@@ -1,10 +1,12 @@
 ---
-hip: 0043
+hip: "0043"
 title: Hanzo Engine — LLM Inference Engine Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Final
+implementation-rust: shipped
+implementation-cpp: shipped
 created: 2026-02-23
 updated: 2026-02-24
 requires: HIP-0004, HIP-0019, HIP-0039
@@ -106,7 +108,7 @@ Hugging Face Hub:
   Auth: HF_TOKEN environment variable
   Cache: ~/.cache/hanzo-engine/models/
 
-Hanzo Object Storage (HIP-0032):
+Hanzo Object Storage (HIP-0405):
   Endpoint: models.hanzo.ai/zen/{model}/{version}/{format}/
   Auth: HANZO_API_KEY
   Cache: /var/cache/hanzo-engine/models/

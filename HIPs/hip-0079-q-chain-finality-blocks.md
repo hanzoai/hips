@@ -1,5 +1,5 @@
 ---
-hip: 0079
+hip: "0079"
 title: Q-Chain — Quasar Finality Block Standard
 type: Standards Track
 category: Infrastructure

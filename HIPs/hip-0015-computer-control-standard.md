@@ -1,10 +1,11 @@
 ---
-hip: 0015
+hip: "0015"
 title: Computer Control Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
 status: Final
+implementation-rust: partial
 created: 2025-01-09
 requires: HIP-0009, HIP-0010
 ---

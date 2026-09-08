@@ -1,10 +1,11 @@
 ---
-hip: 0402
+hip: "0402"
 title: SQL CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: shipped
 created: 2026-05-19
 ---
 

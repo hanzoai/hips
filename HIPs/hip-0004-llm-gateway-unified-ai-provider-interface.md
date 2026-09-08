@@ -1,10 +1,11 @@
 ---
-hip: 0004
+hip: "0004"
 title: LLM Gateway - Unified AI Provider Interface
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
 status: Final
+implementation-go: shipped
 created: 2025-01-09
 requires: HIP-0001
 ---

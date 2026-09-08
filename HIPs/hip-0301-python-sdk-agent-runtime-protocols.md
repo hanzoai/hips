@@ -1,5 +1,5 @@
 ---
-hip: 0301
+hip: "0301"
 title: Agent Runtime Protocols & Cross-Platform Parity
 author: Hanzo AI
 type: Standards Track

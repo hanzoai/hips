@@ -1,5 +1,5 @@
 ---
-hip: 0077
+hip: "0077"
 title: Mesh Identity, Gossip & Payments (PQ)
 type: Standards Track
 category: Infrastructure

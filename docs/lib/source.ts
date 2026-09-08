@@ -29,6 +29,9 @@ export interface HIPMetadata {
 
 export interface HIPPage {
   slug: string[];
+  /** The file this page was read from, e.g. `hip-0065-backup-and-dr.md`. The
+   *  name carries a slug, so it cannot be rebuilt from the HIP number alone. */
+  file: string;
   data: {
     title: string;
     description?: string;
@@ -246,7 +249,9 @@ function readHIPFile(filename: string): HIPPage | null {
 
     // Extract HIP number from filename
     const hipMatch = filename.match(/hip-(\d+)/);
-    const hipNumber = data.hip || (hipMatch ? parseInt(hipMatch[1], 10) : null);
+    const hipNumber =
+      (data.hip !== undefined && data.hip !== null ? String(data.hip) : null) ??
+      (hipMatch ? hipMatch[1] : null);
 
     // Convert Date objects to strings
     const processedData: Record<string, unknown> = {};
@@ -260,6 +265,7 @@ function readHIPFile(filename: string): HIPPage | null {
 
     return {
       slug,
+      file: filename,
       data: {
         title: (processedData.title as string) || filename.replace(/\.mdx?$/, ''),
         description: processedData.description as string,

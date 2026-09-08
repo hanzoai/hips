@@ -1,5 +1,5 @@
 ---
-hip: 0123
+hip: "0123"
 title: Visor — Fleet & Fabric Autoscaling Across Any Provider
 author: Hanzo AI Team
 type: Standards Track
@@ -42,7 +42,7 @@ demand one control plane for it:
 
 1. **The fabric is already plural.** The operated estate spans eight
    Kubernetes clusters across providers this cycle — Kubernetes estates
-   (`do-sfo3-the cluster`, `do-sfo3-lux-k8s`, `do-sfo3-bootnode-k8s`,
+   (`do-sfo3-hanzo-k8s`, `do-sfo3-lux-k8s`, `do-sfo3-bootnode-k8s`,
    the zoo estate, and siblings) plus BYO k3s fleets such as the
    spark/evo/dbc reference cluster of HIP-0121. No single cluster's
    autoscaler can see, size, or bill that fabric as one thing.
@@ -60,9 +60,9 @@ demand one control plane for it:
    the classic two-ways defect.
 
 Visor is where this already lives: it is the machine/cluster
-provisioner and supervisor (HIP-0053), it holds the
-per-owner sealed provider connectors (HIP-0121), and it ships the
-autoscaler. This HIP names that role and fixes its contract.
+provisioner and supervisor, it holds the per-owner sealed provider
+connectors (HIP-0121), and it ships the autoscaler. This HIP names
+that role and fixes its contract.
 
 ## Specification
 
@@ -143,8 +143,8 @@ rewrite.
 Visor does not reconcile Deployments — that is the operator's job
 (HIP-0400); it feeds the node layer those Deployments land on. It does
 not define the fleet registry or billing tiers — that is HIP-0121; it
-executes against them. It is not the monitoring standard — HIP-0053
-covers probes/alerting; the autoscaler consumes those signals.
+executes against them. It is not the telemetry plane — that is
+HIP-0132; the autoscaler reads pod and node state from the cluster.
 
 ### Decided vs shipped
 
@@ -155,7 +155,7 @@ Honesty section. As of v1.108.11:
   project attribution labels in the scale path, the provider
   connector set (clouds + on-prem hypervisors), per-owner sealed
   credentials, the metering reporter, and the eight-cluster operated
-  fabric. Visor runs in production (`do-sfo3-the cluster`, operator CR
+  fabric. Visor runs in production (`do-sfo3-hanzo-k8s`, operator CR
   at tag v1.108.11).
 - **Decided, staged:** the full **per-tenant per-service
   cross-provider placement policy** — i.e. pools uniformly keyed by
@@ -205,8 +205,6 @@ itself and bills honestly.
 
 ## References
 
-- HIP-0053 — Visor Monitoring & Supervision Standard (probes/alerts
-  the autoscaler consumes)
 - HIP-0106 — Cloud — Unified Hanzo Binary (hybrid split mode; the
   "auto-scaling per-subsystem" non-goal this HIP picks up at the
   right layer)
@@ -216,6 +214,8 @@ itself and bills honestly.
   HIP manages)
 - HIP-0121 — BYO Compute Fleet & Metered Billing (the fleet registry,
   sealed providers, and billing tiers this HIP executes against)
+- HIP-0132 — One Telemetry Plane (the telemetry plane; this HIP is the
+  node plane)
 - HIP-0400 — Service CRD (workload reconciliation above this node
   plane)
 - `hanzoai/visor` — `autoscaler/{watcher,sizing}.go`,

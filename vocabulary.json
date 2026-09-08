@@ -50,6 +50,38 @@
     "Platform"
   ],
 
+  "implementation": {
+    "$comment": [
+      "How far the code has got, per runtime. `status:` is one word for the whole",
+      "proposal and cannot say that Go has a thing and Rust does not, so a HIP may",
+      "also carry implementation-go, implementation-cpp and implementation-rust.",
+      "",
+      "Flat and hyphenated like every other field, because the front-matter readers",
+      "here take one line at a time: a nested block under `implementation:` is",
+      "invisible to them, and a claim nothing can read is a claim nothing checks.",
+      "",
+      "An ABSENT key means nobody has assessed that runtime. `none` means somebody",
+      "looked and found nothing. The index counts the two apart -- folding the first",
+      "into the second reports an unread corpus as an unimplemented one.",
+      "",
+      "HIP-0010 stated the same thing a second way, as a Status column in a prose",
+      "table. One question, one place: that table says where the code is, and these",
+      "keys say how far it has got."
+    ],
+
+    "language": {
+      "go": "Go",
+      "cpp": "C++",
+      "rust": "Rust"
+    },
+
+    "progress": {
+      "shipped": "The runtime implements what the HIP specifies.",
+      "partial": "Some of it is there. The HIP names what is not.",
+      "none": "Somebody read this runtime and found none of it."
+    }
+  },
+
   "folded": {
     "$comment": "Every spelling this corpus has carried, and the value it is now. Kept so a reader of an old commit, an old PR or an external link can tell what happened. Nothing may be written back into a HIP from this map.",
     "Proposed": "Draft",

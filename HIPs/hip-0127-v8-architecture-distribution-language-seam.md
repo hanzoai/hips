@@ -1,5 +1,5 @@
 ---
-hip: 0127
+hip: "0127"
 title: "V8 · Open Edition — Architecture, Distribution & the Language Seam"
 author: Hanzo AI Team
 type: Standards Track

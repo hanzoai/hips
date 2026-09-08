@@ -1,9 +1,10 @@
 ---
-hip: 0069
+hip: "0069"
 title: Service Discovery & Auto-Bridge
 type: Standards Track
 category: Infrastructure
 status: Final
+implementation-go: partial
 author: Hanzo AI
 created: 2026-05-08
 requires: HIP-0007, HIP-0010, HIP-0068
@@ -130,9 +131,13 @@ the tree.
 |--------------|-------------------------------------------------------------|
 | Python       | `hanzo-zap-mdns`     (`pip install`)                        |
 | TypeScript   | `@hanzo/zap-mdns`    (npm)                                  |
-| Go           | `github.com/hanzoai/zap-mdns-go`                            |
+| Go           | `github.com/zap-proto/mdns`  (not yet published)            |
 | Rust         | `hanzo-zap-mdns`     (crates.io)                            |
 | Swift        | `HanzoZapMDNS`       (SwiftPM)                              |
+
+The Go binding is written but not yet a fetchable module: the source is
+[`mdns/go` in `luxfi/zap`](https://github.com/luxfi/zap/tree/main/mdns/go),
+and the import path above is the one it declares once tagged.
 
 ### Backwards compatibility
 

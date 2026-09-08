@@ -6,6 +6,7 @@ type: Standards Track
 category: Platform
 capability: admission
 status: Final
+implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0063, HIP-0106, HIP-0139
 ---

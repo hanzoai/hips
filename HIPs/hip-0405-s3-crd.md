@@ -1,10 +1,11 @@
 ---
-hip: 0405
+hip: "0405"
 title: S3 CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
 created: 2026-05-19
 ---
 

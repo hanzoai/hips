@@ -1,10 +1,12 @@
 ---
-hip: 0414
+hip: "0414"
 title: Network CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-05-19
 ---
 
@@ -81,7 +83,7 @@ spec:
 
 - HIP-0020 (Blockchain node standard)
 - HIP-0024 (Hanzo sovereign L1 chain architecture)
-- No `Network` CR currently runs in `do-sfo3-the cluster` — primary deployments are on `lux-k8s`.
+- No `Network` CR currently runs in `do-sfo3-hanzo-k8s` — primary deployments are on `lux-k8s`.
 
 ## Status
 

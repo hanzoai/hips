@@ -1,0 +1,1195 @@
+% hip-compute-settlement.tex
+% Hanzo Improvement Proposal — Compute Settlement: the ledger for paid,
+% attested compute on a Hanzo sovereign L1 over Lux.
+% Number assigned when this lands in HIPs/.
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\newtheorem{definition}{Definition}[section]
+% `rule' is a LaTeX primitive, so the environment carrying normative Rules is
+% named `norm'. The label prefix and the printed head both stay "Rule".
+\newtheorem{norm}[definition]{Rule}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{remark}[definition]{Remark}
+
+% Long identifiers are the norm here, so let the typewriter font break.
+\newcommand{\code}[1]{\texttt{\hyphenchar\font=`\-\relax #1}}
+\sloppy
+\emergencystretch=3em
+
+\newcommand{\Adm}{\mathrm{Adm}}
+\newcommand{\bond}{\mathrm{bond}}
+\newcommand{\esc}{\mathrm{escrow}}
+\newcommand{\res}{\mathrm{reserved}}
+\newcommand{\pay}{\mathrm{pay}}
+\newcommand{\emit}{\mathrm{emit}}
+\newcommand{\open}{\mathrm{open}}
+
+\setlist[itemize]{itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{itemsep=2pt,topsep=4pt}
+\setlist[description]{itemsep=3pt,topsep=4pt}
+
+\title{\textbf{Compute Settlement}\\[4pt]
+\large Credits in, attested work out, on a Hanzo sovereign L1 over Lux\\[6pt]
+\large A Hanzo Improvement Proposal}
+
+\author{Hanzo AI}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Number      & assigned on merge into \code{HIPs/} \\
+Type        & Standards Track \\
+Category    & Core \\
+Status      & Draft \\
+Requires    & HIP-0024 (Hanzo sovereign L1), HIP-0095 (QoS challenge),\\
+            & HIP-0096 (compute rewards), HIP-0106 (plugin contract, usage\\
+            & warehouse), HIP-1313 (\code{/v1/usage}), HIP-1325 (\code{/v1/node});\\
+            & LP-018 (network security modes), LP-77 (P-Chain warp payloads) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{abstract}
+\noindent
+A compute marketplace has two money flows and one question between them. Buyers
+pay for use; operators are paid for work; and somewhere the chain must decide
+whether a particular operator did a particular piece of work well enough to be
+paid for it. This proposal specifies that decision and the ledger around it, as
+a Hanzo sovereign L1 on Lux. It designs no consensus, no signature scheme and no
+attestation format: Lux supplies all three, and the parts of them this chain
+uses are cited to the files that implement them.
+
+The design rests on three separations. \emph{Who may claim} is answered by a
+bond. \emph{What ran} is answered by a measurement and a piece of signed
+evidence about it. \emph{What it is worth} is answered by a price a
+counterparty already agreed to and escrowed. Braiding any two of these produces
+the failure modes that dominate compute-market designs, and we keep them apart
+in the state, in the transaction surface, and in the reward formula.
+
+Two consequences are worth stating up front. First, emission is weighted by
+\emph{paid} work rather than by self-reported capacity, and is rate-capped
+rather than pooled; under those two conditions collusion between a buyer and an
+operator is strictly unprofitable whenever the emission rate is below the
+protocol fee rate, which we prove. Second, an invalid attestation is a
+rejection and not a slash; only an accepted obligation that produces no admitted
+claim is slashable. One rule replaces two, and the bond is sized so that every
+slash it authorises is collectible.
+
+We report what the current implementation does and does not do. The Lux
+attestation verifier is real and fails closed, but the compute-market
+precompile's own \code{verifyCompute} accepts any caller-computable hash, and
+we give the fix. On the reference fleet, measured, neither host can produce
+hardware-rooted evidence today, so the chain must be able to price two trust
+bases rather than one.
+\end{abstract}
+
+\tableofcontents
+
+\section{What the chain must decide}
+
+Between a buyer who pays and an operator who is paid sits a question neither
+can settle alone: what actually ran, and is it worth what was agreed? A
+settlement chain exists to answer that question and to move money on the
+answer. It is worth being exact about which parts of the question a chain can
+answer at all.
+
+Three properties are routinely conflated:
+
+\begin{description}[leftmargin=1.4em]
+  \item[Integrity of the inputs.] The files fed to the machine were the files
+    they were said to be.
+  \item[Fidelity of execution.] Those files, and only those, determined what
+    ran.
+  \item[Quality of the result.] What ran produced a correct answer.
+\end{description}
+
+They have different mechanisms. A digest over inputs addresses the first. A
+hardware root of trust addresses the second. Neither addresses the third; that
+is the domain of verification schemes over the computation itself and of
+challenge protocols, and this proposal cites rather than restates them
+(HIP-0095, LP-313).
+
+This proposal specifies a chain that decides the first, prices the second
+according to which root of trust is offered, and declines to assert the third.
+Declining is not a gap to be papered over: a settlement rule that pretends to
+witness result quality prices a guarantee it cannot deliver, and LP-324 is an
+audit of what happens when a market does that.
+
+\subsection{Scope}
+
+In scope: the credit ledger, operator bonds and slashing, the admission rule
+for a claim of served compute, the settlement arithmetic, and the exact
+boundary between chain state and fleet state.
+
+Out of scope, and specified elsewhere: consensus (Lux Quasar), the attestation
+format and its verifier (Lux \code{precompile/ai}), inference verification
+(LP-313), the challenge protocol over disputed quality (HIP-0095), price
+discovery, and routing.
+
+\subsection{Conventions}
+
+The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted
+as in RFC 2119. Statements are labelled by epistemic status throughout:
+\emph{implemented} means the behaviour exists in a cited file; \emph{measured}
+means we ran it and report the result; \emph{proposed} means this document is
+asking for it; \emph{assumed} means a security or economic premise that is not
+checked by the protocol.
+
+\section{What exists today}
+
+This section reports the substrate with locations, so every later claim can be
+checked against code rather than against prose. Everything in it is
+\emph{implemented} unless marked otherwise.
+
+\subsection{The sovereign-L1 model}
+\label{sec:sovereign}
+
+Lux's P-Chain models a network's security along two orthogonal axes
+(\code{node/vms/platformvm/security/mode.go}):
+
+\begin{itemize}
+  \item \code{RestakeParent} --- the network leans on its parent's validator set.
+  \item an own set, described by \code{Admission} $\in$
+    \{\code{NoOwnSet}, \code{Open}, \code{Gated}\} and \code{Manager} $\in$
+    \{\code{PChain}, \code{Contract}\}, with a \code{Threshold} that is the
+    minimum stake under \code{Open} admission.
+\end{itemize}
+
+\code{Mode.Sovereign()} is \code{Admission != NoOwnSet}. \code{Mode.Valid()}
+enforces the cross-axis invariant that a network must either restake its parent
+or run its own set; a network that does neither is refused with
+\code{ErrNoSecurity}.
+
+A network is born by \code{CreateNetworkTx}
+(\code{node/vms/platformvm/txs/create\_network\_tx.go}), which is the sole
+network constructor at any level of the hierarchy: \code{Parent = Primary}
+yields an L1, \code{Parent =} an L1 yields an L2, and the wire is byte-identical
+at every level. It carries the \code{security.Mode} inline (offsets
+\code{offCN\_RestakeParent}, \code{offCN\_Admission}, \code{offCN\_Manager},
+\code{offCN\_Threshold}), the genesis validator list, and
+\code{ManagerChainID}/\code{ManagerAddress} naming the chain and address hosting
+a \code{Contract}-governed set's staking contract.
+
+Chains are not created by that transaction. \code{CreateChainTx} is the sole
+chain constructor, and an L1 spawn is a block containing one
+\code{CreateNetworkTx} and $N$ \code{CreateChainTx}, atomic at the block.
+
+\begin{remark}
+The brief for this work described L1 birth as
+\code{CreateChainTx} + \code{AddValidatorTx} + \code{ConvertNetworkToL1Tx}.
+That is the older shape. In the current tree the legacy
+\code{ConvertNetworkToL1Tx} and \code{CreateSovereignL1Tx} have been folded into
+\code{CreateNetworkTx}
+(\code{node/vms/platformvm/network/zap\_native\_admission.go}), so a network may
+be \emph{born} sovereign in one transaction. \code{ConvertNetworkTx}
+(\code{convert\_network\_tx.go}) survives as the distinct endomorphism
+$\text{Network} \to \text{Network}$: it promotes an existing network from
+inherited to sovereign security and re-anchors its parent. Hanzo needs the
+constructor, not the promotion, because it has no restaked history to promote.
+\end{remark}
+
+The L1 validator lifecycle is four transactions:
+\code{RegisterL1ValidatorTx} (a funding balance, a BLS proof of possession, and
+a signed Warp \code{AddressedCall} payload),
+\code{IncreaseL1ValidatorBalanceTx} (top up the continuous-fee balance),
+\code{DisableL1ValidatorTx} (authorised by credential over a
+\code{ValidationID}), and the weight updates carried by the
+\code{L1ValidatorWeight} Warp payload
+(\code{node/vms/platformvm/warp/message/l1\_validator\_weight.go}, 49 bytes:
+kind, \code{ValidationID}, nonce, weight). That payload is bidirectional --- the
+P-Chain accepts it as a command and emits it as a report --- and a nonce of
+$2^{64}-1$ with weight $0$ is reserved for removal. These payloads are specified
+in LP-77.
+
+\subsection{Consensus}
+\label{sec:consensus}
+
+Quasar is the Lux post-quantum finality binding
+(\code{consensus/protocol/quasar}). It runs up to three independent signing
+paths in parallel: BLS12-381 threshold signatures (ECDL), Corona Ring-LWE
+two-round threshold signatures (Module-LWE), and ML-DSA-65 identity signatures
+(FIPS 204; Module-LWE and Module-SIS). Each layer is independently toggleable,
+so \{BLS\}, \{BLS, ML-DSA\}, \{BLS, Corona\} and all three are configurations of
+one engine. Inter-node transport is ZAP with optional PQ-TLS 1.3.
+
+This proposal makes no consensus choice. It requires only two properties that
+Quasar already provides and that the settlement rules below depend on:
+deterministic finality of a block height, and a validator set whose weight the
+P-Chain can be told to change.
+
+\subsection{The attestation verifier}
+\label{sec:verifier}
+
+There is one real TEE verifier in the AI precompile block:
+\code{ai.VerifyTEE} $\to$ \code{verifyAttestation}
+(\code{precompile/ai/tee\_attest.go}). Its receipt format is a 48-byte report
+header followed by a concatenated DER certificate chain:
+
+\[
+  \underbrace{\text{deviceID}}_{32} \;\|\;
+  \underbrace{\text{timestamp}}_{8,\ \text{BE}} \;\|\;
+  \underbrace{\text{nonce}}_{8} \;\|\;
+  \underbrace{\text{chain}_{\mathrm{DER}}}_{\text{leaf, intermediates}}
+\]
+
+and the signature is over the 48-byte header by the leaf key. Verification
+checks that the chain terminates at an embedded vendor root, valid \emph{at the
+report's own embedded timestamp} rather than the wall clock, and that the
+signature binds the header. It is deterministic, so every validator reaches the
+same verdict; it fails closed, returning \code{(false, nil)} for an untrusted,
+incomplete or expired chain and \code{(false, err)} only for input it cannot
+evaluate at all; and it never returns true by default --- with an empty root
+pool nothing verifies.
+
+The trusted root pool (\code{precompile/ai/tee\_roots.go}) currently holds
+exactly one certificate: the Intel SGX Provisioning Certification Root CA
+(SHA-256 fingerprint \code{44:A0:19:6B:\ldots:B6:74:D3}), which anchors Intel
+SGX and TDX DCAP chains. The verification core is vendor-agnostic; a vendor
+whose root is not embedded fails closed.
+
+The \code{attestation} precompile at
+\code{0x0300000000000000000000000000000000000001} is a stateless adapter over
+that verifier, with selectors \code{0x01} \code{VerifyNVTrust}, \code{0x02}
+\code{VerifyTPM}, \code{0x03} \code{VerifyCompute}, \code{0x04}
+\code{CreateAttestation} and \code{0x05} \code{GetDeviceStatus}. It keeps no
+device registry: a prior process-global map was a consensus-split hazard and was
+removed, so \code{GetDeviceStatus} always reports not-found and a quote must be
+presented to be believed. Attestation expiry uses the block timestamp plus a
+3600-second TTL. Its \code{SupportedGPUModels} list is H100, H200, B100, B200,
+GB200 and RTX PRO 6000.
+
+\subsection{The compute-market precompile, and its admission defect}
+\label{sec:defect}
+
+The AI precompile range is \code{0x0300\ldots00} through \code{0x0300\ldots ff}
+(\code{precompile/modules/registerer.go}). Within it:
+\code{0x\ldots0000} AI mining, \code{0x\ldots0001} attestation,
+\code{0x\ldots0002} model registry, \code{0x\ldots0003} inference,
+\code{0x\ldots0004} AIVM bridge, and \code{0x\ldots0010} the compute market
+(\code{precompile/compute/contract.go}, interface
+\code{IComputeMarket.sol}).
+
+The compute market implements five operations --- \code{RegisterProvider},
+\code{SubmitJob}, \code{ClaimReward}, \code{VerifyCompute}, \code{GetPrice} ---
+over a keccak-prefixed storage layout, with a job status of open, claimed or
+verified. Its per-operation gas is 25{,}000 / 10{,}000 / 5{,}000 / 50{,}000 /
+5{,}000, and \code{GetPrice} quotes $1000$ wei per input byte and refuses a
+product wider than 256 bits rather than wrapping.
+
+Its verification step, however, is not verification. \code{verifyCompute}
+computes
+
+\begin{center}
+\code{expected = keccak256(jobID || outputHash)}
+\end{center}
+
+and marks the job verified when the caller's \code{attestation} argument equals
+that value (\code{contract.go}, lines 270--283). Both operands are already
+public: \code{jobID} is the argument, and \code{outputHash} was written by the
+claimant at \code{ClaimReward}. Anyone can compute the expected value, so the
+check establishes that the caller can hash --- not that a computation occurred,
+not where, and not on what. It is a well-formedness checksum wearing the name of
+an attestation check.
+
+This is the single most consequential thing to fix, and the fix is not to write
+a new verifier. §\ref{sec:changes} routes admission through the one verifier
+that already exists.
+
+\subsection{Model commitments}
+
+The model registry precompile (\code{0x0300\ldots0002},
+\code{precompile/modelregistry/registry.go}) holds a governance-adopted,
+versioned commitment per model name:
+$\code{GetApproved}(\textit{name}) \to (\textit{version}, \textit{weight})$,
+where \textit{weight} is a commitment to the weights and a zero value means no
+version has been adopted. Adoption is gated on an admin set held in the same
+precompile's storage. This is the on-chain answer to ``which weights are
+canonical'', and §\ref{sec:slash} uses it as the reference for substitution.
+
+\subsection{What an operator can say about itself}
+\label{sec:evidence}
+
+\code{hanzod} produces a measurement and signed evidence about a microVM boot
+(crate \code{hanzo-attest}, \code{hanzoai/node/hanzo-libs/hanzo-attest},
+specified in \emph{Attested Compute in \code{hanzod}}). Its boot inputs are the
+monitor binary digest, the operating-system asset version, the kernel digest,
+the root-filesystem digest, the machine shape, and the guest argv; the
+measurement is $\mathrm{BLAKE3}$ over a length-prefixed canonical encoding under
+the domain tag \code{hanzo.boot.v1}. Evidence is $(M, \kappa, p, \sigma, t)$
+signed over $\code{hanzo.evidence.v1} \| \kappa \| M \| t$, with kinds
+$\kappa \in \{\code{host}=1, \code{snp}=2, \code{tdx}=3\}$.
+
+Only \code{host} is implemented: the node signs its own measurement with its own
+ed25519 identity key. \code{snp} and \code{tdx} are values with no attester and
+no verifier. The distinction is the entire security argument. Host-asserted
+evidence establishes that a named node made a claim and that the claim was not
+altered; it does not establish that the node fed those files to the monitor,
+because nothing outside the node observed the boot. A dishonest operator
+measures the files it wishes to claim, signs, and boots whatever it likes --- and
+the signature verifies.
+
+The monitor is \code{hanzo-vm} (\code{hanzoai/vm}), which boots a k3s microVM
+with published medians of 0.30\,s (Apple M4 Max, Virtualization.framework),
+0.27\,s (Ryzen AI Max+ 395, cloud-hypervisor) and 0.30\,s (GB10, KVM). The
+control-plane image reaching such a machine is \code{ghcr.io/hanzoai/cloud}.
+
+\subsection{What the reference fleet can actually attest}
+\label{sec:fleet}
+
+\emph{Measured.} We inspected the two reference hosts.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & \code{evo.local} & \code{spark.local} \\
+\midrule
+Architecture        & x86\_64                        & aarch64 \\
+CPU                 & AMD Ryzen AI MAX+ 395          & --- \\
+Cores               & 32                             & 20 \\
+KVM                 & present                        & present \\
+GPU                 & none reported by \code{nvidia-smi} & NVIDIA GB10 \\
+\code{/dev/sev}     & absent                         & n/a \\
+\code{kvm\_amd sev} & \code{N}                       & n/a \\
+\code{\~{}/.hanzo/vm} assets & present               & --- \\
+\bottomrule
+\end{tabular}
+\caption{Reference hosts, inspected directly. The two rows that matter for
+admission are the SEV rows: SEV is not enabled on the AMD host, and the ARM
+host is not an SEV or TDX platform at all.}
+\end{table}
+
+Two consequences follow, and neither is hypothetical:
+
+\begin{enumerate}
+  \item Neither host can produce a quote the implemented verifier would accept.
+    The only embedded root is Intel SGX (§\ref{sec:verifier}); the AMD host has
+    SEV disabled and exposes no \code{/dev/sev}; the ARM host is neither.
+  \item GB10 is not in \code{SupportedGPUModels}, so even a GPU attestation
+    path would report it as not confidential-computing capable.
+\end{enumerate}
+
+The design consequence is structural, not a stopgap: \textbf{the chain must be
+able to price two trust bases, because a real fleet contains both}. A settlement
+rule that admits only hardware-rooted evidence settles nothing on this fleet
+today; a rule that treats host-asserted evidence as equivalent to a hardware
+quote lies about what it checked. §\ref{sec:settle} resolves this by letting the
+evidence kind modulate emission and nothing else.
+
+\subsection{Where usage is metered today}
+
+Per-request detail lands in the \code{hanzo.cloud\_usage} warehouse ledger
+written by the AI plane (HIP-0106); the money lands on the org's commerce
+ledger; \code{/v1/usage} (HIP-1313) composes reads over both and owns one series
+of its own. HIP-1313's own motivation states the rule this proposal inherits:
+answering ``what did this cost'' by copying three ledgers into a fourth store
+produces a fourth number that can disagree with the ledger it came from. The
+chain is not that fourth store.
+
+\section{The chain}
+
+\subsection{Placement}
+
+\emph{Proposed.} Hanzo is a sovereign L1 whose parent is the Lux primary
+network, with
+
+\begin{align*}
+  \code{security.Mode} \;=\; \bigl(\;
+    &\code{RestakeParent} = \text{false},\;
+     \code{Admission} = \code{Open},\\
+    &\code{Threshold} = T,\;
+     \code{Manager} = \code{Contract}\;\bigr)
+\end{align*}
+
+and \code{ManagerChainID} naming the Hanzo EVM chain, \code{ManagerAddress} the
+validator-manager contract on it. \code{Mode.Sovereign()} holds. The genesis
+validator list is carried by the same \code{CreateNetworkTx}
+(§\ref{sec:sovereign}), and the chain itself is created by a \code{CreateChainTx}
+in the same block.
+
+Following the workspace convention that a sovereign L1's primary network
+identifier equals its EVM chain identifier, Hanzo's identifiers are those
+already recorded in HIP-0024: 36963 on mainnet and 36962 on testnet, ticker AI.
+One identifier per environment removes the wallet and tooling ambiguity of a
+network identifier that differs from the chain identifier.
+
+The chain inherits Lux's consensus, its post-quantum signing paths, its
+precompile block, and its Warp messaging. It does not inherit the primary
+network's validator set --- that is what sovereign means --- and it does not
+depend on the C-Chain, which is the Lux primary network's own EVM and is used by
+no other network.
+
+HIP-0024 records the engine as \code{nova} with sampling parameters
+$k = 20$, $\alpha = 15$. Nova is the linear-chain driver
+(\code{consensus/protocol/nova}) and Quasar is the post-quantum finality layer
+that composes with such drivers (§\ref{sec:consensus}); the two names describe
+different layers and are not alternatives. Nothing in this proposal depends on
+which driver or which of Quasar's signing modes is configured, for the reason
+given in §\ref{sec:consensus}: the settlement rules need deterministic finality and a validator
+weight the P-Chain can be told to change, and both hold under every mode.
+
+\subsection{Two sets, deliberately distinct}
+
+The validator set secures the ledger. The operator set serves compute. They are
+different populations with different capital, different hardware and different
+failure modes, and LP-323 is an argument for keeping capacity, work and identity
+apart. This proposal keeps them apart:
+
+\begin{itemize}
+  \item A \emph{validator} holds a P-Chain L1 validation with a
+    \code{ValidationID}, a BLS key, and a continuous-fee balance topped up by
+    \code{IncreaseL1ValidatorBalanceTx}.
+  \item An \emph{operator} holds an EVM-level bond in the settlement contract
+    and an ed25519 identity that signs evidence.
+\end{itemize}
+
+A principal may be both. Nothing requires it, and §\ref{sec:slash} is careful
+about which of the two a slash touches.
+
+\section{The ledger}
+\label{sec:ledger}
+
+\subsection{One asset, three accounts}
+
+\emph{Proposed.} There is one asset, AI. There is no separate credit token. A
+non-transferable credit unit would create a second price, and a second price
+needs a reconciliation, and the reconciliation is the defect HIP-1313 exists to
+avoid. Credit is not a different asset; it is AI under a spend authority.
+
+For each buyer $b$ and operator $o$ the chain holds:
+
+\begin{align*}
+  \esc(b)  &\in \mathbb{N} && \text{AI deposited by $b$, spendable only through leases} \\
+  \res(b)  &\in \mathbb{N} && \text{the part of $\esc(b)$ committed to open leases} \\
+  \bond(o) &\in \mathbb{N} && \text{AI locked by $o$, slashable}
+\end{align*}
+
+with the invariant $\res(b) \le \esc(b)$ maintained at every transition.
+
+\begin{definition}[Credit operations]
+\code{deposit}$(v)$ adds $v$ to $\esc(b)$.
+\code{withdraw}$(v)$ requires $v \le \esc(b) - \res(b)$ and subtracts $v$.
+Nothing else moves $\esc$ except settlement.
+\end{definition}
+
+Three operations are the whole credit ledger. Money enters once per deposit, not
+once per request; §\ref{sec:split} explains why the per-request meter must stay
+off the chain.
+
+\subsection{Leases}
+
+\begin{definition}[Lease]
+A \emph{lease} is
+$\ell = (b,\, o,\, m,\, \nu,\, \pi,\, \bar u,\, [e_1, e_2])$: a buyer, an
+operator, a model name $m$ in the registry, a \emph{unit} $\nu$, a price $\pi$ in
+AI per unit, a cap $\bar u$ on units, and a window of epochs. Its
+\emph{obligation} is $\pi \bar u$.
+\end{definition}
+
+$\nu$ is an opaque identifier and the chain never interprets it. Whether a unit
+is an output token, a GPU-second, a request or a frame is a question the two
+counterparties answer between themselves and the meter records off the chain
+(§\ref{sec:split}); the chain settles a scalar they both signed for. Putting a
+unit taxonomy on the chain would fix in consensus a vocabulary that changes with
+every new modality, and would give the chain a second opinion about work it
+cannot observe.
+
+Opening a lease reserves the buyer's side and charges the operator's book:
+
+\begin{norm}[Opening]
+\label{rule:open}
+$\code{open}(\ell)$ MUST fail unless
+$\res(b) + \pi \bar u \le \esc(b)$ and
+\[
+  \lambda \Bigl(\pi_\ell \bar u_\ell +
+    \sum_{\ell' \in \open(o)} \pi_{\ell'} \bar u_{\ell'}\Bigr) \;\le\; \bond(o),
+\]
+where $\open(o)$ is $o$'s set of live leases and $\lambda \in (0,1]$ is the
+slash fraction of §\ref{sec:slash}. On success $\res(b) \mathrel{+}= \pi\bar u$
+and $\ell$ joins $\open(o)$.
+\end{norm}
+
+The second condition is the invariant that makes slashing sound. It says the
+bond covers the book: an operator may take on obligations only up to the point
+where the maximum slash they can incur is still collectible. Most designs assert
+a slash percentage and never check that the stake can pay it; this checks it at
+the only moment when checking is cheap.
+
+\section{Claims and admission}
+\label{sec:admit}
+
+\subsection{The one object that crosses}
+
+\emph{Proposed.} Work is served continuously and settled periodically. Let an
+\emph{epoch} $e$ be a fixed number of blocks. Within an epoch an operator
+accumulates \emph{receipts} off the chain; at the epoch's close it submits one
+\emph{claim} on the chain.
+
+\begin{definition}[Receipt]
+A receipt is $r = (\ell,\, u_r,\, h_r,\, t_r)$: the lease it serves, the units of
+work, a digest of the request and response bodies, and a time. Receipts never
+appear on the chain.
+\end{definition}
+
+\begin{definition}[Claim]
+A claim is
+\[
+  C \;=\; \bigl(o,\; e,\; \rho,\; M,\; \kappa,\; Q,\;
+    \{(\ell_i, u_i)\}_{i=1}^{n},\; \sigma_o \bigr)
+\]
+where $\rho$ is the Merkle root over the epoch's receipts, $M$ is the boot
+measurement of §\ref{sec:evidence}, $\kappa$ the evidence kind, $Q$ the
+attestation receipt and signature, $(\ell_i, u_i)$ the per-lease unit totals, and
+$\sigma_o$ the operator's signature over the whole.
+\end{definition}
+
+A claim is $O(1)$ in the number of requests it covers. Its size is
+$32 + 32 + 1 + |Q| + 40n + |\sigma_o|$ bytes, dominated by $Q$, whose bulk is a
+DER certificate chain. At one claim per operator per epoch, chain load is
+$O(|\mathcal{O}|)$ and independent of traffic: $10^4$ operators on hourly epochs
+is under three claims per second. This is the reason for the epoch structure, and
+it is the whole content of the on-chain/off-chain boundary.
+
+\subsection{Admission}
+
+\begin{definition}[Admission]
+\label{def:adm}
+$\Adm(C)$ holds exactly when all of the following hold. Each is a total,
+deterministic function of chain state and $C$.
+
+\begin{enumerate}[label=A\arabic*.,leftmargin=2.4em]
+  \item \textbf{Evidence verifies.}
+    $\code{ai.VerifyTEE}(Q.\text{receipt}, Q.\sigma) = \text{true}$ for
+    $\kappa \in \{\code{snp}, \code{tdx}\}$, against the embedded root pool at
+    the report's own timestamp (§\ref{sec:verifier}); or, for
+    $\kappa = \code{host}$, $\sigma$ verifies under the operator's registered
+    ed25519 identity over
+    $\code{hanzo.evidence.v1} \,\|\, \kappa \,\|\, M \,\|\, t$.
+  \item \textbf{Evidence binds this claim.} The report's 8-byte nonce equals the
+    low 8 bytes of
+    $H(\code{hanzo.claim.v1} \,\|\, o \,\|\, e \,\|\, \rho \,\|\, M)$.
+  \item \textbf{Evidence is fresh.} The report's timestamp lies within epoch
+    $e$'s window.
+  \item \textbf{Device is the operator's.} The report's 32-byte deviceID is one
+    registered to $o$.
+  \item \textbf{Unspent.} The work identifier $\omega = H(o \,\|\, e)$ is not in
+    the spent set. On admission it is marked spent.
+  \item \textbf{Bonded.} $\bond(o) \ge B_{\min}$ and $o$ is not in an unbonding
+    period.
+  \item \textbf{Arithmetic.} Every $\ell_i$ names $o$, is live in $e$, and
+    satisfies $u_i + (\text{units already settled on } \ell_i) \le \bar u_{\ell_i}$.
+  \item \textbf{Model is adopted.} For each distinct $m$ among the $\ell_i$,
+    $\code{GetApproved}(m)$ returns a nonzero weight commitment.
+\end{enumerate}
+\end{definition}
+
+A2 is the anti-replay binding, and it uses a field that already exists. The
+48-byte report header carries an 8-byte nonce whose purpose in the verifier is
+exactly this and which the verifier does not otherwise constrain. Binding it to
+$(o, e, \rho, M)$ means a quote produced for one operator's epoch cannot be
+presented for another's: changing any of the four changes the nonce, and the
+nonce is inside the signed header. Without A2, an operator with no TEE replays a
+competitor's valid quote.
+
+$M$ belongs inside that hash for a reason worth stating, because the alternative
+looks equally correct and is not. The Lux receipt header is
+$(\text{deviceID}, \text{timestamp}, \text{nonce})$ and has no measurement field,
+so the vendor-rooted signature covers the measurement only if the measurement is
+folded into one of the three. The nonce is the only one that is free. With $M$
+outside the hash, $M$ would be covered by $\sigma_o$ alone --- the operator's own
+signature --- and a hardware quote would attest to a device and a time while the
+statement about what booted stayed self-asserted. Folding $M$ in makes the
+vendor-rooted signature cover it transitively, which is what
+$\mu(\code{snp}) > \mu(\code{host})$ is paying for.
+
+The cost of that choice is the nonce's width. Eight bytes gives a forger 64 bits
+of second-preimage work to find a different $(o, e, \rho, M)$ matching a nonce
+they already hold a valid quote for, and they must additionally control an
+operator the deviceID is registered to (A4). Sixty-four bits is adequate against
+a targeted forgery and is not a birthday setting, since the target nonce is
+fixed. It is nonetheless the narrowest quantity in this design, and widening the
+receipt's nonce field is the change that would widen it.
+
+A5 is the second replay guard and covers the case where an operator submits the
+same claim twice. The pattern is implemented in the AI mining precompile:
+\code{IsSpent}/\code{MarkSpent} over a
+$\mathrm{BLAKE3}(\text{prefix} \| \omega)$ key
+(\code{precompile/ai/ai\_mining.go}).
+
+\subsection{What admission does not establish}
+
+Stating this precisely is part of the specification, not a caveat appended to it.
+
+\begin{itemize}
+  \item It does not establish that the adopted model produced the outputs. It
+    establishes that the operator's declared boot inputs hash to $M$, and, under
+    $\kappa \in \{\code{snp},\code{tdx}\}$, that a genuine platform signed $M$.
+    Binding $M$ to the registry's weight commitment is §\ref{sec:slash}'s
+    substitution rule and is a claim about \emph{declared} inputs.
+  \item It does not establish result quality. No hash of an output is evidence
+    that the output is right.
+  \item Under $\kappa = \code{host}$ it does not establish that the measured
+    files were the files the monitor was given, because nothing outside the node
+    observed the boot. Host-asserted evidence is worth the reputation of the
+    signer, and §\ref{sec:settle} prices it accordingly rather than pretending
+    otherwise.
+  \item It does not establish that the units $u_i$ are the units the buyer
+    actually consumed. It establishes that the operator committed to a receipt
+    set whose root is $\rho$ and signed for the totals. Disagreement is a
+    dispute, and disputes are HIP-0095's subject; the buyer holds its own
+    receipts and opens a Merkle path against $\rho$.
+\end{itemize}
+
+\section{Settlement}
+\label{sec:settle}
+
+\emph{Proposed.} At the close of epoch $e$, for every admitted claim, two
+independent terms are computed. Keeping them independent is the point: one is
+conserved and one is minted, and a design that sums them into a single ``reward''
+loses the ability to take emission to zero without breaking pay-per-use.
+
+\subsection{The conserved term}
+
+For admitted claim $C$ and each $(\ell_i, u_i)$, with $b_i$ the lease's buyer:
+
+\begin{align*}
+  R_i     &= \pi_{\ell_i}\, u_i && \text{revenue on this lease} \\
+  \esc(b_i) &\mathrel{-}= R_i,\qquad \res(b_i) \mathrel{-}= R_i \\
+  \pay(o) &\mathrel{+}= (1-\phi)\,R_i && \text{operator's share} \\
+  \text{treasury} &\mathrel{+}= \phi\, R_i && \text{protocol fee}
+\end{align*}
+
+where $\phi \in (0,1)$ is the protocol fee rate. Nothing is minted here. When a
+lease closes with $u < \bar u$, the unspent reserve is released:
+$\res(b) \mathrel{-}= \pi(\bar u - u)$.
+
+Let $w_o = \sum_i R_i$ be the operator's admitted revenue in the epoch and
+$W_e = \sum_{o} w_o$ the epoch's total.
+
+\subsection{The minted term}
+
+\begin{definition}[Emission]
+\label{def:emit}
+With epoch pool $E_e$, rate cap $\varepsilon > 0$, the evidence kind $\kappa$
+carried by the operator's admitted claim, and multiplier
+$\mu(\kappa) \in (0,1]$:
+\[
+  \emit(o) \;=\; \mu(\kappa)\cdot
+    \min\!\left( E_e \cdot \frac{w_o}{W_e},\;\; \varepsilon\, w_o \right).
+\]
+Any part of $E_e$ not allocated by this formula is not minted.
+\end{definition}
+
+Two choices in that formula carry the design, and each replaces a mechanism that
+would otherwise need its own section.
+
+\paragraph{Weighting by paid work rather than by capacity.} A capacity
+normalisation --- HIP-0096's Hanzo Compute Units, a weighted sum over GPU FLOPs,
+VRAM, cores, memory bandwidth, storage IOPS and network --- is a number the
+operator reports about itself. Weighting emission by it creates a direct
+incentive to inflate it, which is why designs built on it need an anti-gaming
+section chasing the inflation. Weighting by $w_o$ removes the incentive rather
+than policing it: capacity nobody paid for earns nothing, and the number in the
+weight is one a counterparty agreed to pay.
+
+The cost of this choice is real and should be stated: emission follows price, so
+an operator serving cheap models in a cheap region earns less emission per unit
+of physical work than one serving expensive models. That is a consequence of
+paying for value rather than for watts, and the alternative reintroduces
+self-reported capacity.
+
+\paragraph{Rate-capping rather than pooling.} A pure pro-rata split of a fixed
+pool has a hole that is easy to miss: as $W_e \to 0$ the emission \emph{per unit
+of revenue} diverges, so a single participant in a thin epoch collects nearly all
+of $E_e$ for an arbitrarily small $w_o$. The $\varepsilon w_o$ term caps marginal
+emission at $\varepsilon$ per unit of revenue regardless of how thin the epoch
+is. It is one \code{min} and it closes the empty-epoch attack.
+
+\paragraph{The multiplier is on emission only.} $\mu(\code{host}) <
+\mu(\code{snp}) = \mu(\code{tdx})$. The protocol subsidises better evidence; it
+does not reprice a contract the counterparties agreed. A buyer who paid $\pi$ per
+unit gets charged $\pi$ per unit whatever the evidence kind, and the operator
+receives $(1-\phi)R$ whatever the evidence kind. §\ref{sec:fleet} is why this
+parameter exists at all: on the reference fleet today, $\kappa = \code{host}$ is
+the only kind available, and a chain that could not settle it would settle
+nothing.
+
+\subsection{Collusion is unprofitable}
+
+\begin{proposition}
+\label{prop:wash}
+Let a single economic principal control both a buyer $b$ and an operator $o$,
+and route revenue $R$ through leases between them. Under
+Definition~\ref{def:emit}, the principal's net change in AI holdings is at most
+$(\varepsilon - \phi) R$. If $\varepsilon < \phi$ it is strictly negative for
+every $R > 0$.
+\end{proposition}
+
+\begin{proof}
+The conserved term moves $R$ from $\esc(b)$ to $\pay(o)$ less the fee: since $b$
+and $o$ are the same principal, the internal transfer nets to zero and the
+principal's holdings change by $-\phi R$. The minted term is bounded above by
+$\mu(\kappa)\,\varepsilon\,R \le \varepsilon R$, because the \code{min} in
+Definition~\ref{def:emit} is at most its second argument and $\mu \le 1$. The
+sum is at most $(\varepsilon - \phi)R$, which is negative for $R > 0$ exactly
+when $\varepsilon < \phi$.
+\end{proof}
+
+\begin{remark}
+The bound holds for every epoch composition, including an epoch in which the
+colluding pair is the only participant. That is what the rate cap buys; under a
+pure pooled split the second term would be $E_e$ rather than $\varepsilon R$ and
+the proposition would be false for small $R$.
+\end{remark}
+
+\begin{remark}
+Proposition~\ref{prop:wash} bounds a principal who controls both sides. It says
+nothing about an operator who serves real buyers badly; that is quality, and
+quality is HIP-0095's subject. It also assumes the fee is not rebated to the
+payer by some other mechanism --- a rebate is an $\varepsilon$ in disguise and
+must be counted in $\varepsilon$.
+\end{remark}
+
+\begin{proposition}[Emission is bounded by paid work]
+$\sum_o \emit(o) \le \min(E_e,\; \varepsilon W_e)$.
+\end{proposition}
+
+\begin{proof}
+Immediate from Definition~\ref{def:emit}: term-wise, $\sum_o \mu \cdot \min(\cdot)
+\le \sum_o E_e w_o / W_e = E_e$ and $\sum_o \mu \cdot \min(\cdot) \le
+\sum_o \varepsilon w_o = \varepsilon W_e$.
+\end{proof}
+
+This is HIP-0096's stated invariant ``total rewards $\le$ total value created''
+made structural rather than aspirational: with no paid work there is no
+emission, and the unallocated pool is not minted.
+
+\section{Slashing}
+\label{sec:slash}
+
+\subsection{Rejection is not slashing}
+
+An operator whose attestation does not verify has produced nothing the chain can
+admit. That is a rejection: the claim does not settle, and the operator has
+wasted the gas. It is not, by itself, a slash. Slashing a failed verification
+punishes an operator for a network fault, a clock skew, or an expired
+certificate, and an operator who can be slashed for a transient failure will
+withdraw its bond.
+
+What is slashable is an \emph{obligation taken and not met}. The operator
+accepted a lease under Rule~\ref{rule:open}, and the buyer's money was reserved
+against it. If no admitted claim covers that lease by its deadline, the operator
+took a commitment and did not deliver, and the reason --- no attestation, an
+invalid attestation, a crashed node, a decision not to serve --- does not change
+the fact.
+
+This is one rule where a design that slashes both ``invalid'' and ``missing''
+needs two, and it is strictly stronger than either alone: an invalid attestation
+on a live lease produces no admitted claim, so non-delivery fires anyway.
+
+\subsection{The three slashable events}
+
+\emph{Proposed.} All three are decidable from chain state alone.
+
+\begin{norm}[Non-delivery]
+\label{rule:nd}
+If lease $\ell \in \open(o)$ reaches epoch $e_2 + \Delta$ with settled units
+$u < \underline{u}\,\bar u$ for a delivery floor $\underline{u} \in [0,1]$, then
+$s = \min\bigl(\bond(o),\, \lambda\, \pi_\ell (\bar u_\ell - u)\bigr)$ is taken
+from $\bond(o)$, the buyer's remaining reserve on $\ell$ is released, and $s$ is
+credited to $\esc(b)$.
+\end{norm}
+
+Two details in that rule are load-bearing.
+
+The slash is proportional to the obligation, not a flat fraction of the bond. A
+flat fraction under-collateralises a large book and over-punishes a small one;
+proportionality makes the required bond a function of the book the operator chose
+to take, which is what Rule~\ref{rule:open} enforces at the moment of taking it.
+
+The slash goes to the buyer, not to the treasury, and it is measured on the
+\emph{undelivered} part $\bar u_\ell - u$. The buyer is the party that was
+harmed: it reserved capital against a promise and got a fraction of it. Sending
+the slash to the treasury would make the protocol the beneficiary of its own
+operators' failures, which is an incentive nobody should want to build. Crediting
+$\esc(b)$ rather than paying out keeps the money inside the credit ledger, where
+the buyer can spend it with a different operator without a second transaction.
+
+Together, Rules \ref{rule:open} and \ref{rule:nd} give:
+
+\begin{proposition}[Slashes are collectible]
+Under Rule~\ref{rule:open}, at any time
+$\sum_{\ell \in \open(o)} \lambda \pi_\ell \bar u_\ell \le \bond(o)$. Each
+non-delivery slash is $\lambda \pi_\ell (\bar u_\ell - u) \le
+\lambda \pi_\ell \bar u_\ell$, so the sum of all non-delivery slashes an operator
+can simultaneously incur does not exceed its bond, and the $\min$ in
+Rule~\ref{rule:nd} never binds.
+\end{proposition}
+
+\begin{norm}[Equivocation]
+If two admitted claims $C, C'$ of the same operator cover overlapping intervals
+of the same lease, $\lambda_{\mathrm{eq}} \bond(o)$ is taken from $\bond(o)$ and
+both claims' settlements are reversed.
+\end{norm}
+
+\begin{norm}[Substitution]
+If an admitted claim names model $m$ and the measurement $M$ in its evidence is
+not the measurement the operator registered against $(m, \text{version})$ for the
+weight commitment $\code{GetApproved}(m)$ returns, then
+$\lambda_{\mathrm{sub}} \bond(o)$ is taken from $\bond(o)$ and the claim's
+settlement is reversed.
+\end{norm}
+
+These two are fractions of the bond rather than of an obligation, because
+neither harm is bounded by one lease: an equivocating or substituting operator
+has misreported to every buyer it served that epoch. Their proceeds are split
+pro-rata to $\esc(b)$ across the affected buyers and the remainder goes to the
+treasury, which is the only case in this design where the treasury receives a
+slash --- and it receives only what no identifiable buyer was owed.
+
+\begin{remark}
+Substitution is a statement about \emph{declared} inputs. Under
+$\kappa = \code{host}$ an operator who intends to substitute simply declares the
+measurement it is supposed to have and boots something else; the rule catches
+mistakes and lazy operators, not determined ones. Under
+$\kappa \in \{\code{snp},\code{tdx}\}$ the measurement is signed by a platform
+the operator does not control and the rule binds. This is precisely the gap
+$\mu(\kappa)$ prices, and it is the reason a hardware attester is the highest-value
+piece of work outstanding in the fleet rather than a refinement.
+\end{remark}
+
+\subsection{Reaching the validator set}
+
+A slash lands on the EVM bond, which is where operators keep capital. If the
+slashed operator is also an L1 validator, the validator-manager contract named by
+\code{ManagerAddress} (§\ref{sec:sovereign}) reduces its weight by emitting an
+\code{L1ValidatorWeight} Warp payload to the Lux P-Chain carrying the
+\code{ValidationID} and the new weight; removal is the reserved nonce
+$2^{64}-1$ with weight $0$. That path is implemented and specified in LP-77; this
+proposal adds no new cross-chain mechanism.
+
+An operator that is not a validator has no validator weight to reduce, and
+nothing about its slash touches consensus. Keeping the two sets distinct
+(§\ref{sec:sovereign}) is what makes that sentence true.
+
+\section{On chain and off chain}
+\label{sec:split}
+
+The boundary is one sentence: \textbf{the chain holds commitments and verifies
+signatures; the fleet holds content and produces signatures; exactly one object
+crosses, and it is the claim.}
+
+\begin{longtable}{@{}p{0.30\textwidth}p{0.16\textwidth}p{0.46\textwidth}@{}}
+\toprule
+Object & Lives & Why \\
+\midrule
+\endhead
+Credit balance, reserve & chain & It is the money. \\
+Operator bond, its lock & chain & It is the collateral a slash collects from. \\
+Lease terms $(b,o,m,\nu,\pi,\bar u,\text{window})$ & chain & Both sides must be
+held to the same numbers, and Rule~\ref{rule:open} is checked against them. The
+unit $\nu$ is stored and never interpreted. \\
+Admitted-claim record & chain & Equivocation and non-delivery are decided by
+comparing claims. \\
+Spent set over $\omega$ & chain & Replay is only detectable against a durable set. \\
+Model commitment & chain & Substitution needs a reference the operator does not
+control. \\
+Emission parameters, epoch pool & chain & They determine minting. \\
+\midrule
+Prompts, inputs, outputs & fleet & Never on chain, in any form. Confidentiality
+is not a property a public ledger can hold, and LP-324 is explicit that it is
+not a receipt property either. \\
+Per-request meter & fleet & \code{hanzo.cloud\_usage} (HIP-0106),
+\code{/v1/usage} (HIP-1313). Copying it on chain creates a second number to
+reconcile. \\
+Receipts and the tree over them & fleet & $O(\text{requests})$; the root is
+$O(1)$ and is what the chain needs. \\
+Routing, scheduling, placement & fleet & No settlement rule reads them. \\
+Quote generation & fleet & The platform signs; the chain verifies. \\
+Price discovery & fleet & The chain records the price the lease agreed, not how
+it was found. \\
+\midrule
+\textbf{The claim} & \textbf{crosses} & $(o,e,\rho,M,\kappa,Q,\{(\ell_i,u_i)\},\sigma_o)$:
+one per operator per epoch, $O(1)$ in requests. \\
+\bottomrule
+\caption{The split. A row is on the chain when a settlement rule reads it and no
+counterparty can be trusted to hold it; otherwise it is on the fleet.}
+\end{longtable}
+
+The test each row answers is not ``is it important'' but ``does a settlement rule
+in this document read it''. Nothing else earns chain state. Applying that test is
+what keeps the claim $O(1)$: the chain reads $\rho$, never a receipt, so traffic
+does not enter the state.
+
+\subsection{The dispute path}
+
+A buyer disagreeing with $u_i$ holds its own receipts and the operator's $\rho$.
+It opens a challenge (HIP-0095) carrying a Merkle path. The chain adjudicates a
+path against a root, which is a hash comparison, not a re-execution. This
+proposal specifies no more of the challenge protocol than the commitment it needs
+--- $\rho$, in the claim --- because HIP-0095 already specifies the rest, and two
+specifications of one protocol is the defect to avoid.
+
+\section{Transaction and precompile surface}
+
+\emph{Proposed.} The settlement logic is an EVM contract on the Hanzo chain
+rather than a new precompile. Precompiles are for primitives that cannot be
+expressed in the EVM at reasonable cost --- signature verification, lattice
+arithmetic, hashing --- and the AI range already holds the ones this design uses.
+Settlement is bookkeeping over those primitives, it changes with governance, and
+a contract can be upgraded on the chain's own schedule while a precompile change
+is a network upgrade.
+
+\begin{longtable}{@{}p{0.30\textwidth}p{0.22\textwidth}p{0.40\textwidth}@{}}
+\toprule
+Call & Caller & Effect \\
+\midrule
+\endhead
+\code{deposit()} payable & buyer & $\esc(b) \mathrel{+}= \text{value}$ \\
+\code{withdraw(v)} & buyer & requires $v \le \esc(b)-\res(b)$ \\
+\code{bond()} payable & operator & $\bond(o) \mathrel{+}= \text{value}$ \\
+\code{unbond(v)} & operator & requires
+$\bond(o) - v \ge \lambda \sum_{\ell \in \open(o)} \pi_\ell \bar u_\ell$;
+withdrawable at $\max_{\ell \in \open(o)} (e_2(\ell) + \Delta)$ \\
+\code{device(id, quote)} & operator & registers a deviceID for A4 \\
+\code{open(o,m,$\nu$,$\pi$,$\bar u$,window)} & buyer or its delegate & Rule~\ref{rule:open} \\
+\code{claim(C)} & operator & Definition~\ref{def:adm}; on success records and
+marks $\omega$ spent \\
+\code{settle(e)} & anyone & §\ref{sec:settle} over epoch $e$'s admitted claims \\
+\code{report(event, subject)} & anyone & §\ref{sec:slash}; \emph{subject} is a
+lease or a pair of claims \\
+\bottomrule
+\caption{The surface. \code{settle} is permissionless because it is a pure
+function of admitted claims; whoever pays its gas cannot change its result.}
+\end{longtable}
+
+The precompiles it calls, all existing: \code{0x0300\ldots0001} for A1 under
+$\kappa \in \{\code{snp},\code{tdx}\}$, and \code{0x0300\ldots0002} for A8 and
+the substitution rule.
+
+\code{unbond} does not wait for the operator's book to empty --- an operator
+with a rolling book would then never be able to leave --- but it does hold the
+funds until every live obligation has passed its non-delivery deadline. The two
+conditions are the exit-side counterpart of Rule~\ref{rule:open}: the first keeps
+the remaining bond sufficient for the remaining book, and the second keeps it
+present long enough for Rule~\ref{rule:nd} to collect.
+
+\code{device} takes a quote rather than a bare identifier, so a deviceID is
+registered by a party that can make that device sign. Registering someone else's
+deviceID gains nothing regardless, because A2 requires a nonce that binds the
+claiming operator and only the device can produce one; the possession check keeps
+the registry honest rather than doing security work of its own.
+
+\code{open} accepts a delegate so that the gateway can open leases under a
+spend authority the buyer granted, which is how a pay-per-use API becomes a lease
+without the buyer signing per request. The authority's own shape --- its bound,
+its expiry, its revocation --- is HIP-0025 and LP-325, and is not restated here.
+
+\section{Parameters}
+
+\emph{Proposed.} Values are initial proposals subject to governance; the
+constraints between them are not.
+
+\begin{longtable}{@{}llp{0.46\textwidth}@{}}
+\toprule
+Symbol & Initial & Meaning and constraint \\
+\midrule
+\endhead
+$L$ & 1 hour of blocks & Epoch length. Longer amortises $|Q|$ over more work;
+shorter shortens the buyer's exposure to an operator that stops. \\
+$\phi$ & $0.05$ & Protocol fee on conserved revenue. \\
+$\varepsilon$ & $0.02$ & Emission per unit revenue. MUST satisfy
+$\varepsilon < \phi$ (Proposition~\ref{prop:wash}). \\
+$E_e$ & schedule & Epoch pool. An upper bound only; the unallocated part is not
+minted. \\
+$\mu(\code{host})$ & $0.25$ & Emission multiplier for host-asserted evidence. \\
+$\mu(\code{snp}), \mu(\code{tdx})$ & $1.0$ & Multiplier for hardware-rooted
+evidence. \\
+$\lambda$ & $1.0$ & Non-delivery slash as a fraction of the \emph{undelivered}
+obligation, paid to the buyer. $\lambda = 1$ makes a defaulting operator forfeit
+the full value of what it promised and did not serve. Also the coefficient in
+Rule~\ref{rule:open}, so raising it tightens every operator's book. \\
+$\lambda_{\mathrm{eq}}$ & $0.10$ & Equivocation slash, fraction of bond. \\
+$\lambda_{\mathrm{sub}}$ & $0.10$ & Substitution slash, fraction of bond. \\
+$\underline{u}$ & $0.90$ & Delivery floor before non-delivery fires. \\
+$B_{\min}$ & governance & Minimum bond to submit any claim. Distinct from the
+validator minimum stake, which HIP-0024 records as 2000 AI. \\
+$\Delta$ & 1 epoch & Grace after a lease's window before non-delivery fires. \\
+\bottomrule
+\end{longtable}
+
+\section{Adversaries}
+
+\begin{description}[leftmargin=1.4em]
+  \item[A network adversary] between an operator and the chain can modify what is
+    in flight. A claim is self-contained and signed, so this fails: the chain
+    recomputes the nonce binding from $(o,e,\rho,M)$ and checks the signature
+    without trusting the transport.
+  \item[An operator without a TEE] wants a hardware-rooted multiplier. Replaying
+    another operator's quote fails A2, because the nonce commits to $o$ and is
+    inside the signed report header. Fabricating a quote fails A1, because the
+    chain does not terminate at an embedded root.
+  \item[An operator resubmitting] a settled epoch fails A5.
+  \item[A dishonest operator with host-asserted evidence] declares the
+    measurement it is supposed to have and runs something cheaper. Nothing in
+    this document detects that, and §\ref{sec:evidence} explains why nothing
+    can: the root of trust is the party whose honesty is in question.
+    $\mu(\code{host}) < 1$ prices it; only a hardware attester removes it.
+  \item[A buyer and operator under one principal] farming emission is bounded by
+    Proposition~\ref{prop:wash} and loses money whenever $\varepsilon < \phi$.
+  \item[An operator overstating units] $u_i$ within its caps is not caught by
+    admission --- admission checks arithmetic against caps, not against reality.
+    It is caught by the buyer, who holds receipts and opens a Merkle path
+    (HIP-0095). The chain's contribution is the commitment $\rho$, without which
+    the dispute has nothing to be about.
+  \item[An operator taking more obligations than it can serve] is refused at
+    Rule~\ref{rule:open}, which is the only moment the check is cheap.
+  \item[A validator equivocating on consensus] is out of scope here and is
+    Quasar's subject; this document's slashes are about compute obligations, not
+    about block production.
+\end{description}
+
+\section{Changes required in existing code}
+\label{sec:changes}
+
+\emph{Proposed}, and deliberately small. Every item removes something or routes
+an existing call; none adds a new cryptographic primitive.
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item \textbf{The compute precompile's \code{verifyCompute} must not be the
+    admission check.} As implemented (§\ref{sec:defect}) it compares the caller's
+    argument to \code{keccak256(jobID || outputHash)}, which the caller can
+    compute. Admission per Definition~\ref{def:adm} routes A1 through
+    \code{0x0300\ldots0001} (which is a stateless adapter over
+    \code{ai.VerifyTEE}) and never through this function. The precompile's
+    \code{verifyCompute} should either take a real quote and delegate, or be
+    removed; keeping a function named \code{verifyCompute} that verifies a hash
+    of public inputs is the kind of name that gets trusted by the next reader.
+
+  \item \textbf{Embed the vendor roots the fleet actually uses.}
+    \code{tee\_roots.go} holds one root, Intel SGX. §\ref{sec:fleet} measured a
+    fleet on which no host can chain to it. AMD SEV-SNP and NVIDIA device
+    identity roots must be appended for $\kappa \in \{\code{snp}\}$ and any GPU
+    path to be reachable; the verification core is already vendor-agnostic and
+    needs no change.
+
+  \item \textbf{Add GB10 to \code{SupportedGPUModels}, or state why not.} The
+    list carries GB200 and not GB10 while the reference ARM host is a GB10. One
+    of the two is wrong and the discrepancy should be resolved deliberately.
+
+  \item \textbf{Fix the AI mining spent-set address.} \code{module.go} registers
+    the AI mining precompile at
+    \code{0x0300000000000000000000000000000000000000}, while
+    \code{ai\_mining.go}'s \code{precompileAddr} is
+    \code{0x0000000000000000000000000000000000000300} --- the same nibbles, the
+    other end of the word. The spent set is therefore written under an account
+    the module does not own. A5 depends on this set, so it must be one address.
+
+  \item \textbf{Attach an attester for \code{Kind::Snp} and \code{Kind::Tdx} in
+    \code{hanzo-attest}.} The evidence structure needs no change; the kind becomes
+    \code{snp} or \code{tdx} and the signer becomes the vendor chain, which item 2
+    makes verifiable. The platform's user-data field (\code{REPORT\_DATA} on
+    SEV-SNP, \code{REPORTDATA} on TDX) carries different content at two different
+    times, and conflating them is easy: a quote taken \emph{at boot} has no claim
+    to bind and carries $M$, which is what the \code{hanzod} paper proposes; a
+    quote taken \emph{at epoch close} carries
+    $H(\code{hanzo.claim.v1}\|o\|e\|\rho\|M)$, which is A2 and which already
+    covers $M$. Settlement needs the second. This is the item that moves an
+    operator from $\mu(\code{host})$ to $\mu(\code{snp})$, and it is the
+    highest-value one on this list.
+
+  \item \textbf{Give \code{hanzo-attest} a durable registry.} The implemented
+    registry is the node's own in-process view and does not outlive the process.
+    A claim is computed over an epoch's history, so the record must survive the
+    epoch. The record is already self-contained and signed, so the transport need
+    not be trusted; what durability adds is history.
+\end{enumerate}
+
+\section{Limitations}
+
+\begin{enumerate}[leftmargin=1.8em]
+  \item Under $\kappa = \code{host}$ --- the only kind implemented, and the only
+    kind the reference fleet can produce --- admission establishes intent, not
+    execution. Every claim settled this way is worth the operator's reputation.
+    The design's response is to price it, not to hide it.
+  \item Admission checks unit arithmetic against caps, not against delivered
+    work. Overstatement within caps is a dispute, not a rejection, and depends on
+    buyers actually disputing.
+  \item The substitution rule binds a declared measurement to a registry
+    commitment. It does not establish that the committed weights were loaded.
+    LP-313 and LP-324's model-identity witness are the constructions that would.
+  \item Emission weighted by revenue pays less for cheap work than a
+    capacity-weighted scheme would, by construction.
+  \item Proposition~\ref{prop:wash} assumes the fee is not rebated. Any mechanism
+    that returns fee revenue to payers must be counted inside $\varepsilon$ or
+    the bound is void.
+  \item The epoch structure delays an operator's revenue by up to one epoch and
+    delays detection of an operator that has stopped by up to $L + \Delta$.
+    Shortening $L$ costs more on-chain verifications of $Q$.
+  \item A claim's size is dominated by the certificate chain in $Q$. A fleet of
+    $10^4$ operators on hourly epochs is under three claims per second, but the
+    verification cost per claim is a chain-path validation, not a hash.
+\end{enumerate}
+
+\section{References}
+
+\begin{description}[leftmargin=0em,labelsep=0.6em]
+  \item[Lux, implementation.]
+    \code{node/vms/platformvm/security/mode.go};
+    \code{node/vms/platformvm/txs/\{create\_network\_tx, convert\_network\_tx,
+    create\_chain\_tx, register\_l1\_validator\_tx,
+    increase\_l1\_validator\_balance\_tx, disable\_l1\_validator\_tx\}.go};
+    \code{node/vms/platformvm/warp/message/l1\_validator\_weight.go};
+    \code{node/vms/platformvm/network/zap\_native\_admission.go};
+    \code{consensus/protocol/quasar};
+    \code{precompile/ai/\{tee\_attest, tee\_roots, ai\_mining\}.go};
+    \code{precompile/attestation};
+    \code{precompile/modelregistry};
+    \code{precompile/compute};
+    \code{precompile/modules/registerer.go}.
+  \item[Hanzo, implementation.]
+    \code{hanzoai/node/hanzo-libs/hanzo-attest};
+    \code{hanzoai/vm};
+    \code{hanzoai/cloud} \code{apps/usage}.
+  \item[Hanzo proposals.]
+    HIP-0024 sovereign L1 chain architecture;
+    HIP-0025 agent wallet and RPC billing;
+    HIP-0095 QoS challenge;
+    HIP-0096 AI compute contribution rewards;
+    HIP-0106 plugin contract and the usage warehouse;
+    HIP-1313 \code{/v1/usage};
+    HIP-1325 \code{/v1/node}.
+  \item[Lux proposals and papers.]
+    LP-018 network security modes;
+    LP-77 P-Chain warp payloads;
+    LP-313 verifiable inference;
+    LP-314 sovereign inference L1;
+    LP-323 separating capacity, work and identity;
+    LP-324 proof-carrying settlement for compute marketplaces;
+    LP-325 linear budgets.
+  \item[Hanzo papers.]
+    \emph{Attested Compute in \code{hanzod}: Boot Measurement, Host-Asserted
+    Evidence, and the Gap to Hardware Attestation}.
+\end{description}
+
+\section*{Copyright}
+
+Copyright and related rights waived via CC0.
+
+\end{document}
