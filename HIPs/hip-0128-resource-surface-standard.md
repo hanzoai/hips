@@ -7,6 +7,7 @@ category: Core
 status: Final
 implementation-go: shipped
 created: 2026-07-27
+updated: 2026-09-08
 requires: HIP-0106, HIP-0127
 ---
 
@@ -193,6 +194,25 @@ not a code change.
 There is no alias layer, and no window in which two spellings both answer.
 One release; the old spelling stops resolving when the new one starts.
 
+### A retired address names its replacement
+
+"Stops resolving" is **410 Gone carrying the collection that replaced it**, not
+404. The body is the successor:
+
+    GET /v1/iam/get-users        410  {"successor": ["/v1/iam/users"]}
+    GET /v1/iam/get-records      410  {"successor": ["/v1/iam/audit-logs"]}
+
+A 404 says only that a caller is wrong. A 410 with a successor says what to do
+instead, so the retirement documents its own migration and no table has to be
+kept beside it — a caller, an SDK generator and a reviewer all read the mapping
+off the surface itself. This costs one row per retired address and removes the
+class of question that otherwise arrives as a support ticket.
+
+It also makes the mapping unguessable-safe. Most successors are mechanical, and
+one is not: `get-records` became `audit-logs`, because that is what the
+collection holds. `records` answers 404. A consumer that derived the new
+spelling by stripping the verb would have been wrong exactly once, silently.
+
 Prefer a correct, proven partial over a broad change that cannot be verified.
 Authentication surfaces have no safe rollback: a false green locks every user
 out of every product.
@@ -232,6 +252,40 @@ Use `go/ast` and Python `ast`: only a string literal can *be* a route. And every
 guard MUST be proven to fire by injecting a violation, then restored green — an
 enforcement that has never failed is not known to work.
 
+## Consumers: one client, one contract
+
+The grammar above binds the surface. This section binds the code that CALLS it,
+which is where a retired address actually costs something.
+
+**One family reaches a service.** A client that can address a retired spelling is
+a client that can regress to it. When a surface migrates, the old client is
+DELETED, not deprecated — nothing that can only address what is gone earns a
+place beside the thing that works.
+
+**The retired and the current shape are different WIRE CONTRACTS, not two
+spellings of one.** A verb-noun address returned an envelope
+(`{status, msg, data, total}`); a resource answers **itself**, bare. So a client
+that swaps only the URL and keeps the envelope reader finds no `status: "ok"`,
+and **throws on a 200**. This is the failure that looks like a rename and is not
+one, and it is why the two must not share a code path with a flag between them.
+
+**A swallowed refusal is worse than a crash.** List views commonly catch and
+render empty. A 410 then displays as "you have no organizations" on a page that
+otherwise looks correct — indistinguishable from a real empty set, on the surface
+a customer uses to see what they are paying for. Where a client renders a
+collection, an unreachable collection must read as unreachable, never as empty.
+
+**Verify the address before adopting it.** A collection answers `401` when it
+exists and is gated; a retired one answers `410`; a wrong guess answers `404`.
+Those three are distinguishable without a credential, so the mapping is checked
+against the running surface rather than inferred from the old name.
+
+This applies to every consumer of an org's surface on equal terms — first-party
+consoles, an org's own integrations, and customer code alike. There is no
+internal dialect: a client written by the org that ships the service and one
+written by a customer paying for it address it identically, which is what makes
+the surface a contract rather than a convention.
+
 ## Conformance
 
 A service conforms when all hold:
@@ -244,7 +298,7 @@ A service conforms when all hold:
 - Health/liveness endpoints are public (`/healthz`), never under the guarded
   `/v1/<service>/` tree.
 
-Current status (measured 2026-07-27; verb-noun literals outside `compat`):
+Current status (measured 2026-09-08; verb-noun literals outside `compat`):
 
 | service  | verb-noun | `/api/` | native surface |
 |----------|-----------|---------|----------------|
@@ -257,11 +311,16 @@ Current status (measured 2026-07-27; verb-noun literals outside `compat`):
 | `cloud`  | 17        | 26      | partial |
 | `iam`    | 0 in `internal/routes`; 61 in `compat`; ~18 elsewhere | 1 | generated; `sessions` non-compliant |
 
-`iam`'s native registration is clean. Its remaining violations are
-half-migrated modules that register a compliant route *and* a legacy one side by
-side — `memberships` (`/v1/iam/memberships` beside `get-memberships`,
-`add-membership`, `delete-membership`), `mfa` (`/v1/iam/mfa/setup/*` beside
-`delete-mfa`, `set-preferred-mfa`), `get-account`, `update-preferences`.
+`iam` finished. Every verb-noun address it once served now answers 410 with its
+successor — confirmed against the running surface for all 24 of the
+organization, user, application, provider, role and record spellings, and for
+`memberships`. The half-migrated modules recorded here in July no longer answer
+two ways; `/v1/iam/memberships` is the only spelling that resolves.
+
+The consumers were the lagging half, and they lag invisibly: a producer that has
+retired an address is conforming, while every client still calling it is broken
+and often silently (see *Consumers*). Producer conformance is therefore not
+evidence that a migration is complete.
 
 ## Rationale
 
