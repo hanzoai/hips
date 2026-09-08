@@ -69,11 +69,11 @@ concurrency:
 jobs:
   site:
     # NOT ubuntu-latest. These run on the in-cluster act_runner, whose fleet
-    # advertises hanzo-build-linux-amd64 — ci.yml in this repo already targets it
+    # advertises linux-amd64 — ci.yml in this repo already targets it
     # correctly. deploy.yml did not, so every run queued against a label no runner
     # answers and nothing was ever published; GHCR still reports NAME_UNKNOWN for
     # hanzoai/hips. insights sat un-deployed on the identical bug.
-    runs-on: [hanzo-build-linux-amd64]
+    runs-on: [linux-amd64]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
