@@ -290,6 +290,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1325](./HIPs/hip-1325-node-your-machines-on-a-socket.md) | Node — A Machine an Org Owns | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) | AMQP — Exchanges, Queues and Bindings Onto the One Bus | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1327](./HIPs/hip-1327-public-channels-across-orgs.md) | Public Channels — Finding a Room in Another Org | Standards Track | Core | Draft | - | - | - |
+| [HIP-1328](./HIPs/hip-1328-forge-the-meta-code-host.md) | Forge — The Meta Code Host | Standards Track | Infrastructure | Draft | - | - | - |
 
 ## HIP Process
 
