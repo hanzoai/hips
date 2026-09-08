@@ -1,14 +1,18 @@
 ---
-hip: 0414
+hip: "0414"
 title: Network CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-05-19
 ---
 
-# HIP-414: Network CRD
+
+
+# HIP-0414: Network CRD
 
 ## Abstract
 
@@ -18,14 +22,14 @@ The `Network` CRD describes a complete blockchain network: validators, chains, o
 
 ### Group + version
 
-`hanzo.ai/v1`, plural `networks`, shortname `hnet`.
+`hanzo.ai/v1`, plural `network`, shortname `hnet`.
 
 ### Spec fields
 
 | Field | Type | Description |
 |---|---|---|
 | `networkID` | string | "1" (mainnet), "2" (testnet), "3" (local), "1337" (dev) |
-| `validators` | ValidatorSpec | image, replicas, resources, storage, bootstrapNodes, ports |
+| `validator` | ValidatorSpec | image, replicas, resources, storage, bootstrapNodes, ports |
 | `chains` | []ChainSpec | name, vmID, genesis, optional subnetID |
 | `indexer` | SubServiceSpec | optional luxfi/indexer |
 | `explorer` | ExplorerSpec | optional luxfi/explorer |
@@ -48,7 +52,7 @@ spec:
       tag: v1.23.6
     replicas: 5
     bootstrapNodes:
-      - bootnode-0.bootnode.hanzo.svc:9651
+      - localhost:9651
     httpPort: 9650
     stakingPort: 9651
     storage:

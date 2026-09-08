@@ -1,13 +1,15 @@
 ---
-hip: 0000
+hip: "0000"
 title: Hanzo AI Architecture & Framework
 author: Hanzo AI Team
 type: Meta
-status: Final
+status: Living
 created: 2024-12-20
 ---
 
-# HIP-0: Hanzo AI Architecture & Framework
+
+
+# HIP-0000: Hanzo AI Architecture & Framework
 
 ## Abstract
 
@@ -257,7 +259,7 @@ Hanzo's proprietary multimodal AI models supporting:
 ## References
 
 1. [Hanzo AI Documentation](https://docs.hanzo.ai)
-2. [Hanzo Node Repository](https://github.com/hanzoai/hanzo-node)
+2. [Hanzo Node Repository](https://github.com/hanzoai/node)
 3. [Model Context Protocol](https://modelcontextprotocol.io)
 4. [NIST PQC Standards](https://csrc.nist.gov/projects/post-quantum-cryptography)
 

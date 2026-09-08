@@ -1,5 +1,5 @@
 ---
-hip: 0124
+hip: "0124"
 title: Bring-Your-Own Provider & AI — Unified Dashboard and Usage
 author: Hanzo AI Team
 type: Standards Track
@@ -7,8 +7,9 @@ category: Platform
 status: Final
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0004, HIP-0018, HIP-0038, HIP-0121, HIP-0123
+requires: HIP-0004, HIP-0018, HIP-0121, HIP-0123
 ---
+
 
 # HIP-0124: Bring-Your-Own Provider & AI — Unified Dashboard and Usage
 
@@ -26,27 +27,12 @@ is an existing HIP, referenced not duplicated:
    unified AI provider interface, the gateway (HIP-0004).
 3. **One console** — per-model and per-product metered usage, credit
    drawdown, and balance-floor gating in `console.hanzo.ai`
-   (HIP-0018 / HIP-0422 billing; HIP-0038 for the SuperAdmin
+   (HIP-0018 billing; HIP-0118 for the SuperAdmin
    cross-tenant board).
 
 Composed, this is the resell-ready OSS AI cloud: the customer supplies
 the two expensive inputs — compute and model access — and the platform
 supplies identity, scheduling, metering, and a single pane of glass.
-
-## Motivation
-
-Every leg exists and ships independently, which is exactly the risk:
-without a composition spec, product surfaces re-derive the story —
-one dashboard for AI spend, another for compute, a third for the BYO
-cluster — and the customer gets three ledgers that disagree. The
-product requirement is one sentence: **bring your provider, bring
-your AI, see one usage view, pay one invoice.** This HIP pins that
-sentence to the HIPs that implement it, and to nothing else.
-
-It also fixes the product narrative for resellers (HIP-0106
-white-label surfaces): what a `lux.cloud` or `osage.cloud` customer is
-promised is precisely this composition — under their brand, with their
-tenants' own providers and keys.
 
 ## Specification
 
@@ -77,8 +63,8 @@ an attribute of the usage record, never a separate code path.
 ### Leg 3 — One dashboard, one usage ledger
 
 `console.hanzo.ai` is the single self-service pane (per-org); its
-admin sibling is the SuperAdmin-gated cross-tenant board (HIP-0038,
-HIP-0118). Verified live this cycle:
+admin sibling is the SuperAdmin-gated cross-tenant board (HIP-0118).
+Verified live this cycle:
 
 - **AI usage metering is real**: per-model usage records (501 records
   on the reference org at verification), rendered with credit
@@ -89,7 +75,7 @@ HIP-0118). Verified live this cycle:
   one drawdown.
 - **Billing is gated, not advisory**: the balance floor returns
   **HTTP 402** at the platform edge (HIP-0106 realized state;
-  HIP-0018 / HIP-0422 semantics). Usage views and enforcement read
+  HIP-0018 semantics). Usage views and enforcement read
   the same ledger.
 
 The conformance rule is the DRY rule: **one metering path**
@@ -109,32 +95,7 @@ nonconformant.
   BYOC 1% and monthly device billing loops (HIP-0121 roadmap),
   cross-provider per-tenant scale execution (HIP-0123), and the
   unified cross-tenant fleet+revenue admin board (HIP-0121 roadmap,
-  HIP-0038 surface).
-
-## Rationale
-
-**Why a composition HIP.** Rich Hickey's test: is this thing one thing?
-The customer promise is one thing — even though its implementation is
-three orthogonal planes. Capturing it as references keeps each plane
-independently evolvable while making the composition itself a
-reviewable, versioned artifact. The alternative is tribal knowledge —
-the most expensive storage tier.
-
-**Why thin is correct.** Every substantive rule here (org boundary,
-sealed credentials, exactly-once metering, scaling primitives, provider
-abstraction) already has exactly one home. Restating any of it would
-create the second copy this repo's orthogonality rule exists to
-prevent. This HIP's only normative additions are composition
-invariants: no second attach surface, no second AI interface, no
-second ledger.
-
-**Why it matters commercially.** BYO inverts the cost structure of
-running an AI cloud: the customer's cloud bill and model bill stay
-theirs (audited against their own provider statements, per HIP-0121's
-honesty contract), and the platform charges for what it uniquely does
-— identity, orchestration, elasticity, and the unified ledger. That is
-the wedge for resellers and enterprises alike, and it only works if
-the three legs stay composed, not braided.
+  HIP-0118 surface).
 
 ## References
 
@@ -144,16 +105,14 @@ the three legs stay composed, not braided.
   gating)
 - HIP-0026 — Identity & Access Management Standard (the org identity
   on every usage record)
-- HIP-0038 — Admin Console Standard (the cross-tenant board)
 - HIP-0106 — Cloud — Unified Hanzo Binary (white-label surfaces; the
   realized metering + balance-floor edge)
-- HIP-0118 — SuperAdmin & Tenant Isolation Model (who may see the
-  cross-tenant view)
+- HIP-0118 — SuperAdmin & Tenant Isolation Model (the cross-tenant
+  board and who may see it)
 - HIP-0121 — BYO Compute Fleet & Metered Billing (attach surface,
   sealed credentials, billing tiers, one metering path)
 - HIP-0123 — Visor — Fleet & Fabric Autoscaling Across Any Provider
   (elasticity on the customer's provider)
-- HIP-0422 — billing (service catalog entry)
 - `hanzoai/cloud` #159 — per-product usage axis
   (`?product=` / `?groupBy=product`)
 

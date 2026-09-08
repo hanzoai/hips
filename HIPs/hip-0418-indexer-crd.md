@@ -1,18 +1,22 @@
 ---
-hip: 0418
+hip: "0418"
 title: Indexer CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-05-19
 ---
 
-# HIP-418: Indexer CRD
+
+
+# HIP-0418: Indexer CRD
 
 ## Abstract
 
-The `Indexer` CRD is a Service facade for `luxfi/indexer`, the chain-data indexer that builds queryable Postgres tables from raw EVM blocks. Used in combination with `Explorer` (HIP-419) to power block-explorer UIs.
+The `Indexer` CRD is a Service facade for `luxfi/indexer`, the chain-data indexer that builds queryable SQL tables from raw EVM blocks. Used in combination with `Explorer` (HIP-419) to power block-explorer UIs.
 
 ## Specification
 
@@ -53,7 +57,7 @@ spec:
 
 ### Generated K8s resources
 
-Deployment, Service. Long-running indexer pod processes new blocks into Postgres.
+Deployment, Service. Long-running indexer pod processes new blocks into SQL.
 
 ### Operator reconciler
 

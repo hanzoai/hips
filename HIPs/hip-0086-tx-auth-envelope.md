@@ -1,13 +1,17 @@
 ---
-hip: 0086
+hip: "0086"
 title: TxAuthEnvelope (typed PQ transaction signing)
 type: Standards Track
 category: Cryptography
-status: Proposed
-author: TBD
+status: Final
+implementation-go: shipped
+author: Hanzo AI
 created: 2026-05-11
-requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain), HIP-0079 (Q-Chain), HIP-0084 (Pulsar-M DKG), HIP-0085 (Wallet PQ Account Type)
+requires: HIP-0005, HIP-0077, HIP-0078, HIP-0079, HIP-0084, HIP-0085
 ---
+
+
+# HIP-0086: TxAuthEnvelope (typed PQ transaction signing)
 
 ## Abstract
 
@@ -20,16 +24,6 @@ authenticated by an ML-DSA-65 (FIPS 204) signature over the
 transcript. The verifier is the unmodified FIPS 204 `ML-DSA.Verify`
 routine; the envelope is the only thing a strict-PQ chain accepts at
 the transaction boundary.
-
-## Motivation
-
-Path 2 of the LUX_STRICT_E2E_PQ coverage matrix is the hard gap: no
-existing HIP/LP/ZIP defines the transaction-signing envelope. Today
-the EVM accepts secp256k1 RLP-encoded transactions; under strict-PQ
-those are rejected at consensus. Wallets, RPC nodes, and bridges
-cannot interoperate without one canonical envelope. The envelope must
-be typed (no opaque blobs), profile-gated (no silent downgrade), and
-verify-portable (unmodified FIPS 204).
 
 ## Specification
 
@@ -68,23 +62,14 @@ Acceptance rule:
    reject (`ErrProfileMismatch`).
 2. `identity_scheme_id` MUST equal `0x42`; any other value rejected.
 3. `hash_suite_id` MUST equal `0x01`.
-4. `AccountID == SHA3-384("LUX-ACCOUNT-V1" || mldsa_pubkey)`.
+4. `AccountID == cSHAKE256(profile_be4 || chain_be4 || u8(scheme) || pubkey,
+   48, "", "LUX_ACCOUNT_ID_V1")`, per HIP-0085.
 5. `ML-DSA.Verify(mldsa_pubkey, transcript, mldsa_signature)` MUST
    return true under unmodified FIPS 204.
 6. `nonce` MUST equal the account's next-expected nonce.
 7. If `expiration != 0`, `now < expiration`.
 
 Failure of any check is a hard reject; no fallback path.
-
-## Rationale
-
-TupleHash256 is the SP 800-185 derived function explicitly designed
-for unambiguous tuple commitments — every field's byte length is
-absorbed into the hash, so cross-field smuggling is impossible. The
-cust string `TX-AUTH-V1` domain-separates from HIP-0079's Q-Block
-transcript and HIP-0087's permit transcript. 384-bit output matches
-the profile floor. FIPS 204 verifier reuse is the headline interop
-guarantee.
 
 ## Backwards compatibility
 

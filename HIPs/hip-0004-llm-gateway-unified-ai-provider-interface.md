@@ -1,15 +1,17 @@
 ---
-hip: 0004
+hip: "0004"
 title: LLM Gateway - Unified AI Provider Interface
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
+implementation-go: shipped
 created: 2025-01-09
-requires: HIP-1
+requires: HIP-0001
 ---
 
-# HIP-4: LLM Gateway - Unified AI Provider Interface
+
+# HIP-0004: LLM Gateway - Unified AI Provider Interface
 
 ## Abstract
 
@@ -362,8 +364,8 @@ services:
   postgres:
     image: postgres:15
     environment:
-      - POSTGRES_DB=llm_gateway
-      - POSTGRES_PASSWORD=secret
+      - SQL_DB=llm_gateway
+      - SQL_PASSWORD=secret
       
   redis:
     image: redis:7-alpine
@@ -437,52 +439,6 @@ const response = await gateway.chat.completions.create({
 });
 ```
 
-## Implementation Roadmap
-
-### Phase 1: Core Gateway (Q1 2025)
-- OpenAI-compatible API
-- Top 10 providers
-- Basic routing
-- Simple caching
-
-### Phase 2: Enterprise Features (Q2 2025)
-- Multi-tenancy
-- Advanced routing
-- Semantic caching
-- Audit logging
-
-### Phase 3: Optimization (Q3 2025)
-- Cost optimization
-- Performance tuning
-- Auto-scaling
-- ML-based routing
-
-### Phase 4: Advanced Features (Q4 2025)
-- Custom models
-- Fine-tuning proxy
-- Federated inference
-- Edge deployment
-
-## Security Considerations
-
-### API Security
-- API key rotation
-- Rate limiting per tenant
-- IP allowlisting
-- Request signing
-
-### Data Security
-- End-to-end encryption
-- PII detection/masking
-- Secure key storage (KMS)
-- Compliance logging
-
-## References
-
-1. [OpenAI API Reference](https://platform.openai.com/docs/api-reference)
-2. [LiteLLM Proxy](https://github.com/BerriAI/litellm)
-3. [HIP-1: $AI Token](./hip-1.md)
-4. [HIP-2: HLLMs](./hip-2.md)
 5. [LLM Gateway Repository](https://github.com/hanzoai/llm)
 
 ## Copyright

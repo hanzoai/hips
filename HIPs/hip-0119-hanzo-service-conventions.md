@@ -1,15 +1,17 @@
 ---
-hip: 0119
+hip: "0119"
 title: Hanzo Service Conventions
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Active
+status: Final
+implementation-go: shipped
 created: 2026-06-25
-requires: HIP-0027, HIP-0031, HIP-0044, HIP-0068, HIP-0111, HIP-0112, HIP-0400
+requires: HIP-0027, HIP-0068, HIP-0111, HIP-0400
 ---
 
-# HIP-119: Hanzo Service Conventions
+
+# HIP-0119: Hanzo Service Conventions
 
 ## Abstract
 
@@ -38,15 +40,6 @@ defines the request path through the estate (the *topology*). This HIP defines t
 *service itself* — the contract a process MUST satisfy to be a citizen of the
 platform. Where they touch, this HIP is authoritative on the service's own surface.
 
-## Motivation
-
-An LLM (or a human) building against this stack should never have to read a
-service's source to learn where its health check is, which port serves metrics,
-whether the API is under `/api` or `/v1`, or how it gets a database password. Every
-one of those questions has exactly one answer, and it is the same answer for every
-service. Predictability is the product: it is what lets tooling, the operator,
-gateways, dashboards, and code generators treat every service identically.
-
 ## Specification
 
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are to be interpreted as
@@ -58,8 +51,8 @@ A service MUST bind exactly two HTTP listeners, and they MUST NOT share a port:
 
 | Listener | Port (default) | Env override | Serves | Auth |
 |----------|----------------|--------------|--------|------|
-| **app**  | `8000`         | `PORT`       | the product API, under `/v1/*` only | per HIP-0111 |
-| **ops**  | `9090`         | `OPS_PORT`   | `/healthz`, `/readyz`, `/metrics`   | none (cluster-internal) |
+| **app**  | `8080`         | `CLOUD_LISTEN` | the product API, under `/v1/*` only | per HIP-0111 |
+| **ops**  | `9090`         | `CLOUD_HEALTH_LISTEN` | `/healthz`, `/readyz`, `/metrics`   | none (cluster-internal) |
 
 The split is the contract, not an optimization. Operational traffic (probes,
 scrapes, drains) MUST NOT traverse the app listener, and the app listener MUST NOT
@@ -98,13 +91,13 @@ what Kubernetes probes; probes target the ops listener.
 
 ### §4 Observability — `/metrics` on the ops listener
 
-A service MUST expose Prometheus metrics at **`GET /metrics`** on the ops listener,
-per HIP-0031. It MUST NOT expose `/metrics` on the app listener.
+A service MUST expose Prometheus metrics at **`GET /metrics`** on the ops listener.
+It MUST NOT expose `/metrics` on the app listener.
 
 ### §5 Configuration — environment, deterministic names
 
 Configuration is by environment variable. Names are stable and shared:
-`PORT`, `OPS_PORT`, `LOG_LEVEL`, `BRAND`, `DOMAIN`. Identity, datastore, and secret
+`CLOUD_LISTEN`, `CLOUD_HEALTH_LISTEN`, `LOG_LEVEL`, `BRAND`, `DOMAIN`. Identity, datastore, and secret
 material follow the referenced HIPs (`IAM_*` per HIP-0111, `KMS_*` per HIP-0027). A
 service MUST start with zero required flags — every input has a documented env var
 and a working default for local single-node dev. Secrets MUST come from KMS
@@ -147,7 +140,7 @@ state.
 - Health, readiness, or metrics on the **app** listener.
 - Kubernetes probes pointed at the app listener or at a product/API path.
 - A single listener serving both product and operational traffic.
-- Per-service bespoke ports for the same role (everyone's app is `:8000`, ops is
+- Per-service bespoke ports for the same role (everyone's app is `:8080`, ops is
   `:9090`).
 - Floating image tags in a CR; hand-deployed drift; a second deploy mechanism.
 
@@ -164,14 +157,15 @@ identity is the whole point: it is what makes the platform one way.
 ## Reference implementation
 
 `hanzo/cloud` (HIP-0106) is the reference: it binds the app listener (`CLOUD_LISTEN`,
-`:8000`) for `/v1/*` and the ops listener (`CLOUD_HEALTH_LISTEN`, `:9090`) for
+`:8080`) for `/v1/*` and the ops listener (`CLOUD_HEALTH_LISTEN`, `:9090`) for
 `/healthz`, `/readyz`, `/metrics`; the `cloud-api` `Service` CR probes the ops
 listener. iam and gateway follow the same split.
 
 ## Conformance checklist (build a service against this in one pass)
 
-1. App listener on `:8000` (`PORT`); every product route under `/v1/`. No `/api/`.
-2. Ops listener on `:9090` (`OPS_PORT`): `/healthz` (liveness, no deps), `/readyz`
+1. App listener on `:8080` (`CLOUD_LISTEN`); every product route under `/v1/`. No `/api/`.
+2. Ops listener on `:9090` (`CLOUD_HEALTH_LISTEN`, default
+   `127.0.0.1:9090`): `/healthz` (liveness, no deps), `/readyz`
    (readiness, deps), `/metrics` (Prometheus). Unauthenticated.
 3. Probes (in the CR) target `:9090/healthz` and `:9090/readyz`.
 4. Starts with zero required flags; secrets from KMS (HIP-0027); auth via
@@ -182,6 +176,6 @@ listener. iam and gateway follow the same split.
 
 ## References
 
-- HIP-0027 Secrets Management · HIP-0031 Observability/Metrics · HIP-0044 API Gateway
+- HIP-0027 Secrets Management · HIP-0519 One Identity Boundary
 - HIP-0068 Ingress · HIP-0106 Unified Cloud Binary · HIP-0111 IAM Authentication
-- HIP-0112 Cloud Infrastructure Topology · HIP-0400 Service CRD
+- HIP-0132 One Telemetry Plane · HIP-0400 Service CRD

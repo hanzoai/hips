@@ -1,14 +1,17 @@
 ---
-hip: 0407
+hip: "0407"
 title: Base CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
 created: 2026-05-19
 ---
 
-# HIP-407: Base CRD
+
+
+# HIP-0407: Base CRD
 
 ## Abstract
 

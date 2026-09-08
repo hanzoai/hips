@@ -1,13 +1,17 @@
 ---
-hip: 0069
+hip: "0069"
 title: Service Discovery & Auto-Bridge
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
+implementation-go: partial
 author: Hanzo AI
 created: 2026-05-08
-requires: HIP-007 (ZAP), HIP-0010 (MCP Integration), HIP-0068 (Ingress)
+requires: HIP-0007, HIP-0010, HIP-0068
 ---
+
+
+# HIP-0069: Service Discovery & Auto-Bridge
 
 ## Abstract
 
@@ -22,25 +26,6 @@ This HIP closes the gap between HIP-007 (ZAP transport), HIP-0010 (MCP
 integration) and HIP-0068 (Ingress), removing every hard-coded URL,
 port range, lockfile registry and service-name env-var from the Hanzo
 stack.
-
-## Motivation
-
-Pre-HIP-0069 the system used three distinct mechanisms to find services:
-
-1. Hard-coded ports — `[9999..9995]` for ZAP, `9224` for the legacy
-   browser bridge, `:80` / `:443` for ingress.
-2. Lockfile registry — `~/.hanzo/extension/config.json` for the
-   browser-extension ↔ MCP pairing.
-3. Environment variables — `HANZO_KMS_URL`, `HANZO_IAM_URL`,
-   `HANZO_BASE_URL`, … duplicated across every consumer.
-
-All three break under at least one of:
-- Multiple parallel agents competing for the same fixed port.
-- A service moving to a different host on the LAN.
-- Lockfile races (`finally`-clause cleanup deleting another
-  connection's registration; see hanzo-tools-browser 0.5.0 fix).
-
-The mDNS path is collision-free, host-agnostic, and standard.
 
 ## Specification
 
@@ -146,20 +131,19 @@ the tree.
 |--------------|-------------------------------------------------------------|
 | Python       | `hanzo-zap-mdns`     (`pip install`)                        |
 | TypeScript   | `@hanzo/zap-mdns`    (npm)                                  |
-| Go           | `github.com/hanzoai/zap-mdns-go`                            |
+| Go           | `github.com/zap-proto/mdns`  (not yet published)            |
 | Rust         | `hanzo-zap-mdns`     (crates.io)                            |
 | Swift        | `HanzoZapMDNS`       (SwiftPM)                              |
 
+The Go binding is written but not yet a fetchable module: the source is
+[`mdns/go` in `luxfi/zap`](https://github.com/luxfi/zap/tree/main/mdns/go),
+and the import path above is the one it declares once tagged.
+
 ### Backwards compatibility
 
-Through 2026-Q3 a service MAY also advertise `_hanzo-zap._tcp.local.`
-(legacy ZAP-only sub-type). After 2026-Q4 the canonical
-`_hanzo._tcp.local.` is the only required record.
-
-The hard-coded port ranges and lockfile registries SHOULD be removed
-once every consumer ships a binding update. The `[9999..9995]`
-port-probe in `@hanzo/extension` MAY remain as a fallback for offline
-hosts (no mDNS responder running).
+None. `_hanzo._tcp.local.` is the record; there is no second one to
+also advertise. A host with no mDNS responder discovers nothing, which
+is the correct answer rather than a reason to keep a port probe.
 
 ## Reference implementation
 

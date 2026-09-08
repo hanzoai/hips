@@ -9,14 +9,37 @@ name: deploy
 # no replicas.
 #
 #   pnpm build -> docs/out
-#     -> POST /v1/projects/hips/deploy {"source":"git"}   (202, queued)
-#     -> aws s3 sync docs/out s3://<bucket>/<prefix>      (bytes skip the API)
-#     -> POST .../deployments/<id>/complete {"status":"live"}
+#     -> site
 #
-# The bytes never pass through the API, which is the whole point: this export is
-# ~170 MB raw / ~25 MB gzipped and BodyLimit is 16 MiB, so an artifact POST is
-# refused by fasthttp before any handler runs. cloud names the bucket and prefix
-# in the 202 so CI writes exactly where the site is served from.
+# The publish mechanics are NOT here. They are bin/site in hanzoai/ci,
+# reached through its action, and every static surface in the fleet calls that one
+# script — ensure-project, enqueue, presigned per-file upload, complete. A
+# contract transcribed per repo is a contract that drifts, and this file used to
+# carry its own copy of every call. It also SELF-PROVISIONS: the project is
+# created idempotently before the enqueue, so committing this file is enough to
+# stand the site up.
+#
+# THE BYTES NEVER PASS THROUGH THE API, and here that is not marginal: the
+# export is ~170 MB raw / ~25 MB gzipped against a 16 MiB BodyLimit, so an
+# artifact POST is refused by fasthttp BEFORE any handler runs and fails as an
+# opaque 400 "Error when parsing request" that reads like a malformed payload
+# rather than a size cap. Measured, not assumed: that is exactly what a 25 MB
+# POST returned here, while a 468-byte one went live in the same second.
+#
+# DELETION IS THE SERVER'S: site reports its manifest as `keys` on
+# completion and cloud prunes the prefix, because a write-only grant cannot
+# delete.
+#
+# THE DEPLOY KEY IS IN KMS and the action reads it there, so this file names no
+# token at all. It used to pass secrets.HANZO_DEPLOY_TOKEN, a Hanzo Git org secret
+# holding a key that had stopped resolving — and a secret nobody can read back is
+# a secret nobody can tell is dead, which is how this site went on failing 403
+# while hanzo.ai, which had moved to KMS, published fine. What this file passes
+# now is the KMS client identity, and resealing rotates every site at once.
+#
+# The credentials come from Hanzo Git's store, because this file lives under
+# .hanzo/workflows/ and only git.hanzo.ai reads that. GitHub's plan rules never
+# enter into it: the job does not run on GitHub.
 #
 # WHERE THINGS FIT, since these are orthogonal and composable:
 #   Project  — IAM-owned (iam/internal/schema/project.go); the billing bucket.
@@ -35,8 +58,13 @@ on:
   workflow_dispatch:
 
 concurrency:
+  # A superseded build is cancelled. The site flips live at the completion
+  # POST, not while bytes are uploading, so a killed run leaves an incomplete
+  # deployment that never became a Release — the live site is untouched. Held
+  # false, a burst of pushes serialised into a train of full builds and the
+  # newest commit waited behind builds of commits nobody wanted.
   group: deploy-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   site:
@@ -45,7 +73,7 @@ jobs:
     # correctly. deploy.yml did not, so every run queued against a label no runner
     # answers and nothing was ever published; GHCR still reports NAME_UNKNOWN for
     # hanzoai/hips. insights sat un-deployed on the identical bug.
-    runs-on: hanzo-build-linux-amd64
+    runs-on: [hanzo-build-linux-amd64]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -65,98 +93,15 @@ jobs:
           test -d out || { echo "::error::pnpm build produced no docs/out"; exit 1; }
           echo "exported $(find out -type f | wc -l) files"
 
-      # THE GIT-SOURCE FLOW, not an artifact POST. cloud's deploy handler is explicit
-      # about which is which: the artifact path is for "small artifacts, bounded by
-      # the app/gateway BodyLimit", and the git path is the "link repo -> build (CI,
-      # never local) -> deploy" route "for large sites".
-      #
-      # This site is the large case and not marginally so. The export is ~170 MB raw
-      # and ~25 MB gzipped against a 16 MiB BodyLimit, so an artifact POST is refused
-      # by fasthttp BEFORE any handler runs — and it fails as an opaque
-      # 400 "Error when parsing request" that reads like a malformed payload rather
-      # than a size cap. Measured, not assumed: that is exactly what a 25 MB POST
-      # returned here, while a 468-byte one went live in the same second.
-      #
-      # So: enqueue -> sync to the SAME S3 prefix cloud names -> tell cloud it is live.
-      # Three steps because the bytes never pass through the API at all.
-      - name: enqueue the deployment
-        id: enqueue
+      # ONE credential. The 202 carries a prefix-scoped, 30-minute presigned POST
+      # grant, so nothing here holds a bucket key. Do NOT add SITES_S3_* — that is
+      # the standing shared-bucket credential the grant replaced, and it could
+      # overwrite every other org's site.
+      - name: Publish to the Sites plane
+        uses: https://git.hanzo.ai/hanzoai/ci/.github/actions/site@v1
+        with:
+          slug: hips
+          dir: docs/out
         env:
-          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${DEPLOY_TOKEN:-}" ]; then
-            echo "::error::HANZO_DEPLOY_TOKEN is unset. Add it as a REPO secret — org secrets do not reach private repos on the Free plan."
-            exit 1
-          fi
-          CODE=$(curl -sS -o /tmp/enq.json -w '%{http_code}' \
-            -X POST "https://api.hanzo.ai/v1/projects/hips/deploy" \
-            -H "Authorization: Bearer ${DEPLOY_TOKEN}" \
-            -H 'Content-Type: application/json' \
-            -d "{\"source\":\"git\",\"commit\":\"${GITHUB_SHA}\",\"branch\":\"main\"}")
-          # 202 Accepted is the success code here — the deployment is queued, not live.
-          if [ "$CODE" != "202" ]; then
-            echo "::error::enqueue returned HTTP $CODE"; head -c 600 /tmp/enq.json; exit 1
-          fi
-          # bucket and prefix come FROM cloud. Never hardcode them: prefix is
-          # sitePrefix(org, slug) server-side, so a local guess drifts the moment the
-          # org or slug changes and the sync would land bytes nobody serves.
-          echo "id=$(jq -r .id /tmp/enq.json)"         >> "$GITHUB_OUTPUT"
-          echo "bucket=$(jq -r .bucket /tmp/enq.json)" >> "$GITHUB_OUTPUT"
-          echo "prefix=$(jq -r .prefix /tmp/enq.json)" >> "$GITHUB_OUTPUT"
-          jq -c '{id,version,status,bucket,prefix}' /tmp/enq.json
-
-      - name: sync the export to S3
-        id: sync
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.SITES_S3_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SITES_S3_SECRET_ACCESS_KEY }}
-          BUCKET: ${{ steps.enqueue.outputs.bucket }}
-          PREFIX: ${{ steps.enqueue.outputs.prefix }}
-        run: |
-          set -euo pipefail
-          if [ -z "${AWS_ACCESS_KEY_ID:-}" ] || [ -z "${AWS_SECRET_ACCESS_KEY:-}" ]; then
-            echo "::error::SITES_S3_* secrets unset — cannot sync. These are the hanzo-sites bucket credentials."
-            exit 1
-          fi
-          # CNAME is a GitHub Pages artifact. It means nothing to S3 and would ship a
-          # stale hostname claim into the bucket, so it does not travel.
-          rm -f docs/out/CNAME
-          # --delete so a removed spec actually disappears: without it the prefix only
-          # ever grows and deleted pages keep serving.
-          aws s3 sync docs/out "s3://${BUCKET}/${PREFIX}" \
-            --endpoint-url https://s3.hanzo.ai --delete --only-show-errors
-          echo "files=$(find docs/out -type f | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
-          echo "bytes=$(du -sk docs/out | awk '{print $1*1024}')"   >> "$GITHUB_OUTPUT"
-
-      - name: flip it live
-        env:
-          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
-          DEP: ${{ steps.enqueue.outputs.id }}
-          FILES: ${{ steps.sync.outputs.files }}
-          BYTES: ${{ steps.sync.outputs.bytes }}
-        run: |
-          set -euo pipefail
-          CODE=$(curl -sS -o /tmp/done.json -w '%{http_code}' \
-            -X POST "https://api.hanzo.ai/v1/projects/hips/deployments/${DEP}/complete" \
-            -H "Authorization: Bearer ${DEPLOY_TOKEN}" \
-            -H 'Content-Type: application/json' \
-            -d "{\"status\":\"live\",\"commit\":\"${GITHUB_SHA}\",\"files\":${FILES},\"bytes\":${BYTES}}")
-          if [ "$CODE" != "200" ]; then
-            echo "::error::complete returned HTTP $CODE"; head -c 600 /tmp/done.json; exit 1
-          fi
-          jq -c '{status,liveUrl,version,files,bytes}' /tmp/done.json
-
-      # A build that dies after the enqueue would leave the deployment "queued" and
-      # the project stuck "building" forever. Report the failure so cloud records an
-      # honest terminal state instead of a lie by omission.
-      - name: report a failed build
-        if: failure() && steps.enqueue.outputs.id != ''
-        env:
-          DEPLOY_TOKEN: ${{ secrets.HANZO_DEPLOY_TOKEN }}
-          DEP: ${{ steps.enqueue.outputs.id }}
-        run: |
-          curl -sS -X POST "https://api.hanzo.ai/v1/projects/hips/deployments/${DEP}/complete" \
-            -H "Authorization: Bearer ${DEPLOY_TOKEN}" -H 'Content-Type: application/json' \
-            -d '{"status":"error","message":"CI build or sync failed"}' >/dev/null || true
-          echo "marked deployment ${DEP} as error"
+          KMS_CLIENT_ID: ${{ secrets.KMS_CLIENT_ID }}
+          KMS_CLIENT_SECRET: ${{ secrets.KMS_CLIENT_SECRET }}

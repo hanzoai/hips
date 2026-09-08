@@ -1,15 +1,17 @@
 ---
-hip: 0015
+hip: "0015"
 title: Computer Control Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Interface
-status: Draft
+status: Final
+implementation-rust: partial
 created: 2025-01-09
-requires: HIP-9, HIP-10
+requires: HIP-0009, HIP-0010
 ---
 
-# HIP-15: Computer Control Standard
+
+# HIP-0015: Computer Control Standard
 
 ## Abstract
 
@@ -18,19 +20,6 @@ This proposal defines the Computer Control Standard for Hanzo Operative, a unifi
 **Repository**: [github.com/hanzoai/operative](https://github.com/hanzoai/operative)
 **MCP Package**: `hanzo-mcp` (computer use tools)
 **Platforms**: macOS (Quartz), Linux (X11/Wayland), Windows (Win32)
-
-## Motivation
-
-Large language models can reason, plan, and generate text, but they cannot act on computers. They cannot click a button, fill out a form, navigate a desktop application, or read what is on screen. This gap between "AI that answers questions" and "AI that does work" is the single largest barrier to autonomous agent productivity.
-
-Existing approaches to computer use are fragmented:
-
-1. **Hosted-only solutions**: OpenAI and Anthropic offer computer use as hosted APIs. Enterprise customers cannot send their screens to third-party servers. We need self-hosted computer use for security-sensitive deployments.
-2. **Browser-only automation**: Selenium, Puppeteer, and Playwright work for web applications but cannot interact with native desktop software, terminal emulators, IDEs, or system dialogs.
-3. **Pixel-perfect OCR approaches**: Traditional screen scraping is brittle. Font changes, resolution differences, and theme variations break hard-coded coordinate systems.
-4. **No MCP integration**: No existing computer use system integrates with the Model Context Protocol (HIP-10) or the Agent SDK (HIP-9). Agents cannot seamlessly combine computer use with file operations, search, memory, and other MCP tools.
-
-The Computer Control Standard solves all four problems by defining a single interface that supports native screen interaction, browser automation, AI visual interpretation, and full MCP integration, deployable on-premises or in the cloud.
 
 ## Design Philosophy
 
@@ -45,31 +34,6 @@ Computer use removes this constraint. When an AI agent can see the screen, move 
 - Verify visual output (design reviews, chart validation, UI testing)
 - Operate legacy software that has no API
 - Debug applications by observing their runtime behavior
-
-### Why Operative Over Third-Party Computer Use
-
-OpenAI and Anthropic both offer computer use capabilities, but as hosted APIs. This creates three problems for production deployments:
-
-1. **Security**: Screen content is sent to third-party servers. For enterprises handling financial data, medical records, or classified information, this is a non-starter. Operative runs entirely on-premises.
-2. **Integration**: Third-party computer use exists in isolation. Operative integrates with MCP tools (HIP-10) so an agent can seamlessly switch between reading files, searching code, controlling the browser, and interacting with native applications, all within the same tool protocol.
-3. **Customization**: Hosted APIs offer fixed capabilities. Operative supports custom backends, region definitions, batch operations, and platform-specific optimizations that adapt to each deployment environment.
-
-### Why Screen Recording Plus AI Interpretation
-
-Rather than attempting pixel-perfect OCR or maintaining fragile coordinate maps, Operative uses a fundamentally different approach:
-
-1. **Record** the screen for a configurable duration (default 30 seconds, max 120 seconds)
-2. **Detect activity** (mouse movement, clicks, typing, window changes)
-3. **Extract keyframes** at activity points (typically ~30 frames per 30-second session)
-4. **Compress** frames for efficiency (~768px max dimension, 60% JPEG quality, ~500KB total per session)
-5. **Send frames to the LLM** for visual interpretation and action planning
-
-This approach is more robust than traditional UI automation because:
-
-- It works with ANY application, not just browsers or applications with accessibility APIs
-- It is resolution-independent and theme-independent
-- It degrades gracefully: if one frame is ambiguous, surrounding frames provide context
-- It captures temporal information: the AI sees what happened before and after each action
 
 ### Why Playwright for Browser Automation
 
@@ -907,18 +871,8 @@ When Operative is deployed remotely (Docker, cloud), the connection between agen
 | HIP-9 (Agent SDK) | Agents invoke computer use through the Agent SDK's tool interface |
 | HIP-10 (MCP) | Computer use exposed as MCP tools (`computer`, `screen`, `browser`) |
 | HIP-4 (LLM Gateway) | Visual reasoning requests routed through the LLM Gateway |
-| HIP-11 (Chat Interface) | Chat UI can display computer use sessions inline |
+| HIP-1211 (Chat Interface) | Chat UI can display computer use sessions inline |
 | HIP-14 (App Deployment) | Operative containers deployed via the application platform |
-
-### Migration from Existing Tools
-
-| Existing Tool | Migration Path |
-|---------------|---------------|
-| Selenium | Replace with `browser` tool (Playwright-based, same concepts) |
-| Puppeteer | Replace with `browser` tool (Playwright is Puppeteer's successor) |
-| PyAutoGUI | Replace with `computer` tool (same API concepts, native performance) |
-| SikuliX | Replace with `computer` tool + image location (`locate`, `waitForImage`) |
-| Anthropic Computer Use | Replace with `computer` + `screen` tools (self-hosted, MCP-integrated) |
 
 ## Test Plan
 

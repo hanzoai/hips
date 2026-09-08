@@ -1,0 +1,71 @@
+# Capabilities with no HIP. THIS FILE MAY ONLY SHRINK.
+#
+# A capability is one /v1/<name> the cloud serves — the app, per HIP-0139 —
+# grouped into a domain by hanzoai/openapi's capabilities.yaml. The rule is one
+# capability, one HIP, declared by that HIP in front matter:  capability: <name>
+#
+# Adding a line here is how a NEW capability ships before its spec is written.
+# Deleting one is how a capability gets its HIP -- and the deletion happens in
+# the SAME commit as the HIP, because scripts/coverage.py fails (CV002) on a
+# line whose capability is now declared. Neither half can rot.
+#
+# `python3 scripts/coverage.py --report` names, for each line, the HIP that
+# already talks about that route -- usually the one that should adopt it.
+#
+# Re-seeded 2026-08-20 when the capability became the app (HIP-0139): the
+# vocabulary went 191 names to 116. No count is restated in prose here; run the
+# script.
+#
+# One line below, and the reason it is the only one.
+#
+# `dns`, `plugins` and `skills` were recorded here as having stopped being
+# capabilities -- folded, it said, into domain, admin and tools. None of the
+# three had folded. Each still has its own row in cloud's manifest/apps.go, its
+# own package, and its own served operations; what had happened is narrower and
+# worse. They were absent from hanzoai/openapi's capabilities.yaml, and this
+# gate reads the corpus against THAT file. A capability the taxonomy does not
+# name cannot be reported missing, so the gap read as a fold and the prose wrote
+# it down as one. `graph` was invisible the same way.
+#
+# dns and skills now have HIPs (HIP-1321, HIP-1322) and graph declares the one
+# it always had (HIP-1198). plugins keeps a line because it is the operator's
+# control over the app binaries the host loads -- /v1/admin/plugins, four
+# operations, reachable only by a SuperAdmin -- and a customer specifies nothing
+# through it. If that address is ever opened to an org, this line comes out and
+# a HIP goes in.
+#
+# The last two became VISIBLE on 2026-08-21, when the capability list stopped
+# being curation over the emitted document. `capabilities.yaml` now carries a
+# `fleet:` DERIVED from cloud's manifest/apps.go, so an app that serves no HTTP
+# operation is in the universe this gate reads instead of invisible to it. They
+# are not new; the ability to see them is. kafka was in the same position and
+# now has HIP-1323.
+#
+# There were four, and being able to SEE two of them is what settled them.
+# `catalogsync` and `rollingcap` were never capabilities: neither opened a
+# store, neither answered a path, and each claimed a /v1/<name> with nothing
+# registered behind it. They held rows because a row is how cloud's host starts
+# a process, and a process is exactly where neither could do its work --
+# rollingcap wrote a package global the `ai` child reads and never runs in, and
+# catalogsync called a content function that refuses outside content's own
+# process, against an event its publisher was never wired to emit. The spend
+# ceiling moved into apps/ai beside the gate that reads it; the catalog loop was
+# deleted. So the answer was never a spec, and two lines leave this file because
+# the rows left cloud's manifest -- which is the outcome a ratchet is for.
+#
+# `bot` was here too, briefly, as a name this repo could not settle: cloud had
+# renamed bot -> bots for number alone. The rule was the thing that was wrong,
+# and HIP-0139 §2.2 settled it the other way round -- the SINGULAR is canonical,
+# the plural is a rewrite the router performs at the door and nothing publishes,
+# and a capability is NEVER renamed for number again. 21 HIPs took their
+# singular in one commit to follow it. HIP-1107 declares `bot`, so the line is
+# gone rather than resolved in its favour.
+
+# Coresident: it wires the hanzoai/zen serving layer into the cloud binary
+# rather than serving an address. `ai` (HIP-1211) is the door every caller
+# reaches this through, and that is the HIP that owes the contract.
+zen
+
+
+plugins
+

@@ -1,13 +1,17 @@
 ---
-hip: 0085
+hip: "0085"
 title: Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID)
 type: Standards Track
 category: Cryptography
-status: Proposed
-author: TBD
+status: Final
+implementation-go: shipped
+author: Hanzo AI
 created: 2026-05-11
-requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0078 (Z-Chain), HIP-0079 (Q-Chain), HIP-0084 (Pulsar-M DKG)
+requires: HIP-0005, HIP-0077, HIP-0078, HIP-0079, HIP-0084
 ---
+
+
+# HIP-0085: Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID)
 
 ## Abstract
 
@@ -21,25 +25,17 @@ but the AccountID is the primary identifier; the 20-byte form is a
 compatibility projection. Wallet vendors target this HIP to ship a
 single canonical PQ account format across Hanzo, Lux, and Zoo.
 
-## Motivation
-
-LUX_STRICT_PQ requires every user-side signature to be ML-DSA-65. Today
-HD wallets target secp256k1 with 20-byte Keccak truncations. There is
-no canonical 48-byte AccountID that locks an ML-DSA-65 public key to
-an on-chain identity under the strict-PQ profile. Without this HIP,
-wallets either reuse EVM 20-byte addresses (collision-prone for the
-larger pubkey) or invent per-vendor formats. The PQ-side AccountID
-must be primary, not derived from the EVM projection.
-
 ## Specification
 
-The canonical reference is `luxfi/consensus/protocol/auth/account.go`
-(auth-pq-surface branch). Key fields:
+The canonical reference is `luxfi/consensus/protocol/auth/account_id.go`,
+`DeriveAccountID`. Key fields:
 
 ```
-AccountID    = SHA3-384(domain || mldsa_pubkey)        // 48 bytes
-              where domain = "LUX-ACCOUNT-V1" (15-byte cust string,
-              SP 800-185 cSHAKE-style)
+AccountID    = cSHAKE256(profile_be4 || chain_be4 || u8(scheme) || pubkey,
+                         48, "", "LUX_ACCOUNT_ID_V1")   // 48 bytes
+              The four inputs are absorbed in one pass, fixed-width first
+              and the variable-length pubkey last; the customization tag
+              is the domain separator, so no length framing is needed.
 EVMAddress   = Keccak-256(mldsa_pubkey)[12:32]         // 20 bytes
 DerivationPath  m / 44' / 9000' / nid' / 0 / n         // BIP-32, slip-44 9000
 IdentityScheme  0x42 ML_DSA_65                         // FIPS 204
@@ -54,15 +50,6 @@ event log indexing; settlement is keyed by AccountID. The 48-byte
 length is chosen to match the `MinHashOutputBits = 384` profile pin
 and to make truncation collisions cryptographically negligible at the
 profile's NIST PQ Cat 3 floor.
-
-## Rationale
-
-SHA3-384 over the cust-string-prefixed public key matches the
-strict-PQ profile's hash floor (384 bits) and is FIPS 202 / SP 800-185
-compliant. The 20-byte EVM projection retains tooling compatibility
-without conflating identity scope. BIP-32 derivation reuses Lux's
-existing slip-44 9000 allocation; ML-DSA-65 keygen is seeded by
-`SHAKE-256(bip32_child_seed)` per `luxfi/crypto/mldsa`.
 
 ## Backwards compatibility
 
@@ -79,9 +66,12 @@ ML-DSA-65 primitive: `luxfi/crypto/mldsa`. KAT test vectors:
 
 ## Security considerations
 
-Domain separation: the 15-byte cust prefix `LUX-ACCOUNT-V1` prevents
-cross-domain reuse of the AccountID hash under SP 800-185 cSHAKE
-construction. ML-DSA-65 pubkeys are ~1952 B; the 48-byte AccountID is
+Domain separation: the cSHAKE256 customization tag `LUX_ACCOUNT_ID_V1`
+prevents cross-domain reuse of the AccountID hash under SP 800-185, and
+binding `profileID` and `chainID` into the preimage is what stops one
+AccountID being replayed across security postures or chains. The tag is
+the schema identity: bumping it is a hard fork of account derivation,
+with no window in which both forms resolve. ML-DSA-65 pubkeys are ~1952 B; the 48-byte AccountID is
 a collision-resistant commitment that does not leak the public key
 preimage. EVM-form 20-byte addresses provide ~80-bit collision
 resistance — sufficient for the compatibility lane but not for

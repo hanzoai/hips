@@ -1,21 +1,10 @@
 import './global.css';
 import { RootProvider } from '@hanzo/docs/ui/provider/base';
 import { NextProvider } from '@hanzo/docs/core/framework/next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Zen } from '@hanzo/font/sans';
+import { ZenMono } from '@hanzo/font/mono';
 import type { ReactNode } from 'react';
 import { SearchDialog } from '@/components/search-dialog';
-
-const geist = Geist({
-  subsets: ['latin'],
-  variable: '--font-geist',
-  display: 'swap',
-});
-
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono',
-  display: 'swap',
-});
 
 export const metadata = {
   title: {
@@ -58,7 +47,11 @@ export const metadata = {
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${Zen.variable} ${ZenMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Prevent flash - respect system preference or stored preference */}
         <script

@@ -18,6 +18,7 @@ import {
   Globe,
   Link as LinkIcon,
 } from 'lucide-react';
+import { STATUSES, statusClass } from '@/lib/status';
 
 const iconComponents: Record<string, React.ComponentType<{ className?: string }>> = {
   brain: Brain,
@@ -57,18 +58,8 @@ const colorClasses: Record<string, { bg: string; border: string; text: string }>
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    Draft: 'bg-yellow-500/10 text-yellow-500',
-    Review: 'bg-blue-500/10 text-blue-500',
-    'Last Call': 'bg-orange-500/10 text-orange-500',
-    Final: 'bg-green-500/10 text-green-500',
-    Withdrawn: 'bg-red-500/10 text-red-500',
-    Stagnant: 'bg-gray-500/10 text-gray-500',
-    Superseded: 'bg-purple-500/10 text-purple-500',
-  };
-
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${colors[status] || 'bg-muted text-muted-foreground'}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full ${statusClass(status)}`}>
       {status}
     </span>
   );
@@ -133,18 +124,12 @@ export default function HomePage() {
               <div className="text-3xl md:text-4xl font-bold">{stats.total}</div>
               <div className="text-sm text-muted-foreground mt-1">Total HIPs</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-green-500">{stats.byStatus['Final'] || 0}</div>
-              <div className="text-sm text-muted-foreground mt-1">Final</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-blue-500">{stats.byStatus['Review'] || 0}</div>
-              <div className="text-sm text-muted-foreground mt-1">Review</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-yellow-500">{stats.byStatus['Draft'] || 0}</div>
-              <div className="text-sm text-muted-foreground mt-1">Draft</div>
-            </div>
+            {STATUSES.map((s) => (
+              <div key={s} className="text-center">
+                <div className={`text-3xl md:text-4xl font-bold ${statusClass(s).split(' ')[1]}`}>{stats.byStatus[s] || 0}</div>
+                <div className="text-sm text-muted-foreground mt-1">{s}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

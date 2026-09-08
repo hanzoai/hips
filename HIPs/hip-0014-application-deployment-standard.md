@@ -1,15 +1,16 @@
 ---
-hip: 0014
+hip: "0014"
 title: Application Deployment Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2025-01-09
-requires: HIP-0026, HIP-0027, HIP-0029
+requires: HIP-0026, HIP-0027, HIP-1104
 ---
 
-# HIP-14: Application Deployment Standard
+
+# HIP-0014: Application Deployment Standard
 
 ## Abstract
 
@@ -49,23 +50,6 @@ A single PaaS layer eliminates all six problems. Teams define a `hanzo.yaml` man
 
 This section explains the *why* behind every major architectural decision. PaaS choices are sticky -- once 30 services depend on a deployment platform, migrating away costs months. Understanding the rationale prevents future engineers from re-evaluating settled questions.
 
-### Why Not Vercel or Netlify
-
-Vercel and Netlify are excellent products for frontend deployments. They are not suitable for Hanzo's use case:
-
-- **Cost at scale**: Vercel charges per serverless function invocation ($0.60 per million) and per GB of bandwidth ($0.15/GB after the free tier). The LLM Gateway alone handles millions of requests per day. At Hanzo's scale, Vercel costs would exceed $5,000/month for a service that runs on a $40/month VM.
-- **Vendor lock-in**: Vercel's Edge Functions, Image Optimization, and ISR are proprietary. Code written for Vercel cannot run on AWS, GCP, or bare metal without rewriting. A PaaS should be a deployment abstraction, not an application framework.
-- **No backend support**: Vercel is designed for Next.js frontends. Deploying a Go binary (IAM), a Python FastAPI service (agent), or a Rust service (node) requires workarounds. Platform supports any language that produces a Docker container.
-- **No self-hosting**: Vercel cannot be deployed on our own Kubernetes clusters. For air-gapped environments, compliance requirements, or simply avoiding egress fees between our compute and our deployment platform, self-hosting is non-negotiable.
-- **No multi-org tenancy**: Vercel's team model does not map to Hanzo's multi-organization structure. We need Hanzo engineers to see Hanzo services, Lux engineers to see Lux services, and the CTO to see everything.
-
-### Why Not Coolify or CapRover
-
-Both are open-source PaaS alternatives. Neither fits our requirements:
-
-- **CapRover**: Built on Docker Swarm, which is effectively unmaintained. The UI is functional but dated. The codebase is JavaScript with limited TypeScript adoption. No Kubernetes support. The project's last major release was years ago. Building on CapRover means building on a declining foundation.
-- **Coolify**: The closest competitor to Dokploy. Active development, modern UI, good feature set. However, Coolify uses a BSL (Business Source License) that restricts commercial self-hosting without a license. For an infrastructure company that deploys its PaaS as part of its product offering, licensing ambiguity is unacceptable. Dokploy is Apache 2.0.
-
 ### Why Dokploy
 
 Dokploy was selected after evaluating all major open-source PaaS platforms:
@@ -80,7 +64,7 @@ Dokploy was selected after evaluating all major open-source PaaS platforms:
 | Active development | Yes (2024+) | Yes | Stagnant | Yes |
 | Self-hostable | Yes | Yes (with license) | Yes | No |
 
-Dokploy's architecture is the simplest correct design: applications are Docker containers, routing is Traefik, builds are Docker builds, and state is PostgreSQL. There is no custom scheduler, no proprietary runtime, no magic. When something breaks, `docker logs` and `docker inspect` tell you everything you need to know.
+Dokploy's architecture is the simplest correct design: applications are Docker containers, routing is Traefik, builds are Docker builds, and state is SQL. There is no custom scheduler, no proprietary runtime, no magic. When something breaks, `docker logs` and `docker inspect` tell you everything you need to know.
 
 ### Why Fork
 
@@ -88,7 +72,7 @@ Upstream Dokploy covers the common case well. Our fork adds capabilities specifi
 
 1. **Hanzo IAM integration (HIP-26)**: Upstream Dokploy supports GitHub and GitLab OAuth for login. We need login via hanzo.id (our IAM provider) using the OAuth 2.0 Authorization Code Grant with PKCE. This requires a custom OAuth provider implementation in Better Auth, the authentication library Dokploy uses.
 
-2. **KMS secret injection (HIP-27)**: Upstream Dokploy stores environment variables in its own PostgreSQL database. We need environment variables to be sourced from Hanzo KMS at deploy time, so that secrets are never stored in the Platform database and rotation in KMS propagates to all deployments automatically.
+2. **KMS secret injection (HIP-27)**: Upstream Dokploy stores environment variables in its own SQL database. We need environment variables to be sourced from Hanzo KMS at deploy time, so that secrets are never stored in the Platform database and rotation in KMS propagates to all deployments automatically.
 
 3. **Multi-org tenancy**: Upstream Dokploy is single-tenant -- one admin, one set of applications. We need organizational boundaries: the `hanzo` org sees IAM, Cloud, Console; the `lux` org sees validators, gateway, markets; the `zoo` org sees research services. A user's org membership (from IAM) determines what they see in Platform.
 
@@ -97,25 +81,6 @@ Upstream Dokploy covers the common case well. Our fork adds capabilities specifi
 5. **Deployment audit log**: Every deployment, rollback, scale event, and configuration change must be logged with the acting user, timestamp, and diff. This is a compliance requirement for enterprise customers and an operational requirement for incident response.
 
 We maintain our fork by periodically rebasing on upstream Dokploy releases, resolving conflicts in the IAM/KMS integration layer. The fork diverges only in authentication, secrets, multi-tenancy, and audit -- core application deployment logic remains aligned with upstream.
-
-### Why a PaaS Layer Matters
-
-The alternative to Platform is "every team deploys their own way." This works at 5 services. It does not work at 30. Consider what happens without a PaaS when a new engineer joins the Cloud team:
-
-1. Clone the repo. Read the README. The README says "deploy with Docker Compose."
-2. But production uses Kubernetes. The Compose file is for local dev only.
-3. Find the Kubernetes manifests. They are in a separate `universe/infra/k8s/` directory in a different repository.
-4. The manifests reference secrets that do not exist in their kubeconfig context.
-5. Ask a senior engineer which cluster to deploy to, what namespace to use, and where the secrets come from.
-6. Senior engineer walks them through it in 45 minutes.
-
-With Platform, the new engineer:
-
-1. Logs in to platform.hanzo.ai with their Hanzo account.
-2. Sees the Cloud service. Clicks "Deploy." Selects the branch. Clicks "Deploy" again.
-3. Platform builds, pushes, deploys, and health-checks. Done.
-
-The PaaS is not just a deployment tool. It is an organizational boundary that separates "understanding your application code" from "understanding production infrastructure." Application engineers should write application code. Platform handles the rest.
 
 ## Specification
 
@@ -182,10 +147,10 @@ env:
     value: info
 
 resources:
-  postgres:                           # Managed PostgreSQL (optional).
+  postgres:                           # Managed SQL (optional).
     version: "16"
     storage: 10Gi
-  redis:                              # Managed Redis (optional).
+  redis:                              # Managed KV (optional).
     version: "7"
     maxmemory: 256mb
 ```
@@ -223,7 +188,7 @@ The build pipeline executes in isolated Docker containers. No build shares state
    │
 5. docker push ghcr.io/hanzoai/<org>-<app>:<git-sha-short>
    │
-6. Update deployment record in PostgreSQL
+6. Update deployment record in SQL
    │
 7. Deploy (see Deployment section)
 ```
@@ -457,7 +422,7 @@ hanzo domains my-app remove ex.com   # Remove a domain
      └────┬─────────┬────┘
           │         │
  ┌────────┴──┐  ┌───┴────────┐    ┌─────────────┐
- │ PostgreSQL │  │   Redis     │    │  Hanzo IAM  │
+ │ SQL │  │   KV               │    │  Hanzo IAM  │
  │   :5432    │  │   :6379     │    │  hanzo.id   │
  │  platform  │  │  (queues)   │    │  (OAuth)    │
  └────────────┘  └────────────┘    └─────────────┘
@@ -513,7 +478,7 @@ For users who previously logged in via GitHub (legacy Dokploy flow), Platform ma
 
 ### Database
 
-Platform uses PostgreSQL (HIP-29) to store:
+Platform uses SQL (HIP-1104) to store:
 
 - Application definitions (name, org, repo, branch, runtime configuration)
 - Deployment history (image tags, Git commits, status, timestamps)
@@ -522,7 +487,7 @@ Platform uses PostgreSQL (HIP-29) to store:
 - Audit log entries
 - User sessions (via Better Auth)
 
-The database is `platform` on `postgres.hanzo.svc` in the hanzo-k8s cluster.
+The database is `platform` on `localhost` in the Kubernetes cluster .
 
 ### Container Registry
 
@@ -621,7 +586,7 @@ spec:
           protocol: UDP
 ```
 
-Applications must explicitly declare their network dependencies in the manifest. Platform generates NetworkPolicy rules that allow only declared communication paths. For example, if `cloud` declares `resources.postgres`, Platform creates a NetworkPolicy allowing egress from the `cloud` pods to the PostgreSQL service on port 5432.
+Applications must explicitly declare their network dependencies in the manifest. Platform generates NetworkPolicy rules that allow only declared communication paths. For example, if `cloud` declares `resources.postgres`, Platform creates a NetworkPolicy allowing egress from the `cloud` pods to the SQL service on port 5432.
 
 ### Audit Logging
 
@@ -672,7 +637,7 @@ roles:
 5. [Let's Encrypt](https://letsencrypt.org/) - Free, automated TLS certificate authority
 6. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - IAM for authentication
 7. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for secret injection
-8. [HIP-29: Relational Database Standard](./hip-0029-relational-database-standard.md) - PostgreSQL for deployment state
+8. [HIP-1104: Base — The Hosted Backend](./hip-1104-base-hosted-backend.md) - SQL for deployment state
 9. [HIP-4: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - Example service deployed via Platform
 10. [Hanzo Platform Repository](https://github.com/hanzoai/platform)
 

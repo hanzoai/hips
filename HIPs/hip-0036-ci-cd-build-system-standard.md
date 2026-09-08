@@ -1,13 +1,15 @@
 ---
-hip: 0036
+hip: "0036"
 title: CI/CD Build System Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
+implementation-go: partial
 created: 2025-01-15
 requires: HIP-0027, HIP-0033
 ---
+
 
 # HIP-0036: CI/CD Build System Standard
 
@@ -50,28 +52,6 @@ A single source of truth -- `github.com/hanzoai/build` -- that provides:
 
 This section explains the **why** behind each architectural decision. CI/CD is foundational infrastructure -- the wrong choice here multiplies across every repository and every deploy.
 
-### Why GitHub Actions (Not Jenkins, GitLab CI, or CircleCI)
-
-GitHub Actions is the execution platform for all Hanzo CI/CD. The rationale:
-
-- **Co-location with source code**: All Hanzo repositories live on GitHub. The workflow YAML is version-controlled alongside the code it builds. A PR that changes build logic is reviewed in the same diff as the code change. Jenkins requires a separate Jenkinsfile repo or in-repo Jenkinsfiles that drift from the Jenkins server configuration.
-
-- **No infrastructure to maintain**: GitHub-hosted runners are managed by GitHub. We do not operate Jenkins controllers, GitLab runners, or CircleCI executors. For 260+ repos, this eliminates a significant ops burden.
-
-- **Native integration with GitHub features**: Branch protection rules, required status checks, PR reviews, CODEOWNERS, and deployment environments are first-class GitHub concepts. Actions integrates with all of them without glue code.
-
-- **Marketplace ecosystem**: Pre-built actions for Docker buildx, semantic-release, Cypress, GoReleaser, and hundreds of other tools. We compose these rather than writing shell scripts.
-
-- **Cost model**: GitHub Actions is free for public repositories (which most Hanzo repos are). Private repos get 2,000 free minutes/month on the Team plan. This is sufficient for our workload.
-
-**Trade-off acknowledged**: GitHub Actions has weaker support for complex DAG workflows compared to Tekton or Argo Workflows. We accept this because our pipelines are linear enough (test -> build -> release -> deploy) that DAG expressiveness is not a bottleneck.
-
-### Why KMS for CI/CD Secrets (Not GitHub Secrets)
-
-This is the most important architectural decision in this HIP.
-
-GitHub Secrets are scoped to a single repository (or organization, but org-level secrets are all-or-nothing). When a Docker Hub token is rotated, the naive approach requires:
-
 ```
 260 repos x 1 manual update = 260 manual secret rotations
 ```
@@ -100,22 +80,13 @@ GET kms.hanzo.ai/api/v3/secrets/raw/{SECRET_NAME}
   v
 Secrets injected as step outputs -> consumed by subsequent steps
 ```
-
-Each repository stores exactly TWO GitHub Secrets: `KMS_CLIENT_ID` and `KMS_CLIENT_SECRET`. These are a Universal Auth identity that grants read access to the `/ci` secret path in the `gitops` workspace. All other secrets live in KMS.
-
-**Why this matters for security**:
-- KMS provides audit logs for every secret access (who fetched what, when)
-- Access tokens are short-lived (15 minutes), not permanent like GitHub Secrets
-- Secret rotation is atomic: update once in KMS, every build uses the new value
-- Principle of least privilege: each repo's KMS identity can be scoped to only the secrets it needs
-
 ### Why Multi-Arch Builds (linux/amd64 + linux/arm64)
 
 Hanzo infrastructure runs on two architectures:
 
 | Environment | Architecture | Examples |
 |-------------|-------------|----------|
-| Production K8s | AMD64 | DigitalOcean droplets, hanzo-k8s cluster |
+| Production K8s | AMD64 | DigitalOcean droplets, Kubernetes cluster  |
 | Developer machines | ARM64 | Apple Silicon MacBooks (M1/M2/M3/M4) |
 | CI runners | AMD64 | GitHub-hosted ubuntu-latest |
 
@@ -134,10 +105,6 @@ The build uses `docker/setup-qemu-action` for cross-compilation and `docker/setu
 ```
 
 **Trade-off acknowledged**: Multi-arch builds take 2-3x longer than single-arch builds because each platform compiles separately. We accept this because builds are not in the critical path for developer iteration (developers build locally) and the production correctness guarantee is worth the extra CI minutes.
-
-### Why GHCR Primary, Docker Hub Secondary
-
-The registry push strategy is: GHCR MUST succeed, Docker Hub is continue-on-error.
 
 ```yaml
 # GHCR: must succeed (the build fails if this fails)
@@ -206,14 +173,14 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
-    # Language-specific service containers (PostgreSQL, Redis, etc.)
+    # Language-specific service containers (SQL, KV, etc.)
     services:
       postgres:
         image: ghcr.io/hanzoai/sql:latest
         env:
-          POSTGRES_USER: hanzo
-          POSTGRES_PASSWORD: hanzo123
-          POSTGRES_DB: test_db
+          SQL_USER: hanzo
+          SQL_PASSWORD: hanzo123
+          SQL_DB: test_db
         ports: ["5432:5432"]
         options: >-
           --health-cmd="pg_isready -U hanzo"
@@ -427,15 +394,15 @@ Triggered after a successful Docker build on the default branch. Supports two de
       - name: Deploy to K8s
         run: |
           doctl kubernetes cluster kubeconfig save hanzo-k8s
-          kubectl -n hanzo set image deployment/$SERVICE \
+          kubectl set image deployment/$SERVICE \
             $SERVICE=ghcr.io/hanzoai/$SERVICE:latest
-          kubectl -n hanzo rollout status deployment/$SERVICE \
+          kubectl rollout status deployment/$SERVICE \
             --timeout=300s
 
       - name: Health check
         run: |
           kubectl wait --for=condition=available \
-            deployment/$SERVICE -n hanzo --timeout=120s
+            deployment/$SERVICE --timeout=120s
 ```
 
 ### Caching Strategy
@@ -482,7 +449,7 @@ CI workflows that require databases or caches MUST use Hanzo-maintained service 
 |---------|-------|-------|
 | PostgreSQL | `ghcr.io/hanzoai/sql:latest` | PostgreSQL with extensions |
 | Redis | `ghcr.io/hanzoai/kv:latest` | Redis-compatible KV store |
-| MongoDB | `mongo:7` | Upstream (no Hanzo fork needed) |
+| DocumentDB | `mongo:7` | Upstream (no Hanzo fork needed) |
 | MinIO | `minio/minio:latest` | S3-compatible object storage |
 
 ### Branch Protection Requirements
@@ -572,7 +539,7 @@ The preferred deployment target. The CI workflow:
 Services on hanzo-k8s (24.199.76.156):
   IAM, KMS, Platform, Cloud, Console, Gateway,
   Commerce, hanzo-app, web3, registry, bootnode-api
-  PostgreSQL, Redis, MongoDB, MinIO
+  SQL, KV, DocumentDB, MinIO
 ```
 
 #### Target 2: Docker Compose (legacy)
@@ -688,27 +655,6 @@ Build results are posted to Slack via webhook:
 ```
 
 Failed builds include the failure step and a link to the workflow run.
-
-## Migration Guide
-
-### For Existing Repositories
-
-1. **Add KMS credentials**: Set `KMS_CLIENT_ID` and `KMS_CLIENT_SECRET` as GitHub Secrets. Request a Universal Auth identity from the platform team.
-
-2. **Replace inline secrets**: Remove any `DOCKERHUB_TOKEN`, `DEPLOY_SSH_KEY`, etc. from GitHub Secrets. Add the KMS fetch step to your workflow.
-
-3. **Adopt standard workflow**: Copy the template from `hanzoai/build` or use the reusable workflow pattern.
-
-4. **Update Dockerfile**: Ensure multi-stage build with named targets (`STANDARD`, `ALLINONE`).
-
-5. **Add branch protection**: Configure required status checks matching your `build.yml` job names.
-
-6. **Enable Dependabot**: Add `.github/dependabot.yml` for Actions and language-specific dependency updates.
-
-### For New Repositories
-
-Use the `hanzoai/template` repository which includes all standard CI/CD configuration pre-configured.
-
 ```bash
 gh repo create hanzoai/my-new-service \
   --template hanzoai/template \
@@ -723,23 +669,11 @@ gh repo create hanzoai/my-new-service \
 - Multi-arch Docker builds
 - K8s deployment via kubectl
 
-### Phase 2: Maturation (Q2-Q3 2025)
-- Reusable workflow library in `hanzoai/build`
-- SLSA Level 2 provenance on all images
-- Trivy scanning as a required gate
-- Build dashboard with aggregate metrics
-
 ### Phase 3: GitOps (Q4 2025)
 - ArgoCD for K8s deployments (when cluster count > 5)
 - Manifest repo (`hanzoai/deploy`) as deployment source of truth
 - Environment promotion: staging -> production with approval gates
 - Drift detection and automatic reconciliation
-
-### Phase 4: Advanced (2026)
-- Self-hosted runners for GPU workloads (ML model builds)
-- Ephemeral preview environments per PR
-- Canary deployments with automated rollback
-- Cost optimization: spot instances for CI, build queueing
 
 ## References
 
@@ -749,7 +683,7 @@ gh repo create hanzoai/my-new-service \
 4. [Semantic Release](https://github.com/semantic-release/semantic-release)
 5. [SLSA Supply Chain Security Framework](https://slsa.dev/)
 6. [HIP-0014: Application Deployment Standard](./hip-0014-application-deployment-standard.md)
-7. [HIP-0033: KMS Secret Management](./hip-0033-kms-secret-management.md)
+7. [HIP-0033: KMS Secret Management](./hip-0033-container-registry-standard.md)
 8. [Hanzo IAM CI/CD](https://github.com/hanzoai/iam/tree/main/.github/workflows) -- Reference implementation
 9. [Hanzo Build Repository](https://github.com/hanzoai/build)
 

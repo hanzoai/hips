@@ -1,15 +1,17 @@
 ---
-hip: 0009
+hip: "0009"
 title: Agent SDK - Multi-Agent Orchestration Framework
 author: Hanzo AI Team
 type: Standards Track
 category: Core
-status: Draft
+status: Final
+implementation-go: partial
 created: 2025-01-09
-requires: HIP-1, HIP-2, HIP-4
+requires: HIP-0001, HIP-0002, HIP-0004
 ---
 
-# HIP-9: Agent SDK - Multi-Agent Orchestration Framework
+
+# HIP-0009: Agent SDK - Multi-Agent Orchestration Framework
 
 ## Abstract
 
@@ -18,17 +20,6 @@ This proposal defines the Agent SDK specification, Hanzo's multi-agent systems f
 **Repository**: [github.com/hanzoai/agent](https://github.com/hanzoai/agent)  
 **PyPI**: `hanzoai-agent`  
 **NPM**: `@hanzoai/agent`
-
-## Motivation
-
-Current agent frameworks lack:
-1. **True Multi-Agent Coordination**: Agents work in isolation
-2. **Network Effects**: No agent discovery or marketplace
-3. **State Management**: Poor shared memory systems
-4. **Tool Integration**: Limited external tool support
-5. **Observability**: Insufficient debugging and monitoring
-
-The Agent SDK provides a complete framework for building collaborative agent systems.
 
 ## Specification
 
@@ -432,52 +423,7 @@ const result = await orchestrator.execute({
 });
 ```
 
-## Implementation Roadmap
-
-### Phase 1: Core SDK (Q1 2025)
-- Basic agent class
-- Simple orchestration
-- Memory systems
-- Python/TypeScript SDKs
-
-### Phase 2: Networking (Q2 2025)
-- P2P agent network
-- Service discovery
-- Message routing
-- Shared state
-
-### Phase 3: Advanced Features (Q3 2025)
-- MCP tool integration
-- Advanced orchestration
-- Swarm intelligence
-- Observability
-
-### Phase 4: Scale (Q4 2025)
-- Agent marketplace
-- Distributed execution
-- Edge deployment
-- Enterprise features
-
-## Security Considerations
-
-### Agent Security
-- Sandboxed execution
-- Resource limits
-- Permission system
-- Audit trails
-
-### Network Security
-- Encrypted communication
-- Agent authentication
-- Byzantine fault tolerance
-- Rate limiting
-
-## References
-
-1. [AutoGPT](https://github.com/Significant-Gravitas/AutoGPT)
-2. [LangChain Agents](https://python.langchain.com/docs/modules/agents/)
-3. [CrewAI](https://github.com/joaomdmoura/crewAI)
-4. [HIP-10: MCP Integration](./hip-10.md)
+4. [HIP-0010: Model Context Protocol (MCP) Integration Standards](./hip-0010-model-context-protocol-mcp-integration-standards.md)
 5. [Agent SDK Repository](https://github.com/hanzoai/agent)
 
 ## Copyright

@@ -1,15 +1,17 @@
 ---
-hip: 0118
+hip: "0118"
 title: SuperAdmin & Tenant Isolation Model
 author: Hanzo AI Team
 type: Standards Track
 category: Security
-status: Review
+status: Final
+implementation-go: shipped
 created: 2026-07-07
-requires: HIP-0026, HIP-0044, HIP-0068, HIP-0111
+requires: HIP-0026, HIP-0068, HIP-0111
 ---
 
-# HIP-118: SuperAdmin & Tenant Isolation Model
+
+# HIP-0118: SuperAdmin & Tenant Isolation Model
 
 ## Abstract
 
@@ -129,7 +131,7 @@ OIDC userinfo response, in every token format, scope-independent. The predicate 
 evaluated from that claim and nothing else. Concretely:
 
 - The **edge gate** (admin-guard, §7) evaluates it in `decide()`.
-- The **gateway** propagates the resolved org as `X-Org-Id` (HIP-0044); downstream
+- The **gateway** propagates the resolved org as `X-Org-Id` (HIP-0519); downstream
   subsystems read `X-Org-Id` and apply the *same* predicate for any platform action,
   and scope every tenant query to it.
 - The **console** shows platform-admin affordances under the *same* predicate.
@@ -205,32 +207,6 @@ Identity MAY be resolved from more than one transport (a signed edge session coo
 Bearer/Basic JWT, an IAM SSO session), but all transports MUST collapse to the single
 §3 predicate. No transport may widen the scope.
 
-## Rationale
-
-**Why `owner == admin`, not `isAdmin`.** `isAdmin` answers "admin of my own org" — and
-in a self-service platform *every customer is that*. Gating platform scope on `isAdmin`
-therefore grants platform scope to the whole customer base. `owner` answers "which
-tenant is this identity," and the reserved `admin` tenant is, by construction, the only
-one that is not a customer. Reading `owner` makes the platform-privileged set a small,
-explicit, enumerable org rather than an emergent property of a boolean that means
-something else. The two claims are different questions; the model refuses to answer the
-platform question with the tenant answer.
-
-**Why provision, not promote.** Promotion is a mutation, and every mutation is an
-escalation surface: it can be replayed, under-guarded on one of N subsystems, or
-performed by anyone who can edit a user. Provisioning has no such surface — there is no
-"make me admin" operation to attack, because platform privilege is *membership of an
-org you must be separately created in*. It also preserves separation of duties (AC-5):
-the tenant-facing identity and the platform-facing identity are distinct accounts with
-distinct credentials and distinct audit trails, so a compromise of a customer's
-day-to-day admin account yields no platform scope.
-
-**Why one predicate, spelled once.** N independent "is this an admin?" tests are N
-places to drift and N independent escalation surfaces. Collapsing every gate — edge,
-gateway, console, subsystem — onto the identical claim comparison means there is exactly
-one thing to reason about and audit, and adding a subsystem adds no new authorization
-logic, only the same predicate over the same header.
-
 ## Security Considerations
 
 This model is the control that implements the following NIST SP 800-53 Rev. 5
@@ -295,7 +271,7 @@ to be renamed to SuperAdmin (IAM `IsGlobalAdmin` → `IsSuperAdmin`, console
 
 1. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) — the IAM server: the Org primitive, the `owner` field, the `isAdmin` flag.
 2. [HIP-0111: Hanzo IAM Authentication Standard](./hip-0111-iam-authentication-standard.md) — how a client obtains and reads the `owner` claim; the fail-closed tenant rule (§5).
-3. [HIP-0044: Hanzo Gateway Standard](./hip-0044-api-gateway-standard.md) — JWT validation and `X-Org-Id` propagation to subsystems.
+3. [HIP-0519: One Identity Boundary](./hip-0519-one-identity-boundary.md) — JWT validation and `X-Org-Id` propagation to subsystems.
 4. [HIP-0068: Ingress Standard](./hip-0068-ingress-standard.md) — the ForwardAuth mechanism the admin-guard plugs into.
 5. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS-managed secrets for privileged surfaces.
 6. `~/work/hanzo/gateway/cmd/admin-guard/main.go` — the reference implementation of the predicate and the two surfaces.

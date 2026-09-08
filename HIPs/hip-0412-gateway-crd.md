@@ -1,14 +1,18 @@
 ---
-hip: 0412
+hip: "0412"
 title: Gateway CRD
 author: Hanzo Platform Team
 type: Standards Track
 category: Operator
 status: Final
+implementation-rust: partial
+implementation-go: partial
 created: 2026-05-19
 ---
 
-# HIP-412: Gateway CRD
+
+
+# HIP-0412: Gateway CRD
 
 ## Abstract
 
@@ -47,12 +51,12 @@ spec:
   replicas: 2
   routes:
     - prefix: /v1/chat
-      backend: http://chat.hanzo.svc:80
+      backend: http://localhost:80
       methods: [POST]
       authPolicy: iam-jwt
       rateLimit: per-user
     - prefix: /v1/models
-      backend: http://cloud-api.hanzo.svc:80
+      backend: http://localhost:80
       methods: [GET]
   rateLimits:
     - name: per-user
@@ -78,8 +82,7 @@ spec:
 
 ### Related services
 
-- HIP-443 (gateway service)
-- HIP-0044 (API gateway standard)
+- HIP-0519 (One Identity Boundary) — the edge role this gateway holds: strip, verify, mint.
 
 ## Status
 

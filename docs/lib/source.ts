@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import vocabulary from '../../vocabulary.json';
+
+export type Status = keyof typeof vocabulary.status;
+export type Type = keyof typeof vocabulary.type;
 
 const HIPS_DIR = path.join(process.cwd(), '../HIPs');
 
@@ -8,8 +12,12 @@ export interface HIPMetadata {
   hip?: number | string;
   title?: string;
   description?: string;
-  status?: 'Draft' | 'Review' | 'Last Call' | 'Final' | 'Withdrawn' | 'Stagnant' | 'Superseded';
-  type?: 'Standards Track' | 'Meta' | 'Informational';
+  // Both vocabularies come from ../../vocabulary.json, so a status added there
+  // is a status the site renders. This union used to be written by hand: it
+  // admitted 'Stagnant', which no proposal has ever carried, omitted the one 52
+  // proposals did, and left out 'Process' while three proposals are Process.
+  status?: Status;
+  type?: Type;
   category?: string;
   author?: string;
   created?: string;
@@ -21,6 +29,9 @@ export interface HIPMetadata {
 
 export interface HIPPage {
   slug: string[];
+  /** The file this page was read from, e.g. `hip-0065-backup-and-dr.md`. The
+   *  name carries a slug, so it cannot be rebuilt from the HIP number alone. */
+  file: string;
   data: {
     title: string;
     description?: string;
@@ -238,7 +249,9 @@ function readHIPFile(filename: string): HIPPage | null {
 
     // Extract HIP number from filename
     const hipMatch = filename.match(/hip-(\d+)/);
-    const hipNumber = data.hip || (hipMatch ? parseInt(hipMatch[1], 10) : null);
+    const hipNumber =
+      (data.hip !== undefined && data.hip !== null ? String(data.hip) : null) ??
+      (hipMatch ? hipMatch[1] : null);
 
     // Convert Date objects to strings
     const processedData: Record<string, unknown> = {};
@@ -252,6 +265,7 @@ function readHIPFile(filename: string): HIPPage | null {
 
     return {
       slug,
+      file: filename,
       data: {
         title: (processedData.title as string) || filename.replace(/\.mdx?$/, ''),
         description: processedData.description as string,

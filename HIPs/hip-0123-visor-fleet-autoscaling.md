@@ -1,14 +1,16 @@
 ---
-hip: 0123
+hip: "0123"
 title: Visor — Fleet & Fabric Autoscaling Across Any Provider
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Review
+status: Final
 created: 2026-07-07
 updated: 2026-07-08
-requires: HIP-0037, HIP-0053, HIP-0116, HIP-0117, HIP-0121, HIP-0400
+requires: HIP-0106, HIP-0117, HIP-0121, HIP-0400
 ---
+
+
 
 # HIP-0123: Visor — Fleet & Fabric Autoscaling Across Any Provider
 
@@ -25,7 +27,7 @@ themselves*, across *clusters*, across *providers*, including
 providers the **customer** brings (HIP-0121 BYOC).
 
 The target model this HIP formalizes: every service, in its plugin-VM
-shape (HIP-0116), is an independently schedulable unit; visor scales
+shape (HIP-0106), is an independently schedulable unit; visor scales
 **just the nodes running that service for that tenant** — per-service,
 per-org, per-project — on whichever provider that tenant's fleet
 lives. The realized autoscaler already keys its pools by exactly those
@@ -39,13 +41,13 @@ An AI cloud's unit economics live and die on node count. Three forces
 demand one control plane for it:
 
 1. **The fabric is already plural.** The operated estate spans eight
-   Kubernetes clusters across providers this cycle — DOKS estates
+   Kubernetes clusters across providers this cycle — Kubernetes estates
    (`do-sfo3-hanzo-k8s`, `do-sfo3-lux-k8s`, `do-sfo3-bootnode-k8s`,
    the zoo estate, and siblings) plus BYO k3s fleets such as the
    spark/evo/dbc reference cluster of HIP-0121. No single cluster's
    autoscaler can see, size, or bill that fabric as one thing.
 2. **Tenancy must reach the node layer.** HIP-0121 gives every org a
-   fleet; HIP-0116 makes every service independently packageable. If
+   fleet; HIP-0106 makes every service independently packageable. If
    scaling stays cluster-global, one tenant's burst dilutes into
    shared pools — unattributable cost, no per-tenant ceiling, no way
    to scale *only* the service that is hot. The scaling unit must be
@@ -58,9 +60,9 @@ demand one control plane for it:
    the classic two-ways defect.
 
 Visor is where this already lives: it is the machine/cluster
-provisioner and supervisor (HIP-0053, HIP-0490), it holds the
-per-owner sealed provider connectors (HIP-0121), and it ships the
-autoscaler. This HIP names that role and fixes its contract.
+provisioner and supervisor, it holds the per-owner sealed provider
+connectors (HIP-0121), and it ships the autoscaler. This HIP names
+that role and fixes its contract.
 
 ## Specification
 
@@ -86,7 +88,7 @@ All of the following is real code in `hanzoai/visor` at v1.108.x:
   general-purpose → CPU-optimized → memory-optimized), defaulting
   safe. Node count = max(ceil by CPU, ceil by memory). Existing pools
   of the right size grow; otherwise a new pool is created.
-- **Provider backends** — `service/{digitalocean,doks,aws,azure,gcp,
+- **Provider backends** — `service/{digitalocean,kubernetes,aws,azure,gcp,
   aliyun,hetzner,lightsail,kvm,pve,vmware}.go`: machine and cluster
   provisioning across managed clouds AND on-prem hypervisors (KVM,
   Proxmox, VMware), plus managed network/chain provisioning
@@ -105,7 +107,7 @@ All of the following is real code in `hanzoai/visor` at v1.108.x:
 
 The unit visor scales is the **(service, org, project) pool**:
 
-1. **Service** — a plugin VM per HIP-0116. Because every Hanzo service
+1. **Service** — a plugin VM per HIP-0106. Because every Hanzo service
    builds as an independently deployable unit with an identical mount
    contract, "scale the ML serving plane" never implies "scale the
    whole cloud binary". The fat SaaS build stays one deployment; any
@@ -132,7 +134,7 @@ rewrite.
 
 | Concern | Owner |
 |---|---|
-| What a service IS (shapes, mount contract) | HIP-0116 |
+| What a service IS (shapes, mount contract) | HIP-0106 |
 | Where a deployment RUNS (serve / cluster init / helm) | HIP-0117 |
 | What compute a tenant ATTACHED and what it COSTS | HIP-0121 |
 | Day-2 reconciliation of service estates (CRs, GitOps) | HIP-0400 operator |
@@ -141,8 +143,8 @@ rewrite.
 Visor does not reconcile Deployments — that is the operator's job
 (HIP-0400); it feeds the node layer those Deployments land on. It does
 not define the fleet registry or billing tiers — that is HIP-0121; it
-executes against them. It is not the monitoring standard — HIP-0053
-covers probes/alerting; the autoscaler consumes those signals.
+executes against them. It is not the telemetry plane — that is
+HIP-0132; the autoscaler reads pod and node state from the cluster.
 
 ### Decided vs shipped
 
@@ -158,10 +160,10 @@ Honesty section. As of v1.108.11:
 - **Decided, staged:** the full **per-tenant per-service
   cross-provider placement policy** — i.e. pools uniformly keyed by
   the complete `(service, org, project, provider)` tuple across every
-  provider backend, and scale-execution fanned out beyond DOKS
+  provider backend, and scale-execution fanned out beyond Kubernetes
   node-pool APIs to every connector in the set. Today's watcher
-  executes pool changes through the DOKS client
-  (`DOKSClients map[clusterID]`) while reading demand fabric-wide;
+  executes pool changes through the Kubernetes client
+  (`Clients map[clusterID]`) while reading demand fabric-wide;
   generalizing the execution seam to the other shipped connectors is
   mechanical, not architectural — the sizing, attribution, and
   provider primitives it composes are all in-tree.
@@ -203,23 +205,21 @@ itself and bills honestly.
 
 ## References
 
-- HIP-0037 — AI Cloud Platform Standard (the product the fleet serves)
-- HIP-0053 — Visor Monitoring & Supervision Standard (probes/alerts
-  the autoscaler consumes)
 - HIP-0106 — Cloud — Unified Hanzo Binary (hybrid split mode; the
   "auto-scaling per-subsystem" non-goal this HIP picks up at the
   right layer)
-- HIP-0116 — Hanzo Plugin & VM Model (the independently schedulable
+- HIP-0106 — Hanzo Plugin & VM Model (the independently schedulable
   service unit)
 - HIP-0117 — Cloud-in-a-Box (the topologies whose node supply this
   HIP manages)
 - HIP-0121 — BYO Compute Fleet & Metered Billing (the fleet registry,
   sealed providers, and billing tiers this HIP executes against)
+- HIP-0132 — One Telemetry Plane (the telemetry plane; this HIP is the
+  node plane)
 - HIP-0400 — Service CRD (workload reconciliation above this node
   plane)
-- HIP-0490 — visor (service catalog entry)
 - `hanzoai/visor` — `autoscaler/{watcher,sizing}.go`,
-  `service/{digitalocean,doks,aws,azure,gcp,aliyun,hetzner,lightsail,kvm,pve,vmware}.go`,
+  `service/{digitalocean,kubernetes,aws,azure,gcp,aliyun,hetzner,lightsail,kvm,pve,vmware}.go`,
   `billing/reporter.go`, `chain/chainmaker.go`, `authz/`
 - `universe/infra/k8s/operator/crs/visor.yaml` — the live CR
   (tag v1.108.11)

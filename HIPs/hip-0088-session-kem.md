@@ -1,22 +1,28 @@
 ---
-hip: 0088
+hip: "0088"
 title: Session KEM (ML-KEM-768/1024 for P2P)
 type: Standards Track
 category: Cryptography
-status: Proposed
-author: TBD
+status: Final
+implementation-rust: none
+implementation-go: shipped
+author: Hanzo AI
 created: 2026-05-11
-requires: HIP-0005 (Post-Quantum Security), HIP-0077 (Mesh Identity), HIP-0084 (Pulsar-M DKG)
+requires: HIP-0005, HIP-0077, HIP-0084
 ---
+
+
+
+# HIP-0088: Session KEM (ML-KEM-768/1024 for P2P)
 
 ## Abstract
 
 HIP-0088 locks the post-quantum session KEM under the strict-PQ
 profile. The ZAP wire handshake (HIP-0077) negotiates an `ML-KEM-768`
 (FIPS 203, NIST PQ Cat 3) shared secret by default and `ML-KEM-1024`
-(Cat 5) for high-value sessions. The hybrid X-Wing (X25519 + ML-KEM-768)
-mode is available as an explicit transitional profile but is refused
-under strict-PQ. The derived shared secret is fed to an HKDF-Extract
+(Cat 5) for high-value sessions. One KEM family is admitted and it is
+ML-KEM; there is no hybrid mode to fall back to. The derived shared
+secret is fed to an HKDF-Extract
 keyed by `KMAC256` (SP 800-185) and produces the AEAD key for
 `AES-256-GCM` or `ChaCha20-Poly1305` transport.
 
@@ -90,17 +96,15 @@ Acceptance under strict-PQ:
 
 ML-KEM-768 is NIST PQ Cat 3, matching ML-DSA-65's identity scheme.
 ML-KEM-1024 is Cat 5 for high-value (governance, bridge, treasury)
-flows. X-Wing is useful only as a transition tool for connecting to
-legacy classical-only peers; under strict-PQ the X25519 leg adds zero
-cryptanalytic surface and would silently weaken the posture if not
-explicitly refused. KMAC256 over the transcript matches the SP 800-185
+flows. A hybrid X25519 leg would add zero cryptanalytic surface while
+silently weakening the posture, so it is refused rather than offered as
+a way in. KMAC256 over the transcript matches the SP 800-185
 key-derivation pattern used elsewhere in the strict-PQ stack.
 
 ## Backwards compatibility
 
-None. Strict-PQ refuses classical key exchange (X25519, ECDH) at the
-handshake boundary. The permissive profile (0x02) MAY accept hybrid
-constructions; the FIPS profile (0x03) MAY accept ML-KEM only.
+None. Classical key exchange (X25519, ECDH) is refused at the handshake
+boundary. A peer that cannot speak ML-KEM does not connect.
 
 ## Reference implementation
 

@@ -4,6 +4,7 @@ import { FileText, GitPullRequest, Users, BookOpen, ExternalLink } from 'lucide-
 import { LogoWithText } from '../../components/logo';
 import { SearchTrigger } from '../../components/search-trigger';
 import { source } from '@/lib/source';
+import { STATUSES, statusClass } from '@/lib/status';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const pageTree = source.getPageTree();
@@ -33,18 +34,12 @@ export default function Layout({ children }: { children: ReactNode }) {
                   <span className="text-muted-foreground">Total:</span>
                   <span className="ml-1 font-medium">{stats.total}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Final:</span>
-                  <span className="ml-1 font-medium text-green-500">{stats.byStatus['Final'] || 0}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Draft:</span>
-                  <span className="ml-1 font-medium text-yellow-500">{stats.byStatus['Draft'] || 0}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Review:</span>
-                  <span className="ml-1 font-medium text-blue-500">{stats.byStatus['Review'] || 0}</span>
-                </div>
+                {STATUSES.map((s) => (
+                  <div key={s}>
+                    <span className="text-muted-foreground">{s}:</span>
+                    <span className={`ml-1 font-medium ${statusClass(s).split(' ')[1]}`}>{stats.byStatus[s] || 0}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

@@ -1,0 +1,11 @@
+# Hanzo AI — how to report a security problem.
+#
+# RFC 9116. Machine-readable on purpose: scanners and researchers look here
+# first, and a site without this file gets reported to whatever address someone
+# can guess, or not at all.
+
+Contact: mailto:security@hanzo.ai
+Expires: 2027-08-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://hips.hanzo.ai/.well-known/security.txt
+Policy: https://hanzo.ai/security

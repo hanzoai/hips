@@ -1,15 +1,18 @@
 ---
-hip: 0125
+hip: "0125"
 title: Consensus-Backed Plugin-Placement Platform
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
+implementation-go: partial
 created: 2026-07-07
-requires: HIP-0026, HIP-0027, HIP-0105, HIP-0106, HIP-0107, HIP-0112, HIP-0114, HIP-0302
+requires: HIP-0026, HIP-0027, HIP-0105, HIP-0106, HIP-0107, HIP-0114, HIP-0302
 ---
 
-# HIP-125: Consensus-Backed Plugin-Placement Platform
+
+
+# HIP-0125: Consensus-Backed Plugin-Placement Platform
 
 ## Abstract
 
@@ -442,7 +445,7 @@ quorum (6 of 7, above the 5-of-7 threshold) live throughout the roll.
 The existing Service aliases keep resolving: `kms` and `cloud-api` Services
 select `app.kubernetes.io/name: cloud`, which the StatefulSet pods still
 carry, so nothing downstream re-points. The operator's `hanzo.ai/v1 kind:
-Service` CR (HIP-0112) gains a **StatefulSet-emitting mode** — a boolean on
+Service` CR (HIP-0400) gains a **StatefulSet-emitting mode** — a boolean on
 the CR that makes the operator render a StatefulSet + headless service +
 volumeClaimTemplates instead of a Deployment. One CR field, one new render
 path; the CR contract is otherwise unchanged.
@@ -565,7 +568,7 @@ Where the design chose one path, and why:
   RSM on the request path violates this HIP.
 - **A general scheduler.** This is placement of *plugin write ownership*,
   not a Kubernetes replacement. Node-pool `--enable` sets (HIP-0106) and the
-  operator (HIP-0112) still own coarse scheduling.
+  operator (HIP-0400) still own coarse scheduling.
 - **Folding `vault` / `payments`.** Per HIP-0106's solo-vault CDE rule, the
   PCI systems stay their own deployments and are not placed by this runtime.
 
@@ -600,8 +603,8 @@ Where the design chose one path, and why:
   subsystem model this HIP makes stateful and HA)
 - HIP-0107 — Streaming Replication over VFS (the data plane, reused
   unchanged)
-- HIP-0112 — Cloud Infrastructure Topology Standard (the operator `Service`
-  CR that gains a StatefulSet-emitting mode)
+- HIP-0400 — Service CRD (the operator `Service` CR that gains a
+  StatefulSet-emitting mode)
 - HIP-0114 — ZAP Inter-VM Cognitive Transport (the ZAP-native default wire
   for plugins)
 - HIP-0302 — Hanzo Replicate: Encrypted SQLite + ZapDB Durability (the
