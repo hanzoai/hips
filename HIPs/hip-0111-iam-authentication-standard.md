@@ -20,17 +20,26 @@ This is the one and only way an application authenticates a user, provisions an 
 
 **RFC-standard only — no vendor compat.** Every wire contract on this surface is an IETF RFC or OpenID Connect standard. There are NO verb aliases (`get-users`, `add-user`, `get-account`, `issue-user-token`, …), no bespoke "verb" REST, and no backward-compat shims, on iam or on any client. Where a capability has a standard, the standard IS the surface: identity provisioning is **SCIM 2.0** (RFC 7644/7643), delegated/on-behalf-of tokens are **OAuth 2.0 Token Exchange** (RFC 8693), account claims are **OIDC UserInfo**, token validation is **Introspection** (RFC 7662) + JWKS (RFC 7517). A client that needs a capability uses its RFC; if no RFC covers it, it is the authorization server's internal concern (§6), never a new public "verb".
 
-HIP-0026 specifies the IAM **server** — the provider itself (the clean-room `hanzoai/iam2` implementation). This HIP specifies the **wire contract** — how everything talks to it. Where the two touch (endpoint paths, discovery), this HIP is authoritative and HIP-0026 follows it.
+HIP-0026 specifies the IAM **server** — the provider itself. This HIP specifies the **wire contract** — how everything talks to it. Where the two touch (endpoint paths, discovery, the token exchange), this HIP is authoritative and HIP-0026 follows it.
 
-Hanzo IAM (`hanzoai/iam2`) is a clean-room, standards-based OAuth 2.0 + OpenID Connect + SCIM 2.0 provider — original expression, no upstream fork — deployed once per brand:
+Hanzo IAM (`hanzoai/iam`) is a clean-room, standards-based OAuth 2.0 + OpenID Connect + SCIM 2.0 provider — original expression, no upstream fork — deployed once per brand. The Beego/xorm fork it replaced is retired to `hanzoai/iam-v1` and is out of every graph; a HIP describing Beego, xorm or a Postgres schema is describing that repository, not this one. IAM is deployed once per brand:
 
 | Brand | IAM origin (`serverUrl`) | Login UI |
 |-------|--------------------------|----------|
-| Hanzo | `https://iam.hanzo.ai` | `hanzo.id` |
+| Hanzo | `https://hanzo.id` | `hanzo.id` |
 | Lux | `https://lux.id` | `lux.id` |
 | Zoo | `https://zoo.id` | `zoo.id` |
 | Bootnode | `https://id.bootno.de` | `id.bootno.de` |
 | Pars | `https://pars.id` | `pars.id` |
+
+The two columns hold the same host on every row, and that is the rule, not a
+coincidence: the authorization server answers on the origin it names as `issuer`,
+so `serverUrl` is always the brand's identity host. `iam.hanzo.ai` is not that
+host — it serves the `200 text/html` SPA on every path, `/v1/iam/*` included, so
+a client pointed there resolves the catch-all described below and fails on
+content type. Discovery is the check: `https://hanzo.id/.well-known/openid-configuration`
+returns `application/json` with `issuer: https://hanzo.id`, and so does the copy
+served from `api.hanzo.ai`.
 
 The library is brand-agnostic. You select the brand by setting `serverUrl`; nothing else changes.
 
@@ -216,9 +225,18 @@ Every application is registered once per brand in IAM before it can authenticate
 | React SPA (`@hanzo/iam/browser`) | `https://<app-host>/auth/callback` |
 | Passport | `https://<app-host>/v1/sso/oidc/callback` |
 
-- **Grant**: Authorization Code + PKCE. Implicit grant is not used.
-- **Client secret**: KMS-managed (HIP-0027). Never in Git, init data, env files, or images.
-- **Superuser convention**: `z@<domain>` / `Ilove<App>2026!!` (e.g. `z@hanzo.ai`). No built-in admin — the seeded superuser is the only privileged account.
+The first two carry an `/api/` segment because better-auth and NextAuth mount
+their own handler there and the path is not ours to choose — it is a route on the
+*app's* host, in a third-party framework's namespace. The no-`/api/` rule (§4.4,
+§4.7) is about surfaces **we** serve; it is not weakened by a callback we merely
+register. A redirect URI that does not match the framework's actual mount point
+byte for byte fails the flow, so this table records what the framework does, not
+what we would prefer.
+
+- **Grant**: Authorization Code + PKCE. Implicit grant is not used, and `implicit` is not a registered grant type on any application.
+- **Client secret**: KMS-managed (HIP-0027, HIP-0136). Never in Git, init data, env files, or images.
+- **Superuser convention**: no built-in admin — the seeded superuser `z@<domain>` is the only privileged account, and it is a member of the reserved `admin` org (HIP-0118). The password is the org's, not the app's.
+- **Machine identity**: a service authenticates as itself with `client_credentials` and RFC 8707 `resource` naming the resource server it is calling — for example `resource=hanzo-egress` (HIP-0143). There is no service token, no shared secret and no per-app auth; a bearer that does not come from this endpoint is not an identity.
 
 ### 4. Forbidden anti-patterns
 
@@ -260,9 +278,11 @@ Same rule as §1: `/v1/iam/*` only — no `/api/`, anywhere, including the login
 
 A trusted first-party backend that must call a downstream API **as** an end user (the console BFF forwarding a request on the signed-in user's behalf, the keyless AI proxy) obtains that token through **RFC 8693 Token Exchange** on the token endpoint — never a bespoke `issue-user-token` verb.
 
-- `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`, `client_secret_basic` (confidential clients only, capability-gated by `IAM_KEY_MINT_ALLOWED_APPS`), `subject_token` naming the target user (or a `requested_subject`), `requested_token_type=urn:ietf:params:oauth:token-type:access_token`, and `resource`/`audience` (RFC 8707) pinning the downstream resource server.
+- `grant_type=urn:ietf:params:oauth:grant-type:token-exchange`, `client_secret_basic` (confidential clients only), `subject_token` naming the target user (or a `requested_subject`), `requested_token_type=urn:ietf:params:oauth:token-type:access_token`, and `resource`/`audience` (RFC 8707) pinning the downstream resource server.
 - The issued token carries the **target user's** subject + `owner` (so a resource server that scopes on the validated `owner` claim scopes to the user's tenant), an `act` claim recording the acting client, and the requested `aud`. It is signed by the same trusted key the JWKS publishes — indistinguishable from a token the user obtained directly, which is the point.
-- Acting on behalf of a **reserved-org (`admin`/`built-in`)** subject requires the separate `IAM_ADMIN_MINT_ALLOWED_APPS` capability (defense in depth: a leaked general-exchange credential can never reach a SuperAdmin identity). Every exchange is audit-logged.
+- **Two conditions gate it, both required** (`internal/oidc/issuetoken.go`, `mintAllowed`): the acting application's **owning org** must be a reserved platform signing owner (`admin`/`built-in`), AND its `client_id` must appear on `IAM_TOKEN_EXCHANGE_APPS`. The owner-pin is the decisive one. `client_id` and secret are body-supplied at registration, so a tenant could register an app whose `client_id` collides with a listed one and, on a backend whose duplicate-row order is unspecified, have its row resolve and its known secret authenticate — but its owner is its own tenant, never a signing owner, so it acts on nobody. An empty or unset list allows nothing.
+- Acting on behalf of a **reserved-org (`admin`/`built-in`)** subject requires the strictly narrower, separately granted `IAM_ADMIN_TOKEN_EXCHANGE_APPS`, under the same owner-pin (`adminMintAllowed`). A leaked general-exchange credential can therefore never reach a SuperAdmin identity (HIP-0118). Every exchange is audit-logged.
+- **`IAM_KEY_MINT_ALLOWED_APPS` is a different authority and MUST NOT be conflated with these.** It gates credential administration (`authz.CapKeyMint`) and is keyed on the application **name**, not the `client_id`, so an app permitted to exchange tokens is not thereby granted the credential-administration capability nor its reach across the entity registry. Two capabilities, two lists, two keys.
 
 ### 8. Identity provisioning — SCIM 2.0 (RFC 7644 / RFC 7643)
 
@@ -354,8 +374,11 @@ the prohibition list looking satisfied.
 3. [HIP-0068: Ingress Standard](./hip-0068-ingress-standard.md) — edge TLS and routing
 4. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) — KMS-managed client secrets
 5. [HIP-0134: One Process, One Socket, One Identity](./hip-0134-one-process-one-socket-one-identity.md) — how IAM fits the estate
-6. [`@hanzo/iam`](https://github.com/hanzo-js/iam) — the SDK; `src/paths.ts` is the canonical path source
-7. Standards this surface implements (the wire contract, in full):
+6. [HIP-0118: SuperAdmin & Tenant Isolation Model](./hip-0118-superadmin-and-tenant-isolation-model.md) — the reserved-org predicate `IAM_ADMIN_TOKEN_EXCHANGE_APPS` defends
+7. [HIP-0136: One Secret, One Path](./hip-0136-one-secret-one-path.md) — where a client secret is addressed
+8. [HIP-0143: Egress — The Outbound Trust Boundary](./hip-0143-egress-outbound-trust-boundary.md) — the machine identity a caller presents in order to spend
+9. [`@hanzo/iam`](https://github.com/hanzo-js/iam) — the SDK; `src/paths.ts` is the canonical path source
+10. Standards this surface implements (the wire contract, in full):
    - [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) OAuth 2.0 — authorize, token (authorization_code / refresh_token / client_credentials / password grants)
    - [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) PKCE `S256`
    - [RFC 7517](https://datatracker.ietf.org/doc/html/rfc7517) JWK / JWKS
