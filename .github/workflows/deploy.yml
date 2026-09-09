@@ -54,7 +54,7 @@ on:
     branches: [main]
     # HIPs/** belongs here because the site renders it: without it, writing a
     # spec never rebuilds hips.hanzo.ai.
-    paths: ['HIPs/**', 'docs/**', '.hanzo/workflows/deploy.yml']
+    paths: ['HIPs/**', 'docs/**', '.github/workflows/deploy.yml']
   workflow_dispatch:
 
 concurrency:
