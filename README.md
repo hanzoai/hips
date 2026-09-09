@@ -162,6 +162,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0523](./HIPs/hip-0523-rooms-one-store-two-views-many-bridges.md) | Rooms — One Store, Two Views, Many Bridges | Standards Track | Core | Final | partial | - | - |
 | [HIP-0524](./HIPs/hip-0524-the-personal-agent.md) | The Personal Agent — What It May Send Without You | Standards Track | Core | Final | partial | - | - |
 | [HIP-0525](./HIPs/hip-0525-rendezvous.md) | Rendezvous — When Every Participant Is a Machine | Standards Track | Core | Draft | - | - | - |
+| [HIP-0526](./HIPs/hip-0526-semantic-memory.md) | Semantic Memory — The Substrate Under the Graph | Standards Track | Core | Draft | partial | - | - |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Draft | - | - | partial |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Final | - | - | - |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Final | - | - | - |
