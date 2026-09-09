@@ -17,9 +17,10 @@ requires: HIP-0001
 
 This proposal defines the LLM Gateway specification, Hanzo's unified proxy for 100+ LLM providers with OpenAI-compatible API, intelligent routing, cost optimization, and enterprise features. The gateway serves as the central infrastructure for all AI operations in the Hanzo ecosystem.
 
-**Repository**: [github.com/hanzoai/llm](https://github.com/hanzoai/llm)  
-**Port**: 4000  
-**Docker**: `hanzoai/llm-gateway:latest`
+**Repository**: [github.com/hanzoai/gateway](https://github.com/hanzoai/gateway) (historically `hanzoai/llm`)
+**Port**: 4000
+**Image**: `oci.hanzo.ai/hanzoai/gateway` (HIP-0033)
+**Upstream credentials**: none in this process — see §Deployment and HIP-0143
 
 ## Motivation
 
@@ -125,19 +126,19 @@ cache:
   
 providers:
   openai:
-    api_key: ${OPENAI_API_KEY}
-    models:
-      - gpt-4-turbo
-      - gpt-3.5-turbo
+    models: [...]
     rate_limit: 10000/min
-    
+
   anthropic:
-    api_key: ${ANTHROPIC_API_KEY}
-    models:
-      - claude-3-opus
-      - claude-3-sonnet
+    models: [...]
     rate_limit: 5000/min
 ```
+
+**No provider block carries a key.** The gateway asks `egress` for a call and
+names the provider; egress holds the credential in KMS custody and returns what
+the upstream said (HIP-0143). A `provider.api_key` field is the design egress
+replaces: a key in this file is a key in the process's memory, in its config
+volume, and in whatever reads either.
 
 #### OpenAI-Compatible API
 
@@ -342,68 +343,46 @@ Privacy Controls:
   - No logging mode
 ```
 
-### Deployment Options
+### Deployment
 
-#### Docker Compose
-```yaml
-version: '3.8'
+The gateway holds **no upstream credential**. It is a caller of `egress`
+(HIP-0143), which means the deployment carries a machine identity and nothing
+that spends:
 
-services:
-  llm-gateway:
-    image: hanzoai/llm-gateway:latest
-    ports:
-      - "4000:4000"
-    environment:
-      - DATABASE_URL=postgresql://...
-      - REDIS_URL=redis://...
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-    volumes:
-      - ./config.yaml:/app/config.yaml
-      
-  postgres:
-    image: postgres:15
-    environment:
-      - SQL_DB=llm_gateway
-      - SQL_PASSWORD=secret
-      
-  redis:
-    image: redis:7-alpine
-    
-  prometheus:
-    image: prom/prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-```
-
-#### Kubernetes
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llm-gateway
+  name: gateway
 spec:
   replicas: 3
-  selector:
-    matchLabels:
-      app: llm-gateway
   template:
-    metadata:
-      labels:
-        app: llm-gateway
     spec:
       containers:
       - name: gateway
-        image: hanzoai/llm-gateway:latest
-        ports:
-        - containerPort: 4000
+        image: oci.hanzo.ai/hanzoai/gateway
         env:
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: llm-secrets
-              key: openai-key
+        # what it needs to identify ITSELF — not what it spends
+        - name: IAM_CLIENT_ID
+          valueFrom: { secretKeyRef: { name: gateway-env, key: IAM_CLIENT_ID } }
+        - name: IAM_CLIENT_SECRET
+          valueFrom: { secretKeyRef: { name: gateway-env, key: IAM_CLIENT_SECRET } }
+        - name: EGRESS_ADDRESS
+          value: egress.hanzo.ai:9653
 ```
+
+The Secret is materialized from KMS by the KMSSecret controller at the path
+HIP-0136 derives (`hanzo/gateway/<NAME>@prod`); the chart carries a reference and
+never a value.
+
+**The test for whether this is done is falsifiable**: enumerate the pod's
+environment and mounted secrets and find no upstream provider key. A gateway that
+still holds one has not adopted egress, it has moved the key.
+
+State follows HIP-0138: there is no `llm_gateway` database and no gateway-owned
+Postgres or Redis. What the gateway keeps — routing state, budgets, a response
+cache — is per-tenant at rank 1 or in the one shared KV, and usage events go to
+the column store, which is what event data is for.
 
 ### SDK Support
 
