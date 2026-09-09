@@ -15,7 +15,19 @@ requires: HIP-0026, HIP-0027
 
 Hanzo Console is the administrative dashboard for Hanzo platform operators, serving production traffic at **console.hanzo.ai**. It provides a unified interface for managing organizations, users, projects, API keys, quotas, billing oversight, and infrastructure health across the entire Hanzo ecosystem.
 
-Console is built on a fork of [Langfuse](https://github.com/langfuse/langfuse), an open-source LLM engineering platform, chosen for its mature tracing, evaluation, and prompt management capabilities. Hanzo extends it with multi-organization administration, IAM integration (HIP-26), KMS secret management (HIP-27), and operator-grade access controls.
+Console is a clean-room implementation on `@hanzo/gui` over the unified `/v1`
+backend, with multi-organization administration, IAM integration (HIP-26), KMS
+secret management (HIP-27), and operator-grade access controls.
+
+> **This HIP still says Console is a Langfuse fork; it is not.** The repository's
+> `NOTICE` is explicit: the Observe surface reproduces the screen layout and user
+> flows of Langfuse's observability views, wired to the native Hanzo Cloud
+> `/v1/evals` contract, and **no Langfuse source code is used** — the one
+> remaining mention of Langfuse in the whole repository is that attribution.
+> The first commit is "Hanzo Cloud Console (console2) on `@hanzo/gui` over the
+> unified `/v1` backend". Every passage below that reasons about forking,
+> tracking upstream, or merging upstream releases describes a relationship that
+> does not exist, and must be rewritten before this HIP can be Final.
 
 The distinction between Console and Cloud is fundamental to Hanzo's architecture. Cloud (cloud.hanzo.ai) is the customer-facing product where teams manage their AI workloads. Console is the operator-facing product where Hanzo administrators manage the platform itself. This separation follows the control plane vs. management plane pattern established by cloud infrastructure providers.
 

@@ -358,7 +358,7 @@ import { createSearchAPI } from '@hanzo/docs-core/search/server';
 
 export const { GET } = createSearchAPI('custom', {
   search: async (query) => {
-    const results = await fetch(`https://search.hanzo.ai/api/v1/search?q=${query}`);
+    const results = await fetch(`https://search.hanzo.ai/v1/search?q=${query}`);
     return results.json();
   },
 });

@@ -4,7 +4,7 @@ title: Container Registry Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 implementation-go: partial
 created: 2025-01-15
 ---
@@ -434,13 +434,10 @@ The deploy step uses `kubectl set image` to trigger a rolling update:
 deploy:
   needs: build
   steps:
-    - name: Configure kubectl
-      run: doctl kubernetes cluster kubeconfig save hanzo-k8s
-
-    - name: Deploy to K8s
+    - name: Deploy
       run: |
         kubectl set image deployment/iam \
-          iam=ghcr.io/hanzoai/iam:latest
+          iam=ghcr.io/hanzoai/iam:v1.33.25
         kubectl rollout status deployment/iam --timeout=300s
 
     - name: Verify health
@@ -639,6 +636,29 @@ Its `controllers/registry_token.go` demonstrates:
 - RSA-signed JWT token generation
 - JWKS public key endpoint for token verification
 - KMS-backed signing key resolution with ephemeral fallback
+
+## Conformance status
+
+Measured against the running cluster on 2026-09-09. All three tiers answer.
+
+**GHCR, primary.** Every first-party image running in the cluster resolves from
+GHCR under its own org, and the orgs do not mix: 189 `ghcr.io/hanzoai`, 73
+`ghcr.io/luxfi`, 13 `ghcr.io/zooai`. The remainder are upstream base images
+(`python`, `docker.io/library`, `rancher/*`, `quay.io/jetstack`, `registry.k8s.io/*`),
+which is what the standard expects — third-party images are pulled, not published.
+
+**Docker Hub, secondary.** `hub.docker.com/v2/repositories/hanzoai/{iam,console,commerce}`
+each return `200`. The mirror is a distribution channel, not a pull source: nothing
+in the cluster runs from `docker.io/hanzoai`.
+
+**In-cluster, self-hosted.** `oci.hanzo.ai/v2/` returns `401` — an OCI registry
+demanding a token, not a `404` from a host that has no registry behind it — and 13
+running images resolve from `oci.hanzo.ai/hanzoai`. The `registry:2` workload backing
+it runs in `hanzo-build` and `hanzo`.
+
+The token flow in §Authentication is the one that carries the `401`: a client is
+sent to `/v1/iam/registry/token` on IAM, which is the estate's `/v1/` shape and not
+an `/api/` path.
 
 ## Copyright
 

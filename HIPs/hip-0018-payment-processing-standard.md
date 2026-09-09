@@ -21,7 +21,7 @@ This proposal defines the payment processing standard for the Hanzo ecosystem. H
 The system is designed around a single invariant: **IAM is the source of truth for user balances**. Commerce writes credits in; Cloud and Gateway write credits out. No service other than IAM may directly mutate a user's balance. All mutations flow through IAM's transaction API.
 
 **Repository**: [github.com/hanzoai/commerce](https://github.com/hanzoai/commerce)
-**Port**: 4242
+**Port**: 8090 (`COMMERCE_HTTP`)
 **Docker**: `ghcr.io/hanzoai/commerce:latest`
 
 ## Motivation
@@ -668,3 +668,35 @@ When a user's balance reaches zero during an API request:
 ## Copyright
 
 Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+## Conformance status
+
+Measured against `hanzoai/commerce` at `c17a4f786` on 2026-09-09. The credit
+model ships; the payment-sovereignty claim in the abstract does not.
+
+**The native PSP does not exist as a rail.** `payment/processor` defines sixteen
+`ProcessorType` values. The fiat ones are `stripe`, `square`, `paypal`, `adyen`,
+`braintree`, `recurly`, `lemonsqueezy` — every one a third-party processor. The
+first-party ones are crypto (`mpc`, `bitcoin`, `ethereum`, `solanapay`, `circle`)
+plus `wire`. There is no `hanzopay` or `lux-pay` type, so "the native PSP is
+always the default and the only rail a first-party surface is required to
+support" describes a rail that is not implemented.
+
+**A first-party surface's fiat default is Square.** `DefaultConfig()` sets
+`ProcessorPriority` to `Square` first, annotated in the source as
+`// fiat default — pay.hanzo.ai (Square + crypto)`. Stripe is registered but held
+un-selectable for new charges through `DisabledProcessors`, which is a deliberate
+and well-built deny policy — but it is a policy about *which* third-party
+processor is used, not evidence of a native one. The abstract's
+"no first-party surface registers an external processor that can deplatform the
+ecosystem" is contradicted by the shipped default.
+
+This is the gap that keeps this HIP a Draft, and it is a substantive one: the
+document mandates payment sovereignty as a first-class requirement and gives the
+deplatforming history as the reason. Either the native PSP lands and the default
+moves to it, or this HIP is rewritten to describe Square-first fiat with crypto
+as the sovereign rail. It should not be marked Final while it reads as though the
+first has already happened.
+
+The crypto half is sound: `DefaultCryptoProcessor` defaults to `MPC`, a
+first-party rail, and crypto routing is by currency rather than preference order.

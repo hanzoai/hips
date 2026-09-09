@@ -15,18 +15,20 @@ created: 2025-01-15
 ## Abstract
 
 
-> **UNRESOLVED — do not build on this HIP's ownership claim.** Two files in
-> `hanzoai/kms` disagree about whether that repo exists: its `README.md` calls it
-> "a thin Go server ... all server logic lives in `luxfi/kms`", while
-> `DEPRECATED.md` in the same repo says `hanzoai/kms` is deprecated in favour of
-> `luxfi/kms` outright. This document described a fork of a third-party secrets
-> product, which neither file supports and which we do not run. The wire contract
-> below is still accurate; who owns the implementation is a decision somebody owes.
+> **The ownership question is answered; the endpoint prose below is not yet
+> rewritten.** This HIP used to record a disagreement between `README.md` and
+> `DEPRECATED.md` in `hanzoai/kms` about which repo owned the implementation.
+> Both files now say the same thing: `hanzoai/kms` is archived and read-only,
+> and the canonical KMS is `luxfi/kms` (`ghcr.io/luxfi/kms`). What still needs
+> editing is §Authentication and §Secret Retrieval, which document an `/api/v1/`
+> and `/api/v3/` surface that returns `404` in production and carries the `/api/`
+> prefix the estate does not use. The CRD contract in §KMSSecret is accurate and
+> is what ships.
 
 This proposal defines the secrets management standard for the Hanzo ecosystem,
-centered on Hanzo KMS at **kms.hanzo.ai**. Hanzo KMS is a self-hosted fork of
-the luxfi/kms primitives that provides centralized, auditable, Kubernetes-native secrets
-management for all Hanzo services. It replaces scattered environment variables,
+centered on Hanzo KMS at **kms.hanzo.ai**. Hanzo KMS is the centralized,
+auditable, Kubernetes-native secret store for all Hanzo services, built on the
+canonical `luxfi/kms` primitives. It replaces scattered environment variables,
 CI/CD secrets, and manual `kubectl create secret` operations with a single
 source of truth.
 
@@ -37,10 +39,9 @@ short-lived bearer token, and fetch secrets at runtime. In Kubernetes, the
 `KMSSecret` custom resource automates syncing secrets from KMS into native
 `Secret` objects, eliminating human involvement in the secret lifecycle.
 
-**Repository**: [github.com/hanzoai/kms](https://github.com/hanzoai/kms)
+**Repository**: [github.com/luxfi/kms](https://github.com/luxfi/kms) — `hanzoai/kms` is archived
 **Production**: https://kms.hanzo.ai
-**Docker**: `ghcr.io/hanzoai/kms:latest`
-**Cluster**: hanzo-k8s (`24.199.76.156`)
+**Docker**: `ghcr.io/luxfi/kms`
 
 ## Motivation
 
@@ -92,10 +93,10 @@ The design was chosen because:
   production workflow.
 - **Built-in secret rotation**: the server supports automatic rotation for
   database credentials and API keys without external tooling.
-- **Kubernetes operator**: our own operator provides the
-  `KMSSecret` CRD (live in two groups today, `kmssecrets.secrets.lux.network`
-  and `kmssecrets.kms.hanzo.ai`; universe declares the former) under the
-  `secrets.lux.network` API group) for native K8s integration.
+- **Kubernetes operator**: our own operator provides the `KMSSecret` CRD in one
+  API group, `kms.hanzo.ai/v1`. The second group this HIP used to name,
+  `secrets.lux.network`, is not installed; `kmssecrets.kms.hanzo.ai` is the only
+  one, and universe declares it.
 - **Open source with BSL**: Business Source License allows self-hosting
   and modification. We fork, rebrand, and deploy without vendor lock-in.
 - **Single binary**: the server is a single Go binary with
@@ -777,3 +778,24 @@ If a secret is suspected compromised:
 ## Copyright
 
 Copyright and related rights waived via [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+## Conformance status
+
+Measured on 2026-09-09. The Kubernetes-native half of this standard ships as
+written; the HTTP surface documented above does not.
+
+**Ships.** `kmssecrets.kms.hanzo.ai/v1` is installed and reconciled, with 174
+`KMSSecret` resources live across the estate — `hanzo-build`, `collab`, `enso`,
+`extract-svc` and others. A representative resource carries exactly the fields
+§KMSSecret specifies (`projectSlug`, `envSlug`, `secretsPath`, `keys`, `rename`,
+`managedSecretName`, `creationPolicy`) plus `transport: iam`, so the operator
+reaches KMS with an IAM identity rather than a bespoke token. `kms.hanzo.ai/v1/health`
+returns `200` with a build revision.
+
+**Does not ship as documented.** The endpoints in §Authentication and §Secret
+Retrieval — `POST /api/v1/auth/universal-auth/login` and
+`GET /api/v3/secrets/raw` — both return `404`. They also carry an `/api/` prefix,
+which no Hanzo surface uses; the estate's shape is `/v1/`. Those two sections
+describe the third-party product this standard was originally derived from, not
+the server behind `kms.hanzo.ai`. They must be replaced with the real surface
+before this HIP can be Final.

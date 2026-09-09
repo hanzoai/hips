@@ -168,7 +168,7 @@ class HLLMArchitecture:
 - **Multimodal Alignment**: Cross-modal consistency checks
 
 ### Open Source Repositories
-- **Jin Multimodal Models**: [github.com/hanzoai/jin](https://github.com/hanzoai/jin)
+- **Jin Multimodal Models**: [github.com/hanzoai/jin](https://github.com/hanzoai/jin) — archived 2026-05-12; the multimodal framework was not built (HIP-0003)
 - **LLM Gateway**: [github.com/hanzoai/llm](https://github.com/hanzoai/llm)
 - **Agent Framework**: [github.com/hanzoai/agent](https://github.com/hanzoai/agent)
 - **MCP Tools**: [github.com/hanzoai/mcp](https://github.com/hanzoai/mcp)
