@@ -27,10 +27,17 @@ The `LLM` CRD is the facade Kind for the Hanzo LLM gateway (`hanzoai/gateway`, w
 
 Same shape as `Service` (HIP-400). Conventionally:
 
-- `image.repository`: `ghcr.io/hanzoai/gateway`
+- `image.repository`: `oci.hanzo.ai/hanzoai/gateway`
 - `ports`: `containerPort: 4000`
-- consumes `gateway-secrets` via `envFrom` (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
-- has dependencies on `SQL`, `KV`, and `console`
+- `kmsSecrets` supplies its own machine identity — `IAM_CLIENT_ID` /
+  `IAM_CLIENT_SECRET` at `hanzo/gateway/<NAME>@prod` (HIP-0136) — and nothing
+  that spends. **It carries no upstream provider key.** An earlier revision of
+  this HIP had it consume `gateway-secrets` via `envFrom` with
+  `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` and the rest; those keys are in KMS
+  custody behind `egress` now, and the gateway asks egress for a call rather than
+  holding a credential (HIP-0143).
+- depends on `egress`, and on the shared stores per HIP-0138 rather than on
+  instances of its own
 
 ### Example CR
 
@@ -42,16 +49,18 @@ metadata:
   namespace: hanzo
 spec:
   image:
-    repository: ghcr.io/hanzoai/gateway
+    repository: oci.hanzo.ai/hanzoai/gateway
     tag: 2.14.1
   replicas: 2
   ports:
     - name: http
       containerPort: 4000
       servicePort: 80
-  envFrom:
-    - secretRef:
-        name: gateway-secrets
+  kmsSecrets:
+    - name: gateway-env-kms-sync
+      secretsPath: /gateway
+      keys: [IAM_CLIENT_ID, IAM_CLIENT_SECRET]
+      secretName: gateway-env
   resources:
     requests: { cpu: 500m, memory: 1Gi }
     limits:   { cpu: 2,    memory: 4Gi }
@@ -68,6 +77,9 @@ Deployment, Service, optional HPA.
 ### Related services
 
 - HIP-0004, HIP-0043 (LLM gateway, inference standards)
+- HIP-0143 (egress — where the upstream credentials live)
+- HIP-0136 (the path the machine identity is addressed at)
+- HIP-0138 (the stores it is a tenant of)
 
 ## Status
 

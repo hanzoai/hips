@@ -6,16 +6,16 @@ type: Standards Track
 category: Interface
 status: Draft
 created: 2026-02-23
-requires: HIP-0026, HIP-0017, HIP-0055
+requires: HIP-0026, HIP-0138, HIP-0143, HIP-1061, HIP-1190
 ---
 
-# HIP-61: Notification & Messaging Service Standard
+# HIP-0061: Notification & Messaging Service Standard
 
 ## Abstract
 
 Hanzo Notify is the unified notification and messaging service for the Hanzo ecosystem. It provides multi-channel delivery -- email, SMS, push notifications, in-app messages, and webhooks -- through a single API. Every service in the Hanzo platform sends notifications through Notify rather than integrating directly with delivery providers.
 
-Notify includes a template engine with Handlebars rendering and optional LLM-powered personalization, multi-channel fallback chains (try push, then email, then SMS), delivery tracking integrated with Hanzo Insights (HIP-0017), and user preference management integrated with Hanzo IAM (HIP-0026). AI agents (HIP-0025) can send notifications on behalf of users, enabling autonomous workflows to communicate results without human intervention.
+Notify includes a template engine with Handlebars rendering and optional LLM-powered personalization, multi-channel fallback chains (try push, then email, then SMS), delivery tracking integrated with Hanzo Insights (HIP-1190), and user preference management integrated with Hanzo IAM (HIP-0026). AI agents (HIP-0025) can send notifications on behalf of users, enabling autonomous workflows to communicate results without human intervention.
 
 The service distinguishes between transactional notifications (auth codes, receipts, system alerts) and marketing notifications (campaigns, digests, product updates), applying different delivery policies, rate limits, and compliance rules to each category.
 
@@ -445,7 +445,7 @@ Notify  ──SMTP/API──>  SendGrid  ──>  Recipient MTA  ──>  Inbox
 **Bounce handling**:
 - **Hard bounce** (address does not exist): Mark email invalid in IAM user profile. Do not attempt delivery to this address again. Notify IAM to prompt the user to update their email on next login.
 - **Soft bounce** (mailbox full, temporary failure): Retry 3 times with exponential backoff (1h, 6h, 24h). If all retries fail, fall through to next channel in fallback chain.
-- **Complaint** (user marked as spam): Immediately unsubscribe from all marketing emails. Log a compliance event in Insights (HIP-0017).
+- **Complaint** (user marked as spam): Immediately unsubscribe from all marketing emails. Log a compliance event in Insights (HIP-1190).
 
 #### SMS
 
@@ -482,7 +482,7 @@ Browser  ──WSS──>  Notify :8061/ws  ──authenticate via IAM token─�
                    Notify pushes JSON to all active sessions for user
 ```
 
-In-app notifications are stored in a per-user inbox (PostgreSQL) and served via REST for session history:
+In-app notifications are stored in the per-user inbox and served over REST for session history:
 
 ```
 GET /v1/inbox?user_id=hanzo/zach&unread=true
@@ -525,7 +525,7 @@ When a notification specifies `"fallback": true`, Notify executes channels in se
    c. Repeat until success or all channels exhausted
 4. If all channels exhausted:
    a. Mark notification as "failed"
-   b. Log failure event to Insights (HIP-0017)
+   b. Log failure event to Insights (HIP-1190)
    c. If critical (security category): alert ops via PagerDuty
 ```
 
@@ -562,9 +562,9 @@ Response:
 }
 ```
 
-**Preference sync**: User preferences are cached in Notify's Redis instance (TTL 5 minutes). When a user updates preferences via the IAM UI or Notify's preference API, the cache is invalidated immediately via a Kafka event on the `iam.user.updated` topic (HIP-0030).
+**Preference sync**: user preferences are cached with a five-minute TTL in the shared KV (HIP-0138), not in an instance of Notify's own. When a user updates preferences via the IAM UI or Notify's preference API, the cache is invalidated immediately via a Kafka event on the `iam.user.updated` topic (HIP-1323).
 
-### Integration with Analytics (HIP-0017)
+### Integration with Analytics (HIP-1190)
 
 Every notification lifecycle event is emitted as an analytics event to Hanzo Insights:
 
@@ -592,7 +592,7 @@ Rate limits protect both users (from notification fatigue) and providers (from A
 | Per org per hour | 10,000 | 1,000 | 500 |
 | Global per second | 1,000 | 100 | 50 |
 
-Rate limits are enforced via Redis sliding window counters. When a limit is exceeded, the API returns HTTP 429 with a `Retry-After` header.
+Rate limits are enforced with sliding-window counters in the shared KV. When a limit is exceeded the API returns `429` with a `Retry-After` header.
 
 Security-critical notifications (category `security`) bypass all rate limits. These include: MFA codes, password reset links, account breach alerts, and login from new device warnings.
 
@@ -610,7 +610,7 @@ Notify runs on `hanzo-k8s` as a Go service with dedicated delivery workers per c
 | `notify-push-worker` | `ghcr.io/hanzoai/notify:latest` | 1 | 100m | 64Mi | Push via FCM/APNs |
 | `notify-webhook-worker` | `ghcr.io/hanzoai/notify:latest` | 1 | 100m | 64Mi | Outbound webhook delivery |
 
-All workers consume from the Hanzo MQ (HIP-0055) NATS queue `mq.notify.>`, filtered by channel-specific subjects:
+All workers consume from the Hanzo MQ (HIP-1061) NATS queue `mq.notify.>`, filtered by channel-specific subjects:
 
 - `mq.notify.email` -- email worker
 - `mq.notify.sms` -- SMS worker
@@ -618,9 +618,16 @@ All workers consume from the Hanzo MQ (HIP-0055) NATS queue `mq.notify.>`, filte
 - `mq.notify.webhook` -- webhook worker
 - `mq.notify.in_app` -- handled by the API service via WebSocket
 
-### Database Schema
+### Storage
 
-Notify uses PostgreSQL (`hanzo_notify` on `postgres.hanzo.svc`) for templates, inbox, and webhook registrations. Delivery logs go to Insights (ClickHouse) via analytics events, not PostgreSQL.
+Notify holds no database of its own. Per HIP-0138 its templates, inbox and
+webhook registrations are per-tenant state at rank 1; delivery logs are event
+data and go to the column store, which is what event data is for. An earlier
+revision specified a `hanzo_notify` database on the shared SQL instance, which is
+a per-app database inside the shared one — every cost of a private instance
+except the machine.
+
+The shapes it keeps:
 
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
@@ -629,7 +636,10 @@ Notify uses PostgreSQL (`hanzo_notify` on `postgres.hanzo.svc`) for templates, i
 | `webhooks` | Registered webhook endpoints | `org_id`, `url`, `events[]`, `secret` (HMAC key), `enabled`, `failures` |
 | `suppression_list` | Hard bounces, complaints, unsubscribes | `email` or `phone` (unique partial indexes), `reason` |
 
-The `inbox` table has a partial index on `(user_id, read) WHERE NOT read` for efficient unread queries. The `suppression_list` is checked before every delivery attempt to prevent sending to known-bad addresses.
+The unread query is the hot one, so `inbox` carries an index restricted to unread
+rows rather than one over the whole table. The suppression list is checked before
+every delivery attempt: sending to a known-bad address is how a sender's
+reputation is lost, and the check is cheap.
 
 ### Configuration
 
@@ -637,15 +647,27 @@ All configuration uses `${VARIABLE}` placeholders resolved from KMS (HIP-0027) a
 
 | Group | Variables | Description |
 |-------|-----------|-------------|
-| IAM | `NOTIFY_IAM_CLIENT_ID`, `NOTIFY_IAM_CLIENT_SECRET` | Service account for user resolution |
-| MQ | `NOTIFY_NATS_PASSWORD` | NATS credentials for delivery queues |
-| Email | `SENDGRID_API_KEY`, `SES_ACCESS_KEY`, `SES_SECRET_KEY` | Email provider credentials |
-| SMS | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | SMS provider credentials |
-| Push | `FCM_CREDENTIALS_JSON`, `APNS_KEY_ID`, `APNS_TEAM_ID` | Push provider credentials |
-| LLM | `llm_gateway_url=http://llm-gateway.hanzo.svc:4000`, `llm_model=zen-8b` | Personalization config |
-| Storage | `NOTIFY_DATABASE_URL`, `redis://redis.hanzo.svc:6379/3` | PostgreSQL and Redis |
+| IAM | `IAM_CLIENT_ID`, `IAM_CLIENT_SECRET` | its own machine identity, for `client_credentials` |
+| Egress | `EGRESS_ADDRESS` | where it asks for an outbound call |
+| MQ | — | the bus is reached with the same IAM identity |
+| LLM | `llm_model=zen-8b` | personalization config; the model is reached through the gateway |
 
-No credentials appear in config files or Docker images.
+**No delivery-provider credential appears here, and none may.** An earlier
+revision listed `SENDGRID_API_KEY`, `SES_ACCESS_KEY`, `SES_SECRET_KEY`,
+`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `FCM_CREDENTIALS_JSON`, `APNS_KEY_ID`
+and `APNS_TEAM_ID` in this process's environment. Every one of those spends money
+or sends mail in our name; they live in KMS custody behind `egress` (HIP-0143),
+and Notify asks egress for a call rather than holding a key.
+
+That is worth stating for this service in particular. An email provider
+credential is not only money — it is the ability to send mail *as us*, which is
+the ability to phish our own users with correct SPF and DKIM. A stolen caller
+token buys metered sends through our own meter, attributed and revocable in one
+place; a stolen provider key buys an unbounded campaign we learn about from
+recipients.
+
+The two variables above are addressed at `hanzo/notify/<NAME>@prod` (HIP-0136).
+No credential appears in a config file or an image.
 
 ### Monitoring
 
@@ -698,12 +720,14 @@ Outbound webhooks carry potentially sensitive notification data. Security measur
 ## References
 
 1. [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) -- LLM personalization provider
-2. [HIP-0017: Analytics Event Standard](./hip-0017-analytics-event-standard.md) -- Delivery tracking and engagement metrics
+2. [HIP-1190: Event -- The Product Analytics Plane](./hip-1190-event-product-analytics.md) -- delivery tracking and engagement metrics
 3. [HIP-0025: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) -- Agent identity and permissions
 4. [HIP-0026: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) -- User resolution, preferences, contact info
 5. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) -- Provider credential storage
-6. [HIP-0030: Event Streaming Standard](./hip-0030-event-streaming-standard.md) -- IAM user update events
-7. [HIP-0055: Message Queue Standard](./hip-0055-message-queue-standard.md) -- Delivery task distribution
+6. [HIP-1323: Kafka -- A Wire Onto the One Bus](./hip-1323-kafka-the-wire-every-client-speaks.md) -- IAM user update events
+7. [HIP-1061: MQ -- Queues and Streams](./hip-1061-mq-queues-and-streams.md) -- delivery task distribution
+8. [HIP-0138: Where State Lives](./hip-0138-where-state-lives.md) -- the stores this service is a tenant of
+9. [HIP-0143: Egress -- The Outbound Trust Boundary](./hip-0143-egress-outbound-trust-boundary.md) -- where the delivery-provider credentials live
 8. [SendGrid API Documentation](https://docs.sendgrid.com/api-reference)
 9. [Twilio SMS API Documentation](https://www.twilio.com/docs/sms)
 10. [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
