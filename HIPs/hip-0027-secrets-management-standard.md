@@ -586,9 +586,10 @@ environment:
 # Service fetches all other secrets from KMS at startup
 ```
 
-### From GitHub Actions Secrets
+### From a pile of stored CI secrets
 
-Before (many secrets):
+Before — one stored value per credential, each rotated by hand in every
+repository that held it:
 ```yaml
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -598,7 +599,13 @@ env:
   REDIS_URL: ${{ secrets.REDIS_URL }}
 ```
 
-After (two secrets):
+Three of those five no longer exist to store, which is the more interesting half
+of the migration: there is no registry password (the push authorizes with an IAM
+identity, HIP-0033), the build holds no cloud provider token because it does not
+deploy (HIP-0036), and a service reaches the shared store through egress rather
+than through a connection string of its own (HIP-0143, HIP-0144).
+
+After — one stored identity, everything else fetched:
 ```yaml
 env:
   KMS_CLIENT_ID: ${{ secrets.KMS_CLIENT_ID }}

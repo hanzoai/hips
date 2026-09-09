@@ -443,71 +443,92 @@ hanzo domains my-app remove ex.com   # Remove a domain
 
 ### Authentication: OAuth2 via Hanzo IAM
 
-Platform authenticates users via Hanzo IAM (HIP-26) using the OAuth 2.0 Authorization Code Grant with PKCE. The integration uses [Better Auth](https://better-auth.com/), the authentication library used by Dokploy, with a custom `hanzo` provider:
+Platform authenticates users via Hanzo IAM using the OAuth 2.0 Authorization Code
+Grant with PKCE. **HIP-0111 is normative for the client contract**, and Platform
+holds no exception to it: it integrates through `@hanzo/iam`, which owns the
+paths, and writes no OIDC URL of its own.
 
 ```typescript
-// platform/pkg/platform/src/lib/auth.ts (simplified)
+// platform/pkg/platform/src/lib/auth.ts
 import { betterAuth } from "better-auth";
-
-const iamUrl = process.env.HANZO_IAM_URL
-  || process.env.HANZO_IAM_ENDPOINT
-  || process.env.HANZO_IAM_SERVER_URL
-  || process.env.IAM_ENDPOINT
-  || "https://hanzo.id";
+import { genericOAuth } from "better-auth/plugins";
+import { iamProvider } from "@hanzo/iam/betterauth";
 
 export const auth = betterAuth({
-  socialProviders: {
-    hanzo: {
-      clientId: process.env.HANZO_IAM_CLIENT_ID || process.env.HANZO_CLIENT_ID,
-      clientSecret: process.env.HANZO_IAM_CLIENT_SECRET || process.env.HANZO_CLIENT_SECRET,
-      issuer: iamUrl,
-      authorization: `${iamUrl}/oauth/authorize`,
-      token: `${iamUrl}/oauth/token`,
-      userinfo: `${iamUrl}/v1/iam/userinfo`,
-    },
-  },
+  plugins: [
+    genericOAuth({
+      config: [
+        iamProvider({
+          serverUrl: process.env.IAM_ENDPOINT!,        // one name, no fallbacks
+          clientId: process.env.IAM_CLIENT_ID!,        // `hanzo-platform`
+          clientSecret: process.env.IAM_CLIENT_SECRET!, // a KMS reference
+        }),
+      ],
+    }),
+  ],
 });
 ```
 
-When a user clicks "Sign in with Hanzo" on the Platform login page:
+An earlier revision of this HIP is worth naming, because it is the shape a reader
+would otherwise copy. It resolved the IAM origin through **four** environment
+variable names with fallbacks, took the client id from two more, and then wrote
+the endpoints out by hand as `${iamUrl}/oauth/authorize` and
+`${iamUrl}/oauth/token`. Those two paths are not served (HIP-0111 §4.4), and IAM
+answers an unregistered path with a `200 text/html` catch-all rather than a
+`404` — so the failure is not "route not found", it is an OAuth library dying on
+`content-type must be application/json`, which reads as a server bug and is not
+one. Four names for one value is the same defect at the configuration layer: the
+one that is set is discovered by elimination.
 
-1. Platform redirects to `hanzo.id/oauth/authorize` with PKCE challenge.
-2. User authenticates at hanzo.id (password, WebAuthn, or social login).
-3. hanzo.id redirects back to `platform.hanzo.ai/callback` with authorization code.
-4. Platform exchanges the code for tokens.
-5. Platform reads the user's org memberships from the token claims.
-6. User sees only applications belonging to their organizations.
+`iamProvider()` returns explicit `/v1/iam/oauth/*` endpoints and never relies on
+discovery resolution, which is the second failure it forecloses.
 
-For users who previously logged in via GitHub (legacy Dokploy flow), Platform matches the IAM email against existing user records. This prevents duplicate identity silos.
+When a user signs in:
+
+1. Platform redirects to `/v1/iam/oauth/authorize` with a PKCE `S256` challenge.
+2. The user authenticates at the brand's IAM (password, WebAuthn, or a shared
+   social provider — configured once per network, never per app).
+3. IAM redirects back to the registered callback with an authorization code.
+4. Platform exchanges the code for tokens at `/v1/iam/oauth/token`.
+5. Platform reads the tenant from the validated `owner` claim and scopes every
+   query to it. A consumer that finds no org MUST fail closed rather than fall
+   back to a default org — that is a tenant-isolation defect (HIP-0111 §5).
+6. The user sees only applications belonging to their organizations.
 
 ### Database
 
-Platform uses SQL (HIP-1104) to store:
+Platform's state follows HIP-0144. It stores:
 
 - Application definitions (name, org, repo, branch, runtime configuration)
 - Deployment history (image tags, Git commits, status, timestamps)
 - Environment variables (plaintext values only -- secrets are KMS references)
 - Domain configurations
 - Audit log entries
-- User sessions (via Better Auth)
+- User sessions
 
-The database is `platform` on `localhost` in the Kubernetes cluster .
+There is no `platform` database. Platform is a tenant of the shared tier at the
+rank HIP-0144 sets, and environment variables it holds are KMS references
+(HIP-0136), never values — which is why the list above can say "plaintext values
+only".
 
 ### Container Registry
 
-Built images are pushed to GitHub Container Registry (GHCR) at `ghcr.io/hanzoai/`. The image naming convention is:
+Built images are pushed to the fleet registry, `oci.hanzo.ai`, org-namespaced.
+HIP-0033 is the one statement of this; the naming convention here is its
+application:
 
 ```
-ghcr.io/hanzoai/<org>-<app>:<git-sha-short>
-ghcr.io/hanzoai/<org>-<app>:latest
+oci.hanzo.ai/<org>/<app>:<git-sha-short>
+oci.hanzo.ai/<org>/<app>:<semver>
 ```
 
 Examples:
-- `ghcr.io/hanzoai/hanzo-cloud:abc123f`
-- `ghcr.io/hanzoai/hanzo-iam:latest`
-- `ghcr.io/hanzoai/lux-gateway:def456a`
+- `oci.hanzo.ai/hanzoai/cloud:abc123f`
+- `oci.hanzo.ai/hanzoai/iam:1.33.4`
+- `oci.hanzo.ai/luxfi/gateway:def456a`
 
-GHCR was chosen over self-hosted registries (Harbor, MinIO-backed) because it requires zero operational overhead and integrates natively with GitHub Actions for CI-triggered builds.
+The org prefix never mixes, and a floating tag never reaches a cluster: the
+declared state pins a semver tag (HIP-0036 §Deployment).
 
 ### Reverse Proxy
 
