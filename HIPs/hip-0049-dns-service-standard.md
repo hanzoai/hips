@@ -175,7 +175,7 @@ Hanzo DNS integrates with the ACME protocol (Let's Encrypt) to automate wildcard
 3. CoreDNS serves the TXT record immediately (no propagation delay)
 4. Let's Encrypt validates the challenge
 5. Certificate issued, challenge record deleted
-6. Certificate stored in KMS (HIP-27) and distributed to Traefik/Edge
+6. Certificate stored in KMS (HIP-0027) and distributed to Hanzo Ingress (HIP-0068)
 ```
 
 Because the DNS server and the ACME client are co-located in the same cluster, challenge propagation is instant. There is no waiting for DNS TTLs to expire at upstream resolvers. This reduces wildcard certificate issuance from minutes to seconds.

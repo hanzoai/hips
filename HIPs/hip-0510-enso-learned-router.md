@@ -178,8 +178,11 @@ once (OpenAI-compatible) and opt into routing by requesting `auto`.
 ## Security Considerations
 
 The routing ledger is content-free by construction (features and reward only).
-Reward attachment and the training exports are gated (org-admin for an org's own
-data; super-admin or a service token for the platform-wide base). Cross-org
+Reward attachment and the training exports are gated on one predicate, not two
+kinds of credential: org admin for an org's own data, SuperAdmin for the
+platform-wide base — membership of the reserved `admin` org (HIP-0118). A machine
+doing the export presents its own IAM identity and is subject to the same
+predicate; there is no token type that substitutes for it. Cross-org
 isolation is enforced by the precedence fold and the `known` predicate: a scope can
 only narrow to models it can serve, never escalate to another tenant's.
 

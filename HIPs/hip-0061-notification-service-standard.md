@@ -136,7 +136,7 @@ Misclassifying a marketing notification as transactional is a compliance violati
                         Internet
                            |
                  +---------+---------+
-                 |      Traefik      |
+                 |  Hanzo Ingress    |
                  | (TLS termination) |
                  +---------+---------+
                            |
@@ -547,7 +547,7 @@ Notify is a trusted service in the IAM ecosystem. It authenticates to IAM using 
 
 ```
 GET https://hanzo.id/v1/iam/get-user?id=hanzo/zach
-Authorization: Bearer <service-token>
+Authorization: Bearer <IAM access token>
 
 Response:
 {
@@ -691,7 +691,7 @@ Critical alerts: email bounce rate > 5% (deliverability risk), notification queu
 
 All Notify API calls require a valid IAM bearer token. Service-to-service calls use machine-to-machine OAuth tokens with scope `notify:send`. User-facing endpoints (preferences, inbox) validate the token's `sub` claim matches the requested `user_id`.
 
-Agent notifications require the agent's service token to have scope `notify:agent` and the agent must be registered as an authorized sender for the target user in IAM.
+Agent notifications require the agent's IAM access token to carry scope `notify:agent`, and the agent must be registered as an authorized sender for the target user in IAM. The agent presents an identity IAM issued — there is no separate service token, and the authorization and the identity come from the same place.
 
 ### PII Protection
 

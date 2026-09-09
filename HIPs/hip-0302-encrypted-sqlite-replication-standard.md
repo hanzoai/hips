@@ -193,7 +193,7 @@ This standard is adopted by LP-102 (Lux) and ZIP-0803 (Zoo) with ecosystem-speci
 |-----------|-------------|-----------|---------------|
 | Hanzo | `hanzo:replicate:` | `hanzo-replicate-{env}` | `ghcr.io/hanzoai/replicate` |
 | Lux | `lux:replicate:` | `lux-replicate-{env}` | `ghcr.io/luxfi/replicate` |
-| Zoo | `zoo:replicate:` | `zoo-replicate-{env}` | `ghcr.io/zoolabs/replicate` |
+| Zoo | `zoo:replicate:` | `zoo-replicate-{env}` | `ghcr.io/zooai/replicate` |
 
 ## References
 
