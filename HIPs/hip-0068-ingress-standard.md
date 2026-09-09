@@ -579,7 +579,7 @@ Each brand runs the identical topology with its own values:
 | API host | `api.<brand-domain>` |
 | Apps | brand-scoped `<org>-<app>` client IDs (HIP-0111) |
 | Secrets | KMS project per brand |
-| Container registry | `ghcr.io/hanzoai/*` (Hanzo), `ghcr.io/luxfi/*` (Lux), `ghcr.io/zooai/*` (Zoo) |
+| Container registry | `oci.hanzo.ai/<org>/<app>`, org-namespaced and never mixed (HIP-0033) |
 
 Nothing in the topology is brand-special-cased. A brand is a set of values
 plugged into the same shape.

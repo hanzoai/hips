@@ -25,8 +25,8 @@ own copy of the rule.
 verification, at the entry point, and nothing behind it re-deciding — never about
 which binary holds it. In this estate the role is held by the `cloud` binary's
 own edge (`SanitizeIdentity`): the standalone gateway was deliberately retired,
-`api.hanzo.ai` resolves through Traefik straight to `cloud`, and Traefik holds no
-JWKS client and mints none of the headers below. `cloud`'s middleware is
+`api.hanzo.ai` resolves through Hanzo Ingress (HIP-0068) straight to `cloud`, and
+the ingress holds no JWKS client and mints none of the headers below. `cloud`'s middleware is
 therefore not a second implementation — **it is the one this HIP requires**, and
 deleting it deletes the estate's only identity boundary.
 

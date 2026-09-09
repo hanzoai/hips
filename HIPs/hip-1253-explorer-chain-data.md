@@ -77,10 +77,12 @@ Every route requires a validated principal (HIP-0026): `principal.OrgFrom`
 answers 403 without one, so an unauthenticated caller reads nothing. Within a
 brand the ledger is public, so there is no per-org row to leak; isolation is
 per brand — each brand's cloud is wired to its own indexer and graph, so the
-surfaced networks are always the caller's brand's. When a service token is
-configured (`CHAIN_DATA_TOKEN`) it is sent as a Bearer to both upstreams and
-never logged; otherwise the caller's own Authorization is forwarded when
-present.
+surfaced networks are always the caller's brand's. Calls to the indexer and the
+graph carry an identity IAM issued — the caller's own where one is present,
+otherwise this service's machine identity minted with `client_credentials` and
+`resource` naming the upstream (HIP-0111). A bearer configured out of band is
+not an identity: it says nothing about who is calling, nobody rotates it, and it
+is the pattern IAM is the sole authority in order to remove.
 
 ### §5 Metering, events, telemetry, stage
 
@@ -107,9 +109,10 @@ makes the console pages ordinary API consumers.
 ## Security Considerations
 
 The wrong implementation either leaks or lies. Leaking: an ungated route would
-let an unauthenticated caller enumerate a brand's chain deployment, and a
-logged service token would hand out read access to the chain-data plane — the
-principal gate and the never-logged token close both. Lying is the subtler
+let an unauthenticated caller enumerate a brand's chain deployment, and a token
+written to a log would hand out read access to the chain-data plane — the
+principal gate closes the first, and an expiring IAM identity that is never
+logged bounds the second to its own lifetime. Lying is the subtler
 failure: a translator that fabricates an indexer row or masks an upstream error
 as success turns an operations page into fiction, which is why never-fabricate
 and honest error mapping are stated as normative rather than as style.
