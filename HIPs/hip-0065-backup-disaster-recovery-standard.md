@@ -389,13 +389,13 @@ The controller Service exposes port 8065 within the cluster.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/v1/status` | Backup system health and last backup times |
-| `GET` | `/api/v1/backups` | List all backups with metadata |
-| `POST` | `/api/v1/backups` | Trigger an ad-hoc backup for a specific store |
-| `POST` | `/api/v1/restore` | Initiate a restore operation |
-| `GET` | `/api/v1/verify` | Last verification results |
-| `POST` | `/api/v1/verify` | Trigger an ad-hoc verification |
-| `GET` | `/api/v1/metrics` | Prometheus-compatible metrics |
+| `GET` | `/v1/backup/status` | Backup system health and last backup times |
+| `GET` | `/v1/backup/backups` | List all backups with metadata |
+| `POST` | `/v1/backup/backups` | Trigger an ad-hoc backup for a specific store |
+| `POST` | `/v1/backup/restore` | Initiate a restore operation |
+| `GET` | `/v1/backup/verify` | Last verification results |
+| `POST` | `/v1/backup/verify` | Trigger an ad-hoc verification |
+| `GET` | `/v1/backup/metrics` | Prometheus-compatible metrics |
 
 ### Disaster Recovery Runbooks
 
@@ -404,7 +404,7 @@ The controller Service exposes port 8065 within the cluster.
 Scenario: A bad migration corrupts the `iam` database. RTO: 5 minutes.
 
 1. Identify corruption timestamp from application logs.
-2. `POST /api/v1/restore` with `store=postgresql`, `database=iam`,
+2. `POST /v1/backup/restore` with `store=sql`,
    `target_time=<pre-corruption>`, `method=pitr`.
 3. Controller stops IAM pods, restores base backup, replays WAL to target time.
 4. Controller restarts IAM and runs health check. Verify login flow manually.

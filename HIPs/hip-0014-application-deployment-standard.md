@@ -118,13 +118,14 @@ services:
     port: 3000                        # Container port for web services.
     protocol: http                    # http | grpc | tcp (default: http).
     healthcheck:
-      path: /api/health               # HTTP path for health check (default: /).
+      path: /healthz                  # Health is at the root, never under /api/ (HIP-0119).
       interval: 30s                   # Time between checks (default: 30s).
       timeout: 5s                     # Per-check timeout (default: 5s).
       retries: 3                      # Failures before marking unhealthy (default: 3).
     domains:
       - cloud.hanzo.ai                # Custom domains. TLS provisioned automatically.
-      - api.hanzo.ai/v2               # Path-based routing supported.
+      - api.hanzo.ai/v1/cloud         # Path-based routing. `/v1/` only — never an
+                                      # /api/ segment and never a v2 (HIP-0119).
 
   - type: worker                      # Background workers have no port or domain.
     command: node worker.js
@@ -136,24 +137,27 @@ services:
     schedule: "0 */6 * * *"           # Standard cron syntax.
 
 env:
-  - name: DATABASE_URL
-    secret: true                      # Resolved from KMS at deploy time.
-    kms_key: CLOUD_DATABASE_URL       # KMS secret key name.
-    kms_project: hanzo-cloud          # KMS project (default: matches app name).
-    kms_env: prod                     # KMS environment (default: matches deploy target).
+  - name: IAM_CLIENT_SECRET
+    secret: true                      # A KMS reference, never a value.
+    kms_path: /cloud                  # The app that READS it (HIP-0136).
+    kms_env: prod                     # The one environment on this plane.
   - name: NODE_ENV
     value: production                 # Plaintext env var. Stored in Platform DB.
   - name: LOG_LEVEL
     value: info
 
 resources:
-  postgres:                           # Managed SQL (optional).
-    version: "16"
-    storage: 10Gi
-  redis:                              # Managed KV (optional).
-    version: "7"
-    maxmemory: 256mb
+  store: tenant                       # tenant | events | shared (HIP-0144).
+                                      # `tenant` is a per-org Base file and is
+                                      # the default; `events` is the column
+                                      # store; `shared` requests a tenancy on
+                                      # the ONE shared SQL or KV.
 ```
+
+`resources` does not provision an instance. There is no per-app Postgres and no
+per-app Redis to ask for: a request names which rank of the shared tier the app
+is a tenant of, and a service that needs to be at `shared` justifies it in its own
+HIP (HIP-0144 §5).
 
 When `runtime: auto` is specified (or the field is omitted), Platform detects the runtime by inspecting the repository:
 
@@ -283,7 +287,7 @@ Platform aggregates logs from all containers and exposes them through:
 
 - **Web UI**: Real-time log streaming with search, filter by service/timestamp/severity.
 - **CLI**: `hanzo logs --follow` for tail-like streaming.
-- **API**: `GET /api/v1/apps/{app}/logs?since=1h&level=error` for programmatic access.
+- **API**: `GET /v1/platform/apps/{app}/logs?since=1h&level=error` for programmatic access.
 
 Logs are retained for 30 days in Platform's database. For long-term retention, logs can be forwarded to an external sink (e.g., Loki, Elasticsearch) via a configurable log drain.
 
@@ -586,7 +590,7 @@ spec:
           protocol: UDP
 ```
 
-Applications must explicitly declare their network dependencies in the manifest. Platform generates NetworkPolicy rules that allow only declared communication paths. For example, if `cloud` declares `resources.postgres`, Platform creates a NetworkPolicy allowing egress from the `cloud` pods to the SQL service on port 5432.
+Applications must explicitly declare their network dependencies in the manifest. Platform generates NetworkPolicy rules that allow only declared communication paths. An app declaring `store: shared` gets egress to the shared SQL or KV and to nothing else; an app at `tenant` needs no such rule at all, which is one more reason the rank is ordered the way it is.
 
 ### Audit Logging
 

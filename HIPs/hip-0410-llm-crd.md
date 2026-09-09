@@ -36,7 +36,7 @@ Same shape as `Service` (HIP-400). Conventionally:
   `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` and the rest; those keys are in KMS
   custody behind `egress` now, and the gateway asks egress for a call rather than
   holding a credential (HIP-0143).
-- depends on `egress`, and on the shared stores per HIP-0138 rather than on
+- depends on `egress`, and on the shared stores per HIP-0144 rather than on
   instances of its own
 
 ### Example CR
@@ -79,7 +79,7 @@ Deployment, Service, optional HPA.
 - HIP-0004, HIP-0043 (LLM gateway, inference standards)
 - HIP-0143 (egress — where the upstream credentials live)
 - HIP-0136 (the path the machine identity is addressed at)
-- HIP-0138 (the stores it is a tenant of)
+- HIP-0144 (the stores it is a tenant of)
 
 ## Status
 

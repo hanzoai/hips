@@ -156,14 +156,13 @@ jobs:
 ```
 
 **The caller's directory and the callee's path are governed by different rules,
-and conflating them breaks the build.** `.hanzo/workflows/` is where the forge
-*scans* for this repository's workflows, so the caller MUST live there (§2). The
-`uses:` line is a reference into another repository at a pinned tag — the forge
-resolves it by path at that tag, not by scanning — so it names whatever path the
-reusable workflow occupies there. Today that is
-`hanzoai/ci/.github/workflows/build.yml@v2`. Copy the line from `hanzoai/ci`'s
-own caller rather than from memory; it is the one place both halves are known to
-agree.
+and conflating them breaks the build.** The caller sits in this repository's one
+workflow directory, which the forge *scans* (§2). The `uses:` line is a reference
+into another repository at a pinned tag — resolved by path at that tag, never
+scanned — so it names whatever path the reusable workflow occupies there. Today
+that is `hanzoai/ci/.github/workflows/build.yml@v2`. Copy the line from
+`hanzoai/ci`'s own caller rather than from memory; it is the one place both
+halves are known to agree.
 
 A `v*` tag is what produces a published immutable image tag. Without that
 trigger, a release tag builds nothing and there is no version for the declared
@@ -295,7 +294,7 @@ A floating tag never reaches a cluster: `hanzoai/universe` pins a semver tag, an
 
 ### 8. Service containers in a test job
 
-A test job that needs a store MUST use ours, named for what we run (HIP-0138):
+A test job that needs a store MUST use ours, named for what we run (HIP-0144):
 
 | service | image |
 |---|---|
@@ -416,7 +415,7 @@ failed: there is no log to open, so it is not drawn as a failure.
 ### Secret Hygiene Rules
 
 1. **No secrets in git**: Not in code, not in config files, not in `.env` files. All secrets come from KMS.
-2. **One stored identity**: the machine identity the build authenticates to KMS with. Everything else is fetched at build time. Secrets are set **on the forge**, since `.hanzo/workflows/` is what the forge reads; GitHub's secret store is not in this path at all.
+2. **One stored identity**: the machine identity the build authenticates to KMS with. Everything else is fetched at build time. It is set **on the forge**, which is what executes these workflows; GitHub's secret store is not in this path even for a repository whose workflows live under `.github/workflows/`.
 3. **Mask all secrets**: Every fetched secret MUST be masked with `::add-mask::` before use.
 4. **Short-lived tokens**: KMS access tokens expire in 15 minutes. If a build takes longer, re-authenticate.
 5. **Audit trail**: KMS logs every secret access. Anomalous patterns (unusual repo, unusual time) trigger alerts.

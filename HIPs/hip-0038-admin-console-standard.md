@@ -9,7 +9,7 @@ created: 2025-01-15
 requires: HIP-0026, HIP-0027
 ---
 
-# HIP-38: Admin Console Standard
+# HIP-0038: Admin Console Standard
 
 ## Abstract
 
@@ -17,7 +17,7 @@ Hanzo Console is the administrative dashboard for Hanzo platform operators, serv
 
 Console is a clean-room implementation on `@hanzo/gui` over the unified `/v1`
 backend, with multi-organization administration, IAM integration (HIP-26), KMS
-secret management (HIP-27), and operator-grade access controls.
+secret management (HIP-0027), and operator-grade access controls.
 
 > **This HIP still says Console is a Langfuse fork; it is not.** The repository's
 > `NOTICE` is explicit: the Observe surface reproduces the screen layout and user
@@ -136,7 +136,7 @@ Console (console.hanzo.ai)
     |     |-- Balance queries
     |     |-- OAuth application management
     |
-    |-- KMS (kms.hanzo.ai, HIP-27)
+    |-- KMS (api.hanzo.ai/v1/kms, HIP-0027)
     |     |-- Secret creation and rotation
     |     |-- Project-scoped secret access
     |     |-- Audit log retrieval
@@ -270,11 +270,11 @@ interface ServiceHealth {
 Monitored services:
 | Service | Health Endpoint | Expected Response |
 |---------|----------------|-------------------|
-| IAM | `https://hanzo.id/api/health` | `{"status": "ok"}` |
-| KMS | `https://kms.hanzo.ai/api/status` | `{"status": "ok"}` |
+| IAM | `https://hanzo.id/healthz` | `{"status": "ok"}` |
+| KMS | `https://api.hanzo.ai/v1/kms/healthz` | `{"status": "ok"}` |
 | LLM Gateway | `https://llm.hanzo.ai/health` | `{"status": "ok"}` |
-| Cloud | `https://cloud.hanzo.ai/api/health` | `{"status": "ok"}` |
-| Console | `https://console.hanzo.ai/api/health` | `{"status": "ok"}` |
+| Cloud | `https://cloud.hanzo.ai/healthz` | `{"status": "ok"}` |
+| Console | `https://console.hanzo.ai/healthz` | `{"status": "ok"}` |
 
 ### Billing Oversight
 
@@ -334,7 +334,7 @@ Per-organization configuration managed through Console:
                          Internet
                             |
                   +---------+---------+
-                  |      Traefik      |
+                  |   Hanzo Ingress   |
                   | (TLS termination) |
                   +---------+---------+
                             |
@@ -351,10 +351,11 @@ Per-organization configuration managed through Console:
            |:8000 |  |:8080 | |:4000|  | :8000 |
            +--+---+  +--+---+ +--+--+  +---+---+
               |         |        |          |
-        +-----+----+ +--+---+ +-+------+ +-+------+
-        |PostgreSQL | |Vault | |100+    | |Workers |
-        | hanzo_iam | |Store | |Models  | |Queues  |
-        +----------+ +------+ +--------+ +--------+
+        +-----+-----+ +--+---+ +-+------+ +-+------+
+        | the shared | | KMS  | | egress | |Workers |
+        | tier       | |store | | HIP-143| |Queues  |
+        | HIP-0144   | +------+ +--------+ +--------+
+        +-----------+
 ```
 
 ### Technology Stack
@@ -364,9 +365,9 @@ Per-organization configuration managed through Console:
 | Frontend | Next.js 14 (Pages Router) | SSR for admin dashboards, tRPC for type safety |
 | UI | shadcn/ui (Radix primitives) + Tailwind CSS | Consistent with Hanzo design system |
 | API | tRPC (internal) + REST (public) | Type-safe internal APIs, standard REST for integrations |
-| Database | PostgreSQL (Prisma ORM) | Primary data store for projects, traces, evaluations |
+| State | the shared tier at the rank HIP-0144 sets | projects, traces, evaluations |
 | Analytics | ClickHouse | High-volume trace data, fast aggregation queries |
-| Cache/Queue | Redis + BullMQ | Session cache, background job processing |
+| Cache/Queue | the one shared KV | session cache, background job processing |
 | Storage | MinIO (S3-compatible) | File attachments, exported reports |
 | Auth | NextAuth.js with IAM provider | Delegates to hanzo.id for OAuth |
 
@@ -382,14 +383,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      CLICKHOUSE_URL: ${CLICKHOUSE_URL}
-      REDIS_URL: ${REDIS_URL}
-      NEXTAUTH_URL: https://console.hanzo.ai
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      HANZO_IAM_URL: https://hanzo.id
-      HANZO_IAM_CLIENT_ID: hanzo-console-client-id
-      HANZO_IAM_CLIENT_SECRET: ${HANZO_IAM_CLIENT_SECRET}
+      # Console holds an identity, not a database and not a key.
+      IAM_ENDPOINT: https://hanzo.id
+      IAM_CLIENT_ID: hanzo-console
+      IAM_CLIENT_SECRET: ${IAM_CLIENT_SECRET}   # KMS reference: hanzo/console/…@prod
+      EGRESS_ADDRESS: egress.hanzo.ai:9653      # every outbound call (HIP-0143)
       HANZO_INIT_ORG_IDS: hanzo,lux,zoo,pars
       HANZO_INIT_ORG_NAMES: "Hanzo,Lux Network,Zoo Labs,Pars"
       HANZO_INIT_USER_EMAIL: z@hanzo.ai
@@ -397,10 +395,10 @@ services:
       S3_ENDPOINT: ${S3_ENDPOINT}
       S3_BUCKET: console-data
     labels:
-      - "traefik.http.routers.console.rule=Host(`console.hanzo.ai`)"
-      - "traefik.http.routers.console.tls=true"
+      # Routing is an Ingress object served by Hanzo Ingress (HIP-0068),
+      # not per-container labels.
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -410,7 +408,6 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       CLICKHOUSE_URL: ${CLICKHOUSE_URL}
-      REDIS_URL: ${REDIS_URL}
     depends_on:
       console-web:
         condition: service_healthy
@@ -421,7 +418,7 @@ services:
 On first startup, Console executes the following bootstrap sequence:
 
 ```
-1. Connect to PostgreSQL and run Prisma migrations
+1. Connect to the store and run migrations
 2. Connect to ClickHouse and initialize analytics schema
 3. Read HANZO_INIT_ORG_IDS environment variable
 4. For each org ID:
@@ -453,7 +450,7 @@ Console uses NextAuth.js with a custom IAM provider:
 4. IAM redirects back with authorization code
 5. Console exchanges code for tokens via IAM token endpoint
 6. Console validates JWT, checks admin role
-7. Session created in Redis (30-minute idle timeout)
+7. Session created, 30-minute idle timeout
 ```
 
 Only users with OWNER or ADMIN role in at least one organization can access Console. MEMBER-only users are redirected to Cloud.
@@ -468,7 +465,7 @@ cd console
 # Install dependencies
 pnpm install
 
-# Start infrastructure (PostgreSQL, ClickHouse, Redis, MinIO)
+# Start infrastructure (the shared tier, locally: sql, datastore, kv, s3)
 pnpm run infra:dev:up
 
 # Initialize database
@@ -509,10 +506,14 @@ function buildProxyTenantHeaders(session: Session): Headers {
 ```
 
 Proxy routes exist for:
-- `/api/proxy/iam/*` -- IAM administrative operations
-- `/api/proxy/kms/*` -- KMS secret management
-- `/api/proxy/agents/*` -- Agent orchestration
-- `/api/proxy/compute/*` -- Compute resource management
+- `/v1/iam/*` -- IAM administrative operations
+- `/v1/kms/*` -- KMS secret management
+- `/v1/agents/*` -- agent orchestration
+- `/v1/compute/*` -- compute resource management
+
+The console does not stand up a proxy prefix of its own. `api.hanzo.ai` is the
+endpoint and the path starts at `/v1/`; a `/api/proxy/...` tree is a second
+address for a surface that already has one (HIP-0119, HIP-0128).
 
 ## Security Considerations
 
@@ -534,7 +535,7 @@ CONSOLE_IP_ALLOWLIST_HANZO: "24.199.76.0/24,10.0.0.0/8"
 CONSOLE_IP_ALLOWLIST_LUX: "24.144.69.0/24,10.0.0.0/8"
 ```
 
-Requests from non-allowlisted IPs receive a 403 Forbidden response. This is enforced at the Traefik middleware level, before the request reaches the Console application.
+Requests from non-allowlisted IPs receive a 403 Forbidden response. This is enforced by Hanzo Ingress middleware (HIP-0068), before the request reaches the Console application.
 
 ### MFA Enforcement
 
@@ -544,7 +545,7 @@ Console requires MFA for all admin users. On first login, if a user does not hav
 
 All administrative actions generate immutable audit entries. The audit subsystem:
 
-- Logs to both PostgreSQL (for querying) and a write-ahead log (for tamper detection).
+- Logs to the store (for querying) and to a write-ahead log (for tamper detection).
 - Records the full request context: actor, IP, user agent, timestamp, action, target resource, and result.
 - Is queryable through the Console UI with filters for time range, actor, action type, and organization.
 - Cannot be modified or deleted by any user, including OWNERs. Retention is managed by automated cleanup jobs.
@@ -611,14 +612,14 @@ pnpm build:check
 
 1. [HIP-4: LLM Gateway Standard](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - AI provider interface (usage metrics source)
 2. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - User/org CRUD, authentication, balances
-3. [HIP-27: KMS Secrets Management](./hip-0027-kms-secrets-management.md) - Secret resolution and rotation
+3. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - secret resolution and rotation
 4. [Langfuse](https://github.com/langfuse/langfuse) - Open-source LLM engineering platform (upstream fork)
 5. [Hanzo Console Repository](https://github.com/hanzoai/console)
 6. [shadcn/ui](https://ui.shadcn.com/) - UI component library (Radix + Tailwind)
 7. [NextAuth.js](https://next-auth.js.org/) - Authentication framework for Next.js
-8. [Prisma](https://www.prisma.io/) - TypeScript ORM for PostgreSQL
+8. [HIP-0144: Where State Lives](./hip-0144-where-state-lives.md) - the tier this console is a tenant of
 9. [ClickHouse](https://clickhouse.com/) - Analytics database for trace data
-10. [BullMQ](https://docs.bullmq.io/) - Redis-backed job queue for background processing
+10. [HIP-0143: Egress — The Outbound Trust Boundary](./hip-0143-egress-outbound-trust-boundary.md) - where an outbound credential lives
 
 ## Copyright
 

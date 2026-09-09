@@ -8,13 +8,13 @@ status: Draft
 created: 2026-02-23
 ---
 
-# HIP-53: Visor Monitoring & Supervision Standard
+# HIP-0053: Visor Monitoring & Supervision Standard
 
 ## Abstract
 
 This proposal defines the monitoring, visualization, and supervision standard for the Hanzo ecosystem. **Hanzo Visor** provides real-time dashboards, AI-specific metrics, anomaly detection, alert management, SLA tracking, and cost attribution across all Hanzo services.
 
-Visor is the presentation and intelligence layer that sits on top of the observability stack (HIP-0031, Zap) and the analytics platform (HIP-0017, Insights). Zap collects metrics, traces, and logs. Insights collects product analytics. Visor consumes both data streams and turns them into actionable dashboards, intelligent alerts, and cost reports. It is the single pane of glass through which operators, engineers, and business stakeholders understand the health, performance, and economics of the Hanzo platform.
+Visor is the presentation and intelligence layer that sits on top of the observability stack (HIP-1241, Zap) and the analytics platform (HIP-1190, Insights). Zap collects metrics, traces, and logs. Insights collects product analytics. Visor consumes both data streams and turns them into actionable dashboards, intelligent alerts, and cost reports. It is the single pane of glass through which operators, engineers, and business stakeholders understand the health, performance, and economics of the Hanzo platform.
 
 > **The name no longer belongs to this system.** `hanzoai/visor` today is
 > `github.com/hanzoai/compute` — "Hanzo Compute, the multi-cloud compute plane for
@@ -39,7 +39,7 @@ Visor is the presentation and intelligence layer that sits on top of the observa
 
 ### The Gap Between Collection and Understanding
 
-HIP-0031 (Zap) solved the data collection problem. Prometheus scrapes metrics every 15 seconds. ClickHouse stores structured logs. OpenTelemetry traces connect requests across services. But raw data is not understanding.
+HIP-1241 (Zap) solved the data collection problem. Prometheus scrapes metrics every 15 seconds. ClickHouse stores structured logs. OpenTelemetry traces connect requests across services. But raw data is not understanding.
 
 An engineer staring at Prometheus's built-in expression browser cannot answer: "Is the LLM Gateway healthy right now?" They can write a PromQL query, interpret the result, compare it to yesterday, and decide. That takes minutes. A well-designed dashboard answers the question in two seconds.
 
@@ -55,7 +55,7 @@ These failure modes require AI-specific metrics and AI-specific alerting logic. 
 
 ### Why a Separate Service From O11y
 
-The temptation is to add dashboards and alerting directly to the Zap sidecar (HIP-0031). We deliberately separate them for three reasons:
+The temptation is to add dashboards and alerting directly to the Zap sidecar (HIP-1241). We deliberately separate them for three reasons:
 
 1. **Separation of concerns**: Zap is a data plane component. It runs as a sidecar in every pod, must be tiny (~15MB RSS), and must never become a bottleneck. Adding Grafana, alert evaluation, cost calculation, and anomaly detection to the sidecar would bloat it and create failure coupling.
 
@@ -74,7 +74,7 @@ At Hanzo's scale, LLM API costs are the largest operational expense. In January 
 - Detect cost anomalies (a misconfigured agent calling GPT-4 in a loop)
 - Plan capacity and budget for the next quarter
 
-Visor provides this attribution by joining LLM Gateway metrics (HIP-0031 `hanzo_llm_*` counters) with pricing data from provider rate cards, broken down by organization, user, model, and endpoint.
+Visor provides this attribution by joining LLM Gateway metrics (HIP-1241 `hanzo_llm_*` counters) with pricing data from provider rate cards, broken down by organization, user, model, and endpoint.
 
 ## Design Philosophy
 
@@ -92,7 +92,7 @@ We evaluated three approaches for the visualization layer:
 
 **Grafana**: Open-source (AGPL v3), battle-tested at scale (Netflix, Uber, GitLab all use it), supports Prometheus and ClickHouse natively, has a rich plugin ecosystem, and allows custom plugins for domain-specific visualizations. Setup time: days, not months. The trade-off is that Grafana's UI is opinionated -- but its opinions are good, refined over a decade of usage.
 
-**SaaS (Datadog/New Relic)**: Zero build time, but $12K-18K/month at our volume (see HIP-0031 cost analysis), vendor lock-in, and no custom AI-specific panels. The cost alone disqualifies this option.
+**SaaS (Datadog/New Relic)**: Zero build time, but $12K-18K/month at our volume (see HIP-1241 cost analysis), vendor lock-in, and no custom AI-specific panels. The cost alone disqualifies this option.
 
 **Decision**: Grafana with custom plugins for AI-specific visualizations. We get 90% of the dashboard functionality for free, and build the remaining 10% (AI metrics panels, cost attribution views) as Grafana plugins.
 
@@ -118,18 +118,18 @@ This is "AI monitoring AI" in the most literal sense: a statistical model watchi
          │                  │                     │
     ┌────▼────┐       ┌─────▼──────┐        ┌────▼─────┐
     │Prometheus│       │ClickHouse  │        │ Insights │
-    │(HIP-0031)│       │(HIP-0031)  │        │(HIP-0017)│
+    │(HIP-1241)│       │(HIP-1241)  │        │(HIP-1190)│
     │ Metrics  │       │Logs/Traces │        │Analytics │
     └──────────┘       └────────────┘        └──────────┘
 ```
 
-Visor reads from Prometheus (real-time metrics), ClickHouse (historical logs and traces), and Insights (business analytics). It does not duplicate data collection -- that remains Zap's responsibility (HIP-0031). Visor only consumes, transforms, visualizes, and alerts.
+Visor reads from Prometheus (real-time metrics), ClickHouse (historical logs and traces), and Insights (business analytics). It does not duplicate data collection -- that remains Zap's responsibility (HIP-1241). Visor only consumes, transforms, visualizes, and alerts.
 
 ## Specification
 
 ### AI-Specific Metrics
 
-Beyond the standard infrastructure metrics defined in HIP-0031, Visor tracks and visualizes AI-specific metrics that the Grafana dashboards present:
+Beyond the standard infrastructure metrics defined in HIP-1241, Visor tracks and visualizes AI-specific metrics that the Grafana dashboards present:
 
 #### Token Throughput
 
@@ -194,7 +194,7 @@ Cost is not a Prometheus metric -- it is computed by the Visor API server by joi
 }
 ```
 
-The Visor API exposes a `/api/v1/costs` endpoint that Grafana queries via the JSON API data source plugin. Pricing tables are maintained in a YAML configuration file:
+The Visor API exposes a `/v1/visor/costs` endpoint that Grafana queries via the JSON API data source plugin. Pricing tables are maintained in a YAML configuration file:
 
 ```yaml
 # visor-pricing.yaml
@@ -401,7 +401,7 @@ receivers:
 
   webhook-billing:
     type: webhook
-    url: "https://commerce.hanzo.ai/api/v1/alerts"
+    url: "https://api.hanzo.ai/v1/commerce/alerts"
     method: POST
     headers:
       Authorization: "Bearer ${COMMERCE_API_TOKEN}"
@@ -518,7 +518,7 @@ Real-time view of the anomaly detector output.
 
 #### 5. Infrastructure Health
 
-Extended version of HIP-0031's infrastructure dashboard, with Visor-specific additions:
+Extended version of HIP-1241's infrastructure dashboard, with Visor-specific additions:
 
 - Cross-service dependency graph (which services call which)
 - Pod resource utilization with headroom indicators
@@ -536,7 +536,7 @@ A panel plugin that renders cost attribution with drill-down. Click on an organi
 ```
 Plugin ID: hanzo-ai-cost-panel
 Type: Panel
-Data sources: JSON API (Visor /api/v1/costs)
+Data sources: JSON API (Visor /v1/visor/costs)
 Install: grafana-cli plugins install hanzo-ai-cost-panel
 ```
 
@@ -559,12 +559,12 @@ Install: grafana-cli plugins install hanzo-sla-gauge
 
 The Visor API server (port 8053) exposes REST endpoints consumed by Grafana, external alerting systems, and the Hanzo CLI.
 
-#### GET /api/v1/costs
+#### GET /v1/visor/costs
 
 Returns cost data for Grafana's JSON API data source.
 
 ```http
-GET /api/v1/costs?org=hanzo&from=2026-02-01&to=2026-02-23&group_by=model HTTP/1.1
+GET /v1/visor/costs?org=hanzo&from=2026-02-01&to=2026-02-23&group_by=model HTTP/1.1
 Host: visor.hanzo.ai
 Authorization: Bearer ${VISOR_API_TOKEN}
 ```
@@ -583,12 +583,12 @@ Response:
 }
 ```
 
-#### GET /api/v1/sla
+#### GET /v1/visor/sla
 
 Returns current SLA status for all monitored services.
 
 ```http
-GET /api/v1/sla HTTP/1.1
+GET /v1/visor/sla HTTP/1.1
 Host: visor.hanzo.ai
 Authorization: Bearer ${VISOR_API_TOKEN}
 ```
@@ -619,12 +619,12 @@ Response:
 }
 ```
 
-#### GET /api/v1/anomalies
+#### GET /v1/visor/anomalies
 
 Returns active anomalies detected by the anomaly engine.
 
 ```http
-GET /api/v1/anomalies?active=true HTTP/1.1
+GET /v1/visor/anomalies?active=true HTTP/1.1
 Host: visor.hanzo.ai
 Authorization: Bearer ${VISOR_API_TOKEN}
 ```
@@ -757,7 +757,7 @@ datasources:
   - name: Visor API
     type: marcusolsson-json-datasource
     access: proxy
-    url: http://visor-api.hanzo.svc:8053/api/v1
+    url: http://visor.hanzo.svc:8053/v1/visor
     jsonData:
       httpHeaderName1: Authorization
     secureJsonData:
@@ -774,7 +774,7 @@ datasources:
 
 ### Visor API: Go Implementation
 
-The Visor API server is written in Go for the same reasons as Zap (HIP-0031): small binary, fast startup, low memory, ecosystem alignment.
+The Visor API server is written in Go for the same reasons as Zap (HIP-1241): small binary, fast startup, low memory, ecosystem alignment.
 
 ```go
 package main
@@ -804,9 +804,9 @@ func main() {
 
     mux := http.NewServeMux()
     mux.HandleFunc("/health", healthHandler)
-    mux.HandleFunc("/api/v1/costs", costEngine.Handler)
-    mux.HandleFunc("/api/v1/sla", slaTracker.Handler)
-    mux.HandleFunc("/api/v1/anomalies", detector.Handler)
+    mux.HandleFunc("/v1/visor/costs", costEngine.Handler)
+    mux.HandleFunc("/v1/visor/sla", slaTracker.Handler)
+    mux.HandleFunc("/v1/visor/anomalies", detector.Handler)
     mux.HandleFunc("/metrics", metricsHandler)
 
     http.ListenAndServe(":8053", mux)
@@ -842,7 +842,7 @@ allow_sign_up = true
 
 ### API Authentication
 
-The Visor API requires a bearer token on all `/api/v1/*` endpoints. Tokens are issued through Hanzo IAM and validated on each request. The `/health` and `/metrics` endpoints are unauthenticated (required for Kubernetes probes and Prometheus scraping).
+The Visor API requires a bearer token on all `/v1/visor/*` endpoints. Tokens are issued through Hanzo IAM and validated on each request. The `/health` and `/metrics` endpoints are unauthenticated (required for Kubernetes probes and Prometheus scraping).
 
 ### Network Isolation
 
@@ -895,10 +895,10 @@ Cost data and SLA metrics are not PII, but they are commercially sensitive. The 
 
 ## References
 
-1. [HIP-0031: Observability & Metrics Standard](./hip-0031-observability-metrics-standard.md) -- Data collection layer (Zap)
-2. [HIP-0017: Analytics Event Standard](./hip-0017-analytics-event-standard.md) -- Product analytics (Insights)
+1. [HIP-1241: Metrics — One Native Store, Three Signals](./hip-1241-metrics-one-store-three-signals.md) -- the metric store this reads
+2. [HIP-1190: Event — The Product Analytics Plane](./hip-1190-event-product-analytics.md) -- Product analytics (Insights)
 3. [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) -- LLM metrics source
-4. [HIP-0030: Event Streaming Standard](./hip-0030-event-streaming-standard.md) -- Kafka infrastructure
+4. [HIP-1323: Kafka — A Wire Onto the One Bus](./hip-1323-kafka-the-wire-every-client-speaks.md) -- Kafka infrastructure
 5. [Grafana Documentation](https://grafana.com/docs/)
 6. [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/)
 7. [Grafana Plugin Development](https://grafana.com/developers/plugin-tools/)

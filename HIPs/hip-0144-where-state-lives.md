@@ -1,5 +1,5 @@
 ---
-hip: 0138
+hip: 0144
 title: Where State Lives
 author: Hanzo AI Team
 type: Standards Track
@@ -10,7 +10,7 @@ created: 2026-09-09
 requires: HIP-0119, HIP-0136
 ---
 
-# HIP-0138: Where State Lives
+# HIP-0144: Where State Lives
 
 ## Abstract
 
@@ -25,6 +25,13 @@ something that is not deployed and will not be provisioned.
 This HIP is the one statement of that rank. Where another HIP names a private
 database, an instance of its own, or an upstream engine by vendor name, this one
 is normative.
+
+It replaces three retired proposals that split one question three ways —
+HIP-0028 (Key-Value Store Standard), HIP-0029 (Relational Database Standard) and
+HIP-0032 (Object Storage Standard). Splitting the question by engine is what
+produced the per-app instances: a HIP per engine invites a service to pick one,
+when the decision that matters is which rank it needs at all. Those numbers are
+spent and are not reused.
 
 ## Motivation
 

@@ -81,11 +81,19 @@ def m_fm010(root):
                  read(root, SUBJECT), count=1, flags=re.M))
 
 def m_fm011(root):
-    # STANDARDS_SUBJECT is Final, which is the half of the contradiction that
-    # is already there. Adding the other half to a Draft would prove nothing.
+    # STANDARDS_SUBJECT is Final, which is half the contradiction already. Doing
+    # this to a Draft would prove nothing.
+    #
+    # REPLACE any implementation-go: it already declares. Appending a second one
+    # proved nothing: the front-matter readers here take one line at a time, so
+    # the later key won, the subject stayed `shipped`, and the contradiction this
+    # case exists to build was never built. The guard then correctly did not
+    # fire and the suite reported it as broken -- a check whose test is a no-op
+    # is a check that has never been shown to work.
+    text = re.sub(r"^implementation-go:.*\n", "", read(root, STANDARDS_SUBJECT), flags=re.M)
     write(root, STANDARDS_SUBJECT,
           re.sub(r"^status:(.*)$", r"status:\1\nimplementation-go: none",
-                 read(root, STANDARDS_SUBJECT), count=1, flags=re.M))
+                 text, count=1, flags=re.M))
 
 def m_st001(root):
     write(root, SUBJECT, re.sub(r"^# HIP-.*$", "", read(root, SUBJECT), count=1, flags=re.M))

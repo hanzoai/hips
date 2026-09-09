@@ -6,7 +6,7 @@ type: Standards Track
 category: Infrastructure
 status: Draft
 created: 2025-01-15
-requires: HIP-0027, HIP-0111, HIP-0138
+requires: HIP-0027, HIP-0111, HIP-0144
 ---
 
 # HIP-0026: Identity & Access Management Standard
@@ -24,7 +24,7 @@ IAM is a clean-room native rewrite on the Hanzo stack — `zip` over
 `hanzoai/orm`, with no Beego and no xorm. Storage is one `orm.DB` abstraction
 with the backend chosen at boot (`--store`): embedded SQLite by default
 (`hanzoai/sqlite`, pure-Go, WAL), or the shared `sql` or `datastore` over ZAP
-(HIP-0138). Every handler is written once against `orm.DB` and never against a
+(HIP-0144). Every handler is written once against `orm.DB` and never against a
 driver.
 
 It implements OAuth 2.0, OpenID Connect, and SCIM 2.0, and provides multi-tenant
@@ -154,7 +154,7 @@ calling, never of what they can afford.
                     ┌─────────┴─────────┐
                     │ sqlite (default)  │
                     │ sql | datastore   │
-                    │     HIP-0138      │
+                    │     HIP-0144      │
                     └───────────────────┘
 ```
 
@@ -448,7 +448,7 @@ a restart cannot reset a password, an MFA enrolment or any other user data.
 
 ### Storage
 
-One `orm.DB` abstraction, backend chosen at boot, per HIP-0138:
+One `orm.DB` abstraction, backend chosen at boot, per HIP-0144:
 
 - `sqlite` (default) — embedded, pure-Go, WAL. No server, no credential.
 - `sql` — the one shared `hanzoai/sql`, reached over ZAP.
@@ -584,7 +584,7 @@ The key design principle: **IAM authenticates users and issues scoped tokens. Se
 13. [HIP-0118: SuperAdmin & Tenant Isolation Model](./hip-0118-superadmin-and-tenant-isolation-model.md) - the reserved `admin` org and the one SuperAdmin predicate
 14. [HIP-0519: One Identity Boundary](./hip-0519-one-identity-boundary.md) - where the token is validated and `X-Org-Id` is minted
 15. [HIP-0068: Ingress Standard](./hip-0068-ingress-standard.md) - the edge that terminates TLS and routes every brand domain
-16. [HIP-0138: Where State Lives](./hip-0138-where-state-lives.md) - the store this service is a tenant of
+16. [HIP-0144: Where State Lives](./hip-0144-where-state-lives.md) - the store this service is a tenant of
 17. [HIP-0136: One Secret, One Path](./hip-0136-one-secret-one-path.md) - where a client secret is addressed
 18. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - the KMS this reads from
 19. [HIP-0004: LLM Gateway](./hip-0004-llm-gateway-unified-ai-provider-interface.md) - consumes IAM tokens

@@ -345,7 +345,7 @@ fetch: the reusable workflow does it, once, using the build's machine identity,
 and the secret is addressed at `hanzo/deploy/<NAME>@prod`.
 
 The only durable value a repository stores is that machine identity, and it is
-set **on the forge**, since `.hanzo/workflows/` is what the forge reads.
+set **on the forge**, which is what executes the workflow.
 
 Two things a build must not be given, because it does not need them: a cloud
 provider token or kubeconfig (it does not deploy — HIP-0036 §Deployment), and any

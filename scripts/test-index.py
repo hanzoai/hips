@@ -84,9 +84,17 @@ def m_progress(root):
 def m_final_without_go(root):
     # STANDARDS_SUBJECT is Final, which is half the contradiction already. Doing
     # this to a Draft would prove nothing.
+    #
+    # REPLACE any implementation-go: it already declares. Appending a second one
+    # proved nothing: the front-matter readers here take one line at a time, so
+    # the later key won, the subject stayed `shipped`, and the contradiction this
+    # case exists to build was never built. The guard then correctly did not
+    # fire and the suite reported it as broken -- a check whose test is a no-op
+    # is a check that has never been shown to work.
+    text = re.sub(r"^implementation-go:.*\n", "", read(root, STANDARDS_SUBJECT), flags=re.M)
     write(root, STANDARDS_SUBJECT,
           re.sub(r"^status:(.*)$", r"status:\1\nimplementation-go: none",
-                 read(root, STANDARDS_SUBJECT), count=1, flags=re.M))
+                 text, count=1, flags=re.M))
 
 def m_requires(root):
     s = read(root, STANDARDS_SUBJECT)
@@ -150,7 +158,15 @@ CASES = [
 
 def main() -> int:
     base = tempfile.mkdtemp(prefix="hips-index-test-")
-    capabilities = os.environ.get("HANZO_CAPABILITIES")
+    # Resolve the capabilities path the way run() does, NOT just from the caller's
+    # environment. m_no_capabilities points HANZO_CAPABILITIES at a file that does
+    # not exist and the runner restores it afterwards -- but the restore was
+    # guarded on a value that is None whenever the caller had not exported the
+    # var, which is the ordinary case. Every case after m_no_capabilities then ran
+    # against a missing input, and the two that follow it reported failures that
+    # were the harness's own.
+    capabilities = os.environ.get("HANZO_CAPABILITIES") or os.path.join(
+        os.path.dirname(ROOT), "openapi", "capabilities.yaml")
     try:
         clean = os.path.join(base, "clean")
         os.makedirs(clean)

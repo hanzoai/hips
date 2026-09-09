@@ -7,10 +7,10 @@ category: Interface
 status: Draft
 created: 2025-01-09
 updated: 2026-02-23
-requires: HIP-1, HIP-4, HIP-26, HIP-27, HIP-30
+requires: HIP-0001, HIP-0004, HIP-0026, HIP-0027, HIP-1060
 ---
 
-# HIP-18: Payment Processing Standard
+# HIP-0018: Payment Processing Standard
 
 ## Abstract
 
@@ -294,10 +294,14 @@ Free-tier credits reset monthly and do not accumulate. Paid-tier included credit
 4. User completes payment on the native hosted checkout page (Hanzo Vault CDE)
 5. PSP fires webhook: checkout.session.completed
 6. Commerce verifies webhook signature (HMAC-SHA256)
-7. Commerce checks idempotency key in Redis (prevent double-processing)
-8. Commerce calls IAM: POST /v1/iam/add-balance { owner: "hanzo", user: "z", amount: 21.0 }
-9. Commerce records transaction: POST /v1/iam/add-transaction
-   { category: "Recharge", user: "z", amount: 21.0, name: "txn_psp_cs_..." }
+7. Commerce checks the idempotency key in the shared KV (prevent double-processing)
+8. Commerce records the transaction in its OWN ledger — it does not write a
+   balance into IAM. IAM's balance fields are read-only mirrors of this ledger
+   (HIP-0026 §The balance mirror); the `add-balance` and `add-transaction` verbs
+   an earlier revision called here do not exist and would be forbidden if they
+   did (HIP-0111 §4.8).
+9. The mirror follows from the ledger. A surface that gates spend reads the
+   authoritative position, never the mirror.
 10. User's IAM balance updated. Credits available immediately.
 ```
 
@@ -357,7 +361,7 @@ async def handle_psp_webhook(request):
 
     # 2. Check idempotency (prevent double-processing)
     event_id = event["id"]
-    if await redis.exists(f"webhook:processed:{event_id}"):
+    if await kv.exists(f"webhook:processed:{event_id}"):
         return Response(status=200, body="Already processed")
 
     # 3. Route by event type
@@ -375,7 +379,7 @@ async def handle_psp_webhook(request):
         await handler(event)
 
     # 4. Mark as processed (72h TTL matching the PSP retry window)
-    await redis.set(f"webhook:processed:{event_id}", "1", ex=259200)
+    await kv.set(f"webhook:processed:{event_id}", "1", ex=259200)
 
     return Response(status=200)
 ```
@@ -522,7 +526,7 @@ When the metering pipeline detects a balance crossing below the threshold, it en
 - [x] IAM balance update via `/v1/iam/add-balance`
 - [x] Transaction recording via `/v1/iam/add-transaction`
 - [x] Balance and transaction query endpoints
-- [x] Idempotency key tracking in Redis
+- [x] Idempotency key tracking in the shared KV
 
 ### Phase 2: Subscriptions (Completed)
 
@@ -603,7 +607,7 @@ These three layers provide defense-in-depth against double-processing.
 | `/v1/billing/usage` | 10 | per minute per user |
 | `/webhooks/psp` | 1000 | per minute (global) |
 
-Rate limiting is enforced via Redis sliding window counters. Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header.
+Rate limiting is enforced with sliding-window counters in the shared KV (HIP-0144). Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header.
 
 ### Audit Trail
 
@@ -656,8 +660,8 @@ When a user's balance reaches zero during an API request:
 4. [HIP-25: Bot Agent Wallet & RPC Billing Protocol](./hip-0025-bot-agent-wallet-rpc-billing-protocol.md) - Agent-level billing built on Commerce
 5. [HIP-26: Identity & Access Management Standard](./hip-0026-identity-access-management-standard.md) - Balance storage and transaction ledger
 6. [HIP-27: Secrets Management Standard](./hip-0027-secrets-management-standard.md) - KMS for PSP keys and secrets
-7. [HIP-30: Event Streaming Standard](./hip-0030-event-streaming-standard.md) - Billing event distribution
-8. [HIP-32: Object Storage Standard](./hip-0032-object-storage-standard.md) - Invoice PDF storage
+7. [HIP-1060: Pubsub — The Tenant Endpoint on the Bus](./hip-1060-pubsub-the-tenant-door-on-the-bus.md) - billing event distribution
+8. [HIP-1165: S3 — Buckets and Objects](./hip-1165-s3-buckets-and-objects.md) - invoice PDF storage
 9. [HIP-101: Hanzo-Lux Bridge Protocol](./hip-0101-hanzo-lux-bridge-protocol-integration.md) - Cross-chain payment acceptance
 10. [Hanzo Pay (native PSP) — `github.com/lux-pay`](https://github.com/lux-pay) (white-labeled `lux-pay` on Lux)
 11. [Hanzo Vault — PCI CDE / card tokenization](https://github.com/hanzoai/vault)
