@@ -20,10 +20,10 @@ it and the environment variable it becomes, there is exactly one path it can be
 at, one Kubernetes Secret it lands in, and one key inside that Secret. Nobody
 looks it up, because there is nothing to look up.
 
-    hanzo/iam/IAM_SERVICE_TOKEN@prod
+    hanzo/gateway/IAM_CLIENT_SECRET@prod
 
-Read that as: the `hanzo` org's `iam` app reads `IAM_SERVICE_TOKEN`, in `prod`.
-Every part is a fact you already had before you went looking.
+Read that as: the `hanzo` org's `gateway` app reads `IAM_CLIENT_SECRET`, in
+`prod`. Every part is a fact you already had before you went looking.
 
 ## Motivation
 
@@ -221,6 +221,14 @@ Four of eleven declarations already conform. Seven move:
 | `cloud` | `/cloud-sign` | `/cloud` |
 | `cloud` | `/integrations/cloudflare` (env `default`) | `/cloud` (env `prod`) |
 | `iam` | `/iam-service-token` | `/iam` |
+
+The `iam` row is the one worth reading twice. Its old path named a **service
+token** — a bearer minted outside IAM and shared between callers, which is the
+pattern IAM exists to replace. Those tokens have since been deleted across cloud
+and commerce; a caller presents an IAM identity now (`client_credentials`, RFC
+8707 `resource`-scoped, JWKS-verified — HIP-0111). So the move is not only a
+rename: the entry that moves is a client secret, and the shared token it replaced
+should not come back under a conforming path.
 | `team` | `/team-go-secret` | `/team` |
 
 Already conforming: `aml`, `bot-browser`, `pkg`, `studio`.
