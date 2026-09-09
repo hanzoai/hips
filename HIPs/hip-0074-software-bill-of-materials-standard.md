@@ -92,18 +92,18 @@ The CI pipeline flags license violations as warnings. Strong copyleft and non-co
 The SBOM workflow is added as a post-build step in every Hanzo CI pipeline:
 
 ```yaml
-# .github/workflows/docker-deploy.yml (addition to HIP-0036 standard)
+# a job of the one reusable workflow (HIP-0036), not a per-repo file
   sbom-and-sign:
     name: SBOM, Sign, Attest
     needs: [docker-release]
     if: needs.docker-release.outputs.digest != ''
-    runs-on: ubuntu-latest
+    runs-on: hanzo-linux-amd64
     permissions:
       contents: read
       packages: write
       id-token: write    # Required for cosign keyless signing
     env:
-      IMAGE: ghcr.io/hanzoai/${{ env.SERVICE }}
+      IMAGE: oci.hanzo.ai/hanzoai/${{ env.SERVICE }}
       DIGEST: ${{ needs.docker-release.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
@@ -213,29 +213,49 @@ HIP's earlier revisions listed (`/api/v1/provenance`, `/api/v1/verify`,
 and when they land they land under `/v1/sbom` per HIP-0139 §3, not under a
 second host or an `/api/` prefix.
 
+### The signing identity is unresolved, and this HIP does not pretend otherwise
+
+Keyless signing binds a signature to the identity of the workflow that produced
+it, via an OIDC issuer the verifier trusts. Earlier revisions of this HIP wrote
+that issuer as GitHub Actions' (`token.actions.githubusercontent.com`) and the
+identity as a `.github/workflows/...` path, because that is where builds ran when
+it was written.
+
+Builds run on Hanzo Git Actions now (HIP-0036), which is not that issuer.
+GitHub's OIDC trusted-publishing surface is one of the GitHub-only surfaces that
+has no equivalent in this path, so the chain below is written with the issuer and
+identity as placeholders rather than as values that would verify. Closing this
+means either a signing identity the forge can present and a verifier can pin, or
+signing with a key held in KMS — a decision, not a substitution, and it belongs
+in its own proposal.
+
+Until it is closed, an image's provenance rests on the digest and the build
+record, and this HIP should not be read as claiming a verifiable signature chain
+exists today.
+
 ### Verification Flow
 
 A consumer verifying an artifact follows this chain:
 
 ```
 1. Pull image digest
-   docker pull ghcr.io/hanzoai/iam:1.584.0
+   docker pull oci.hanzo.ai/hanzoai/iam:1.584.0
    -> sha256:abc123...
 
 2. Verify cosign signature
    cosign verify \
-     --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
-     --certificate-identity-regexp="github.com/hanzoai/.*" \
-     ghcr.io/hanzoai/iam@sha256:abc123...
-   -> Signature valid. Signed by github.com/hanzoai/iam/.github/workflows/...
+     --certificate-oidc-issuer=<the builder's OIDC issuer> \
+     --certificate-identity-regexp="<the builder's workflow identity>" \
+     oci.hanzo.ai/hanzoai/iam@sha256:abc123...
+   -> Signature valid.
 
 3. Verify SLSA provenance
    cosign verify-attestation \
      --type slsaprovenance1 \
-     --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
-     --certificate-identity-regexp="github.com/hanzoai/.*" \
-     ghcr.io/hanzoai/iam@sha256:abc123...
-   -> Provenance valid. Built from commit a1b2c3d4 on 2026-02-23
+     --certificate-oidc-issuer=<the builder's OIDC issuer> \
+     --certificate-identity-regexp="<the builder's workflow identity>" \
+     oci.hanzo.ai/hanzoai/iam@sha256:abc123...
+   -> Provenance valid. Built from commit a1b2c3d4
 
 4. Resolve the component set
    curl https://api.hanzo.ai/v1/sbom/ghcr.io/hanzoai/iam@sha256:abc123...
