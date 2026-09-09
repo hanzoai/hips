@@ -4,7 +4,7 @@ title: Hanzo IAM Authentication Standard
 author: Hanzo AI Team
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 implementation-rust: partial
 created: 2026-06-16
 requires: HIP-0026, HIP-0068
@@ -310,53 +310,47 @@ Google, GitHub, and Web3 are configured **once per network** as org-level provid
 
 ## Conformance status
 
-The prohibitions in §Anti-patterns are **not yet met by the deployment.** Measured
-against `https://hanzo.id` on 2026-07-28; unauthenticated probes, so a `401`
-means the route exists and demands auth, and a `404` would mean it is genuinely
-gone:
+The prohibitions in §Anti-patterns are **met by the deployment.** Measured against
+`https://hanzo.id` on 2026-09-09; unauthenticated probes, so a `401` would mean the
+route still exists and demands auth, and `410 Gone` means it was removed on purpose
+and the server says what replaced it:
 
 | Surface | This HIP says | Production returns |
 |---|---|---|
-| `/v1/iam/get-users` | gone | `401` — route live |
-| `/v1/iam/get-user` | gone | `401` — route live |
-| `/v1/iam/add-user` | gone | `401` — route live |
-| `/v1/iam/get-organizations` | gone | `401` — route live |
-| `/v1/iam/get-application` | gone | `401` — route live |
-| `/v1/iam/issue-user-token` | gone | `401` — route live |
-| `/v1/iam/get-records` | gone | `401` — route live |
-| `/v1/iam/get-account` | gone | **`200`** with `{"status":"error","msg":"please sign in first"}` |
+| `/v1/iam/get-users` | gone | `410` → `{"successor":["/v1/iam/users"]}` |
+| `/v1/iam/get-user` | gone | `410` → `{"successor":["/v1/iam/users","/v1/iam/keys/principal"]}` |
+| `/v1/iam/add-user` | gone | `410` → `{"successor":["/v1/iam/users"]}` |
+| `/v1/iam/get-organizations` | gone | `410` → `{"successor":["/v1/iam/organizations"]}` |
+| `/v1/iam/get-application` | gone | `410` → `{"successor":["/v1/iam/applications"]}` |
+| `/v1/iam/issue-user-token` | gone | `410` → `{"successor":["/v1/iam/tokens/issue"]}` |
+| `/v1/iam/get-records` | gone | `410` → `{"successor":["/v1/iam/audit-logs"]}` |
+| `/v1/iam/get-account` | gone | `410` → `{"successor":["/v1/iam/account"]}` |
 
-Two further deviations:
+The two further deviations are also closed. `/v1/iam/oauth/access_token` returns
+`404`; the standard `/v1/iam/oauth/token` is the only spelling, and it answers a
+`POST` with `400` on an empty body rather than a `200` carrying an error envelope.
+The `get-account` shape that returned `200` with `{"status":"error"}` is gone with
+the rest.
 
-- **Two spellings for the token endpoint.** `/v1/iam/oauth/access_token` answers
-  alongside the standard `/v1/iam/oauth/token`. Only the standard one appears in
-  OIDC discovery, so the alias is live but undiscoverable — the worst of both.
-- **`200` carrying an error.** `get-account` returns HTTP 200 with an error
-  envelope where the standard requires `401`. This is the vendor error shape this
-  HIP exists to eliminate, and a client that branches on the status code reads
-  "signed in".
+`410` rather than `404` is the stronger result, and the retirement order in this
+section is why it was reachable. A `404` says only that nothing is there; `410`
+with a `successor` says the route was removed deliberately and names the RFC route
+that replaced it, so a client still on an alias gets told where to go instead of
+guessing. The order held: callers moved to the native routes first, the aliases
+went second, and no deletion was an outage.
 
-The standard surfaces this HIP mandates are all present and correct
-(`/v1/iam/scim/v2/Users`, `/v1/iam/oauth/{token,userinfo,introspect}`, jwks at
-`/v1/iam/.well-known/jwks`, and `grant_types_supported` including RFC 8693
-token-exchange and device_code). So this is not a gap in the implementation of
-the standard — both surfaces are live at once, which is precisely the "two ways to
-do one thing" the HIP forbids.
+The standard surfaces this HIP mandates remain present and correct
+(`/v1/iam/scim/v2/Users` and `/v1/iam/scim/v2/ServiceProviderConfig` answer `401`
+as `application/json`; `/v1/iam/.well-known/jwks` serves an RS256 key set;
+`/v1/iam/oauth/{authorize,token,introspect}` are live routes, not the SPA;
+discovery is single-origin on `https://hanzo.id` and advertises RFC 8693
+token-exchange and device_code). One surface, one spelling — which is what this
+HIP asked for.
 
-**Removal order matters.** The compat aliases cannot simply be deleted:
-`hanzoai/cloud` calls `get-application` today, and `internal/authz` carries an
-`entityNoun` fold specifically so capability checks keep working on the alias
-path. Retire in this order, or the deletion is an outage:
-
-1. Migrate every caller to the native/RFC route (`/v1/iam/applications`,
-   SCIM for users, `oauth/token` for tokens).
-2. Verify no traffic remains on the alias paths.
-3. Delete `internal/compat/aliases.go` and the `access_token` alias, and drop the
-   `entityNoun` fold that exists only to serve them.
-
-Until step 3 lands, this HIP describes the intended contract, not the deployed
-one, and that difference is the point of recording it here rather than leaving
-the prohibition list looking satisfied.
+The catch-all still discriminates, and that is how these probes are read: the
+uncanonical `/scim/v2/Users` returns `200 text/html`, the canonical
+`/v1/iam/scim/v2/Users` returns `401 application/json`. Content type, not status,
+is the test.
 
 ## Security Considerations
 

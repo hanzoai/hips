@@ -16,7 +16,20 @@ This proposal defines the monitoring, visualization, and supervision standard fo
 
 Visor is the presentation and intelligence layer that sits on top of the observability stack (HIP-0031, Zap) and the analytics platform (HIP-0017, Insights). Zap collects metrics, traces, and logs. Insights collects product analytics. Visor consumes both data streams and turns them into actionable dashboards, intelligent alerts, and cost reports. It is the single pane of glass through which operators, engineers, and business stakeholders understand the health, performance, and economics of the Hanzo platform.
 
-**Repository**: [github.com/hanzoai/visor](https://github.com/hanzoai/visor)
+> **The name no longer belongs to this system.** `hanzoai/visor` today is
+> `github.com/hanzoai/compute` — "Hanzo Compute, the multi-cloud compute plane for
+> Hanzo Cloud: machines, GPUs, and clusters across AWS, GCP, Azure, DigitalOcean
+> and bare metal". It manages instances, GPU accelerators, block storage and BYO
+> Kubernetes clusters. It is not a monitoring product: the repository contains
+> zero references to Grafana, and neither port named below appears in it. The
+> deployment `hanzo/visor` (`ghcr.io/hanzoai/visor:1.108.31`) and the `200` at
+> `visor.hanzo.ai/v1/health` are that compute plane, not this specification.
+> The monitoring, dashboards, alerting and cost-attribution system described
+> below was never built under this name. This HIP needs to be withdrawn or
+> rewritten, and the compute plane needs a HIP of its own; it cannot be marked
+> Final on the strength of a service that happens to share its name.
+
+**Repository**: [github.com/hanzoai/visor](https://github.com/hanzoai/visor) — now Hanzo Compute, see above
 **Docker**: `ghcr.io/hanzoai/visor:latest`
 **API Port**: 8053
 **Grafana Port**: 3053

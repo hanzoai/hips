@@ -4,7 +4,7 @@ title: "esign: shared-DB tenancy via team-where, not file-per-tenant"
 author: Zach Kelling (zach@hanzo.ai)
 type: Standards Track
 category: Infrastructure
-status: Draft
+status: Final
 created: 2026-06-21
 requires: HIP-0302
 ---
@@ -92,3 +92,28 @@ to be org-addressable at request entry (a tenant resolver before
 Until that work is scoped, the shared file + `team-where` boundary is the
 settled position for esign. A follow-up HIP supersedes this one if/when global
 identity is reworked; this HIP is the authority in the interim.
+
+## Conformance status
+
+Measured against `hanzoai/esign` at `643d0fd3e` on 2026-09-09. The deviation this
+HIP argues for is the one that shipped, and the schema says so in the datasource
+block — it cites this HIP by number as the reason the estate's file-per-tenant
+rule does not apply here:
+
+```prisma
+datasource db {
+  // Single shared SQLite file via Hanzo Base. Tenancy is enforced at the
+  // query layer via buildTeamWhereQuery keyed on the authenticated user
+  // (see ./tenant.ts). DATABASE_URL points at one sign.db file shared
+  // across all orgs. See HIP-0305 for the architectural deviation ...
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+```
+
+`provider = "sqlite"` closes the SQL → Base migration the abstract describes.
+`buildTeamWhereQuery` is defined in `packages/prisma/tenant.ts` and reached from
+54 files, including every handler under `packages/trpc/zap/server/handlers/`
+(`envelope`, `team`, `organisation`, `webhook`, `admin`) — so the predicate is the
+boundary in practice and not only in the proposal. esign serves at
+`esign.hanzo.ai`, which redirects an anonymous caller to `/signin`.

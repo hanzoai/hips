@@ -15,7 +15,7 @@ created: 2026-05-19
 
 ## Abstract
 
-The `KMS` CRD is the facade Kind for the Hanzo secrets manager (`hanzoai/kms`). It is a Service facade with a thicker reconciler: it also produces `KMSSecret` cross-references and Universal-Auth credentials. See HIP-027 for the KMS design.
+The `KMS` CRD is the facade Kind for the Hanzo secrets manager (`luxfi/kms`; `hanzoai/kms` is archived). It is a Service facade with a thicker reconciler: it also produces `KMSSecret` cross-references and Universal-Auth credentials. See HIP-027 for the KMS design.
 
 ## Specification
 
@@ -27,7 +27,7 @@ The `KMS` CRD is the facade Kind for the Hanzo secrets manager (`hanzoai/kms`). 
 
 Same shape as `Service` (HIP-400). Conventionally:
 
-- `image.repository`: `ghcr.io/hanzoai/kms`
+- `image.repository`: `ghcr.io/luxfi/kms`
 - `ports`: `containerPort: 8080` (HTTP), `containerPort: 9000` (metrics)
 - mounts `kms-postgres` secret for backing DB
 - mounts `kms-encryption-key` secret for at-rest encryption
@@ -42,7 +42,7 @@ metadata:
   namespace: hanzo
 spec:
   image:
-    repository: ghcr.io/hanzoai/kms
+    repository: ghcr.io/luxfi/kms
     tag: v2.4.1
   replicas: 2
   ports:
