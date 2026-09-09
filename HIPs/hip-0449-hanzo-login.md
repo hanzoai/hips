@@ -3,12 +3,12 @@ hip: 0449
 title: hanzo-login
 author: Hanzo Platform Team
 type: Informational
-category: Service Catalog
+category: Application
 status: Final
 created: 2026-05-19
 ---
 
-# HIP-449: hanzo-login
+# HIP-0449: hanzo-login
 
 ## Abstract
 

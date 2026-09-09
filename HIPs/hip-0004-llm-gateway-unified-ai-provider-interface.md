@@ -379,7 +379,7 @@ never a value.
 environment and mounted secrets and find no upstream provider key. A gateway that
 still holds one has not adopted egress, it has moved the key.
 
-State follows HIP-0138: there is no `llm_gateway` database and no gateway-owned
+State follows HIP-0144: there is no `llm_gateway` database and no gateway-owned
 Postgres or Redis. What the gateway keeps — routing state, budgets, a response
 cache — is per-tenant at rank 1 or in the one shared KV, and usage events go to
 the column store, which is what event data is for.

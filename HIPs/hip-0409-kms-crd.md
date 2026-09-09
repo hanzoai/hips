@@ -29,8 +29,10 @@ Same shape as `Service` (HIP-400). Conventionally:
 
 - `image.repository`: `ghcr.io/luxfi/kms`
 - `ports`: `containerPort: 8080` (HTTP), `containerPort: 9000` (metrics)
-- mounts `kms-postgres` secret for backing DB
-- mounts `kms-encryption-key` secret for at-rest encryption
+- mounts `kms-encryption-key` for at-rest encryption — the bootstrap set, and
+  deliberately not a database connection string: the store keeps per-org
+  encrypted files (HIP-1134), so there is no separate database to bootstrap
+  (HIP-0027 §KMS's Own Secrets, HIP-0144)
 
 ### Example CR
 
@@ -53,7 +55,7 @@ spec:
     - secretRef:
         name: kms-secrets
   readinessProbe:
-    path: /api/status
+    path: /healthz
     port: 8080
 ```
 

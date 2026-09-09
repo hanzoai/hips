@@ -146,7 +146,7 @@ one field for a secret. Two consequences MUST be designed for:
   that says otherwise. The egress socket MUST be reachable only by the service
   that owns it.
 
-`Provider: "sql"` names the shared base (HIP-0138) and is reached with **no
+`Provider: "sql"` names the shared base (HIP-0144) and is reached with **no
 credential at all** — egress connects on the trust between it and the base and
 presents the caller's org as the database role. Any other provider name is a
 connection URL enrolled once into the caller's own custody. An enrolled origin
@@ -234,7 +234,7 @@ upstream credential.
 - HIP-0120 — ZAP-Native Transport & gRPC Elimination
 - HIP-0132 — One Telemetry Plane
 - HIP-0136 — One Secret, One Path
-- HIP-0138 — Where State Lives (the shared base egress brokers)
+- HIP-0144 — Where State Lives (the shared base egress brokers)
 - HIP-1065 — Connectors — A User's Own Credentials
 - HIP-1134 — KMS — Secret Custody
 - `hanzoai/egress` — `docs/using-egress.md`, `docs/architecture.md`

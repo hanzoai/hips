@@ -9,7 +9,7 @@ created: 2026-02-23
 requires: HIP-0026, HIP-0027
 ---
 
-# HIP-54: Zero Trust Architecture Standard
+# HIP-0054: Zero Trust Architecture Standard
 
 ## Abstract
 
@@ -46,7 +46,7 @@ Perimeter security assumes the network has an inside and an outside. Everything 
 - **Lateral movement is the primary threat**: Most breaches start with a single compromised service (a dependency vulnerability, a leaked credential, a misconfigured endpoint). Once inside the perimeter, the attacker moves laterally to higher-value targets. If the internal network is flat and trusted, one compromised pod can reach every other pod.
 - **Multi-cluster reality**: Hanzo operates two Kubernetes clusters (hanzo-k8s and lux-k8s) plus CI/CD runners, developer machines, and edge deployments. There is no single perimeter to defend.
 
-Zero Trust eliminates the concept of a trusted internal network. Every connection is verified. A compromised pod in the `hanzo` namespace cannot reach the `postgres` service unless its SPIFFE identity has an explicit policy granting that access.
+Zero Trust eliminates the concept of a trusted internal network. Every connection is verified. A compromised pod in the `hanzo` namespace cannot reach the `sql` service unless its SPIFFE identity has an explicit policy granting that access.
 
 ## Design Philosophy
 
@@ -56,7 +56,7 @@ Traditional network security uses IP addresses and port numbers to define access
 
 1. **IP addresses are not identities**: In Kubernetes, a pod's IP is assigned from a CIDR pool and recycled when the pod restarts. The IP that belonged to the `iam` service five minutes ago now belongs to `chat`. IP-based rules cannot distinguish them.
 
-2. **CIDR ranges are coarse**: Allowing a /24 subnet grants access to every pod in that range. You cannot express "only the gateway service can reach postgres" --- you can only express "anything in this IP range can reach this IP".
+2. **CIDR ranges are coarse**: Allowing a /24 subnet grants access to every pod in that range. You cannot express "only the gateway service can reach sql" --- you can only express "anything in this IP range can reach this IP".
 
 3. **No cryptographic binding**: An IP address can be spoofed on many network configurations. Even where anti-spoofing is enforced (as in most cloud VPCs), the mapping from IP to workload is maintained by the orchestrator, not cryptographically proven.
 
@@ -69,10 +69,10 @@ SPIFFE (Secure Production Identity Framework for Everyone) solves this by assign
 
 Mutual TLS means both sides of a connection present certificates. Standard TLS (what browsers use) only authenticates the server; the client is anonymous at the transport layer. mTLS authenticates both:
 
-- **Server proves identity**: "I am postgres, here is my certificate signed by the Hanzo CA."
+- **Server proves identity**: "I am sql, here is my certificate signed by the Hanzo CA."
 - **Client proves identity**: "I am iam, here is my certificate signed by the Hanzo CA."
 
-This means the postgres service can enforce "only accept connections from iam, gateway, and cloud" at the TLS handshake, before any application code runs. A compromised `chat` service cannot even establish a TCP connection to postgres --- the handshake fails because chat's SPIFFE ID is not in postgres's authorized set.
+This means the `sql` service can enforce "only accept connections from iam, gateway, and cloud" at the TLS handshake, before any application code runs. A compromised `chat` service cannot even establish a TCP connection to `sql` --- the handshake fails because chat's SPIFFE ID is not in `sql`'s authorized set.
 
 The alternative --- application-layer authentication only (e.g., database passwords) --- leaves the transport layer open. An attacker who compromises any pod can sniff traffic between other pods on the same node (if network encryption is not enforced). mTLS encrypts all traffic and authenticates both endpoints, eliminating network-layer eavesdropping entirely.
 
@@ -128,7 +128,7 @@ Examples:
 |---------|-----------|
 | IAM | `spiffe://hanzo.ai/hanzo-k8s/hanzo/iam` |
 | LLM Gateway | `spiffe://hanzo.ai/hanzo-k8s/hanzo/gateway` |
-| PostgreSQL | `spiffe://hanzo.ai/hanzo-k8s/hanzo/postgres` |
+| `sql` | `spiffe://hanzo.ai/hanzo-k8s/hanzo/sql` |
 | Lux Validator | `spiffe://hanzo.ai/lux-k8s/lux/validator` |
 | CI Runner | `spiffe://hanzo.ai/ci/github-actions/deploy` |
 
@@ -151,8 +151,8 @@ Examples:
 │  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘    │
 │        │               │               │          │
 │   ┌────┴────┐    ┌─────┴────┐   ┌─────┴────┐    │
-│   │iam  gw │    │chat cloud│   │postgres  │     │
-│   │pods    │    │pods      │   │redis     │     │
+│   │iam  gw │    │chat cloud│   │sql       │     │
+│   │pods    │    │pods      │   │kv        │     │
 │   └────────┘    └──────────┘   └──────────┘     │
 └───────────────────────────────────────────────────┘
 ```
@@ -189,13 +189,13 @@ metadata:
   name: hanzo-core-policy
 spec:
   rules:
-    # IAM can reach PostgreSQL and Redis
+    # IAM can reach the shared sql and kv
     - from:
         spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/iam"
       to:
-        - spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/postgres"
+        - spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/sql"
           ports: [5432]
-        - spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/redis"
+        - spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/kv"
           ports: [6379]
 
     # LLM Gateway can reach IAM (token validation) and models
@@ -204,7 +204,7 @@ spec:
       to:
         - spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/iam"
           ports: [8000]
-        - spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/postgres"
+        - spiffe: "spiffe://hanzo.ai/hanzo-k8s/hanzo/sql"
           ports: [5432]
 
     # Chat can reach Gateway only (no direct DB access)
@@ -226,16 +226,16 @@ Every service gets a Kubernetes NetworkPolicy that mirrors the ZT policy. This p
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: postgres-ingress
+  name: sql-ingress
   namespace: hanzo
 spec:
   podSelector:
     matchLabels:
-      app: postgres
+      app: sql
   policyTypes:
     - Ingress
   ingress:
-    # Only IAM, Gateway, Cloud, and Console can reach PostgreSQL
+    # Only IAM, Gateway, Cloud, and Console can reach the shared sql
     - from:
         - podSelector:
             matchLabels:
@@ -254,7 +254,7 @@ spec:
           port: 5432
 ```
 
-The principle: **each service gets minimal network access**. The `chat` service, which only talks to the LLM Gateway API, has no network path to PostgreSQL, Redis, or MinIO. If chat is compromised, the attacker's lateral movement is confined to the gateway API surface.
+The principle: **each service gets minimal network access**. The `chat` service, which only talks to the LLM Gateway API, has no network path to `sql`, `kv`, or `s3`. If chat is compromised, the attacker's lateral movement is confined to the gateway API surface.
 
 ### WireGuard Overlay Network
 
@@ -350,7 +350,7 @@ Operator                 ZT Proxy (8054)            Target Service
   │  4. Log access decision  │                           │
   │                          │                           │
   │  [ALLOW: role=sre,       │                           │
-  │   target=postgres,       │                           │
+  │   target=sql,       │                           │
   │   action=read-only]      │                           │
   │                          │  mTLS connection           │
   │                          ├──────────────────────────►│
@@ -369,9 +369,9 @@ spec:
   rules:
     - role: sre
       targets:
-        - service: postgres
+        - service: sql
           actions: [read, write]
-        - service: redis
+        - service: kv
           actions: [read, write]
         - service: "*"
           actions: [logs, metrics]
@@ -421,7 +421,7 @@ Every access decision --- allow and deny --- is logged to the audit trail:
     "node": "worker-3"
   },
   "destination": {
-    "spiffe_id": "spiffe://hanzo.ai/hanzo-k8s/hanzo/postgres",
+    "spiffe_id": "spiffe://hanzo.ai/hanzo-k8s/hanzo/sql",
     "port": 5432
   },
   "policy_matched": "hanzo-core-policy/rule-2",
@@ -429,7 +429,7 @@ Every access decision --- allow and deny --- is logged to the audit trail:
 }
 ```
 
-Audit logs are written to a dedicated PostgreSQL table with append-only permissions (the ZT service account can `INSERT` but not `UPDATE` or `DELETE`). Logs are retained for 365 days and are queryable via the ZT API for incident response.
+Audit logs are written to a dedicated append-only table (the ZT service account can `INSERT` but not `UPDATE` or `DELETE`). Logs are retained for 365 days and are queryable via the ZT API for incident response.
 
 ## Implementation
 
@@ -497,7 +497,7 @@ Deploy the ZT policy engine in **audit-only mode**. All traffic is allowed, but 
 Enable enforcement for non-critical services first: `chat`, `search`, `flow`. These services are stateless and can tolerate brief connectivity disruptions during policy tuning. Monitor for false denials and adjust policies.
 
 #### Phase 3: Enforce Critical (Weeks 9-12)
-Enable enforcement for critical path services: `iam`, `gateway`, `postgres`, `redis`. At this point, the policy has been validated by 8 weeks of observation and partial enforcement. Roll out with canary deployments --- enforce on one replica first, monitor, then expand.
+Enable enforcement for critical path services: `iam`, `gateway`, `sql`, `kv`. At this point, the policy has been validated by 8 weeks of observation and partial enforcement. Roll out with canary deployments --- enforce on one replica first, monitor, then expand.
 
 #### Phase 4: Full Zero Trust (Week 13+)
 Default-deny is active across all namespaces and clusters. New services must submit a policy declaration before deployment. The ZT policy engine rejects connections from services without a declared policy.

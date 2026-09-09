@@ -842,7 +842,10 @@ services:
       - "8061:8061"
       - "9060:9060"
     environment:
-      DATABASE_URL: postgresql://hanzo:hanzo@postgres:5432/hanzo_functions
+      # No per-app database. State follows HIP-0144: per-tenant by default,
+      # the column store for events, the ONE shared sql only if a server is
+      # genuinely required.
+      STORE: tenant
       NATS_URL: nats://nats:4222
       KAFKA_BROKERS: kafka:9092
       OBJECT_STORAGE_URL: http://minio:9000

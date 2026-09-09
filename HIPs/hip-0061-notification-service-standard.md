@@ -6,7 +6,7 @@ type: Standards Track
 category: Interface
 status: Draft
 created: 2026-02-23
-requires: HIP-0026, HIP-0138, HIP-0143, HIP-1061, HIP-1190
+requires: HIP-0026, HIP-0144, HIP-0143, HIP-1061, HIP-1190
 ---
 
 # HIP-0061: Notification & Messaging Service Standard
@@ -562,7 +562,7 @@ Response:
 }
 ```
 
-**Preference sync**: user preferences are cached with a five-minute TTL in the shared KV (HIP-0138), not in an instance of Notify's own. When a user updates preferences via the IAM UI or Notify's preference API, the cache is invalidated immediately via a Kafka event on the `iam.user.updated` topic (HIP-1323).
+**Preference sync**: user preferences are cached with a five-minute TTL in the shared KV (HIP-0144), not in an instance of Notify's own. When a user updates preferences via the IAM UI or Notify's preference API, the cache is invalidated immediately via a Kafka event on the `iam.user.updated` topic (HIP-1323).
 
 ### Integration with Analytics (HIP-1190)
 
@@ -620,7 +620,7 @@ All workers consume from the Hanzo MQ (HIP-1061) NATS queue `mq.notify.>`, filte
 
 ### Storage
 
-Notify holds no database of its own. Per HIP-0138 its templates, inbox and
+Notify holds no database of its own. Per HIP-0144 its templates, inbox and
 webhook registrations are per-tenant state at rank 1; delivery logs are event
 data and go to the column store, which is what event data is for. An earlier
 revision specified a `hanzo_notify` database on the shared SQL instance, which is
@@ -726,7 +726,7 @@ Outbound webhooks carry potentially sensitive notification data. Security measur
 5. [HIP-0027: Secrets Management Standard](./hip-0027-secrets-management-standard.md) -- Provider credential storage
 6. [HIP-1323: Kafka -- A Wire Onto the One Bus](./hip-1323-kafka-the-wire-every-client-speaks.md) -- IAM user update events
 7. [HIP-1061: MQ -- Queues and Streams](./hip-1061-mq-queues-and-streams.md) -- delivery task distribution
-8. [HIP-0138: Where State Lives](./hip-0138-where-state-lives.md) -- the stores this service is a tenant of
+8. [HIP-0144: Where State Lives](./hip-0144-where-state-lives.md) -- the stores this service is a tenant of
 9. [HIP-0143: Egress -- The Outbound Trust Boundary](./hip-0143-egress-outbound-trust-boundary.md) -- where the delivery-provider credentials live
 8. [SendGrid API Documentation](https://docs.sendgrid.com/api-reference)
 9. [Twilio SMS API Documentation](https://www.twilio.com/docs/sms)

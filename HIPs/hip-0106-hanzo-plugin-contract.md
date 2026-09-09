@@ -757,7 +757,7 @@ test:
       make test
 ```
 
-`.hanzo/workflows/cicd.yml`, unchanged from repo to repo — the caller lives in `.hanzo/workflows/` because that is the directory the forge scans, while the `uses:` line references the reusable workflow by path at a pinned tag (HIP-0036 §1, §2):
+`.hanzo/workflows/cicd.yml`, unchanged from repo to repo — a repository keeps ONE workflow directory and this is the fleet's, while the `uses:` line references the reusable workflow by path at a pinned tag, which is resolved rather than scanned (HIP-0036 §1, §2):
 
 ```yaml
 name: CI/CD
