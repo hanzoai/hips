@@ -757,7 +757,7 @@ test:
       make test
 ```
 
-`.github/workflows/cicd.yml`, unchanged from repo to repo:
+`.hanzo/workflows/cicd.yml`, unchanged from repo to repo — the caller lives in `.hanzo/workflows/` because that is the directory the forge scans, while the `uses:` line references the reusable workflow by path at a pinned tag (HIP-0036 §1, §2):
 
 ```yaml
 name: CI/CD
@@ -767,16 +767,17 @@ on:
   workflow_dispatch:
 jobs:
   cicd:
-    uses: hanzoai/ci/.github/workflows/build.yml@v1
+    uses: hanzoai/ci/.github/workflows/build.yml@v2
     secrets: inherit
 ```
 
 - Images push to **`oci.hanzo.ai`**, org-namespaced `<host>/<org>/<app>`.
   Registries never mix. `ghcr.io/<org>` remains only for already-published OSS
   deps external users pull.
-- The only GitHub secrets are `KMS_CLIENT_ID` / `KMS_CLIENT_SECRET` plus the
-  `KMS_WORKSPACE` variable. Registry, IAM and cluster credentials come from KMS
-  at run time.
+- The only stored secret is the machine identity the build authenticates to KMS
+  with, set on the forge, since `.hanzo/workflows/` is what the forge reads.
+  Registry and IAM credentials come from KMS at run time; the build holds no
+  cluster credential at all, because it does not deploy (HIP-0036 §Deployment).
 - Binaries build on every push (an arm64 cross-compile that breaks fails the PR
   that broke it) and publish on a tag, after the `test:` gate. `binaries.json`
   ships beside them with `{name, os, arch, url, sha256}` for every artifact, plus

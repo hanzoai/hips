@@ -151,9 +151,23 @@ on:
   workflow_dispatch:
 jobs:
   cicd:
-    uses: hanzoai/ci/.hanzo/workflows/build.yml@v1
+    uses: hanzoai/ci/.github/workflows/build.yml@v2
     secrets: inherit
 ```
+
+**The caller's directory and the callee's path are governed by different rules,
+and conflating them breaks the build.** `.hanzo/workflows/` is where the forge
+*scans* for this repository's workflows, so the caller MUST live there (§2). The
+`uses:` line is a reference into another repository at a pinned tag — the forge
+resolves it by path at that tag, not by scanning — so it names whatever path the
+reusable workflow occupies there. Today that is
+`hanzoai/ci/.github/workflows/build.yml@v2`. Copy the line from `hanzoai/ci`'s
+own caller rather than from memory; it is the one place both halves are known to
+agree.
+
+A `v*` tag is what produces a published immutable image tag. Without that
+trigger, a release tag builds nothing and there is no version for the declared
+state to pin.
 
 A repository MUST NOT carry its own build, test, release or publish logic. Where
 one exists, the fix is to move the specifics into `hanzo.yml` and delete the
@@ -193,6 +207,12 @@ CI: label bots, reviewer assignment, stale bots, release trains for packages we
 do not publish. Moving those runs someone else's automation on our fleet. Sort
 every file into revive / rewrite / drop, then **delete the directory** — a dead
 file cannot accumulate in a directory that does not exist.
+
+The one repository that keeps files in both is `hanzoai/ci` itself, and for a
+reason that is not an exception to this rule: its `.hanzo/workflows/cicd.yml` is
+its own caller, gated like any other repository, while the reusable workflow it
+publishes for everyone else is an artifact addressed by path at a tag. It is
+consumed by reference, never scanned.
 
 ### 3. Runner labels
 
