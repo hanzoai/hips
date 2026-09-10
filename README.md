@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 145 | 34 | 1 | 89 |
-| C++ | 1 | 2 | 0 | 266 |
-| Rust | 10 | 25 | 1 | 233 |
+| Go | 145 | 34 | 2 | 89 |
+| C++ | 1 | 2 | 0 | 267 |
+| Rust | 10 | 25 | 1 | 234 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -56,6 +56,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0040](./HIPs/hip-0040-multi-language-sdk-standard.md) | Multi-Language SDK Standard | Standards Track | Interface | Final | shipped | - | partial |
 | [HIP-0041](./HIPs/hip-0041-cli-standard.md) | The Hanzo CLI — a Projection of the Served API | Standards Track | Interface | Final | - | - | shipped |
 | [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | Hanzo Engine — LLM Inference Engine Standard | Standards Track | Core | Final | - | shipped | shipped |
+| [HIP-0044](./HIPs/hip-0044-answer-and-the-six-accessors.md) | Answer — Budget, Policy, Audit, Search, KB and Graph... | Standards Track | Interface | Draft | none | - | - |
 | [HIP-0045](./HIPs/hip-0045-documentation-framework-standard.md) | Documentation Framework Standard | Standards Track | Interface | Final | - | - | - |
 | [HIP-0049](./HIPs/hip-0049-dns-service-standard.md) | DNS Service Standard | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-0050](./HIPs/hip-0050-edge-computing-standard.md) | Hanzo Edge — Edge AI Runtime Standard | Standards Track | Infrastructure | Final | - | - | partial |
@@ -385,7 +386,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 125 | Capability |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 126 | Capability |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 122 | Identity & Access Management Standard |
 | [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 121 | The Hanzo Plugin Contract |
 
@@ -397,7 +398,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 17 | Hanzo Service Conventions |
 | [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | 16 | AI Token - Hanzo's Native Currency |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 15 | Post-Quantum Security for AI Infrastructure |
-| [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 12 | Hanzo IAM Authentication Standard |
+| [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 13 | Hanzo IAM Authentication Standard |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
