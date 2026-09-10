@@ -31,8 +31,9 @@ and `graph`.
 A method that can be refused returns
 `Answer<T>` with three arms — `ok`, `denied`, `held` — and a caller cannot reach
 the value without acknowledging which arm it got. A refused budget and a refused
-policy are outcomes the caller reads, not exceptions the caller catches. An
-exception is reserved for the case where no decision was made at all.
+policy are outcomes the caller reads, not exceptions the caller catches. The
+fourth outcome, `Fault`, is reserved for the case where no decision was made at
+all.
 
 It specifies no address and no server behaviour. The routes are HIP-1198's,
 HIP-1260's and their neighbours'; the document that describes them is HIP-1030's;
@@ -178,9 +179,13 @@ Requests MUST go to `base` with paths under `/v1/`. An SDK MUST NOT emit an
 `/api/` path segment, a `v2` prefix, or a request to a third host. The issuer is
 the only other host any SDK contacts, and only to mint (§3).
 
-Construction MUST NOT fail on a missing `id` or `secret`; the first call does,
-when the exchange of §3 is refused. Go's constructor therefore returns one value,
-not `(client, error)`. Every TypeScript method returns a `Promise`; the tables in
+Construction MUST NOT fail on a missing `id` or `secret`; the first call does.
+Go's constructor therefore returns one value, not `(client, error)`. With no
+credential there is nothing to exchange, so the first call raises `Fault` with
+status `0` and a reason naming `HANZO_CLIENT_ID` and `HANZO_CLIENT_SECRET`
+without contacting either host — an unsigned request to `base` would come back a
+bare `403`, which §6 reads as an error but which tells a reader their org was
+refused rather than that this process never said who it was. Every TypeScript method returns a `Promise`; the tables in
 §8 name the resolved type. Python ships a synchronous client and an asynchronous
 one, and both carry all six accessors with the same method names — an accessor
 present on one and absent from the other is the divergence this HIP exists to
@@ -288,6 +293,20 @@ Answer<T>
   always  request  string      # the response's X-Request-Id, on all three arms
 ```
 
+The fourth outcome — the one §6 classifies as an error, where nothing was
+decided — is a type too, and it is named `Fault` in all three languages:
+`{status: int, code: string, reason: string, request: string}`, raised rather
+than returned. `status` is `0` where nothing answered. `code` carries the RFC
+9457 `code` when the response had one and is empty otherwise, including for
+every fault an SDK raises before a request goes out.
+
+It is not named `Problem`, because RFC 9457's problem detail is a body a 402
+carries and §6 reads as a `denied` arm; one word for two things is what §10
+exists to prevent. It is not named `Error`, because that name is taken — by
+TypeScript's global, by Go's builtin interface, and by Python's own hierarchy —
+and a type that shadows it reads as the language's rather than as this
+specification's.
+
 The `held` arm is parsed from a body whose members are
 `{status: "held", id, clause, reason}` — the shape both `go-sdk`'s `result.go`
 and `python-sdk`'s `pkg/hanzoai/result.py` already read. `held.id` is the handle
@@ -309,7 +328,15 @@ added there tomorrow must arrive at a caller as data rather than as a parse
 failure. The codes present in that repository today are
 `insufficient_balance`, `spend_cap_exceeded`, `payment_required`, `unauthorized`
 and `forbidden`. A policy refusal has no distinct code of its own yet; §12
-records that, and an SDK MUST NOT invent one.
+records that, and an SDK MUST NOT invent one. Neither `policy_denied` nor
+`entitlement_required` appears anywhere in that repository, so an SDK that
+branched on either would branch on a string no server sends.
+
+Where a refusal body names no code, `code` is empty. An SDK MUST NOT derive one
+from the status: `payment_required` is a code cloud really answers — it is the
+`error` member of every `Refusal` (§6) — so writing it where the body said
+nothing would make the spend gate's refusal and an unreadable body the same
+value.
 
 Each language enforces the same obligation with what it has:
 
@@ -342,7 +369,7 @@ Apply the rows in order and take the first that matches.
 | 2 | any other 2xx | `ok` | it ran |
 | 3 | 402, any code | `denied` | money refused |
 | 4 | 403 whose `code` is `insufficient_balance` or `spend_cap_exceeded` | `denied` | authenticated, and refused |
-| 5 | everything else — 401, any other 403, other 4xx, all 5xx, transport failure | error | no decision was made, so there is nothing to read |
+| 5 | everything else — 401, any other 403, other 4xx, all 5xx, transport failure | `Fault` | no decision was made, so there is nothing to read |
 
 A hold is recognised by the **body**, never by the status code. Cloud answers a
 hold with `202`, but `202` is also the ordinary answer for "accepted, working on
@@ -362,6 +389,12 @@ same `denied` arm: `code` from `error`, `reason` from `message`, `product` and
 names the admit leg that failed rather than explaining the refusal to a person,
 and is dropped; `message` is the sentence a caller shows. §12 records the two
 bodies as a defect and states what removes it.
+
+One reader covers both, in one place per SDK, by named fallback and not by
+sniffing for a shape: `code` is `code` else `error`, `reason` is `detail` else
+`message`, `product` is verbatim, and `cures` come from `cure` and from nowhere
+else. Nothing else is read — not the wire's `reason`, not `title` — so the
+reader keeps working unchanged when cloud settles on the envelope alone.
 
 Row 4 is a workaround, not a design. It exists because cloud spells "no validated
 principal" as `403 forbidden` rather than `401`, so a bare `403` cannot be read as
@@ -421,15 +454,18 @@ money are different facts and MUST NOT stand in for each other.
 | `plan()` | `Plan` | `GET /v1/entitlement` |
 | `spent(filter)` | `Page<Charge>` | `GET /v1/billing/usage` |
 
-- `Allowance` is `{plan: string, limit: int, used: int, left: int, spent: Money,
-  window: string, resets: instant}`. The counts are calls, not money; `spent` is
-  the only money on the type. `window` is `"hour"` or `"day"` — whichever will
-  stop the caller next. When `limit == 0` the allowance is unbounded: the SDK
-  MUST report `left` and `resets` as absent, never as zero, because there is no
+- `Allowance` is `{plan: string, limit: int, used: int, left: int, spent: bool,
+  window: string, resets: instant}`. Every count on it is calls; there is no
+  money on the type, and `spent` is the boolean that says the subject is at the
+  limit. (The served `Allowance` schema declares `spent` as a boolean, and all
+  three SDKs read one.) `window` is `"hour"` or `"day"` — whichever will stop
+  the caller next. When `limit == 0` the allowance is unbounded: the SDK MUST
+  report `left` and `resets` as absent, never as zero, because there is no
   period to end.
 - `Balance` is `{available: Money, reserved: Money, account: string}`. The wire
-  member for `reserved` is `held`; the SDK renames it because `held` is an arm of
-  `Answer` (§5) and one word for two facts is what §10 exists to prevent.
+  member for `reserved` is `holds` (`cloud/apps/billing/ledger.go`); the SDK
+  renames it because `held` is an arm of `Answer` (§5) and one word for two
+  facts is what §10 exists to prevent.
 - `Plan` is `{tier: string, apps: map<string, bool>}`. A key is false both when
   the plan does not grant the app and when the licence authority could not be
   reached; cloud decides which, and the SDK reports what it is given. An SDK MUST
@@ -459,12 +495,21 @@ the verdict so that a cached or logged decision still says what it answered.
 and MUST NOT synthesize a sentence for a denial it was given no reason for.
 
 The argument order is `(sub, act, obj)` — subject, verb, object, the order the
-sentence reads in. The request body cloud expects orders its members
-`{sub, obj, act}`. JSON members are unordered, so nothing on the wire changes;
-what changes is the order a person writes the three arguments in, and all three
-SDKs MUST take them subject-first. The mismatch with the route's own member order
-is spelled here, once, so no implementer re-derives it from the document and
-arrives at `(sub, obj, act)`.
+sentence reads in. The body the served handler binds spells the three members
+`{subject, verb, path}`, and the SDK sends that. The `{sub, obj, act}` spelling
+appears only in the route's own description, which cloud declares at
+`cloud/plugin/authz/main.go:38`; the deployed predicate is
+`hanzoai/authz v1.10.37`, pinned at `cloud/go.mod:794`, whose handler
+(`serve/use.go`) binds `{subject, verb, path, grants}` and answers `400` when
+`subject`, `verb` or `path` is empty. It answers `{allow, subject, verb, path}`.
+§12 records the description as a defect. The two spellings are stated here,
+once, so no implementer re-derives either from the document.
+
+The predicate is stateless: it decides against grants carried in the request
+rather than against the org's stored set, and an empty grant set authorizes
+nothing, so a three-argument check answers `false` for every question until
+cloud reads the caller's grants from IAM. `Decision` is the shape that survives
+that change.
 
 `POST /v1/authz/check` declares neither a request body nor responses, so all
 three generators emit an unusable method. Policy is the one accessor that cannot
@@ -564,21 +609,48 @@ to `search`.
 | `get(kind, name)` | `Doc` | `GET /v1/framework/kb.{kind}/{name}` |
 | `list(kind, filter)` | `Page<Doc>` | `GET /v1/framework/kb.{kind}` |
 | `drop(kind, name)` — **gated** | `Answer<void>` | `DELETE /v1/framework/kb.{kind}/{name}` |
-| `import(format, data)` — **gated** (Python: `import_`) | `Answer<Import>` | `POST /v1/knowledge/import` |
+| `import(format, data, project?)` — **gated** (Python: `import_`) | `Answer<Import>` | `POST /v1/knowledge/import` |
 | `reindex()` — **gated** | `Answer<Reindex>` | `POST /v1/knowledge/reindex` |
 | `connectors()` | `[]Connector` | `GET /v1/knowledge/connectors` |
 | `connect(provider)` | `Link` | `GET /v1/knowledge/connectors/{provider}/connect` |
 | `sync(provider)` — **gated** | `Answer<Sync>` | `POST /v1/knowledge/connectors/{provider}/sync` |
 | `revoke(provider)` — **gated** | `Answer<void>` | `DELETE /v1/knowledge/connectors/{provider}` |
-| `links()` | `Links` | `GET /v1/knowledge/graph` |
+| `links(project?)` | `Links` | `GET /v1/knowledge/graph` |
 | `install()` — **gated** | `Answer<void>` | `POST /v1/framework/modules/kb/install` |
 
 `Doc` is `{kind, name, title, body, project, url}` where `kind` is one of `page`,
-`memory`, `source`. One method covers three kinds: the SDK maps `kind` to the
-doctype `kb.<kind>`. `put` sends `POST /v1/framework/kb.{kind}` when `Doc.name`
-is empty and `PUT /v1/framework/kb.{kind}/{name}` when it is set. The caller's
-`name` is the decision; the SDK MUST NOT probe with a `GET` first, because a
-read between the decision and the write is a race the caller did not ask for.
+`memory`, `source`. Only `kind` is required of a caller; the rest are what that
+caller has. One method covers three kinds: the SDK maps `kind` to the doctype
+`kb.<kind>`.
+
+`put` sends `PUT /v1/framework/kb.{kind}/{name}` when `Doc.name` is set, and
+`POST /v1/framework/kb.{kind}` when it is empty **or when the `PUT` answers
+`404`**. The store decides whether the document exists, because the name cannot:
+`kb.page` is autonamed `field:slug`, so a page IS its name, and a page being
+created carries one exactly as a page being revised does. Reading a present name
+as "it exists" would leave no way to create a page at all — the `PUT` would
+`404` forever and a `POST` with no name would be refused for the missing
+required `slug`. The SDK MUST NOT probe with a `GET` first: the `PUT` that
+`404`s wrote nothing, so the `POST` that follows is the first write, and a
+concurrent create collides on the unique name rather than being overwritten.
+
+The write body is the document's own field data as its doctype declares it, and
+nothing else — the framework validates against `DocType.Fields` and drops
+anything undeclared before the store sees it. A page keeps its text in `body`
+and its name in `slug`; a memory keeps its text in `content`; only a source
+declares a `url`. `name` is not a field of any of the three and MUST NOT be
+sent: the engine reads a body `name` as a requested name, and all three kb
+doctypes ignore it (a page is named from `slug`, a memory and a source are hash-
+named by the store). A field the caller left empty is left out, so the doctype's
+own required fields refuse the write and name the one that is missing.
+
+`list`'s filter is `{project, order, limit}` — the three narrowings
+`GET /v1/framework/{doctype}` serves that a person would say (`filters`,
+`order_by`, `limit`). `order` is `"<field> [asc|desc]"`. The route publishes no
+count and takes no page number, so `Page.total` here is the number of documents
+on the page; §9's paging rule does not apply to it.
+
+`links(project?)` narrows to one project scope; absent, it reads the whole org.
 
 `import` takes `format` — one of `obsidian`, `notion`, `roam`, `evernote` — and
 the export's bytes, sent as the multipart `file` field. It answers
@@ -621,8 +693,17 @@ itself an assertion.
 | `vocabulary()` | `Vocabulary` | `GET /v1/graph/vocabulary` |
 
 - `Fact` is `{entity, relation, value, names, at, seen, source, evidence,
-  confidence}`. `names: true` declares that the value is another entity's key and
-  that the assertion is therefore an edge.
+  confidence}` — what an asserter states — plus `{id, by, knowable}`, which the
+  server mints and the SDK carries **read-only**. `names: true` declares that the
+  value is another entity's key and that the assertion is therefore an edge.
+  `id` is the assertion's content address, `by` the identity that filed it, and
+  `knowable` the first instant this plane could have answered with it, which is
+  what an as-of read is bounded by. `GET /v1/graph` serves all twelve
+  (`cloud/apps/graph/typed.go`'s `wireFact`) and no other route hands back a
+  content address, so an SDK that projected the nine would make a read lossy
+  with nothing to recover it from. The write path MUST strip the three: a fact
+  read back and asserted again states the nine and none of the three, so a
+  caller can neither forge a `by` nor backdate a `knowable`.
 - `Wrote` is `{recorded, duplicate, refused, reasons[]}`. Each member of a batch
   is judged on its own: one malformed fact MUST NOT discard the batch. Every SDK
   MUST check the invariant `recorded + duplicate + refused == len(facts)` on
@@ -641,8 +722,14 @@ itself an assertion.
   only when a conflict claims a *different* value than the winner.
 - `walk` takes `Opts{relation, direction, depth, at}` and answers
   `{entities[], depth, bound, truncated}`. Only edges are followed.
-- `extract` reads what a document states without recording it. `ingest` takes
-  `{source, subject, text, at}` and does both, answering the same `Wrote`.
+- `extract` reads what a document states without recording it; `ingest` does
+  both, answering the same `Wrote`. Both take one `Source`,
+  `{source, subject, text, at}` — the shape `cloud/apps/graph/semantic.go`'s
+  `graphSourceIn` binds, where `source` and `text` are required and `at` is
+  required by `ingest`. It is one type because the two operations take the same
+  thing and differ only in what they do with what they found, and a language
+  that spread it into separate arguments would make the first positional
+  argument of `extract` a different thing in a different language.
 - `Vocabulary` is `{relations[], rules[], bound}` — the relations in use and the
   ordering that decides a conflict. The wire member is `rule`; the SDK pluralizes
   it because it is a list, as with `cures` (§5).
@@ -667,19 +754,28 @@ instant type has already diverged.
 | `Answer.request` | all three arms; the join to `audit.Event.request` |
 | `at` | `graph.Fact.at`, `audit.Event.at`, `Charge.at`, `graph.resolve(at)`, `graph.walk` opts |
 | `Money` | `budget.balance`, `budget.spent` |
-| `kind` | `kb.Doc.kind`, `search.Opts.kinds`, `search.Hit.kind` |
+| `kind` | `kb.Doc.kind`, `search.Opts.kinds`, `search.Hit.kind` — one word, `page` \| `memory` \| `source` |
 | `Page<T>` | `audit.list`, `budget.spent`, `kb.list` |
 | `find` | `search.find`, `graph.find` |
 
 Three rules are stated once here and govern every accessor:
 
-- **Paging.** `Page<T>` is `{items, total}`. A method returning one takes `size`
-  (default 100) and `page` in its filter; the caller requests page 1, and stops
-  when a page comes back empty or the running count reaches `total`. `all()` is
-  defined only on `audit` (§8.3); `budget.spent` and `kb.list` are paged by the
-  caller. `search` and `graph.read` bound their results with `limit`/`offset`
-  rather than `Page<T>` because their routes do; an SDK MUST NOT convert between
-  the two conventions.
+- **Paging.** `Page<T>` is `{items, total}`, where `total` is the count the
+  SERVER matched for the filter the SERVER applied. An SDK MUST NOT substitute a
+  count of its own — including where it narrows further on the client, as
+  `audit.Filter.request` does (§12): there `items` are the page's matches and
+  `total` still counts what the server was asked, because a number the SDK made
+  up is a number nobody counted. `all()` is defined only on `audit` (§8.3), and
+  it counts what the server sent against that total rather than what survived a
+  client-side narrowing — counting the survivors would end the walk early or not
+  at all. `audit.list` takes `size` (default 100) and `page` in its filter and
+  sends them only when the caller set one; the route's own defaults are the same
+  100 and 1, so an unset term is a term the route decides identically.
+  `budget.spent` and `kb.list` are bounded by their own routes, which publish no
+  count and take no page number, so `total` there is the page's own length.
+  `search` and `graph.read` bound their results with `limit`/`offset` rather than
+  `Page<T>` because their routes do; an SDK MUST NOT convert between the two
+  conventions.
 - **Instants and durations.** An instant is RFC 3339 on the wire and each
   language's own instant type in the SDK — `time.Time`, `datetime`, `Date`. This
   governs `graph.Fact.at` and `seen`, `audit.Event.at`, `audit.Filter.since` and
@@ -709,6 +805,15 @@ Two consequences follow, and each is normative:
    invent values for them.
 3. `Answer.request` and `audit.Event.request` are the same value, so a call and
    the row recording it can be joined without the caller correlating by hand.
+4. `kind` is one word in all three places, and it is the bare word — `page`,
+   `memory`, `source` — never the doctype address. The wire carries the address:
+   `search`'s `doctypes` term matches `kb.page`, `kb.memory` and `kb.source`
+   EXACTLY and silently drops anything else (`cloud/apps/knowledge/subsystem.go`,
+   `sanitizeDocTypes`), and `search.Hit.doctype` comes back in the same
+   spelling. The SDK maps in both directions at the boundary, so a caller
+   narrowing to `page` narrows the query rather than emptying it. A doctype from
+   another corpus — a lexical row carries its own — has no `kb.` prefix and
+   passes through unchanged.
 
 ### §10 The naming rule
 
@@ -751,11 +856,14 @@ HIP, not to this one.
 | A missing principal answers `403 forbidden`, not `401` | §6's fourth row: match `403` against a list of refusal codes | the code list; the rule becomes 402 or 403 ⇒ `denied` |
 | Two 402 bodies are served: the RFC 9457 problem detail with `code`, and `cloud.Refusal` with `{error, product, reason, message, cure[]}` | parse both, map both onto `denied` (§6) | one parse instead of two |
 | `POST /v1/authz/check` declares no request body and no responses | hand-write `policy.check` against §8.2 | policy becomes generatable |
+| That route's own description states the body as `{sub, obj, act}` (`cloud/plugin/authz/main.go:38`), which the deployed handler does not bind — `hanzoai/authz v1.10.37` `serve/use.go` binds `{subject, verb, path, grants}` and `400`s otherwise | send `{subject, verb, path}`, the body the handler reads | the description and the handler say the same thing, and an implementer can trust either |
 | A policy refusal carries no code of its own, and `Decision.reason` is unpopulated | classify a policy refusal by §6 like any other, and carry `reason` empty | a caller learns which clause refused, and §9's one-clause-vocabulary rule becomes checkable |
 | `GET /v1/billing/balance` and `GET /v1/billing/usage` declare no response schema | hand-model `Balance` and `Charge` per §8.1 | budget stops being modelled in three places |
 | `POST /v1/knowledge/import` and `POST /v1/framework/{doctype}` declare no response schema | hand-model `Import` and `Doc` per §8.5 | `kb` stops being modelled in three places |
 | `GET /v1/audit` accepts no `requestId` filter, though every row carries one | ship `Filter.request`, fall back to `{action, since}` and match `request` client-side | the audit join stops being a client-side scan |
 | `GET /v1/audit` declares `pageSize` and `p` as strings | serialize integers as strings at the boundary | nothing else; the SDK types stay integers either way |
+| `GET /v1/framework/{doctype}` publishes no count and takes no page number, so a listing cannot be paged or sized | report `Page.total` as the page's own length (§8.5) and bound with `limit` | `kb.list` pages like every other listing |
+| `kb.page` is autonamed `field:slug`, so a `PUT` to a page that does not exist yet answers `404` and a `POST` with no `slug` is refused | `put` sends the `PUT` and follows a `404` with the `POST` (§8.5) | the caller's `name` decides the method, in one round trip |
 | `POST /v1/framework/modules/kb/install` must be called before the first write | expose `kb.install()` (§8.5) | `kb.install` leaves the surface |
 | `POST /v1/graph/ingest` validates the body before resolving tenancy — an unauthenticated `POST {}` answers `400`, not `403` | none; the SDK always authenticates | an unauthenticated caller stops learning the validation rules |
 
@@ -784,7 +892,8 @@ outside the package.
    reads `HANZO_API_KEY`.
 3. `As`/`as_`/`as` per §4, and no method anywhere in §8 taking an org or subject.
 4. `Answer<T>` per §5, returned by every method §8 marks gated, with no second
-   entry point and no opt-in.
+   entry point and no opt-in, and `Fault` per §5 raised for every outcome §6
+   classifies as an error — one name for the fourth outcome, in all three.
 5. Response classification per §6, identical across the three.
 6. The methods, types, field names and renames of §8, spelled exactly as written.
 7. Shared types declared once per §9.
