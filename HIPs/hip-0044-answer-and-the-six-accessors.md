@@ -7,7 +7,7 @@ category: Interface
 status: Draft
 implementation-go: none
 created: 2026-09-10
-requires: HIP-0040, HIP-0111, HIP-0139, HIP-1030, HIP-1198
+requires: HIP-0040, HIP-0111, HIP-0139, HIP-0526, HIP-1030, HIP-1041, HIP-1101, HIP-1103, HIP-1126, HIP-1147, HIP-1198, HIP-1202, HIP-1220, HIP-1260
 ---
 
 # HIP-0044: Answer — Budget, Policy, Audit, Search, KB and Graph in Three SDKs
@@ -68,7 +68,7 @@ things they both attempt. Measured on the working trees at 2026-09-08:
 
 | Observation | go-sdk | python-sdk | js-sdk |
 |---|---|---|---|
-| Files under the package not listed in `.generated` | 6 of 2703 | 9 | **0 of 2698** |
+| Files under the package not listed in `.generated` | 6 of 2703 | 9 of 2710 | 0 of 2698 |
 | Hand-written client object | no — two constructors | `Client(ApiClient)` | none |
 | Subject scoping | `As(subject)` | `as_(subject)` | absent |
 | Hold type | `Result[T]`, opt-in via `Read()` | `Held` raised by default | absent |
@@ -153,7 +153,8 @@ accessor is built over them; it does not replace them and MUST NOT hide them.
 
 Each SDK MUST expose exactly one client type carrying the six accessors. In
 TypeScript this is a new type — the package has no client object today — and it
-is the only new type this HIP adds to a language.
+is the only new type this HIP adds to a language's public entry point; the
+types of §5, §8 and §9 are added to all three alike.
 
 | Language | Construction |
 |---|---|
@@ -173,9 +174,17 @@ case and MUST work.
 | `issuer` | `HANZO_ISSUER_URL` | `https://hanzo.id` | where IAM answers |
 | `resource` | `HANZO_RESOURCE` | the value of `base` | RFC 8707 audience |
 
-Requests MUST go to `base` with paths under `/v1/`. No SDK may emit an `/api/`
-path segment, a `v2` prefix, or a request to a third host. The issuer is the only
-other host any SDK contacts, and only to mint (§3).
+Requests MUST go to `base` with paths under `/v1/`. An SDK MUST NOT emit an
+`/api/` path segment, a `v2` prefix, or a request to a third host. The issuer is
+the only other host any SDK contacts, and only to mint (§3).
+
+Construction MUST NOT fail on a missing `id` or `secret`; the first call does,
+when the exchange of §3 is refused. Go's constructor therefore returns one value,
+not `(client, error)`. Every TypeScript method returns a `Promise`; the tables in
+§8 name the resolved type. Python ships a synchronous client and an asynchronous
+one, and both carry all six accessors with the same method names — an accessor
+present on one and absent from the other is the divergence this HIP exists to
+prevent, inside a single language.
 
 ### §3 Identity
 
@@ -193,7 +202,11 @@ grant_type=client_credentials&resource={resource}
 
 The token MUST be cached until `expires_in` minus 60 seconds. On a `401` from
 `base`, the client MUST re-mint once and replay the request; a second `401` is
-the server's answer and surfaces as an error, never as a retry loop.
+the server's answer and surfaces as an error, never as a retry loop. This one
+re-mint is the only respect in which a request to `base` behaves differently from
+HIP-0040's transport, and it applies to every method the client makes rather than
+only to §8's: a credential that has expired has expired for all of them. HIP-0040
+keeps retry, backoff and timeouts unchanged.
 
 A client MUST NOT accept a pre-existing bearer token, an API key, or a
 `HANZO_API_KEY` environment variable, and MUST NOT read one if it is set. There
@@ -241,23 +254,31 @@ NOT treat a refusal here as a `denied` arm — it is a `401`/`403` on a credenti
 operation, so it is an error per §6, and it means the calling application is not
 permitted to act for anyone rather than that this call was refused.
 
-No method in §8 takes an org, a tenant, or a subject argument. The tenant is the
-validated principal, everywhere. A method accepting one would be a cross-tenant
-read the caller asserted for itself.
+No method in §8 takes an org or a tenant, and none takes a subject it will act
+as. The tenant is the validated principal, everywhere. A method accepting one
+would be a cross-tenant read the caller asserted for itself. `policy.check` takes
+a `sub` (§8.2) because it asks a question *about* a subject rather than acting as
+one; its answer is scoped to the caller's own tenant like every other read.
 
 Python spells this `as_` because `as` is a keyword and PEP 8 prescribes the
 trailing underscore. The word is still `as`. This is the general rule of §10, and
-within this HIP it applies exactly twice: here, and to `graph.assert` in §8.6.
+within this HIP it applies three times: here, to `kb.import` in §8.5, and to
+`graph.assert` in §8.6.
 
 ### §5 Answer
 
 Every method §8 marks as gated MUST return one type with three arms. A caller
-MUST NOT be able to reach the value without acknowledging the arm.
+MUST NOT be able to reach the value without first narrowing to an arm, to the
+extent the language admits: TypeScript and Python make it impossible, and Go
+makes it an ignored `error`, which `errcheck` and `golangci-lint` report but the
+compiler permits. Go's arm is therefore enforced by convention where the other
+two enforce it by type. That is the language's limit, not a licence to weaken the
+other two.
 
 ```
 Answer<T>
   ok      value    T
-  denied  code     string      # "insufficient_balance", "policy_denied", …
+  denied  code     string      # "insufficient_balance", "spend_cap_exceeded", …
           reason   string      # the problem detail's `detail` member
           product  string?     # present when the gate is product-scoped
           cures    []Cure      # {kind, url} — the ways out, in the order to offer them
@@ -267,23 +288,35 @@ Answer<T>
   always  request  string      # the response's X-Request-Id, on all three arms
 ```
 
+The `held` arm is parsed from a body whose members are
+`{status: "held", id, clause, reason}` — the shape both `go-sdk`'s `result.go`
+and `python-sdk`'s `pkg/hanzoai/result.py` already read. `held.id` is the handle
+the approval is known by; no route redeems it today, and §11 records that. An SDK
+carries the id and offers no method that resolves it, rather than inventing one.
+
+`Answer<void>` is the arm set with no value. Go spells it `Answer[struct{}]` and
+its `Value()` yields the zero struct; Python's `.value` yields `None`;
+TypeScript's `ok` arm carries `value: void`. The arms are otherwise identical.
+
 `Cure` is `{kind: string, url: string}`. The SDK field is plural (`cures`)
 because it is a list; the wire member is `cure`, and the SDK MUST NOT rename the
 wire.
 
 `code` MUST be carried as a string in all three languages and MUST NOT be an
 enum, a union of literals, or any closed type. The set is open by construction —
-it is decided in `cloud/errmap.go` and `cloud/middleware_billing.go`, and a code
+it is decided in `hanzoai/cloud`'s `errmap.go` and `middleware_billing.go`, and a code
 added there tomorrow must arrive at a caller as data rather than as a parse
-failure. The codes observed today are `insufficient_balance`,
-`spend_cap_exceeded`, `payment_required`, `unauthorized` and `forbidden`.
+failure. The codes present in that repository today are
+`insufficient_balance`, `spend_cap_exceeded`, `payment_required`, `unauthorized`
+and `forbidden`. A policy refusal has no distinct code of its own yet; §12
+records that, and an SDK MUST NOT invent one.
 
 Each language enforces the same obligation with what it has:
 
 | Language | Shape | What stops a caller ignoring the arm |
 |---|---|---|
-| Go | `Answer[T]` with `Value() (T, error)`, `Denied() (*Denied, bool)`, `Held() (*Held, bool)` | `Value` returns `*Denied` or `*Held` as its `error`; every linter flags an ignored one, and ignoring it yields the zero value |
-| Python | `Answer` with a `.value` property that raises `Denied` or `Held`, plus `.denied` and `.held` for the branch | reaching `.value` on a non-`ok` arm raises |
+| Go | `Answer[T]` with a `Status` field (`"ok"`/`"denied"`/`"held"`), `Value() (T, error)`, `Denied() (*Denied, bool)`, `Held() (*Held, bool)` | `Value` returns `*Denied` or `*Held` as its `error`; discarding it yields the zero value and is reported by `errcheck` |
+| Python | `Answer` with a `.status` attribute, a `.value` property that raises `Denied` or `Held`, and `.denied` / `.held` returning the same objects those raise | reaching `.value` on a non-`ok` arm raises |
 | TypeScript | a union discriminated on `status`: `{status:"ok", value:T, request:string}` \| `{status:"denied", code, reason, product?, cures, request}` \| `{status:"held", id, clause, reason, request}` | `a.value` does not typecheck until the union is narrowed |
 
 `request` MUST be present on all three arms and MUST carry the response's
@@ -301,35 +334,42 @@ provided for either.
 One rule, applied identically by every SDK to every gated method. There is no
 per-accessor variation.
 
-| Response | Arm | Why |
-|---|---|---|
-| 2xx whose body is not a hold | `ok` | it ran |
-| 202 with body `{"status":"held", …}` | `held` | the body decides, never the status code |
-| 402, any code | `denied` | money refused |
-| 403 whose `code` is one of `policy_denied`, `entitlement_required`, `spend_cap_exceeded`, `insufficient_balance` | `denied` | authenticated, and refused |
-| 401 · 403 with any other code · other 4xx · all 5xx · transport failure | error | no decision was made, so there is nothing to read |
+Apply the rows in order and take the first that matches.
 
-A hold is recognised by the **body**, never by the status code: a 202 is also
-the ordinary answer for "accepted, working on it" on many routes, and an SDK
-that read 202 as a hold would invent holds that do not exist.
+| # | Response | Arm | Why |
+|---|---|---|---|
+| 1 | any 2xx whose body is a JSON object with `status` equal to `"held"` | `held` | the body decides |
+| 2 | any other 2xx | `ok` | it ran |
+| 3 | 402, any code | `denied` | money refused |
+| 4 | 403 whose `code` is `insufficient_balance` or `spend_cap_exceeded` | `denied` | authenticated, and refused |
+| 5 | everything else — 401, any other 403, other 4xx, all 5xx, transport failure | error | no decision was made, so there is nothing to read |
+
+A hold is recognised by the **body**, never by the status code. Cloud answers a
+hold with `202`, but `202` is also the ordinary answer for "accepted, working on
+it", so the status code does not separate the two. Testing the body first, at any
+2xx, means a hold served at some other 2xx is still read as a hold, and a `202`
+that is merely an acknowledgement is still read as `ok`.
 
 Two refusal bodies are served on the routes §8 binds, and both MUST be parsed.
 The AI surface emits a third, nested shape; that surface is HIP-0040's and no
 method here reaches it. The first is the
-RFC 9457 problem detail emitted by `cloud/errmap.go`, carrying `code`. The second
-is `cloud.Refusal` (`cloud/middleware_spend.go`), which is
+RFC 9457 problem detail emitted by `hanzoai/cloud`'s `errmap.go`, carrying `code`.
+The second is that repository's `Refusal` (`middleware_spend.go`), which is
 `{error, product, reason, message, cure[]}` — its `error` member is always
 `payment_required` and it carries no `code`. An SDK MUST map the second onto the
 same `denied` arm: `code` from `error`, `reason` from `message`, `product` and
-`cures` verbatim. §12 records this as a defect and states what removes it.
+`cures` verbatim. The wire's own `reason` member — `"unpaid"` or `"unresolved"` —
+names the admit leg that failed rather than explaining the refusal to a person,
+and is dropped; `message` is the sentence a caller shows. §12 records the two
+bodies as a defect and states what removes it.
 
-The fourth row of the table is a workaround, not a design. It exists because
-cloud spells "no validated principal" as `403 forbidden` rather than `401`. When
-that is fixed (§12) the rule collapses to **402 or 403 ⇒ `denied`** and the code
-list disappears. While the defect stands an SDK MUST match exactly those four
-codes and classify any other `403` as an error. That closed list is a workaround
-for one server behaviour; it says nothing about the code vocabulary of §5, which
-is open and MUST stay open.
+Row 4 is a workaround, not a design. It exists because cloud spells "no validated
+principal" as `403 forbidden` rather than `401`, so a bare `403` cannot be read as
+a refusal. When that is fixed (§12) the rule collapses to **402 or 403 ⇒
+`denied`** and the code list disappears. While the defect stands an SDK MUST
+match exactly the two codes named and classify any other `403` as an error. That
+closed list is a workaround for one server behaviour; it says nothing about the
+code vocabulary of §5, which is open and MUST stay open.
 
 ### §7 What is not an Answer
 
@@ -381,17 +421,21 @@ money are different facts and MUST NOT stand in for each other.
 | `plan()` | `Plan` | `GET /v1/entitlement` |
 | `spent(filter)` | `Page<Charge>` | `GET /v1/billing/usage` |
 
-- `Allowance` is `{plan, limit, used, left, spent, window, resets}`. `window` is
-  `"hour"` or `"day"` — whichever will stop the caller next. When `limit == 0`
-  the allowance is unbounded: the SDK MUST report `left` and `resets` as absent,
-  never as zero, because there is no period to end.
-- `Balance` is `{available: Money, held: Money, account}`. `Money` is
-  `{cents: int, currency: string}` — integer minor units. No SDK may return a
-  float for money, anywhere, for any reason.
-- `Plan` is `{tier, apps: map<string, bool>}`. A key is false both when the plan
-  does not grant the app and when the licence authority could not be reached: a
-  read that decides what to show MUST fail to locked, not to an error.
-- `Charge` is `{id, at, model, amount: Money}`.
+- `Allowance` is `{plan: string, limit: int, used: int, left: int, spent: Money,
+  window: string, resets: instant}`. The counts are calls, not money; `spent` is
+  the only money on the type. `window` is `"hour"` or `"day"` — whichever will
+  stop the caller next. When `limit == 0` the allowance is unbounded: the SDK
+  MUST report `left` and `resets` as absent, never as zero, because there is no
+  period to end.
+- `Balance` is `{available: Money, reserved: Money, account: string}`. The wire
+  member for `reserved` is `held`; the SDK renames it because `held` is an arm of
+  `Answer` (§5) and one word for two facts is what §10 exists to prevent.
+- `Plan` is `{tier: string, apps: map<string, bool>}`. A key is false both when
+  the plan does not grant the app and when the licence authority could not be
+  reached; cloud decides which, and the SDK reports what it is given. An SDK MUST
+  NOT convert a transport failure into `false` — that would be a read inventing
+  an answer.
+- `Charge` is `{id: string, at: instant, model: string, amount: Money}`.
 
 `Balance` and `Charge` are modelled by the SDK because the served document
 declares no response schema for their routes (§12).
@@ -408,15 +452,19 @@ May this subject take this action on this object.
 |---|---|---|
 | `check(sub, act, obj)` | `Decision` | `POST /v1/authz/check` |
 
-`Decision` is `{allow: bool, sub, act, obj, reason}`. All three arguments are
-required. The question is echoed beside the verdict so that a cached or logged
-decision still says what it answered.
+`Decision` is `{allow: bool, sub: string, act: string, obj: string,
+reason: string}`. All three arguments are required. The question is echoed beside
+the verdict so that a cached or logged decision still says what it answered.
+`reason` is empty until cloud fills it (§12); the SDK carries the field as given
+and MUST NOT synthesize a sentence for a denial it was given no reason for.
 
 The argument order is `(sub, act, obj)` — subject, verb, object, the order the
 sentence reads in. The request body cloud expects orders its members
-`{sub, obj, act}`. The SDK MUST send the body cloud expects and MUST take the
-arguments in the order above. That difference is spelled here, once, and MUST NOT
-be re-derived in any implementation.
+`{sub, obj, act}`. JSON members are unordered, so nothing on the wire changes;
+what changes is the order a person writes the three arguments in, and all three
+SDKs MUST take them subject-first. The mismatch with the route's own member order
+is spelled here, once, so no implementer re-derives it from the document and
+arrives at `(sub, obj, act)`.
 
 `POST /v1/authz/check` declares neither a request body nor responses, so all
 three generators emit an unusable method. Policy is the one accessor that cannot
@@ -440,13 +488,14 @@ page}`, every field optional and every field a narrowing **within** the caller's
 own org. `Page<T>` is `{items, total}`, where `total` is the count the filter
 matched across all pages.
 
-`all` walks every page. Go returns `iter.Seq2[Event, error]`, Python an
-`Iterator[Event]`, TypeScript an `AsyncIterable<Event>`. One paging rule, shared
-by every `Page<T>` in this HIP: request page 1 at the caller's size, default 100;
-stop when a page returns empty or the running count reaches `total`.
+`all` walks every page by the rule in §9. Go returns `iter.Seq2[Event, error]`,
+Python an `Iterator[Event]`, TypeScript an `AsyncIterable<Event>`; in Python and
+TypeScript a failure part-way through raises out of the iteration rather than
+ending it, so a caller cannot mistake a broken walk for a finished one.
 
-Six wire fields are renamed. Nothing else moves, and an SDK MUST NOT rename
-anything else.
+Six wire fields are renamed for what they carry. Nothing else is renamed for that
+reason; `pageSize` and `p` also reach the caller as `size` and `page`, which is a
+type repair rather than a rename and is recorded in §12.
 
 | Wire | SDK | Why |
 |---|---|---|
@@ -458,8 +507,10 @@ anything else.
 | `userAgent` | `agent` | likewise |
 
 Unchanged: `seq`, `org`, `email`, `home`, `action`, `resource`, `method`, `path`,
-`result`, `status`, `reason`. `result` is `success`, `deny` or `error`. `home` is
-present only on a cross-org action and marks it as an impersonation.
+`result`, `status`, `reason`. `result` is `success`, `deny` or `error` — the
+wire's own vocabulary, kept verbatim; a row reading `deny` is the trail's record
+of a call that returned a `denied` arm, and the SDK MUST NOT restate it as
+`denied` merely to match §5.
 
 There is no write method and MUST NOT be one. The server writes the trail; an
 SDK that offered a write would let a caller forge its own evidence.
@@ -474,8 +525,10 @@ One ranked result set over everything the org has stored.
 
 `Opts` is `{mode, project, kinds[], index, limit, offset}`. `mode` is one of
 `auto`, `text`, `semantic`, `hybrid`, default `auto`. The modes name kinds of
-retrieval, never backends: a caller chooses how to search and MUST NOT be able to
-choose which subsystem answers.
+retrieval, not backends. `mode` constrains which retrieval the server runs, and
+the server chooses the subsystem that runs it; the SDK exposes no name from
+`Backend.name` as an input, so a caller can ask for semantic retrieval but cannot
+route a query to a named subsystem.
 
 ```
 Hits     status    "ok" | "partial" | "unavailable"
@@ -511,7 +564,7 @@ to `search`.
 | `get(kind, name)` | `Doc` | `GET /v1/framework/kb.{kind}/{name}` |
 | `list(kind, filter)` | `Page<Doc>` | `GET /v1/framework/kb.{kind}` |
 | `drop(kind, name)` — **gated** | `Answer<void>` | `DELETE /v1/framework/kb.{kind}/{name}` |
-| `import(format, data)` — **gated** | `Answer<Import>` | `POST /v1/knowledge/import` |
+| `import(format, data)` — **gated** (Python: `import_`) | `Answer<Import>` | `POST /v1/knowledge/import` |
 | `reindex()` — **gated** | `Answer<Reindex>` | `POST /v1/knowledge/reindex` |
 | `connectors()` | `[]Connector` | `GET /v1/knowledge/connectors` |
 | `connect(provider)` | `Link` | `GET /v1/knowledge/connectors/{provider}/connect` |
@@ -522,7 +575,10 @@ to `search`.
 
 `Doc` is `{kind, name, title, body, project, url}` where `kind` is one of `page`,
 `memory`, `source`. One method covers three kinds: the SDK maps `kind` to the
-doctype `kb.<kind>`. A `name` that already exists is a `PUT`; absent, a `POST`.
+doctype `kb.<kind>`. `put` sends `POST /v1/framework/kb.{kind}` when `Doc.name`
+is empty and `PUT /v1/framework/kb.{kind}/{name}` when it is set. The caller's
+`name` is the decision; the SDK MUST NOT probe with a `GET` first, because a
+read between the decision and the write is a race the caller did not ask for.
 
 `import` takes `format` — one of `obsidian`, `notion`, `roam`, `evernote` — and
 the export's bytes, sent as the multipart `file` field. It answers
@@ -541,7 +597,7 @@ between them.
 KB writes are not under `/v1/knowledge` at all — they are generic doctype CRUD at
 `/v1/framework/kb.page`, `kb.memory` and `kb.source`, which is why the routes
 straddle two capabilities. The accessor presents one `kb` and hides the split.
-No SDK may expose `/v1/framework/{doctype}` generically: a caller who needs
+An SDK MUST NOT expose `/v1/framework/{doctype}` generically: a caller who needs
 arbitrary doctypes is not using this accessor.
 
 `install()` is required once per org before the first `put`. It is in the surface
@@ -569,9 +625,12 @@ itself an assertion.
   that the assertion is therefore an edge.
 - `Wrote` is `{recorded, duplicate, refused, reasons[]}`. Each member of a batch
   is judged on its own: one malformed fact MUST NOT discard the batch. Every SDK
-  MUST check the invariant `recorded + duplicate + refused == len(facts)`; a
-  batch that does not add up is a transport fault and surfaces as an error, never
-  as an `Answer`.
+  MUST check the invariant `recorded + duplicate + refused == len(facts)` on
+  `assert`, where the caller supplied the facts and can count them; a batch that
+  does not add up is a transport fault and surfaces as an error, never as an
+  `Answer`. The check does not apply to `ingest`, which extracts its own facts, so
+  the SDK has no count to compare against. `reasons[]` explains the refusals but
+  does not index them to particular facts; the SDK carries it as given.
 - `read` reads by key, `{entity, relation, value, at, limit}`. It resolves
   nothing and withholds nothing — a superseded claim and the claim that
   superseded it both appear.
@@ -584,14 +643,14 @@ itself an assertion.
   `{entities[], depth, bound, truncated}`. Only edges are followed.
 - `extract` reads what a document states without recording it. `ingest` takes
   `{source, subject, text, at}` and does both, answering the same `Wrote`.
-- `Vocabulary` is `{relations[], rule[], bound}` — the relations in use and the
-  ordering that decides a conflict.
+- `Vocabulary` is `{relations[], rules[], bound}` — the relations in use and the
+  ordering that decides a conflict. The wire member is `rule`; the SDK pluralizes
+  it because it is a list, as with `cures` (§5).
 
-Instants are RFC 3339 strings on the wire and each language's own instant type in
-the SDK: `time.Time`, `datetime`, `Date`. `at` is when the thing was so; `seen`
-is when it became knowable and defaults to `at`. Cloud refuses an `at` more than
-five minutes ahead of its own clock; the SDK MUST NOT clamp, round, or silently
-correct it.
+Instants follow §9. `at` is when the thing was so; `seen` is when it became
+knowable and defaults to `at`. Cloud refuses an `at` in the future beyond a small
+tolerance; the SDK MUST NOT clamp, round, or silently correct one, and a fact
+refused on its timestamp comes back in `Wrote.refused` like any other refusal.
 
 Python spells the first method `assert_` because `assert` is a keyword (§10).
 
@@ -603,25 +662,51 @@ instant type has already diverged.
 
 | Type or field | Where it appears |
 |---|---|
-| `Answer<T>` | every gated method in all six accessors |
-| `Denied.code` | budget refuses, policy refuses, entitlement refuses — one string, one branch |
+| `Answer<T>` | the ten gated methods, which fall in `search`, `kb` and `graph` |
+| `Denied.code` | whichever gate stopped a gated call — money, policy or entitlement; one string, one branch |
 | `Answer.request` | all three arms; the join to `audit.Event.request` |
-| `at` | `graph.Fact.at`, `audit.Event.at`, `graph.resolve(at)`, `graph.walk` opts |
+| `at` | `graph.Fact.at`, `audit.Event.at`, `Charge.at`, `graph.resolve(at)`, `graph.walk` opts |
 | `Money` | `budget.balance`, `budget.spent` |
 | `kind` | `kb.Doc.kind`, `search.Opts.kinds`, `search.Hit.kind` |
-| `Page<T>` and `all()` | `audit`, `budget.spent`, `kb.list` |
+| `Page<T>` | `audit.list`, `budget.spent`, `kb.list` |
 | `find` | `search.find`, `graph.find` |
 
-Three consequences follow, and each is normative:
+Three rules are stated once here and govern every accessor:
+
+- **Paging.** `Page<T>` is `{items, total}`. A method returning one takes `size`
+  (default 100) and `page` in its filter; the caller requests page 1, and stops
+  when a page comes back empty or the running count reaches `total`. `all()` is
+  defined only on `audit` (§8.3); `budget.spent` and `kb.list` are paged by the
+  caller. `search` and `graph.read` bound their results with `limit`/`offset`
+  rather than `Page<T>` because their routes do; an SDK MUST NOT convert between
+  the two conventions.
+- **Instants and durations.** An instant is RFC 3339 on the wire and each
+  language's own instant type in the SDK — `time.Time`, `datetime`, `Date`. This
+  governs `graph.Fact.at` and `seen`, `audit.Event.at`, `audit.Filter.since` and
+  `until`, `Charge.at` and `Allowance.resets`. A duration is milliseconds on the
+  wire and `time.Duration`, `timedelta`, and a number of milliseconds in
+  TypeScript, which has no duration type; this governs `Hits.took` and
+  `Backend.took`.
+- **Money.** `Money` is `{minor: int, currency: string}`, where `minor` counts the
+  currency's minor units as ISO 4217 defines them — hundredths for USD, whole yen
+  for JPY, thousandths for KWD. The field is not named `cents`, because for two of
+  those three that would be false, and not `amount`, because `Charge.amount` is
+  already a `Money`. Cloud answers USD today. An SDK MUST NOT represent money as
+  a float, anywhere.
+
+Two consequences follow, and each is normative:
 
 1. A refusal on money and a refusal on policy are read at the same field. The two
    money codes — `insufficient_balance` (the wallet is empty) and
    `spend_cap_exceeded` (the wallet has money and a cap says no) — are different
    facts with different cures and MUST NOT be collapsed into one.
-2. `held.clause` MUST name the same clause `policy.check` would have refused on.
-   One clause vocabulary across the pre-check, the hold and the denial; otherwise
-   a caller cannot tell which of its own checks it should have run, and the
-   pre-check is decoration.
+2. `held.clause`, and whatever names a clause in a policy refusal, MUST use the
+   same vocabulary `policy.check` reports in `Decision.reason` for the same
+   question. One clause vocabulary across the pre-check, the hold and the denial;
+   otherwise a caller cannot tell which of its own checks it should have run.
+   Cloud populates neither `Decision.reason` nor a policy-specific refusal code
+   today (§12), so this binds the SDKs to carry both fields unchanged, not to
+   invent values for them.
 3. `Answer.request` and `audit.Event.request` are the same value, so a call and
    the row recording it can be joined without the caller correlating by hand.
 
@@ -631,11 +716,11 @@ An accessor and a method carry the same word in all three languages. Casing
 follows the language: `c.Budget.Left`, `c.budget.left`, `c.budget.left`.
 
 The only permitted escape is a keyword collision, which takes the language's
-prescribed form and nothing else. Within this specification that is `as_` and
-`assert_` in Python, both because PEP 8 prescribes the trailing underscore. There
-is no other escape, and an implementer MUST NOT invent one: if a word collides in
-a language not covered here, that is a question for an amendment, not for the
-implementer.
+prescribed form and nothing else. Within this specification that is `as_`,
+`import_` and `assert_` in Python — all three because PEP 8 prescribes the
+trailing underscore for a name that collides with a keyword. There is no other
+escape, and an implementer MUST NOT invent one: if a word collides in a language
+not covered here, that is a question for an amendment, not for the implementer.
 
 ### §11 Routes no SDK binds
 
@@ -665,7 +750,8 @@ HIP, not to this one.
 |---|---|---|
 | A missing principal answers `403 forbidden`, not `401` | §6's fourth row: match `403` against a list of refusal codes | the code list; the rule becomes 402 or 403 ⇒ `denied` |
 | Two 402 bodies are served: the RFC 9457 problem detail with `code`, and `cloud.Refusal` with `{error, product, reason, message, cure[]}` | parse both, map both onto `denied` (§6) | one parse instead of two |
-| `POST /v1/authz/check` declares no request body and no responses | hand-write `policy.check` against §8.2 | policy becomes generatable, and a denial can carry a reason |
+| `POST /v1/authz/check` declares no request body and no responses | hand-write `policy.check` against §8.2 | policy becomes generatable |
+| A policy refusal carries no code of its own, and `Decision.reason` is unpopulated | classify a policy refusal by §6 like any other, and carry `reason` empty | a caller learns which clause refused, and §9's one-clause-vocabulary rule becomes checkable |
 | `GET /v1/billing/balance` and `GET /v1/billing/usage` declare no response schema | hand-model `Balance` and `Charge` per §8.1 | budget stops being modelled in three places |
 | `POST /v1/knowledge/import` and `POST /v1/framework/{doctype}` declare no response schema | hand-model `Import` and `Doc` per §8.5 | `kb` stops being modelled in three places |
 | `GET /v1/audit` accepts no `requestId` filter, though every row carries one | ship `Filter.request`, fall back to `{action, since}` and match `request` client-side | the audit join stops being a client-side scan |
@@ -719,7 +805,8 @@ Status per language, as measured on the working trees at 2026-09-08:
 | TypeScript | none of this implemented | no hand-written layer of any kind; every file under `src/` is generated |
 
 The three `.spec-lock` files pin the same document digest
-(`sha256=2dd32162f8…`), so all three generate from identical bytes; the `ref`
+(`sha256=2dd32162f86963c080b1139549d593139ba6a3cb30533ef5abaf04881e7ef183`), so
+all three generate from identical bytes; the `ref`
 recorded beside it differs in `go-sdk`, which is a bookkeeping difference and not
 a content one. Conformance requires the digests stay equal.
 
@@ -737,7 +824,7 @@ That is one line shorter at the call site and wrong in two ways. A refusal
 carries a cure — an ordered list of ways out — and an exception path is where
 callers put the code they wrote once and never look at again. And a refusal is a
 normal outcome for a metered call: making the normal outcome an exception inverts
-which path gets the attention. The cost of `Answer` is that six methods return a
+which path gets the attention. The cost of `Answer` is that ten methods return a
 type the rest of the SDK does not use. That cost is paid once per SDK, in a layer
 of a few hundred lines, and it is the whole reason a caller can act on a denial
 instead of logging it.
@@ -770,7 +857,7 @@ reached there.
 
 ## Security Considerations
 
-**The credential is the whole of it.** §3 is the only place a token enters an
+**What an out-of-band bearer costs.** §3 is the only place a token enters an
 SDK, and it enters as the result of an exchange the SDK performed with
 credentials it holds. Accepting a bearer token from the environment — which all
 three SDKs do today — moves the decision about who is calling out of the SDK and
@@ -780,7 +867,7 @@ holder of the same string. The RFC 8707 `resource` parameter is what keeps a
 token minted for `api.hanzo.ai` from being replayed against another audience, so
 it is not optional and has no default other than the base URL.
 
-**Two credentials on one request is the failure mode of §4.** A scoped client
+**Why a scoped client drops the operator credential.** A scoped client
 that kept the operator credential alongside the subject's would present two
 answers to who is calling, and which one a server honours becomes a property of
 that server's header precedence rather than of the client's intent. The operator
@@ -800,13 +887,13 @@ handler that never reads `cures`.
 method. If one existed, a caller could write rows to the trail that records its
 own behaviour. The trail's value rests entirely on its author being the server.
 
-**Degradation stated, never inferred.** §8.4 requires `partial` as a field a
+**Why `partial` is a field rather than an inference.** §8.4 requires it as a field a
 caller can see. A search that silently returns the surviving backends' results
-gives a caller a truncated corpus with the shape of a complete one — which is how
-an absence of evidence becomes evidence of absence in whatever decides on the
-result.
+gives a caller a truncated corpus with the shape of a complete one. Whatever
+consumes the result then treats a subsystem outage as a finding that nothing
+matched.
 
-**Reading a document grants nothing.** The routes this HIP binds are enumerated
+**Why enumerating the routes is safe.** The routes this HIP binds are enumerated
 in a document HIP-1030 requires to be readable without a credential. That is
 safe for the same reason it is safe there: every route named remains individually
 authorized, and no route in §8 may rely on a client not knowing its address.
