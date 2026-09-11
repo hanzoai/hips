@@ -51,19 +51,67 @@ critical path (`apps/research/research.go:12-15`).
 
 ### Addresses
 
-Eight operations under `/v1/research`, seven typed and one declared
-(`apps/research/research.go:225-240`): ingest (`POST /experiments`, idempotent
-by content — re-running a backfill appends nothing), the canonical listing
-(`GET /experiments`), `GET /projects`, `GET /totals`, the grant
-(`POST /grants`), and the diary (`POST /artifacts`, `GET /artifacts`,
-`GET /artifacts/{sha256}`). The last is the one route that cannot be a typed
-op: it streams the artifact's raw bytes under the artifact's own Content-Type,
-which a typed op — always JSON from a Go value — has no vocabulary for; its
-prose is declared beside the route.
+Seventeen operations under `/v1/research`, sixteen typed and one declared
+(`apps/research/research.go`). The measurement plane: ingest
+(`POST /experiments`, idempotent by content — re-running a backfill appends
+nothing), the canonical listing (`GET /experiments`), `GET /projects`,
+`GET /totals`, the grant (`POST /grants`), and the diary (`POST /artifacts`,
+`GET /artifacts`, `GET /artifacts/{sha256}`). The last is the one route that
+cannot be a typed op: it streams the artifact's raw bytes under the artifact's
+own Content-Type, which a typed op — always JSON from a Go value — has no
+vocabulary for; its prose is declared beside the route.
+
+The experiment record adds four kinds in one shape — a POST that records a
+batch, a GET that lists it narrowed by the filters that matter, with `?id=`
+selecting one so there is no second address for fetching one thing:
+`/benchmarks`, `/runs`, `/studies`, `/papers` — plus `GET /compare`.
 
 An artifact's identity is the SERVER-derived sha256 of its bytes, never a
 client-asserted hash, so the address space is genuinely content-addressed and
 un-poisonable; a re-POST of the same bytes is a no-op.
+
+### The execution, and whether it finished
+
+`Experiment` is one measured number and `Attempt` is one scored item; neither is
+the EXECUTION. `Run` is (`apps/research/record.go`): the benchmark and split it
+measured against, the system under test and its version, the configuration that
+moves a number (embedder, reader, k, temperature, max-tokens, the prompt file and
+its digest), the digests that pin its inputs (dataset, retrieval store, fact
+layer), the commit it was frozen at, its per-(category, metric) measures with the
+intervals the harness reported, when it ran, by whom — and `questions`,
+`answered` and `ended`.
+
+`completion` is DERIVED from those three and MUST NOT be accepted from a write:
+`complete` where the record says the run covered its set and says when it ended,
+`partial` where it says it covered less, `inconsistent` where the two counts
+cannot both be true, `unknown` where the record does not say. A harness that
+checkpoints as it goes reports whatever has been answered so far, so a run read
+at question 57 of 282 is otherwise indistinguishable from a finished one — which
+is how `locomo-all-context-k20-enso-flash` reached hanzo.ai/benchmarks 9.4 F1
+points and 12.5 EM points above where it landed. Absence MUST stay absent:
+`questions`, `answered`, `k`, `temperature` and `max_tokens` are nullable, and a
+null is the record declining to answer rather than a zero.
+
+`ResearchBenchmark` is the TASK — dataset, that dataset's licence and origin, the
+splits it declares, the metric its authors score it by, the citation — and it is
+independent of anyone's run. `Study` is the question a set of runs was run to
+answer; `Paper` cites runs, and a run names at most its study, never a paper. A
+baseline is a run carrying `baseline`, not a kind of its own and not a category
+inside somebody else's numbers.
+
+`GET /compare` reads two runs together and states FIRST what stops them being
+compared — a different benchmark, a different split, different dataset digests,
+either run not established as complete, either run not naming its system — then
+every configuration field they disagree about, then the change over what BOTH
+measured, with whether the reported intervals overlap. A metric only one of them
+reported is left out rather than compared against nothing.
+
+All four ride the same per-org SQLite through the same orm records, the same
+content-hash version identity, the same server-assigned append clock and the same
+private-by-default grant: a correction to a run APPENDS a version and the
+published mistake stays retained. Runs also roll up to the warehouse with
+`completion` as a column; their per-category measures do not, because a second
+copy of the numbers with no reconciliation between them is worse than a join.
 
 ### Tenancy
 
@@ -104,6 +152,19 @@ themselves — its own data plane, not telemetry a customer reads back under
 durability contract is still rolling out — the roll-up is best-effort and
 reconciliation is unbuilt, so the record is versioned-append-only today and no
 more is claimed.
+
+### Loading a measurement tree
+
+`research.Load` reads a tree's OWN output — the harness's generated
+`benchmarks.json` for the numbers and each run directory's `meta.json` and
+`metrics.json` for what the run was — and recomputes no metric: a second
+normalization would be a second answer to the same question, free to disagree
+with the one the published tables came from. Where a field is absent it is
+recorded absent and counted, never defaulted. Measured over `bench/brain` as it
+stands: 56 runs and 2936 measures, of which 9 are complete, 3 are inconsistent
+(their own `meta.json` records more answers than questions), and 44 are unknown;
+no run records who ran it or the version of what it measured; 44 carry no
+completion counts, 28 none of the reader knobs, 4 no commit.
 
 ### Upstream
 
