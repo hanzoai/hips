@@ -8,7 +8,6 @@ status: Final
 implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0119, HIP-0122, HIP-0128, HIP-0135, HIP-0139
-capability: openapi
 ---
 
 # HIP-1030: OpenAPI — The Served Contract
@@ -56,6 +55,13 @@ RFC 2119.
 The canonical address is `/v1/openapi.json` (`openapi/openapi.go:75`). House law
 applies: `/v1/` only, no `/api/` prefix, and never a `v2` — the document's own
 shape is versioned by its `openapi` field, and the API's by `/v1`.
+
+The host serves it, not an app. There is no `openapi` row in cloud's manifest and
+no `plugin/openapi` binary, because the document is a projection of every app's
+router and a projection cannot be one of the things it projects. So this HIP
+declares no `capability:` in front matter: a capability is one `/v1/<name>` the
+fleet serves (HIP-0139), and what is described here is the host's own route. The
+same is true of the command projection in §7.
 
 `/.well-known/openapi.json` MUST be an ALIAS answered from the same render
 (`openapi/openapi.go:101`), never a second document. A client that has never seen
@@ -153,9 +159,9 @@ and a floor sized to the smaller document would accept the loss of every product
 the projection already drops. The customer contract is its own ratchet: it is
 small enough to compare WHOLE, so a shrink and a leak are both a diff in it.
 
-### §6 What the capability owns, meters and emits
+### §6 What this owns, meters and emits
 
-This capability **owns no store**. The document is a render of the routers;
+The document **has no store**. It is a render of the routers;
 what is committed — `openapi.yaml`, `private.yaml`, each `plugin/<app>/openapi.json`
 subset, the two ratchet files of §5 — is artifact, not state, regenerated from
 source and verified byte-for-byte. There is nothing to migrate and nothing a
@@ -166,8 +172,8 @@ credential and does not vary by caller (§1), so there is no claim to read and
 nothing to refuse but a write — and there are no writes.
 
 Reading the document is **free**, said in those words: the serving code is the
-`openapi` package linked into the host, and no meter sits on the path. The
-capability publishes **no events** on the bus — a regeneration is a commit,
+`openapi` package linked into the host, and no meter sits on the path. It
+publishes **no events** on the bus — a regeneration is a commit,
 not a runtime fact — and emits nothing to observability beyond the request
 span the route already gets.
 

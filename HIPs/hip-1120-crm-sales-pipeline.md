@@ -4,114 +4,139 @@ title: CRM — The Sales Pipeline
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: crm
 status: Final
-implementation-go: partial
+implementation-go: shipped
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0139
+requires: HIP-0026, HIP-0106, HIP-0139, HIP-1126
 ---
 
 # HIP-1120: CRM — The Sales Pipeline
 
 ## Abstract
 
-`/v1/crm` is an org's sales pipeline: companies, contacts and opportunities,
-plus the Startup Program intake that lands as a scored application. It is
-implemented in `hanzoai/cloud` at `apps/crm`. This HIP states the store, the two
-audiences the surface serves — staff behind the identity boundary and an
-anonymous applicant on one public form — and why exactly one route is not typed.
+Sales is companies, contacts and opportunities, plus the programme intake that
+lands as an application. It is not an address of its own: CRM is a module on the
+document engine (HIP-1126), so the records are framework documents in module
+`crm` and the whole surface is `/v1/framework`. It is implemented in
+`hanzoai/cloud` at `apps/crm`, which declares the document set and nothing else.
+
+This HIP declares no capability in front matter, and that is the point: a
+capability is one `/v1/<name>` the cloud serves, and nothing serves `/v1/crm`.
+What this HIP fixes is the record model, the role that reads it, and the
+boundary that keeps a prospect out of the user roster.
 
 ## Motivation
 
 A CRM contact is a prospect the org tracks, not a product user: the org's own
 users live in IAM, and the marketing subsystem resolves audiences from that
-roster, never from this table (`apps/crm/crm.go:9-13`). Without a capability
-that owns the prospect universe, prospect rows leak into user stores and the two
-contact universes join by accident — which is a privacy defect, not a modelling
-choice. This capability is the one place prospects live.
+roster, never from these documents. Without one place that owns the prospect
+universe, prospect rows leak into user stores and the two contact universes join
+by accident — which is a privacy defect, not a modelling choice.
+
+The second question this settles is where sales records belong at all. A sales
+pipeline is exactly what the document engine is for: a closed set of typed
+records with a lifecycle field, per-org isolation, role-gated CRUD and one
+renderer. Building it as its own app bought a second copy of CRUD, a second
+store, a second permission model, and a name in the fleet for a thing the engine
+already served.
 
 ## Specification
 
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted
 as in RFC 2119.
 
-### §1 The store
+### §1 The store is the engine's
 
-crm owns one store: a single SQLite file named `crm` in the deployment's data
-directory (`apps/crm/store.go:40`, `sqlpool.Open`). Every org's rows share the
-file; isolation is the `org` column, which leads every uniqueness and lookup
-index so tenancy is a physical property of the index, not only a WHERE clause
-(`apps/crm/store.go:56-59`). The entity model follows Twenty's `company` /
-`person` / `opportunity` standard objects, with the composite fields flattened
-to scalar columns for SQLite (`apps/crm/crm.go:5-8`); no upstream code is
-imported for it.
+crm opens no store. A company, a contact, an opportunity and an application are
+`framework.DocType` documents carrying the module tag `crm`
+(`apps/crm/crm.go`), and the engine holds them: one SQLite file per org, opened
+by the framework, with every call taking the org as an argument — so the tenant
+boundary is the storage boundary and there is no `org` column to forget.
+
+`apps/crm` declares the document set at init and exports nothing else
+(`framework.RegisterModule`). Its own gates check that every DocType is valid,
+every Link resolves to a DocType that exists, every Select is a closed set, and
+that the module is registered (`apps/crm/crm_test.go`).
 
 ### §2 The addresses
 
-Every route is under `/v1/crm` (`manifest/apps.go:273`). The CRUD over
-companies, contacts and opportunities, `GET /v1/crm/summary`, and the staff
-reads of applications are typed operations; each DELETE answers no body and so
-carries no response schema. One route is a raw handler and MUST stay one:
-`POST /v1/crm/applications`, the public Startup Program intake. Its rate limit
-and 64 KiB body cap are HTTP middleware, and the MCP and CLI projections of a
-typed op do not run middleware — typing it would publish an unmetered alias of a
-deliberately limited public endpoint (`apps/crm/crm.go:200-207`). Its prose is
-declared beside the wire fact instead (`apps/crm/applications.go:130`).
+There is no `/v1/crm`, and no manifest row claims one. The surface is the
+engine's generic, role-gated one under `/v1/framework`: list, read, write and
+delete a document by `module.kind`, and the console's CRM screens are that same
+DocType renderer scoped to this module. An org gets the lane by installing it —
+`POST /v1/framework/modules/crm/install` — which ensures the four DocTypes exist
+in that org.
 
-### §3 Tenancy
+A module that needs an operational read no generic surface can serve is what
+earns a prefix of its own; `patrol` is the worked example (HIP-1331). crm needs
+none, so it has none.
 
-Staff routes resolve the org from the validated principal
-(`principal.Acting`, `apps/crm/crm.go:433`), minted by the identity boundary
-(HIP-0026); a request the boundary refuses never reaches the store. The intake
-POST is the one unauthenticated route: it takes no principal and never reads a
-caller org — the application is filed against the deployment's own program org,
-so there is no tenant to name and none to leak. Re-submitting the same
-(email, company) refreshes the existing application rather than filing a second.
+### §3 Tenancy and roles
+
+The org is the validated principal's, resolved once by the engine (HIP-0026);
+`apps/crm` never sees a request. Reads and writes admit two roles: the org's
+System Manager, and `CRM User`, which the owner assigns through
+`/v1/framework/roles`. Both are IAM roles in the tenant's own org, and the same
+values appear in the document permissions, so who may touch a record is answered
+in one place.
+
+An application is the one record that arrives from outside the roster: it holds a
+company name, a contact, a stage from a closed set, and the screen a reviewer
+files against it. On acceptance it is promoted into a company and a contact, and
+the promoted rows are Links back to it, so the trail from intake to customer is
+one read.
 
 ### §4 Money, events, telemetry
 
-crm is free, in those words: its plugin declares `cloud.Free`
-(`plugin/crm/main.go:21`) and crm is not in the metered set (`spend.go:275`).
-The AI screen a filed application receives runs on the deployment's own gateway
-credential, not the applicant's. crm publishes no events on the bus, and emits
-nothing to observability beyond the request span every route gets.
+Free. The documents ride the framework's plugin, which declares `cloud.Free`,
+and no meter runs behind a document write. crm publishes no events of its own,
+and emits nothing to observability beyond the request span every framework route
+gets.
 
 ### §5 Stage
 
-crm is `beta`: a vertical application, not the agentic-OS core. The manifest
-row declares it (`manifest/apps.go:273`, `Stage: Beta`; HIP-0139 §8).
+The engine's. crm is not a fleet app, so it carries no stage of its own; what a
+caller is shown is `/v1/framework`'s (HIP-0139 §8).
 
 ### §6 Upstream
 
-crm derives from no third-party code. The one third-party fact is the schema
-lineage stated in §1: the entity model mirrors Twenty's standard objects so a
-migration is a column mapping, and nothing of Twenty's implementation is in the
-tree.
+crm derives from no third-party code. The one third-party fact is schema
+lineage: the entity model mirrors Twenty's standard objects — company, person,
+opportunity — with composite fields flattened to scalar document fields, so a
+migration is a column mapping. Nothing of Twenty's implementation is in the tree.
 
 ## Rationale
 
-One shared file with a leading `org` index, rather than a file per org, because
-CRM rows are small and the summary read is a cross-table count within one org —
-the per-org-file pattern buys physical isolation at the cost of N file handles,
-and here the leading index gives the same fail-closed property for one handle.
-The intake staying raw, rather than teaching typed ops about middleware, keeps
-the typed registry's promise intact: every typed op is safe to project
-everywhere.
+A module rather than an app, because nothing in a sales pipeline is unusual. The
+records are records, the lifecycle is a field, the permissions are roles, and one
+renderer draws all of it. An app would have bought a second CRUD plane, a second
+store and a name in the fleet, and every one of those is a thing that can drift
+from the engine that already did the work.
+
+The cost is that CRM has no address a caller can guess, and that is the honest
+consequence rather than a defect to paper over: a client reaches these records
+the way it reaches any document, by naming `crm.company` at `/v1/framework`.
 
 ## Security Considerations
 
 The wrong implementation leaks the pipeline: every prospect, every deal and its
-amount, to any tenant that can name another's id. The gate is the org from the
-validated principal, never a client-supplied field, and every query filters on
-it. The intake is the other exposure — an unauthenticated write — and it is
-bounded three ways: IP rate limit, body cap, and upsert-on-resubmit, so an
-attacker can neither flood the store nor amplify a row.
+amount, to any tenant that can name another's id. Here the control is the
+engine's and is structural — one file per org, the org supplied by the identity
+boundary as an argument to every call — so a cross-tenant read is not a query a
+caller can shape.
+
+The second exposure is the roster boundary in §Motivation. A prospect is not a
+user: nothing may resolve a notification audience, a seat or an entitlement from
+these documents, and a join between this module and IAM's roster is a privacy
+defect whichever direction it is written in.
 
 ## References
 
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0139 — Capability
+- HIP-1126 — Framework: the document engine that serves this module
+- HIP-1331 — Patrol: a module that did earn a prefix, and why
 
 ## Copyright
 

@@ -70,20 +70,22 @@ subsection exists to end.
 
 | Number | Question it answers | Authority |
 |---|---|---|
-| **191 capabilities** | Which names exist for a reader shown the whole API at once, and which of nine domains each sits under | `capabilities.yaml` in the **`hanzoai/openapi` repository** — `openapi/` is the REPO name, not a directory inside `cloud` |
-| **182 products** | Which capability names the served document actually carries today | the top-level `tags:` of `cloud`'s emitted `openapi.yaml` (2,473 operations across the 123 subsets) |
-| **123 apps** | How many things get built, shipped and started — the deployment unit | `manifest.Apps` in `cloud/manifest/apps.go`, in exact bijection with the 123 `plugin/<app>/openapi.json` subsets, gated by `plugin/gen-app-cmds` |
+| **120 capabilities** | Which names exist for a reader shown the whole API at once, and which of nine domains each sits under | `capabilities.yaml` in the **`hanzoai/openapi` repository** — `openapi/` is the REPO name, not a directory inside `cloud` |
+| **122 products** | Which capability names the served document actually carries today | the operation `tags:` of `cloud`'s emitted `openapi.yaml` (2,335 operations across the 129 subsets) |
+| **129 apps** | How many things get built, shipped and started — the deployment unit | `manifest.Apps` in `cloud/manifest/apps.go`, in exact bijection with the 129 `plugin/<app>/openapi.json` subsets, gated by `plugin/gen-app-cmds` |
 
 The manifest is **curation, not a registry**: it cannot invent a capability,
 because `publish.py` refuses in both directions — a served name nobody has
 grouped fails the publish, and a grouped name nothing serves fails it too. The
-nine domains are `identity` (18) · `intelligence` (51) · `data` (18) ·
-`streams` (16) · `observability` (12) · `commerce` (22) · `platform` (26) ·
-`applications` (25) · `chain` (3).
+nine domains are `identity` (16) · `intelligence` (14) · `data` (14) ·
+`streams` (12) · `observability` (5) · `commerce` (18) · `platform` (14) ·
+`applications` (24) · `chain` (3). Every count here is measured, and every one of
+them moves; read them as a shape, and take the number from the gate.
 
-**Capability ≠ app.** 27 apps serve more than one `/v1` product (`billing` also
-answers `/v1/finance`), and some products are served by the host itself rather
-than by any plugin (`GET /v1/commands`, `GET /v1/openapi.json`) — so a sweep of
+**Capability ≠ app.** Some apps serve more than one `/v1` product — `platform`
+answers `/v1/platform` and `/v1/build`, `git` answers `/v1/git` and `/v1/runner` —
+and some addresses are served by the host itself rather than by any plugin
+(`GET /v1/openapi.json`, `GET /v1/openapi/commands`) — so a sweep of
 `plugin/*/openapi.json` alone under-reports the served set, and reading a
 capability count as a binary count is always wrong.
 
@@ -92,17 +94,20 @@ A fourth number exists and is not a capability count: operations carrying the
 wire-compatibility dialect never mints a product name.
 
 #### 1.2 — Declared-but-unserved names are drift, and are named
-At time of writing the manifest declares 13 names `cloud` no longer serves. Each
-is a rename or a consolidation with a commit behind it — `sentry`→`sentinel`,
-`automations`→`auto`, `kv`/`sql`/`docdb`/`datastore` folded into
-`/v1/instances/*`, `balancers`/`vpcs`/`cloud` deleted with their apps, four
-speech names folded into `/v1/audio/*`, and `health`, which was never a product
-(per-app liveness is auto-mounted). Five served names are ungrouped:
-`instances`, `sentinel`, `seo`, `allowance` and `edge`.
+A name in the manifest that `cloud` does not serve is drift, and each one is a
+rename or a consolidation with a commit behind it: `sentry`→`sentinel`, folded
+under `/v1/o11y/sentinel`; `automations`→`auto`; `balancers`/`vpcs`/`cloud`
+deleted with their apps; four speech names folded into `/v1/audio/*`; and
+`health`, which was never a product, because per-app liveness is auto-mounted.
 
-`edge` must NOT be grouped. `GET /v1/edge` names a POSITION, not a product; the
-correction belongs in `cloud` — move the probe under its owner's prefix — and
-until it moves the publish stays blocked, which is the gate working.
+The instructive one was `edge`, and it is closed. `GET /v1/edge` named a POSITION
+rather than a product, and four unrelated things wore the word: the on-device
+inference runtime a customer runs on their own machine, which has no cloud prefix
+and never should; the public catalogue cache; the gateway's policy role; and the
+zero-trust fabric's edge-routers. The correction was the one this section asked
+for — the routers are addressed as what they are, `/v1/network/routers` — so the
+row is gone, `/v1/edge` 404s at every depth, and that is the right answer rather
+than a missing product.
 
 ### 2 — The language seam is the ZAP wire, NEVER FFI
 Go and Rust components compose over **ZAP** (network or local socket), each a

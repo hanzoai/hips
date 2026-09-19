@@ -4,7 +4,6 @@ title: Forge — The Meta Code Host
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: forge
 status: Draft
 created: 2026-09-08
 requires: HIP-0106, HIP-0139, HIP-1114, HIP-1122, HIP-1232
@@ -26,6 +25,12 @@ The name follows the shape: the current service hosts repositories (HIP-1232);
 the proposed service federates hosts. `/v1/code` (HIP-1114) is the search surface
 this makes cross-platform, and the GitOps plane (HIP-1122) is what runs against
 a repository Forge does not own.
+
+Nothing here is shipped. Cloud serves no `/v1/forge` and holds no `forge` row in
+its manifest — repositories answer at `/v1/git` today (HIP-1232) — so this HIP
+declares no `capability:` in front matter. It claims the name when the prefix is
+served, and not before; a Draft that reserves a capability slot makes the coverage
+gate report a spec for a surface a caller cannot call.
 
 ## Motivation
 
@@ -148,10 +153,11 @@ down degrades the result set, never the request.
 
 ### 6. Surface
 
-Forge answers under `/v1/forge`, one capability, one prefix (HIP-0139).
-`/v1/code` remains the search surface and gains the federated corpus. `/v1/git`
-remains what it is for repositories Forge does host — the paid, durable case, and
-our own.
+Forge would answer under `/v1/forge`, one capability, one prefix (HIP-0139), and
+that prefix is unclaimed today — the front matter takes it on the commit that
+serves it. `/v1/code` remains the search surface and gains the federated corpus.
+`/v1/git` remains what it is for repositories Forge does host — the paid, durable
+case, and our own.
 
 ## Assumptions
 

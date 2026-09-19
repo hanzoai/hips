@@ -1,28 +1,34 @@
 ---
 hip: 1062
-title: Tasks — The Durable Run
+title: Workflow — The Durable Run
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: tasks
+capability: workflow
 status: Final
 implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0119, HIP-0139
 ---
 
-# HIP-1062: Tasks — The Durable Run
+# HIP-1062: Workflow — The Durable Run
 
 ## Abstract
 
 A durable run is work that survives the process that started it. `hanzoai/tasks`
 is the event-sourced engine that provides one — workflows, activities, schedules,
-task queues, workers — and `/v1/tasks` is the cloud's endpoint onto it, together with
+task queues, workers — and `/v1/workflow` is the cloud's endpoint onto it, together with
 the studio the run history is read in.
+
+The address is the engine's own word: a run here is a workflow made of
+activities. It answered at `/v1/tasks`, beside a `/v1/task` that is the work-item
+board (HIP-1160), so one word named two planes and neither name was the thing.
+The Go module keeps its own spelling — `github.com/hanzoai/tasks`, imported by
+dozens of modules — because a module path is not a surface.
 
 This HIP specifies the endpoint: which engine answers, how a request becomes a
 tenant's shard, and why this surface is a relay rather than a typed operation set.
-The implementation is `hanzoai/cloud` `apps/tasks`.
+The implementation is `hanzoai/cloud` `apps/workflow`.
 
 ## Motivation
 
@@ -46,7 +52,7 @@ in RFC 2119.
 
 This subsystem MUST NOT create an engine. The cloud binary embeds exactly one
 (`cloud/durable.go`), shared with the durable ingest path, and this endpoint mounts
-that engine's handlers. The Tasks product and the ingest path therefore read the
+that engine's handlers. The Workflow product and the ingest path therefore read the
 same durable state.
 
 The engine is wired after mounting, so the surface resolves it lazily per request
@@ -57,7 +63,7 @@ existed would be reporting on itself.
 
 A process that does not own an engine MUST NOT open another process's store. It
 asks: the engine's owner publishes an org-scoped read on the internal plane
-(`apps/tasks/activities_rpc.go:34`) and the writer stays where it is.
+(`apps/workflow/activities_rpc.go:34`) and the writer stays where it is.
 
 The org on that read is the caller's own and cannot be named in the input, so a
 caller can never page another tenant's activities. The namespace is the caller's
@@ -84,7 +90,7 @@ A typed operation is one method at one path with one input and one output; it is
 also the single registry entry every projection reads, so anything outside it
 publishes no schema, no tool and no client method. The engine's surface cannot fit
 that shape, and each blocker is measured rather than asserted
-(`apps/tasks/typed_wire_test.go`):
+(`apps/workflow/typed_wire_test.go`):
 
 - The bare noun answers a redirect to its own subtree on every method, decided by
   the engine's router before any handler runs. A typed operation has no vocabulary
@@ -110,31 +116,31 @@ free to drift from the one that actually answers.
 ### Schedules are a facet, not a subsystem
 
 Platform cron mounts no routes. It registers durable schedules on this same
-engine, and is folded in here so there is one tasks subsystem rather than two that
+engine, and is folded in here so there is one durable subsystem rather than two that
 must agree.
 
 ### Addresses, and the one that is legacy
 
 The endpoint serves two shapes — the bare noun's redirect and the one wildcard route
 that carries the engine's operation set, on every method — under one prefix,
-`/v1/tasks`. The bare `/tasks` the studio shipped with is gone.
+`/v1/workflow`. The bare `/tasks` the studio shipped with is gone.
 
 The studio is not a cloud address. It is its own image (`ghcr.io/hanzoai/admin-tasks`,
 built from `hanzoai/admin` `apps/tasks` at base `/`) at the root of
-`tasks.hanzo.ai`, like `todo` and `meet` before it. The `/tasks` pair was
+`tasks.hanzo.ai`, like `task` and `meet` before it. The `/tasks` pair was
 ledgered in `openapi/misfiled.txt` and closes by deletion, not by fold.
 
 It is the one of the three that could not simply move, and the reason belongs
 here because it decides the ROUTING rather than the code. The studio reads
-`/v1/tasks` with same-origin credentials and carries no bearer, so the
-arrangement `todo` and `meet` use — a static host and a cross-origin API —
+`/v1/workflow` with same-origin credentials and carries no bearer, so the
+arrangement `task` and `meet` use — a static host and a cross-origin API —
 would send no credential at all. So the host is split at the edge instead: the
-bundle from its own pods, `/v1/tasks` to cloud, which is the shape
+bundle from its own pods, `/v1/workflow` to cloud, which is the shape
 `console.hanzo.ai` already runs. The browser sees one origin, and nothing about
 the requests cloud receives changes.
 
 That split carves ONE prefix, measured against the built bundle rather than
-assumed. The bundle names three — `/v1/tasks`, `/v1/csrf`, `/v1/iam` — and only
+assumed. The bundle names three — `/v1/workflow`, `/v1/csrf`, `/v1/iam` — and only
 the first is same-origin: `/v1/csrf` is fetched through `@hanzogui/admin`'s
 `apiUrl()`, which resolves to the brand's API origin on every `hanzo.ai` host,
 and `/v1/iam` belongs to shared IAM-policy screens this app routes nowhere.
@@ -147,7 +153,7 @@ it; a second store here would be the second copy of the engine's model this HIP
 refuses everywhere else.
 
 It is free, in those words: the plugin declares `Price: cloud.Free`
-(plugin/tasks/main.go:25), and no meter runs behind any route.
+(plugin/workflow/main.go:25), and no meter runs behind any route.
 
 It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. It emits nothing to observability beyond the request
@@ -159,7 +165,7 @@ engine's own record, not from exported spans.
 The stage is `ga` — the manifest row declares none, and absent is `ga`
 (HIP-0139 §8).
 
-The engine is `hanzoai/tasks` (pinned v1.52.9 in cloud's go.mod), a fork of
+The engine is `hanzoai/tasks` (pinned v1.53.4 in cloud's go.mod), a fork of
 Temporal (MIT). What survives in HEAD is the event-sourced core — workflows,
 activities, schedules, task queues, workers — embedded in-process
 (`tasksengine.Embed`), with the gRPC surface removed.
@@ -185,6 +191,7 @@ org is not an input, so the only shard a caller can address is its own.
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0119 — Hanzo Service Conventions
+- HIP-1160 — Task: the work-item board that took the other word
 
 ## Copyright
 

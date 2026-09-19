@@ -74,14 +74,14 @@ What an autonomous firm actually requires, and where it lives:
 | Organ | What it must do | Hanzo |
 |---|---|---|
 | **Formation** | Exist in law | `/v1/company` |
-| **Identity** | Prove who acts | `/v1/iam`, `/v1/idv` |
+| **Identity** | Prove who acts | `/v1/iam`, `/v1/compliance/verifications` |
 | **Legal** | Hold and sign agreements | `/v1/legal` |
 | **Ownership** | Record who owns what | `/v1/captable` |
 | **Capital** | Raise | `/v1/company/fundraise` |
-| **Money** | Hold, move, settle | `/v1/finance`, `/v1/x402`, `/v1/wallet` |
+| **Money** | Hold, move, settle | `/v1/treasury`, `/v1/books`, `/v1/x402`, `/v1/wallet` |
 | **Commerce** | Charge for things | `/v1/commerce`, `/v1/billing`, `/v1/pricing` |
-| **Product** | Build and run software | `/v1/git`, `/v1/deploy`, `/v1/paas`, `/v1/functions` |
-| **Demand** | Find and keep customers | `/v1/guide`, `/v1/crm`, `/v1/campaign` |
+| **Product** | Build and run software | `/v1/git`, `/v1/build`, `/v1/deploy`, `/v1/platform`, `/v1/function` |
+| **Demand** | Find and keep customers | `/v1/guide`, `/v1/campaign`, `/v1/marketing` |
 | **Observation** | Know its own state | `/v1/o11y`, `/v1/event`, `/v1/usage` |
 | **Compliance** | Stay legal | `/v1/compliance`, `/v1/audit`, `/v1/sbom` |
 | **Custody** | Hold secrets | `/v1/kms` |
@@ -306,10 +306,10 @@ automating it.
 
 ## 7. Money, commerce, product
 
-**Money.** `/v1/finance/accounts`, `/v1/finance/treasury`, with admin sweep,
-policy, and anchoring under `/v1/admin/treasury`. Ledger discipline through
-`apps/treasury/ledger`. On-chain settlement via `/v1/wallet` and
-`/v1/smart-wallets`. And `/v1/x402` — HTTP-native payment, where a request
+**Money.** `/v1/treasury` and `/v1/treasury/accounts`, with admin sweep,
+policy, and anchoring under `/v1/admin/treasury`. Double-entry discipline through
+`/v1/books` and `apps/treasury/ledger`. On-chain settlement via `/v1/wallet`,
+smart-account custody included — there is no separate wallet prefix. And `/v1/x402` — HTTP-native payment, where a request
 carrying insufficient funds gets `402` and a settlement path rather than a
 rejection. That matters more than it sounds: **x402 is how one agent pays
 another without either holding a card.** It is the payment rail that does not
@@ -318,19 +318,20 @@ assume a human at the checkout.
 The payer is one value in one place — `hanzoai/account.Payer` — because the
 alternative was four copies disagreeing and `402`-ing funded customers.
 
-**Commerce.** `/v1/commerce`, `/v1/billing`, `/v1/pricing`, `/v1/plans`,
+**Commerce.** `/v1/commerce`, `/v1/billing`, `/v1/pricing`, `/v1/plan`,
 `/v1/entitlement`, `/v1/marketplace`, `/v1/referral`, `/v1/affiliate`. Price,
 meter, invoice, collect, gate on entitlement, pay partners.
 
-**Product.** `/v1/git` (native, no forge dependency), `/v1/builds`, `/v1/deploy`,
-`/v1/paas`, `/v1/sites`, `/v1/functions`, `/v1/clusters`, `/v1/machines`. Code
-enters at `/v1/git` and leaves as something serving traffic, with no vendor in
-the path.
+**Product.** `/v1/git` (native, no forge dependency), `/v1/build`, `/v1/deploy`,
+`/v1/platform`, `/v1/project/sites`, `/v1/function`, `/v1/compute/clusters`,
+`/v1/compute/machines`. Code enters at `/v1/git` and leaves as something serving
+traffic, with no vendor in the path.
 
-**Demand.** `/v1/guide` — the GTM autopilot — plus `/v1/crm`, `/v1/campaign`,
-`/v1/marketing`, `/v1/ad`, `/v1/social`, `/v1/content`.
+**Demand.** `/v1/guide` — the GTM autopilot — plus `/v1/campaign`,
+`/v1/marketing`, `/v1/ad`, `/v1/social`, `/v1/content`. The sales pipeline is
+`/v1/framework` module `crm` (HIP-1120), a document set rather than a prefix.
 
-**Observation.** `/v1/o11y`, `/v1/event`, `/v1/usage`, `/v1/costs`. A firm that cannot read its own state cannot govern itself, and
+**Observation.** `/v1/o11y`, `/v1/event`, `/v1/usage`, `/v1/metrics`. A firm that cannot read its own state cannot govern itself, and
 autonomy without self-observation is just an unattended process.
 
 ## 8. What still requires a human, and why
