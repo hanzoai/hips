@@ -84,6 +84,33 @@ The payload is a ZAP message, not a C struct and not JSON: the buffer is the
 message, so a turn that ships thousands of file reads pays for no parse and no
 copy. Count the messages before calling serialization cheap.
 
+### Hosting the core
+
+The core is one Rust library with one C ABI — open a session, step it with an
+event, snapshot it, restore it, drop it — and that ABI is the export list of a
+wasm module unchanged (`make wasm` in `hanzoai/dev`). Two hosts, one loop:
+
+    native   `libdev.a` behind the C header, for a host that shares its memory
+    wasm     `dev.wasm` under wazero, for cloud
+
+Cloud takes the wasm build. It needs no cgo and no Rust toolchain in cloud's own
+build, a session is an instance with memory of its own, and a panic in the core
+is a trap the host survives rather than something that must be caught before it
+crosses a C boundary. A host that shares no memory with the module borrows some
+(`dev_alloc`, `dev_release`) to pass an event in and receive the actions out.
+
+**The import list is the proof that the core touches nothing.** The module asks
+its host for `environ_get`, `environ_sizes_get`, `fd_write` and `proc_exit` — and
+for no file, no socket, no clock and no source of randomness. "The core reads
+nothing from a disk and opens no socket" is therefore a property a build can
+check, not one a review has to notice; a change that grows the list has given the
+loop an effect of its own.
+
+Measured from a wazero host: compile 85 ms once per process, instantiate 46 µs,
+a step 86 µs, a snapshot 21 µs, about 1 MiB a session. The loop's cost is the
+model's latency and the cell's; the boundary between host and core is not where
+the time goes.
+
 ### Actions carry identity
 
 Every action the core emits carries an id. The ledger records dispatch and
