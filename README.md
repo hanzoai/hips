@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 151 | 34 | 2 | 89 |
-| C++ | 1 | 2 | 0 | 273 |
-| Rust | 10 | 25 | 1 | 240 |
+| Go | 151 | 35 | 2 | 89 |
+| C++ | 1 | 2 | 0 | 274 |
+| Rust | 10 | 25 | 1 | 241 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -393,9 +393,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 132 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 128 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 127 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 133 | Capability |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 129 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 128 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -414,7 +414,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | 8 | Q-Chain — Quasar Finality Block Standard |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | 8 | Z-Chain — Post Quantum Identity and Attestation Rollup |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 8 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
-| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 7 | ZAP — Cognitive Transport for Thinking Chains |
+| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Cognitive Transport for Thinking Chains |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 6 | Model Context Protocol (MCP) Integration Standards |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
@@ -432,7 +432,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 130 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 131 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
