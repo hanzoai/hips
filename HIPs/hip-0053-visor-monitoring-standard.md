@@ -33,7 +33,7 @@ Visor is the presentation and intelligence layer that sits on top of the observa
 **Docker**: `ghcr.io/hanzoai/visor:latest`
 **API Port**: 8053
 **Grafana Port**: 3053
-**Production**: `visor.hanzo.ai` on `hanzo-k8s` cluster (`24.199.76.156`)
+**Production**: `visor.hanzo.ai` on the `hanzo-k8s` cluster
 
 ## Motivation
 

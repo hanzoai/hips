@@ -373,7 +373,7 @@ Per-organization configuration managed through Console:
 
 ### Production Deployment
 
-Console runs on the **hanzo-k8s** DOKS cluster at `24.199.76.156`:
+Console runs on the **hanzo-k8s** cluster:
 
 ```yaml
 # compose.prod.yaml (simplified)
@@ -531,8 +531,8 @@ Production Console supports IP-based access restriction:
 
 ```yaml
 # Per-organization IP allowlist
-CONSOLE_IP_ALLOWLIST_HANZO: "24.199.76.0/24,10.0.0.0/8"
-CONSOLE_IP_ALLOWLIST_LUX: "24.144.69.0/24,10.0.0.0/8"
+CONSOLE_IP_ALLOWLIST_HANZO: "198.51.100.0/24,10.0.0.0/8"
+CONSOLE_IP_ALLOWLIST_LUX: "203.0.113.0/24,10.0.0.0/8"
 ```
 
 Requests from non-allowlisted IPs receive a 403 Forbidden response. This is enforced by Hanzo Ingress middleware (HIP-0068), before the request reaches the Console application.

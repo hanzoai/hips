@@ -22,7 +22,7 @@ The service distinguishes between transactional notifications (auth codes, recei
 **Repository**: [github.com/hanzoai/notify](https://github.com/hanzoai/notify)
 **Port**: 8061
 **Docker**: `ghcr.io/hanzoai/notify:latest`
-**Cluster**: `hanzo-k8s` (`24.199.76.156`)
+**Cluster**: `hanzo-k8s`
 
 ## Motivation
 

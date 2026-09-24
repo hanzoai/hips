@@ -22,7 +22,7 @@ Every Hanzo service MUST be deployable through Platform. The deployment flow is:
 **Production**: https://platform.hanzo.ai
 **Port**: 3000 (Platform UI), 5173 (legacy admin)
 **Docker**: `ghcr.io/hanzoai/platform:latest`
-**Cluster**: hanzo-k8s (`24.199.76.156`)
+**Cluster**: hanzo-k8s
 
 ## Motivation
 

@@ -263,7 +263,7 @@ The principle: **each service gets minimal network access**. The `chat` service,
 The two production clusters (hanzo-k8s and lux-k8s) connect via a WireGuard mesh. Each cluster runs a WireGuard gateway pod that peers with the other cluster:
 
 ```
-hanzo-k8s (24.199.76.156)         lux-k8s (24.144.69.101)
+hanzo-k8s                         lux-k8s
 ┌─────────────────────┐           ┌─────────────────────┐
 │  ┌───────────────┐  │  WireGuard│  ┌───────────────┐  │
 │  │  wg-gateway   │◄─┼──────────┼──►│  wg-gateway   │  │
@@ -290,7 +290,7 @@ ListenPort = 51820
 # lux-k8s gateway
 PublicKey = <lux-k8s-public-key>
 AllowedIPs = 10.10.0.2/32, 10.244.0.0/16
-Endpoint = 24.144.69.101:51820
+Endpoint = <lux-k8s-gateway-address>:51820
 PersistentKeepalive = 25
 ```
 

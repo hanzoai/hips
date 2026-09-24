@@ -83,10 +83,10 @@ GET    /v1/zones/{zone}/export            Export zone in RFC 1035 format
 ```json
 {
   "id": "rec_abc123", "zone": "hanzo.ai", "name": "api",
-  "type": "A", "value": "24.199.76.156", "ttl": 300,
+  "type": "A", "value": "192.0.2.10", "ttl": 300,
   "geo": {
     "enabled": true,
-    "regions": { "na": "24.199.76.156", "eu": "138.68.100.42", "ap": "128.199.200.15" }
+    "regions": { "na": "192.0.2.10", "eu": "198.51.100.10", "ap": "203.0.113.10" }
   },
   "metadata": { "managed_by": "platform", "deployment_id": "dep_xyz789" }
 }
@@ -125,11 +125,11 @@ For domains served by Hanzo Edge (CDN), the `hanzo_geo` plugin returns different
 // edge.json -- geo-routing configuration
 {
   "api.hanzo.ai": {
-    "default": "24.199.76.156",
+    "default": "192.0.2.10",
     "regions": {
-      "NA": "24.199.76.156",
-      "EU": "138.68.100.42",
-      "AP": "128.199.200.15"
+      "NA": "192.0.2.10",
+      "EU": "198.51.100.10",
+      "AP": "203.0.113.10"
     },
     "healthcheck": {
       "interval": "10s",
@@ -266,7 +266,7 @@ hanzo dns zones create lux.network           # Create a zone
 hanzo dns records hanzo.ai                   # List records for hanzo.ai
 hanzo dns records hanzo.ai add               # Interactive record creation
 hanzo dns records hanzo.ai add \
-  --name api --type A --value 24.199.76.156  # Non-interactive
+  --name api --type A --value 192.0.2.10     # Non-interactive
 hanzo dns records hanzo.ai delete rec_abc123 # Delete a record
 
 # Diagnostics
