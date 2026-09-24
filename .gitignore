@@ -12,3 +12,7 @@ __pycache__/
 
 # Agent worktrees are scratch, not corpus.
 .claude/worktrees/
+
+# Local symlinks to LLM.md
+AGENTS.md
+GEMINI.md
