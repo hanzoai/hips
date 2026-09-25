@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 147 | 34 | 2 | 89 |
-| C++ | 1 | 2 | 0 | 269 |
-| Rust | 10 | 25 | 1 | 236 |
+| Go | 147 | 34 | 2 | 90 |
+| C++ | 1 | 2 | 0 | 270 |
+| Rust | 10 | 26 | 1 | 236 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -301,6 +301,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1328](./HIPs/hip-1328-forge-the-meta-code-host.md) | Forge — The Meta Code Host | Standards Track | Infrastructure | Draft | - | - | - |
 | [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) | Dev — The Agent Loop | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1331](./HIPs/hip-1331-patrol-standing-watch-over-an-estate.md) | Patrol — Standing Watch Over an Estate | Standards Track | Application | Final | shipped | - | - |
+| [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) | Kai — The Decision Model and the Decision Plane | Standards Track | Core | Draft | - | - | partial |
 
 ## HIP Process
 
@@ -390,7 +391,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
 | [HIP-0139](./HIPs/hip-0139-capability.md) | 128 | Capability |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 124 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 123 | The Hanzo Plugin Contract |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 124 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -403,15 +404,15 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 13 | Hanzo IAM Authentication Standard |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
+| [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 9 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | 9 | Responsible AI Principles and Commitments |
-| [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | 8 | Q-Chain — Quasar Finality Block Standard |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | 8 | Z-Chain — Post-Quantum Identity & Attestation Rollup |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 8 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
+| [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 7 | Model Context Protocol (MCP) Integration Standards |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
-| [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 6 | Model Context Protocol (MCP) Integration Standards |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 6 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0002](./HIPs/hip-0002-hamiltonian-large-language-models-hllms-specification.md) | 5 | Hamiltonian Large Language Models (HLLMs) Specification |
@@ -427,7 +428,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 119 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 120 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & Trust** — who you are · what you may touch · where secrets live
 
@@ -467,4 +468,4 @@ One capability, one HIP (HIP-0139). 119 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) `workflow` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1160](./HIPs/hip-1160-todo-work-item-board.md) `task` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills` · [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1331](./HIPs/hip-1331-patrol-standing-watch-over-an-estate.md) `patrol`
+[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1062](./HIPs/hip-1062-tasks-the-durable-run.md) `workflow` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1160](./HIPs/hip-1160-todo-work-item-board.md) `task` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills` · [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1331](./HIPs/hip-1331-patrol-standing-watch-over-an-estate.md) `patrol` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions`
