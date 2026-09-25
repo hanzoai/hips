@@ -44,7 +44,7 @@ curl -s 'https://huggingface.co/api/models?author=zenlm&limit=500' # open weight
 curl -s 'https://huggingface.co/api/models?author=hanzoai'
 ```
 
-`zenlm` holds 85 repositories, 5 of them private; `hanzoai` holds 3.
+`zenlm` holds 85 repositories, 4 of them private; `hanzoai` holds 3.
 
 ### 1. Families
 
@@ -62,7 +62,7 @@ card. Hanzo Cloud serves the ids in the third column.
 
 | Line | Open weights | Hanzo Cloud | Status |
 |---|---|---|---|
-| Zen6 | `zenlm/zen6`, `zenlm/zen6-coder`, `zenlm/zen6-flash` (2026-09-21) | `zen6`, `zen6-coder` | shipped |
+| Zen6 | `zenlm/zen6`, `zenlm/zen6-coder`, `zenlm/zen6-flash` (2026-09-21) | `zen6`, `zen6-coder` | shipped; HIP-0904 |
 | Zen5.8 | none | `zen5.8`, `zen5.8-coder`, `zen5.8-spark`, `zen5.8-evo` | shipped, cloud only |
 | Zen5 | GGUF: `zenlm/zen5-gguf`, `zen5-coder-gguf`, `zen5-mini-gguf`, `zen5-pro-gguf`, `zen5-max-gguf`, `zen5-nano-9B-gguf`; `zen5-flash-gguf` and three `zen5-nano` sizes private | `zen5`, `zen5-mini`, `zen5-flash`, `zen5-coder`, `zen5-pro`, `zen5-spark`, `zen5-evo` | shipped |
 | Zen7 | none | none | upcoming; the successor to Satori; no repository, weights or spec yet |
@@ -101,7 +101,7 @@ Hanzo Cloud also lists `zen-free`.
 
 | Name | HIP | Status |
 |---|---|---|
-| Jin | HIP-0003 | not built as specified: `hanzoai/jin` was archived 2026-05-12 and holds JEPA representation-learning research |
+| Jin | HIP-0003 | not built: `hanzoai/jin` was archived 2026-05-12 and holds a copy of `LumenPallidium/jepa` (MIT), not Hanzo model code; no weights |
 | HLLM | HIP-0002 | a specification; no model or weights exist |
 
 ### 6. One request, in order
@@ -170,7 +170,7 @@ lets a request reach a generative model only when generation is the work.
 
 ## References
 
-- HIP-0039 — Zen, the open-weight generative family
+- HIP-0039 — Zen, the open-weight generative family; HIP-0904 — Zen6
 - HIP-0510 — Enso, the router family
 - HIP-1211 — AI, the model API
 - HIP-1332 — Kai, the decision model and the decision plane

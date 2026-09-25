@@ -23,16 +23,16 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 34 | 2 | 90 |
-| C++ | 1 | 2 | 0 | 271 |
-| Rust | 10 | 26 | 1 | 237 |
+| Go | 148 | 34 | 2 | 91 |
+| C++ | 1 | 2 | 0 | 272 |
+| Rust | 10 | 26 | 1 | 238 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | Hanzo AI Architecture & Framework | Meta | - | Living | - | - | - |
 | [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | AI Token - Hanzo's Native Currency | Standards Track | Core | Final | - | - | - |
 | [HIP-0002](./HIPs/hip-0002-hamiltonian-large-language-models-hllms-specification.md) | Hamiltonian Large Language Models (HLLMs) Specification | Standards Track | Core | Final | - | - | - |
-| [HIP-0003](./HIPs/hip-0003-jin-multimodal-ai-architecture.md) | Jin Multimodal AI Architecture | Standards Track | Core | Draft | - | - | - |
+| [HIP-0003](./HIPs/hip-0003-jin-multimodal-ai-architecture.md) | Jin — A Multimodal Model That Was Not Built | Standards Track | Core | Draft | - | - | - |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | LLM Gateway - Unified AI Provider Interface | Standards Track | Interface | Final | shipped | - | - |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | Post-Quantum Security for AI Infrastructure | Standards Track | Security | Final | partial | - | partial |
 | [HIP-0006](./HIPs/hip-0006-per-user-fine-tuning-architecture-for-personalized-ai.md) | Per-User Fine-Tuning Architecture for Personalized AI | Standards Track | Core | Final | - | - | - |
@@ -52,7 +52,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0033](./HIPs/hip-0033-container-registry-standard.md) | Container Registry Standard | Standards Track | Infrastructure | Final | partial | - | - |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | CI/CD Build System Standard | Standards Track | Infrastructure | Final | partial | - | - |
 | [HIP-0038](./HIPs/hip-0038-admin-console-standard.md) | Admin Console Standard | Standards Track | Interface | Draft | - | - | - |
-| [HIP-0039](./HIPs/hip-0039-zen-model-architecture.md) | Zen Model Architecture | Standards Track | Core | Final | - | - | - |
+| [HIP-0039](./HIPs/hip-0039-zen-model-architecture.md) | Zen — The Open-Weight Generative Family | Standards Track | Core | Final | - | - | - |
 | [HIP-0040](./HIPs/hip-0040-multi-language-sdk-standard.md) | Multi-Language SDK Standard | Standards Track | Interface | Final | shipped | - | partial |
 | [HIP-0041](./HIPs/hip-0041-cli-standard.md) | The Hanzo CLI — a Projection of the Served API | Standards Track | Interface | Final | - | - | shipped |
 | [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | Hanzo Engine — LLM Inference Engine Standard | Standards Track | Core | Final | - | shipped | shipped |
@@ -174,6 +174,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Draft | - | - | partial |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Final | - | - | - |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Final | - | - | - |
+| [HIP-0904](./HIPs/hip-0904-zen6.md) | Zen6 — Dense, Coder and Ternary Checkpoints | Standards Track | Core | Final | - | - | - |
 | [HIP-1000](./HIPs/hip-1000-author-royalty.md) | Author — A Royalty Bound to a Repository | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1001](./HIPs/hip-1001-books-double-entry-ledger.md) | Books — The Double-Entry Ledger | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1004](./HIPs/hip-1004-licensing.md) | Licensing — Signed Tokens for Paid Binaries | Standards Track | Security | Final | shipped | - | - |
@@ -400,14 +401,14 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 |:--|--:|:--|
 | [HIP-0027](./HIPs/hip-0027-secrets-management-standard.md) | 24 | Secrets Management Standard |
 | [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 17 | Hanzo Service Conventions |
-| [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | 16 | AI Token - Hanzo's Native Currency |
+| [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | 15 | AI Token - Hanzo's Native Currency |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 15 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 13 | Hanzo IAM Authentication Standard |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
-| [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 9 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | 9 | Responsible AI Principles and Commitments |
+| [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | 8 | Q-Chain — Quasar Finality Block Standard |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | 8 | Z-Chain — Post-Quantum Identity & Attestation Rollup |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 8 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
@@ -416,7 +417,6 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 6 | SuperAdmin & Tenant Isolation Model |
-| [HIP-0002](./HIPs/hip-0002-hamiltonian-large-language-models-hllms-specification.md) | 5 | Hamiltonian Large Language Models (HLLMs) Specification |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 5 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |
