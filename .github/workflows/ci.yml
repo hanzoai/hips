@@ -1,6 +1,6 @@
 name: ci
 
-# Native CI on git.hanzo.ai. Runs the SAME lint a contributor runs locally:
+# CI on GitHub Actions (the hanzoai org runner). Runs the SAME lint a contributor runs locally:
 #
 #     python3 scripts/lint-hips.py
 #

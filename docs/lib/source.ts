@@ -117,13 +117,13 @@ const HIP_CATEGORIES: CategoryMeta[] = [
     learnMore: 'Cloud Infrastructure HIPs define the distributed computing and data infrastructure for Hanzo AI at scale. Covers edge computing, security guard systems, Nexus integration hub, Visor monitoring, zero-trust architecture, message queues, pub/sub messaging, ML pipelines, unified databases, and time-series data.',
     keyTopics: ['Edge', 'Zero-trust', 'Message queues', 'ML pipelines', 'Time-series'],
   },
-  // Platform Services (0060-0067)
+  // Platform Services (0060-0069)
   {
     slug: 'platform',
     name: 'Platform Services',
     shortDesc: 'Serverless, notifications, and governance',
-    description: 'Serverless functions, notifications, scheduling, feature flags, log aggregation, backup/DR, data governance, and federated learning.',
-    range: [60, 67],
+    description: 'Serverless functions, notifications, scheduling, feature flags, log aggregation, backup/DR, data governance, federated learning, ingress, and service discovery.',
+    range: [60, 69],
     icon: 'layers',
     color: 'pink',
     learnMore: 'Platform Services HIPs specify higher-level platform capabilities including serverless function execution (FaaS), notification services, task scheduling, feature flag management, centralized log aggregation, backup and disaster recovery, data governance compliance, and federated learning for privacy-preserving AI.',
@@ -153,6 +153,18 @@ const HIP_CATEGORIES: CategoryMeta[] = [
     learnMore: 'Governance HIPs define supply chain security and community sustainability. Covers software bill of materials (SBOM) for dependency tracking, OSS contributor payout mechanisms for sustainable open source, and open AI protocol standards for interoperability.',
     keyTopics: ['SBOM', 'OSS payouts', 'Open AI Protocol'],
   },
+  // Post-Quantum Chains (0077-0079)
+  {
+    slug: 'chains',
+    name: 'Post-Quantum Chains',
+    shortDesc: 'Mesh identity, Z-Chain, Q-Chain',
+    description: 'Mesh identity, gossip and payments; the Z-Chain identity and attestation rollup; Q-Chain finality blocks.',
+    range: [77, 79],
+    icon: 'link',
+    color: 'sky',
+    learnMore: 'Post-quantum chain HIPs define how nodes identify themselves, gossip and pay on the mesh, how identity and attestations roll up on the Z-Chain, and how the Q-Chain seals finality blocks.',
+    keyTopics: ['Mesh identity', 'Z-Chain', 'Q-Chain', 'Finality'],
+  },
   // Robotics & Physical AI (0080-0083)
   {
     slug: 'robotics',
@@ -165,6 +177,18 @@ const HIP_CATEGORIES: CategoryMeta[] = [
     learnMore: 'Robotics HIPs extend Hanzo AI into the physical world. Covers robotics integration for autonomous systems, computer vision pipelines for real-time visual processing, digital twin simulation for virtual-physical synchronization, and sensor fusion with SLAM for spatial awareness.',
     keyTopics: ['Robotics', 'Computer vision', 'Digital twins', 'SLAM'],
   },
+  // Post-Quantum Cryptography (0084-0089)
+  {
+    slug: 'cryptography',
+    name: 'Post-Quantum Cryptography',
+    shortDesc: 'ML-DSA, ML-KEM, PQ accounts and randomness',
+    description: 'Threshold ML-DSA (Pulsar-M), PQ wallet accounts, typed transaction signing, PQ permits, session KEM, and the DRBG randomness beacon.',
+    range: [84, 89],
+    icon: 'shield',
+    color: 'slate',
+    learnMore: 'Cryptography HIPs specify the post-quantum primitives the stack signs, encrypts and draws randomness with: Pulsar-M threshold ML-DSA DKG and signing, the ML-DSA-65 wallet account type, TxAuthEnvelope, PQ permits, ML-KEM session keys, and an SP 800-90A/B randomness beacon.',
+    keyTopics: ['Pulsar-M', 'ML-DSA', 'ML-KEM', 'PQ permits', 'DRBG'],
+  },
   // Biotech & Life Sciences (0090-0094)
   {
     slug: 'biotech',
@@ -176,6 +200,18 @@ const HIP_CATEGORIES: CategoryMeta[] = [
     color: 'teal',
     learnMore: 'Biotech HIPs apply Hanzo AI to life sciences and healthcare. Covers brain-computer interface (BCI) standards, genomics pipeline specifications, AI-driven drug discovery, synthetic biology design tools, and medical AI for clinical decision support.',
     keyTopics: ['BCI', 'Genomics', 'Drug discovery', 'Synthetic biology', 'Medical AI'],
+  },
+  // AI Network (0095-0098)
+  {
+    slug: 'network',
+    name: 'AI Network',
+    shortDesc: 'QoS, compute rewards, node identity',
+    description: 'QoS challenges, AI compute contribution rewards, node identity and the did:hanzo method, and governance upgrade keys.',
+    range: [95, 98],
+    icon: 'globe',
+    color: 'cyan',
+    learnMore: 'AI Network HIPs define how the compute network measures and rewards its nodes: QoS challenges, contribution rewards, node identity under did:hanzo, and the cold-root keys that authorize upgrades.',
+    keyTopics: ['QoS', 'Compute rewards', 'did:hanzo', 'Upgrade keys'],
   },
   // Cross-Chain & Bridge (0100+)
   {
@@ -224,6 +260,54 @@ const HIP_CATEGORIES: CategoryMeta[] = [
     color: 'slate',
     learnMore: 'Architecture HIPs define overarching system design patterns for the Hanzo AI platform. Covers the unified MCP tools architecture that integrates 260+ tools into a coherent, composable framework.',
     keyTopics: ['MCP tools', 'Unified architecture', 'Composability'],
+  },
+  // Operator Resources (0400-0499)
+  {
+    slug: 'operator',
+    name: 'Operator Resources',
+    shortDesc: 'CRDs the operator reconciles',
+    description: 'Custom resources the Hanzo operator reconciles: service, datastore, SQL, KV, DocDB, S3, DNS, Base, IAM, KMS, LLM, ingress, gateway, MPC, network, indexer, explorer; and hanzo-login.',
+    range: [400, 499],
+    icon: 'server',
+    color: 'amber',
+    learnMore: 'Operator HIPs specify one custom resource each: its fields and what the operator reconciles from them.',
+    keyTopics: ['CRDs', 'Operator', 'Reconcile', 'Universe'],
+  },
+  // Models & Systems (0500-0599)
+  {
+    slug: 'systems',
+    name: 'Models & Systems',
+    shortDesc: 'Enso, model families, serving, context',
+    description: 'Enso routing (0510) and the model families (0511), the design system, Studio, evidence, translation, identity, serving topology, org hierarchy, the context graph, rooms, the personal agent, rendezvous, and semantic memory.',
+    range: [500, 599],
+    icon: 'brain',
+    color: 'purple',
+    learnMore: 'Systems HIPs cut across capabilities. HIP-0510 specifies Enso, the router family; HIP-0511 maps Zen, Enso, Kai and Policy to their HIPs, APIs and hosts. The rest cover serving topology, identity, the context graph, rooms, memory and the personal agent.',
+    keyTopics: ['Enso', 'Model families', 'Serving topology', 'Context graph', 'Semantic memory'],
+  },
+  // Proofs & Models (0900-0999)
+  {
+    slug: 'proofs',
+    name: 'Proofs & Models',
+    shortDesc: 'Proof of AI, Proof of Code, Zen6',
+    description: 'Proof of AI native execution proofs, Proof of Code over git refs, the Agentic Company, and Zen6 (0904).',
+    range: [900, 999],
+    icon: 'shield-check',
+    color: 'violet',
+    learnMore: 'These HIPs cover proofs of execution and of code, autonomous firms on Hanzo, and HIP-0904, the Zen6 dense, coder and ternary checkpoints.',
+    keyTopics: ['Proof of AI', 'Proof of Code', 'Agentic company', 'Zen6'],
+  },
+  // Capabilities (1000-1399)
+  {
+    slug: 'capabilities',
+    name: 'Capabilities',
+    shortDesc: 'One HIP per served capability',
+    description: 'One capability, one HIP (HIP-0139): identity, intelligence, data, streams, observability, commerce, platform, applications, chain, and Kai at /v1/decisions (1332).',
+    range: [1000, 1399],
+    icon: 'blocks',
+    color: 'teal',
+    learnMore: 'One capability, one HIP (HIP-0139). HIP-1211 is the model API; HIP-1330 the agent loop; HIP-1332 Kai, the decision model, at POST /v1/decisions.',
+    keyTopics: ['Capabilities', 'AI', 'Agents', 'Decisions', 'Commerce', 'Platform'],
   },
 ];
 
@@ -375,7 +459,7 @@ export const source = {
           type: 'folder' as const,
           name: cat.name,
           description: cat.shortDesc,
-          children: cat.hips.slice(0, 30).map(hip => ({
+          children: cat.hips.map(hip => ({
             type: 'page' as const,
             name: `HIP-${String(getHIPNumber(hip)).padStart(4, '0')}: ${hip.data.title.substring(0, 40)}${hip.data.title.length > 40 ? '...' : ''}`,
             url: `/docs/${hip.slug.join('/')}`,

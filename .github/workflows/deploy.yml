@@ -37,9 +37,11 @@ name: deploy
 # while hanzo.ai, which had moved to KMS, published fine. What this file passes
 # now is the KMS client identity, and resealing rotates every site at once.
 #
-# The credentials come from Hanzo Git's store, because this file lives under
-# .hanzo/workflows/ and only git.hanzo.ai reads that. GitHub's plan rules never
-# enter into it: the job does not run on GitHub.
+# The job runs on GitHub Actions for hanzoai/hips, on the hanzoai org runner that
+# answers linux-amd64; KMS_CLIENT_ID and KMS_CLIENT_SECRET are org secrets. The
+# forge mirror runs no actions for hanzoai repos, so GitHub is the only lane:
+# with Actions disabled on the repo nothing publishes, which is how the site
+# froze at the 2026-09-09 run.
 #
 # WHERE THINGS FIT, since these are orthogonal and composable:
 #   Project  — IAM-owned (iam/internal/schema/project.go); the billing bucket.
@@ -68,15 +70,20 @@ concurrency:
 
 jobs:
   site:
-    # NOT ubuntu-latest. These run on the in-cluster act_runner, whose fleet
-    # advertises linux-amd64 — ci.yml in this repo already targets it
-    # correctly. deploy.yml did not, so every run queued against a label no runner
-    # answers and nothing was ever published; GHCR still reports NAME_UNKNOWN for
-    # hanzoai/hips. insights sat un-deployed on the identical bug.
+    # NOT ubuntu-latest: the hanzoai org runner answers linux-amd64, the same
+    # label ci.yml and hanzoai/hanzo.ai's deploy use. A label no runner answers
+    # queues in silence and publishes nothing.
     runs-on: [linux-amd64]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
+      # The runner is persistent and shared; node comes from the toolcache, not
+      # from whatever the host has installed. pnpm comes from corepack, pinned by
+      # docs/package.json packageManager.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: build the static export
         run: |
