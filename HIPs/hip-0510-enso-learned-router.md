@@ -24,8 +24,10 @@ optimizes `quality − λ·cost − μ·latency` over the whole pool. The routin
 **microseconds on a CPU** (measured 300 ns heuristic → 12 µs learned), never a
 GPU. Enso tiers cleanly from a transparent rule router (cold start) to a learned
 policy (`xᵀWp`, closed-form ridge fit + online per-user LinUCB) that takes over
-once eval data exists and falls back to the rules whenever it is unsure. Every
-routed request produces a content-free training tuple that trains both the router
+once eval data exists and falls back to the rules whenever it is unsure. In
+production today the gateway serves overrides, ε-exploration and a prefer table
+rewritten from mean reward (§3); the `xᵀWp` engine is built and not wired (§8).
+Every routed request produces a content-free training tuple that trains both the router
 and — recursively — the next model. This HIP defines the routing contract, the
 per-org and global training loops, the reward sources (in-app feedback + an
 LLM-as-judge quality signal), the metering, and the economics. It also names the
@@ -75,11 +77,16 @@ gateway sets `X-Routed-Model` on the response for transparency; the response
   SKUs additionally require an explicit grant.
 - **SLO.** Optional per-request ceilings (`X-Max-Cost` per 1k tokens,
   `X-Max-Latency-Ms`) gate the choice; a policy cost ceiling fills an unset budget.
+- **Order.** The org's task overrides; then the engine, only when
+  `router.endpoint` is set; then ε-exploration (`ROUTER_EXPLORE_EPSILON`); then
+  the preference walk (`hanzoai/ai` `router/routing_policy.go`).
 
 The learned policy replaces the ordered preference with a bilinear utility
 `xᵀW p_m` over a feature vector `x` (task one-hot, hashed n-grams, length, media)
 and a per-model profile `p_m`, argmax subject to the SLO and access gates. It
-falls back to the rule policy when confidence is low or `W` is unfit.
+falls back to the rule policy when confidence is low or `W` is unfit. It runs in
+the engine's `POST /route` (`hanzoai/engine` `hanzo-server-core/src/route.rs`):
+`hanzo-router` rules by default, the `xᵀWp` head when `ROUTER_HEADS` mounts one.
 
 ### 2. Reward sources
 
@@ -110,8 +117,11 @@ Enso trains **both** a shared base and every org's own policy from one ledger re
 
 Each cycle is **fit → gate → deploy → publish**:
 
-1. **Fit.** Per-(task, model) empirical statistics over the rewarded ledger
-   (offline closed-form ridge for `W`; online LinUCB per user for adaptation).
+1. **Fit.** The gateway trainer (`hanzoai/ai` `controllers/router_trainer.go`)
+   takes the per-(task, model) mean reward over the rewarded ledger and picks each
+   task's best arm. In the engine, `hanzo-router-retrain` fits `W` by closed-form
+   ridge and `enso` adapts per user by LinUCB; both serve only through
+   `router.endpoint` (§8).
 2. **Gate.** A candidate is deployed **only** if it beats the incumbent by a margin
    on a held-out reward measure (or a benchmark eval). Otherwise the incumbent is
    kept and training continues on more data — **promote-or-keep**.
@@ -146,9 +156,14 @@ served on 2026-09-25 (`curl -s https://api.hanzo.ai/v1/models`) are `enso`,
   lifts it by reasoning depth onto a priced SKU through the `router.depth` table
   (`hanzoai/ai` `controllers/depth_route.go`). The lift runs only from a free SKU
   to a priced SKU that needs no grant, never the reverse.
-- `enso-ultra` is an **adaptive fan-out**: it probes one task-appropriate arm and
-  escalates to a small panel with verify-then-select **only** when the probe is
-  low-confidence, so a confident request bills one arm, not the panel.
+- Fan-out is a catalog capability (`hanzoai/zen` `catalog.go`, `escalate.go`,
+  `ultra.go`). A SKU with `arms` fans out and picks by verify-then-select; an
+  `escalate` stanza in `adaptive` mode first probes one task-ranked arm and widens
+  to the panel **only** when the probe is low-confidence, so a confident request
+  bills one arm. The embedded catalog and `hanzoai/enso` give `enso-ultra` arms and
+  `escalate`; the deployed catalog (`hanzoai/universe`
+  `charts/app/files/enso/catalog.yaml`) gives it one route and neither, so today
+  `enso-ultra` serves one model.
 
 The family is data, served by the Zen serving engine with `ZEN_FAMILY=enso`.
 `hanzoai/enso` holds the identity prompts and a catalog; the catalog that answers
@@ -193,10 +208,10 @@ repository shows on 2026-09-25.
 
 | Member | What it is | Repository | Status |
 |---|---|---|---|
-| Router | the per-request policy (§1) and its mechanism | `hanzoai/engine` (`enso`, `hanzo-router`), `hanzoai/ai` | shipped |
+| Router | the per-request policy (§1) and its mechanism | `hanzoai/ai` (live policy); `hanzoai/engine` (`enso`, `hanzo-router`) | shipped: overrides, ε = 0.1 exploration, the prefer table the reward-mean trainer rewrites every 15m; the `xᵀWp` engine is built, not wired (`router.endpoint` is empty in `hanzoai/universe` `charts/app/values/hanzo/cloud.yaml`) |
 | SKUs | the managed family (§5) | `hanzoai/enso` | shipped |
 | Replay router | a fingerprint-keyed table: an exact recurring question goes to the cheapest model observed answering it correctly, else a domain fallback, else the strongest servable model | `hanzoai/enso` `router/` | code and tests; not linked by `hanzoai/ai` |
-| Router model | `zen-router`, 0.6B: one pass emits a task, a route distribution and a feature embedding | `zenlm/zen-router`, open weights on Hugging Face | experimental (model card); `hanzoai/ai` calls it only when `router.endpoint` is set, and it is empty by default |
+| Router model | `zen-router`, 0.6B: one pass emits a task, a route distribution and a feature embedding | `zenlm/zen-router`, open weights on Hugging Face | experimental (model card); on no serving path: `router.endpoint` reaches the engine's `/route`, which never loads it, and `enso` refuses its 256-dimension feature head (`policy::D` is 16; `enso/tests/seam.rs`) |
 | Enso Diffusion | a sparse mixture-of-experts diffusion transformer with rectified-flow training and sampling, forked from DiT-MoE (arXiv:2407.11633); class-conditional image generation | `zenlm/enso` (Apache-2.0) | research code; Hanzo's commits touch only licence, docs, CI and ignore rules; no Hanzo-trained weights (no `zenlm/enso` on Hugging Face) |
 | Enso Browser | a desktop browser forked from `zen-browser/desktop` on Firefox 147.0.3 | `hanzoai/enso-browser` (private, MPL-2.0) | unreleased; upstream name and branding unchanged; no Hanzo feature in the tree |
 
@@ -246,12 +261,13 @@ only narrow to models it can serve, never escalate to another tenant's.
 
 ## Reference Implementation
 
-- Router mechanism and learned policy: `hanzoai/engine` (`hanzo-router`, `enso`).
+- Router mechanism and learned policy: `hanzoai/engine` (`hanzo-router`, `enso`,
+  `hanzo-router-retrain`); built, not wired in production.
 - Gateway routing, depth lift, per-org/global training, reward ledger, metering:
   `hanzoai/ai` (`controllers/auto_route.go`, `controllers/depth_route.go`,
   `controllers/router_trainer.go`).
 - Managed family (identity prompts + catalog) and the replay router: `hanzoai/enso`.
-- Router model: `zenlm/zen-router`.
+- Router model: `zenlm/zen-router` (open weights; on no serving path).
 - Evaluation harness: `hanzoai/enso-bench` (private: the specification does not
   depend on it; it produces the eval rows §3 fits on).
 - Measurements and economics: the Enso paper (`hanzoai/papers/enso`).

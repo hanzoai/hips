@@ -83,9 +83,9 @@ Hanzo Cloud also lists `zen-free`.
 
 | Member | HIP | API | Runs | Status |
 |---|---|---|---|---|
-| Router | HIP-0510 §1–§4 | `model=auto` (alias `zen-router`); the response header `X-Routed-Model` names what served | Hanzo Cloud; code open in `hanzoai/engine` and `hanzoai/ai` | shipped |
+| Router | HIP-0510 §1–§4 | `model=auto` (alias `zen-router`); the response header `X-Routed-Model` names what served | Hanzo Cloud (`hanzoai/ai`); the `xᵀWp` engine (`hanzoai/engine`) is built, not wired | shipped |
 | SKUs | HIP-0510 §5 | `enso`, `enso-auto`, `enso-flash`, `enso-free`, `enso-pro`, `enso-ultra` | Hanzo Cloud only | shipped |
-| Router model | HIP-0510 §8 | `zen-router`, called by the gateway only when `router.endpoint` is set | open weights (`zenlm/zen-router`) | experimental |
+| Router model | HIP-0510 §8 | none | open weights (`zenlm/zen-router`); on no serving path | experimental |
 | Enso Diffusion | HIP-0510 §8 | none | code only (`zenlm/enso`) | research code; no weights |
 | Enso Browser | HIP-0510 §8 | none | none | unreleased private fork |
 
@@ -123,8 +123,10 @@ deterministic, Kai, Zen, solver, simulation or human, and only the Zen nodes
 generate, so an agent workflow spends generative compute only where generation is
 the work.
 
-Today the routing decision is the router's own policy (HIP-0510 §1): rules, then
-`xᵀWp`. Kai takes a decision over one program at a time, `shadow`, then
+Today the routing decision is the router's own policy (HIP-0510 §1): per-org
+overrides, ε = 0.1 exploration, then the prefer table that the reward-mean trainer
+rewrites every 15m. The `xᵀWp` engine is built (`hanzoai/engine`) but not wired
+(`router.endpoint` is empty). Kai takes a decision over one program at a time, `shadow`, then
 `advisory`, then `enforced` (HIP-1332 §13.1). On 2026-09-25 no program has made
 that move: no repository implements `enso.decide`.
 
@@ -155,7 +157,7 @@ curl https://api.hanzo.ai/v1/decisions \
 ### 8. Names that collide
 
 - `zen-router` is both the gateway's alias for `auto` (HIP-0510 §1) and the router
-  model `zenlm/zen-router`.
+  model `zenlm/zen-router`. The alias never calls the model.
 - The Enso Browser tree still carries its upstream's name, "Zen Browser", which is
   also the generative family's name.
 - `hanzoai/kai-1*` carry the Kai name and Laya weights.

@@ -25,7 +25,7 @@ and policy:
 ```text
 Zen     generates: open reasoning, code, language
 Kai     decides: bounded judgment, decision state
-Enso    orchestrates: serving, routing, context, tools, agents
+Enso    routes: each operation to Kai or Zen (HIP-0510)
 Embed   retrieves      TS      forecasts     Vision  perceives
 Audio   hears          Graph   structures    Solver  proves
 Policy  governs
@@ -56,7 +56,7 @@ open work; Kai takes bounded judgment.
 ### §1 Vocabulary
 
 Normative terms. **Hanzo Decision**: the capability and API. **Kai**: the decision model.
-**Zen**: the generative family. **Enso**: the inference and agent runtime. **Decision Program**:
+**Zen**: the generative family. **Enso**: the router family (HIP-0510); it routes each operation to Kai or Zen. **Decision Program**:
 a versioned, executable description of a decision. **Decision Package**: the reproducible record
 of one program run. **Evidence**: anything a program may read. **Adapter**: maps one modality into
 evidence. **Policy**: deterministic authority. **Decision Plane**: the runtime subsystem that
@@ -256,7 +256,7 @@ behaviour MUST NOT reach global training without that permission.
 A business runs on bounded decisions followed by generation and execution. Kai decides who, what,
 when, why and through which channel: enrichment (industry, size, role, interest, intent, budget,
 urgency, channel, readiness; each typed, scored, deferrable), lead fit and intent, next action,
-offer, cadence, handoff to a human, stop. Zen writes the message; Enso runs the workflow; Policy
+offer, cadence, handoff to a human, stop. Zen writes the message; Enso routes each step; Policy
 decides whether contact is permitted (consent, opt-outs, caps, quiet hours, jurisdiction, age,
 suppression, sensitive attributes), so Kai may prefer SMS and policy may still forbid it. Each
 program (`marketing.*`, `sales.*`, `commerce.*`) owns its outcome metrics (replies, qualified
@@ -391,7 +391,7 @@ yields consistent program state without serial decision calls.
 
 Observe everything. Encode once. Decide in parallel. Refine uncertainty. Enforce constraints.
 Keep provenance. Escalate when needed. Generate only when generation is the work. Zen generates,
-Enso orchestrates, Kai decides.
+Enso routes, Kai decides.
 
 ## Security Considerations
 
