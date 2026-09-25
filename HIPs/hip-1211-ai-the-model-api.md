@@ -45,6 +45,11 @@ The vendor-compatible wire — `/v1/chat/completions`, `/v1/completions`,
 vendor SDK hard-codes, is exempt by HIP-0139 §3.2, and belongs to `ai` and to no
 other capability. It MUST NOT move.
 
+Which model a request names is HIP-0511's map: Zen ids generate, `auto` and the
+`enso*` ids are resolved by the Enso router (HIP-0510) before provider and
+billing resolution, and decisions go to Kai at `/v1/decisions` (HIP-1332), not to
+this wire.
+
 ### Everything else answers under /v1/ai
 
 Six satellite roots fold under the capability's own name, each an HTTP binding
@@ -130,6 +135,9 @@ canonical routes guard.
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0139 — Capability
+- HIP-0510 — Enso, the router family
+- HIP-0511 — Model families
+- HIP-1332 — Kai, the decision model
 
 ## Copyright
 

@@ -1,24 +1,26 @@
 ---
 hip: 0510
-title: Enso — Learned Per-Request Model Routing and the Recursive Router–Model Flywheel
+title: Enso — The Router Family, Learned Per-Request Routing and the Router–Model Flywheel
 author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Final
+implementation-go: shipped
 implementation-rust: shipped
 created: 2026-07-17
-requires: HIP-0001
+requires: HIP-0001, HIP-1211
 ---
 
-# HIP-0510: Enso — Learned Per-Request Model Routing and the Recursive Router–Model Flywheel
+# HIP-0510: Enso — The Router Family, Learned Per-Request Routing and the Router–Model Flywheel
 
 ## Abstract
 
-This proposal specifies **Enso**, Hanzo's learned router: a layer that selects the
-best model for every request across any enabled provider and any hosted model,
-then improves itself from feedback. Enso makes model choice **per-request** and
-makes **cost a first-class, transparent axis** — it optimizes
-`quality − λ·cost − μ·latency` over the whole pool. The routing decision costs
+**Enso** is Hanzo's router family. Zen generates, Enso routes, Kai decides
+(HIP-0511). This proposal specifies the family's core, the learned router: a
+layer that selects the best model for every request across any enabled provider
+and any hosted model, then improves itself from feedback. Enso makes model
+choice **per-request** and makes **cost a first-class, transparent axis** — it
+optimizes `quality − λ·cost − μ·latency` over the whole pool. The routing decision costs
 **microseconds on a CPU** (measured 300 ns heuristic → 12 µs learned), never a
 GPU. Enso tiers cleanly from a transparent rule router (cold start) to a learned
 policy (`xᵀWp`, closed-form ridge fit + online per-user LinUCB) that takes over
@@ -26,7 +28,10 @@ once eval data exists and falls back to the rules whenever it is unsure. Every
 routed request produces a content-free training tuple that trains both the router
 and — recursively — the next model. This HIP defines the routing contract, the
 per-org and global training loops, the reward sources (in-app feedback + an
-LLM-as-judge quality signal), the metering, and the economics.
+LLM-as-judge quality signal), the metering, and the economics. It also names the
+managed Enso SKUs (§5), the members that share the name without routing, Enso
+Diffusion and the Enso Browser (§8), and where Kai takes Enso's bounded decisions
+(§9, HIP-1332 §13).
 
 ## Motivation
 
@@ -84,7 +89,10 @@ latency — never prompt text). A reward in `[0,1]` is attached, keyed by the
 response/usage request id, from either:
 
 - **In-app feedback** — an explicit signal a product surfaces (thumbs, accept,
-  regenerate) posted to `POST /v1/add-routing-reward`.
+  regenerate) posted to `POST /v1/ai/feedback` (HIP-1211) as
+  `{request_id, reward|rating}`. The write is org-scoped (a request id from
+  another org answers 404, like an unknown one), idempotent, and carries no prompt
+  text. The earlier `/v1/add-routing-reward` is retired and answers 404.
 - **LLM-as-judge** — an automatic quality score: a judge model rates the served
   response against a task rubric; only the numeric score is stored.
 
@@ -112,6 +120,9 @@ Each cycle is **fit → gate → deploy → publish**:
 4. **Publish.** The retrain verdict (version, event count, gate pass/value/base) is
    recorded and surfaced for observability.
 
+The policy, defaults, ledger, rewards, artifact metadata and stats are served
+under `/v1/ai/router` (HIP-1211).
+
 ### 4. The recursive router–model flywheel
 
 Every routed request yields a labeled tuple `(features, winning model, quality
@@ -125,11 +136,25 @@ not.
 
 ### 5. Serving family
 
-For callers who prefer not to manage a pool, Enso is also offered as a managed
-family (`enso`, `enso-flash`, `enso-ultra`) over the same OpenAI-compatible API.
-`enso-ultra` is an **adaptive fan-out**: it probes one task-appropriate arm and
-escalates to a small panel with verify-then-select **only** when the probe is
-low-confidence, so a confident request bills one arm, not the panel.
+For callers who prefer not to manage a pool, Enso is also a managed family over
+the same OpenAI-compatible API (`/v1/chat/completions`, `/v1/responses`). The ids
+served on 2026-09-25 (`curl -s https://api.hanzo.ai/v1/models`) are `enso`,
+`enso-auto`, `enso-flash`, `enso-free`, `enso-pro` and `enso-ultra`.
+
+- `enso-auto` is the family's free entry and the default model of `hanzoai/dev`
+  (`crates/hanzo-config`, `DEFAULT_MODEL`). When the caller funds it, the gateway
+  lifts it by reasoning depth onto a priced SKU through the `router.depth` table
+  (`hanzoai/ai` `controllers/depth_route.go`). The lift runs only from a free SKU
+  to a priced SKU that needs no grant, never the reverse.
+- `enso-ultra` is an **adaptive fan-out**: it probes one task-appropriate arm and
+  escalates to a small panel with verify-then-select **only** when the probe is
+  low-confidence, so a confident request bills one arm, not the panel.
+
+The family is data, served by the Zen serving engine with `ZEN_FAMILY=enso`.
+`hanzoai/enso` holds the identity prompts and a catalog; the catalog that answers
+a request is the deployment's, mounted over the copy baked into the image
+(`hanzoai/enso` `LLM.md`). Prices are what `GET /v1/models` returns; this HIP
+fixes none.
 
 ### 6. Metering and pricing
 
@@ -150,6 +175,8 @@ auditable number (not a model-card estimate). Two models:
 - **Self-service.** An org enables Enso Router, selects the providers and models in
   its pool, sets a cost ceiling, and sends `model=auto` over `api.hanzo.ai/v1` —
   usable from any OpenAI-compatible client (CLIs, IDE assistants, agent harnesses).
+  The switch is the org's settings row (`/v1/ai/org/settings`); the reserved `*`
+  row sets the platform default, and an org's own row overrides it.
 - **Provider control.** An org may opt specific providers or models out of its pool
   for data, privacy, compliance, or organizational reasons.
 - **Data ownership.** The ledger is content-free; an org can export or delete its own
@@ -157,6 +184,37 @@ auditable number (not a model-card estimate). Two models:
 - **Feature gating.** Any capability not yet generally available is gated behind the
   native flag engine (`/v1/flags`), org-scoped, so the surface ships dark and enables
   per-org without a release.
+
+### 8. The Enso family
+
+The name covers the members below. This HIP specifies the router (§1–§4, §6–§7)
+and the SKUs (§5); the rest are listed so the name resolves, each with what its
+repository shows on 2026-09-25.
+
+| Member | What it is | Repository | Status |
+|---|---|---|---|
+| Router | the per-request policy (§1) and its mechanism | `hanzoai/engine` (`enso`, `hanzo-router`), `hanzoai/ai` | shipped |
+| SKUs | the managed family (§5) | `hanzoai/enso` | shipped |
+| Replay router | a fingerprint-keyed table: an exact recurring question goes to the cheapest model observed answering it correctly, else a domain fallback, else the strongest servable model | `hanzoai/enso` `router/` | code and tests; not linked by `hanzoai/ai` |
+| Router model | `zen-router`, 0.6B: one pass emits a task, a route distribution and a feature embedding | `zenlm/zen-router`, open weights on Hugging Face | experimental (model card); `hanzoai/ai` calls it only when `router.endpoint` is set, and it is empty by default |
+| Enso Diffusion | a sparse mixture-of-experts diffusion transformer with rectified-flow training and sampling, forked from DiT-MoE (arXiv:2407.11633); class-conditional image generation | `zenlm/enso` (Apache-2.0) | research code; Hanzo's commits touch only licence, docs, CI and ignore rules; no Hanzo-trained weights (no `zenlm/enso` on Hugging Face) |
+| Enso Browser | a desktop browser forked from `zen-browser/desktop` on Firefox 147.0.3 | `hanzoai/enso-browser` (private, MPL-2.0) | unreleased; upstream name and branding unchanged; no Hanzo feature in the tree |
+
+Enso Diffusion and the Enso Browser each get their own HIP when there is
+something of ours to specify: trained weights, or a Hanzo change to the fork.
+
+### 9. Decisions before generation
+
+Choosing a model is a bounded decision: the answer space is known. HIP-1332 §13
+makes Kai native to Enso. A bounded decision (model and provider, context depth,
+tools and skills, reasoning budget, stop, retry, escalation) goes to Kai, in
+process where co-resident and at `POST /v1/decisions` otherwise. Generation, and
+any decision Kai defers, goes to a generative model. Each decision program runs in
+`shadow` first (HIP-1332 §13.1), so the policy of §1 keeps serving until a program
+is promoted.
+
+This HIP adds no requirement; HIP-1332 carries it. On 2026-09-25 no repository
+implements `enso.decide`, and `POST https://api.hanzo.ai/v1/decisions` answers 404.
 
 ## Rationale
 
@@ -189,10 +247,15 @@ only narrow to models it can serve, never escalate to another tenant's.
 ## Reference Implementation
 
 - Router mechanism and learned policy: `hanzoai/engine` (`hanzo-router`, `enso`).
-- Gateway routing, per-org/global training, reward ledger, metering: `hanzoai/ai`.
-- Managed family (catalog + identity): `hanzoai/enso`.
-- Evaluation harness: `hanzoai/enso-bench`.
+- Gateway routing, depth lift, per-org/global training, reward ledger, metering:
+  `hanzoai/ai` (`controllers/auto_route.go`, `controllers/depth_route.go`,
+  `controllers/router_trainer.go`).
+- Managed family (identity prompts + catalog) and the replay router: `hanzoai/enso`.
+- Router model: `zenlm/zen-router`.
+- Evaluation harness: `hanzoai/enso-bench` (private: the specification does not
+  depend on it; it produces the eval rows §3 fits on).
 - Measurements and economics: the Enso paper (`hanzoai/papers/enso`).
+- Model families: HIP-0511. Decisions: HIP-1332. Model API: HIP-1211.
 
 ## Copyright
 

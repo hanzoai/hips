@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 147 | 34 | 2 | 90 |
-| C++ | 1 | 2 | 0 | 270 |
-| Rust | 10 | 26 | 1 | 236 |
+| Go | 148 | 34 | 2 | 90 |
+| C++ | 1 | 2 | 0 | 271 |
+| Rust | 10 | 26 | 1 | 237 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -157,7 +157,8 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0449](./HIPs/hip-0449-hanzo-login.md) | hanzo-login | Informational | Application | Final | - | - | - |
 | [HIP-0504](./HIPs/hip-0504-unified-design-system.md) | Unified Cross-Platform Design System | Standards Track | Interface | Final | - | - | - |
 | [HIP-0506](./HIPs/hip-0506-hanzo-studio-agentic-creative-runtime.md) | Hanzo Studio — Agentic Multi-Modal Creative Runtime | Standards Track | Application | Final | - | - | - |
-| [HIP-0510](./HIPs/hip-0510-enso-learned-router.md) | Enso — Learned Per-Request Model Routing and the Rec... | Standards Track | Core | Final | - | - | shipped |
+| [HIP-0510](./HIPs/hip-0510-enso-learned-router.md) | Enso — The Router Family, Learned Per-Request Routin... | Standards Track | Core | Final | shipped | - | shipped |
+| [HIP-0511](./HIPs/hip-0511-model-families.md) | Model Families — Zen Generates, Enso Routes, Kai Dec... | Informational | Core | Living | - | - | - |
 | [HIP-0512](./HIPs/hip-0512-experiment-the-evidence-plane.md) | Experiment — The Evidence Plane | Standards Track | Infrastructure | Final | partial | - | - |
 | [HIP-0516](./HIPs/hip-0516-translate.md) | Translate — One Endpoint, Two Tiers, Permissive Weights | Standards Track | Core | Final | shipped | - | - |
 | [HIP-0517](./HIPs/hip-0517-branch-naming.md) | Branch Naming — main is the Trunk, Everywhere | Process | Meta | Living | - | - | - |
