@@ -289,6 +289,15 @@ languages (parallel examples, code-switching, low-resource sampling, balanced ba
 report per-language results. Training and evaluation data MUST stay separate; a test set is
 never trained on.
 
+Every build is barriered against every evaluation item: an equal content unit, an instance key, a
+near duplicate (5-gram Jaccard ≥ 0.5) or contained spans exclude a training record. A stage MAY
+name a benchmark's official train split in `official`; there only the item itself (equal unit or
+key) is excluded, since a templated benchmark's train and test states are near by construction.
+A result under `official` MUST say so and MUST name the baseline trained on the same split.
+
+A specialist trained on another encoder (for example the English ModernBERT-large of the Laya
+typed-decisions baseline) MAY serve as a teacher for the one line. It is never served (§2).
+
 ### §16 Training infrastructure
 
 The trainer SHOULD span Hanzo's heterogeneous fleet (Metal, CUDA, ROCm) and MUST support resume,
@@ -296,6 +305,13 @@ versioned data, model revision tracking and optimizer-state recovery. A run MUST
 copy of its own progress. A full stage-A run SHOULD start only when resume works, the CUDA and
 ROCm builds are validated, and the stage-A mixture is built and versioned; a run on an obsolete
 encoder is not the Kai lineage because compute was spent on it.
+
+The trainer is local SGD with an outer Nesterov step: `train fit --listen` coordinates and trains,
+`train join` adds a machine at any time, and deltas are summed in join order. It has run on Metal
+(M4 Max), CUDA (GB10) and ROCm (Radeon 8060S) together. On a 2% pilot, CUDA and Metal agree on mean
+validation accuracy (0.500 against 0.504 over 48 suites). A unified-memory worker MUST keep its
+micro-batch within the OS memory guard: at half the budget, the ROCm worker was killed by
+`earlyoom` within three rounds, while a quarter held.
 
 ### §17 API
 
@@ -331,6 +347,28 @@ decision model, static rules, embedding retrieval. Axes are reported apart:
 
 Documentation MUST NOT turn a target into a claim.
 
+Measured on the frozen harness (`hanzoai/benchmarks` `decision/`, Laya's own builders, one
+question set scored by one function for every backend). Kai is stage `a4`, `hanzoai/decision`
+`train/stages/a4.json`, results `decision/results/kai-a4`:
+
+| suite | Kai a4 | Laya | Jev |
+|---|---|---|---|
+| emotion | **0.938** | 0.595 | 0.603 |
+| Banking77 (77) | **0.885** | 0.425 | 0.835 |
+| phishing | **0.990** | 0.983 | 0.900 |
+| toxicity | **0.833** | 0.530 | 0.662 |
+| RAG relevance | **0.672** | 0.625 | 0.620 |
+| routing | **1.000** | 0.639 | 0.977 |
+| AG News | 0.935 | **0.950** | 0.860 |
+| email spam | 0.995 | **0.998** | 0.978 |
+| support triage | 0.453 | **0.502** | 0.365 |
+| jailbreak | 0.907 | 0.705 | **0.940** |
+| MASSIVE, 51 languages | 0.858 | 0.382 | **0.890** |
+| typed decisions | 0.523 | **0.766** (Laya's typed checkpoint) | 0.736 |
+
+Kai leads 6 of 12 suites. It trained on 638 of typed decisions' 1,185 train records (the near rule
+dropped the rest), where Laya's typed checkpoint trained on all of them.
+
 #### §18.1 Kai in the loop
 
 Enso SHALL support the study: does Kai remove generative compute at equal task success? Baseline
@@ -364,16 +402,25 @@ one encoding across a state's decisions; needs no generative call per bounded de
 
 ### §22 Status
 
-Descriptive, not normative, as of `hanzoai/decision` main `d419552`.
+Descriptive, not normative, as of `hanzoai/decision` main `bcdc01d`.
 
-- **Landed**: Decision Programs and Packages, what-flips analysis, SysML v2 import, the
-  engineering knowledge graph, a cited JLTV powertrain trade, refinement passes, the Laya
-  baseline served natively.
-- **In progress**: the distributed resumable trainer, CUDA and ROCm builds, the stage-A corpus,
-  evidence adapters, the joint decoder, agent and coding data, sensor data, the harness, the
-  Enso study.
-- **Not claimed**: a trained Kai checkpoint; Kai against Laya or Jev; multimodal accuracy; Enso
-  savings; any end-to-end engineering or acquisition result.
+- **Landed**:
+  - Decision Programs and Packages, what-flips analysis, SysML v2 import, the engineering
+    knowledge graph, a cited JLTV powertrain trade, and refinement passes;
+  - the Laya baseline served natively (21 states, 108/108 labels at parity);
+  - the heterogeneous resumable trainer (§16);
+  - the stage-A corpus and its barrier, with `official` splits (§15);
+  - trained Kai checkpoints: stage `a4` beside Laya and Jev (§18).
+- **In progress**:
+  - stage `a5` (from `a4`, all three backends): typed decisions from its official split, more
+    AG News, MASSIVE, jailbreak, email spam and support triage;
+  - `t1`, a typed-decisions teacher (§15);
+  - evidence adapters, the joint decoder, the Enso study.
+- **Not claimed**:
+  - Kai ahead of Laya and Jev on every suite;
+  - multimodal accuracy;
+  - Enso savings;
+  - any end-to-end engineering or acquisition result.
 
 ## Rationale
 
