@@ -348,26 +348,35 @@ decision model, static rules, embedding retrieval. Axes are reported apart:
 Documentation MUST NOT turn a target into a claim.
 
 Measured on the frozen harness (`hanzoai/benchmarks` `decision/`, Laya's own builders, one
-question set scored by one function for every backend). Kai is stage `a4`, `hanzoai/decision`
-`train/stages/a4.json`, results `decision/results/kai-a4`:
+question set scored by one function for every backend). Kai is stage `a5`, one epoch from `a4`
+with typed decisions' official split read whole (`hanzoai/decision` `train/stages/a5.json`),
+results `decision/results/kai-a5` (b07ba42). † marks a suite drawn from rows Laya trained on.
 
-| suite | Kai a4 | Laya | Jev |
+| suite | Kai a5 | Laya | Jev |
 |---|---|---|---|
-| emotion | **0.938** | 0.595 | 0.603 |
-| Banking77 (77) | **0.885** | 0.425 | 0.835 |
-| phishing | **0.990** | 0.983 | 0.900 |
-| toxicity | **0.833** | 0.530 | 0.662 |
-| RAG relevance | **0.672** | 0.625 | 0.620 |
-| routing | **1.000** | 0.639 | 0.977 |
-| AG News | 0.935 | **0.950** | 0.860 |
+| AG News | **0.950** | **0.950** | 0.860 |
+| emotion | **0.925** | 0.595 | 0.603 |
+| Banking77 (77) | **0.907** | 0.425 | 0.835 |
+| support triage | **0.490** | 0.502 † | 0.365 |
 | email spam | 0.995 | **0.998** | 0.978 |
-| support triage | 0.453 | **0.502** | 0.365 |
-| jailbreak | 0.907 | 0.705 | **0.940** |
-| MASSIVE, 51 languages | 0.858 | 0.382 | **0.890** |
-| typed decisions | 0.523 | **0.766** (Laya's typed checkpoint) | 0.736 |
+| phishing | **0.990** | 0.983 † | 0.900 |
+| jailbreak | 0.915 | 0.705 | **0.940** |
+| toxicity | **0.820** | 0.530 | 0.662 |
+| RAG relevance | **0.667** | 0.625 | 0.620 |
+| routing | **1.000** | 0.639 | 0.977 |
+| typed decisions | 0.705 | **0.766** (Laya's typed checkpoint) | 0.736 |
+| MASSIVE, 51 languages | 0.888 | 0.382 | **0.890** |
+| macro, 11 suites | **0.851** | 0.702 | 0.770 |
 
-Kai leads 6 of 12 suites. It trained on 638 of typed decisions' 1,185 train records (the near rule
-dropped the rest), where Laya's typed checkpoint trained on all of them.
+Kai is best of three in 8 of 12 suites, counting only backends that did not train on a suite's
+rows (Laya 3, Jev 2; AG News a tie).
+
+The two † suites are rebuilt on rows none of the three trained on (`decision/held`, 6273430):
+phishing from a corpus outside Laya's mix, deduplicated exactly, by 5-gram Jaccard and by
+containment; support tickets generated through Hanzo's API over the same ten queues and
+cross-checked by a second model (98.6% agreement). There Laya leads both: phishing 0.922 against
+Kai's 0.900 (Laya read 0.983 on its own training rows), support triage 0.580 against 0.417, where
+Kai answers Billing and Payments for 111 of 400 tickets, 40 of them billing.
 
 #### §18.1 Kai in the loop
 
@@ -402,7 +411,7 @@ one encoding across a state's decisions; needs no generative call per bounded de
 
 ### §22 Status
 
-Descriptive, not normative, as of `hanzoai/decision` main `bcdc01d`.
+Descriptive, not normative, as of `hanzoai/decision` main `bb819a6`.
 
 - **Landed**:
   - Decision Programs and Packages, what-flips analysis, SysML v2 import, the engineering
@@ -410,11 +419,14 @@ Descriptive, not normative, as of `hanzoai/decision` main `bcdc01d`.
   - the Laya baseline served natively (21 states, 108/108 labels at parity);
   - the heterogeneous resumable trainer (§16);
   - the stage-A corpus and its barrier, with `official` splits (§15);
-  - trained Kai checkpoints: stage `a4` beside Laya and Jev (§18).
+  - trained Kai checkpoints: stage `a5` beside Laya and Jev on the frozen and held-out suites
+    (§18); the shipped programs pin `kai` at a5's calibration `cal_47711d44267fdbdd`;
+  - the structured selector: a program's MAP over each slot's top-K by bucket elimination
+    (`kai::field`), and incremental encoding of a new chunk over cached keys and values.
 - **In progress**:
-  - stage `a5` (from `a4`, all three backends): typed decisions from its official split, more
-    AG News, MASSIVE, jailbreak, email spam and support triage;
-  - `t1`, a typed-decisions teacher (§15);
+  - `POST /v1/decisions` on api.hanzo.ai, served privately from Hanzo's own storage;
+  - stage `a6`: score questions as a choice over their levels with the ranked probability
+    score, a typed-decisions teacher, and support-queue data against the held-out losses;
   - evidence adapters, the joint decoder, the Enso study.
 - **Not claimed**:
   - Kai ahead of Laya and Jev on every suite;
