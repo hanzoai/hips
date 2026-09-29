@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 34 | 2 | 91 |
-| C++ | 1 | 2 | 0 | 272 |
-| Rust | 10 | 26 | 1 | 238 |
+| Go | 148 | 35 | 2 | 91 |
+| C++ | 1 | 2 | 0 | 273 |
+| Rust | 10 | 27 | 1 | 238 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -304,6 +304,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) | Dev — The Agent Loop | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1331](./HIPs/hip-1331-patrol-standing-watch-over-an-estate.md) | Patrol — Standing Watch Over an Estate | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) | Kai — The Decision Model and the Decision Plane | Standards Track | Core | Draft | - | - | partial |
+| [HIP-1333](./HIPs/hip-1333-train-one-endpoint-for-training.md) | Train — One Endpoint for Training | Standards Track | Infrastructure | Draft | partial | - | partial |
 
 ## HIP Process
 
@@ -391,9 +392,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 128 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 124 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 124 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 129 | Capability |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 125 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 125 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
