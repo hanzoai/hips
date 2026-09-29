@@ -97,7 +97,7 @@ served; neither is kept as an alias.
                           {"kind": "consistency", "weight": 0.5}]},
   "adaptation": {"mode": "full"},
   "protect": {"suites": ["typed_decisions", "ag_news"],
-              "projection": true, "distillation": true,
+              "projection": {"strength": 0.5}, "distillation": true,
               "budget": {"accuracy": 0.02, "ece": 0.03}},
   "resources": {"machines": ["dgx", "evo"], "steps": 2000},
   "evaluation": {"suites": ["labels"]},
@@ -126,8 +126,12 @@ adaptation trains.
   coefficients alone). `auto` chooses, and `adaptation.chose` says what and why.
 - `protect.suites` names capabilities the base already has, by suite; `capabilities`
   names capability artifacts, by sha256. `projection` projects every update — a full
-  update, an adapter or a residual — off the protected directions: the subspace the
-  suites' gradients span at the base, and each named capability's subspace.
+  update, an adapter or a residual — off the protected directions, the subspace `P`
+  the suites' gradients span at the base and each named capability's subspace, by its
+  `strength` λ in [0, 1] (default 1): `g' = g − λ·P g`. Orthogonality is a budget,
+  not a switch: at λ = 1 the update keeps only what lies outside `P`, which can be
+  little of it, and at 0 it is untouched; each step reports the share of the gradient
+  removed, per layer.
   `distillation` adds KL to the base's answers on a preservation set drawn from the
   suites. `budget` bounds the regression the job may cause on each protected suite:
   accuracy down at most `accuracy`, calibration error up at most `ece`.
@@ -158,7 +162,7 @@ the two cannot disagree. Today:
 
 | base | executor | adaptation | protect | objective terms | output |
 |---|---|---|---|---|---|
-| `kai` | `train serve`, jobs only | `full`, `auto` (chooses `full`) | `suites`, `projection`, `distillation` | `pairwise_margin`, `hard_margin`, `consistency` | `checkpoint`, `capability` |
+| `kai` | `train serve`, jobs only | `full`, `auto` (chooses `full`) | `suites`, `projection` with `strength`, `distillation` | `pairwise_margin`, `hard_margin`, `consistency` | `checkpoint`, `capability` |
 | engine LLMs (Hugging Face causal LMs the engine loads) | engine, clients only | `lora` | none | none | `lora` |
 
 A client on `kai` and a job on an engine LLM are refused as `unsupported_base` for that
@@ -168,7 +172,8 @@ supported set. A base gains a row when its executor implements the row.
 
 For Kai the job becomes a stage file (HIP-1332): the stage named by `dataset.uri`, its
 init replaced by `revision`, `objective.terms` its `terms`, `protect.suites` with
-`projection` and `distillation` its `protect.project` and `protect.distill`,
+`projection` and `distillation` its `protect.project` (λ its `strength`) and
+`protect.distill`,
 `resources.steps` its `max_steps`.
 
 ### §5 Lifecycle
