@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 36 | 2 | 91 |
-| C++ | 1 | 2 | 0 | 274 |
-| Rust | 10 | 28 | 1 | 238 |
+| Go | 148 | 37 | 2 | 91 |
+| C++ | 1 | 2 | 0 | 275 |
+| Rust | 10 | 28 | 1 | 239 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -171,6 +171,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0524](./HIPs/hip-0524-the-personal-agent.md) | The Personal Agent — What It May Send Without You | Standards Track | Core | Final | partial | - | - |
 | [HIP-0525](./HIPs/hip-0525-rendezvous.md) | Rendezvous — When Every Participant Is a Machine | Standards Track | Core | Draft | - | - | - |
 | [HIP-0526](./HIPs/hip-0526-semantic-memory.md) | Semantic Memory — The Substrate Under the Graph | Standards Track | Core | Draft | partial | - | - |
+| [HIP-0527](./HIPs/hip-0527-tenancy.md) | Tenancy | Standards Track | Security | Draft | partial | - | - |
 | [HIP-0901](./HIPs/hip-0901-proof-of-ai-native-execution-proofs.md) | Proof of AI (PoAI) — Native Execution Proofs, Canoni... | Standards Track | Core | Draft | - | - | partial |
 | [HIP-0902](./HIPs/hip-0902-proof-of-code.md) | Proof of Code — Consensus over Git Refs | Standards Track | Core | Final | - | - | - |
 | [HIP-0903](./HIPs/hip-0903-agentic-company.md) | The Agentic Company — Autonomous Firms on Hanzo | Informational | Meta | Final | - | - | - |
@@ -394,7 +395,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
 | [HIP-0139](./HIPs/hip-0139-capability.md) | 130 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 126 | Identity & Access Management Standard |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 127 | Identity & Access Management Standard |
 | [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 126 | The Hanzo Plugin Contract |
 
 ### Then the invariants
@@ -410,14 +411,14 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | 9 | Responsible AI Principles and Commitments |
+| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 9 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | 8 | Q-Chain — Quasar Finality Block Standard |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | 8 | Z-Chain — Post-Quantum Identity & Attestation Rollup |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 8 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
-| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 8 | SuperAdmin & Tenant Isolation Model |
+| [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 8 | One Identity Boundary |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 7 | Model Context Protocol (MCP) Integration Standards |
-| [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 5 | Hanzo Sovereign L1 Chain Architecture |
