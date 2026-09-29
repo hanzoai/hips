@@ -302,7 +302,7 @@ and `cluster/finetune.go`, and edit:
 | `controllers/zap_ownership_test.go` | drop the `refreshFinetuneJob` entry |
 | `LLM.md` | drop `/v1/finetune/*` from the alias list |
 
-Then in hanzo-inc/cloud, with the new hanzoai/ai pinned:
+Then in `hanzoai/cloud`, with the new hanzoai/ai pinned:
 `make -f mk/fleet.mk describe/ai && make closure && make -f mk/fleet.mk openapi`, which
 drops `/v1/ai/finetune/*` from `private.yaml` and `openapi.yaml` and so from the generated
 clients and the CLI.
