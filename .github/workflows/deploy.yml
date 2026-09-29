@@ -1,86 +1,27 @@
 name: deploy
 
-# hips.hanzo.ai is a SITE, not an App.
-#
-# It is a Next.js static export. Baking that into a container so a Go binary can
-# serve /public means building an image, pushing it, pinning a tag in a CR, and
-# running pods — all to hand back files that never execute. The Sites plane exists
-# for exactly this shape: build the export, POST the tar, done. No image, no CR,
-# no replicas.
-#
-#   pnpm build -> docs/out
-#     -> site
-#
-# The publish mechanics are NOT here. They are bin/site in hanzoai/ci,
-# reached through its action, and every static surface in the fleet calls that one
-# script — ensure-project, enqueue, presigned per-file upload, complete. A
-# contract transcribed per repo is a contract that drifts, and this file used to
-# carry its own copy of every call. It also SELF-PROVISIONS: the project is
-# created idempotently before the enqueue, so committing this file is enough to
-# stand the site up.
-#
-# THE BYTES NEVER PASS THROUGH THE API, and here that is not marginal: the
-# export is ~170 MB raw / ~25 MB gzipped against a 16 MiB BodyLimit, so an
-# artifact POST is refused by fasthttp BEFORE any handler runs and fails as an
-# opaque 400 "Error when parsing request" that reads like a malformed payload
-# rather than a size cap. Measured, not assumed: that is exactly what a 25 MB
-# POST returned here, while a 468-byte one went live in the same second.
-#
-# DELETION IS THE SERVER'S: site reports its manifest as `keys` on
-# completion and cloud prunes the prefix, because a write-only grant cannot
-# delete.
-#
-# THE DEPLOY KEY IS IN KMS and the action reads it there, so this file names no
-# token at all. It used to pass secrets.HANZO_DEPLOY_TOKEN, a Hanzo Git org secret
-# holding a key that had stopped resolving — and a secret nobody can read back is
-# a secret nobody can tell is dead, which is how this site went on failing 403
-# while hanzo.ai, which had moved to KMS, published fine. What this file passes
-# now is the KMS client identity, and resealing rotates every site at once.
-#
-# The job runs on GitHub Actions for hanzoai/hips, on the hanzoai org runner that
-# answers linux-amd64; KMS_CLIENT_ID and KMS_CLIENT_SECRET are org secrets. The
-# forge mirror runs no actions for hanzoai repos, so GitHub is the only lane:
-# with Actions disabled on the repo nothing publishes, which is how the site
-# froze at the 2026-09-09 run.
-#
-# WHERE THINGS FIT, since these are orthogonal and composable:
-#   Project  — IAM-owned (iam/internal/schema/project.go); the billing bucket.
-#              One project holds MANY sites.
-#   Site     — this. /v1/sites + /v1/projects/:slug/deploy. Static, no compute.
-#   Function — /v1/functions (Fission). Per-request compute, no server.
-#   App      — an App CR the operator reconciles. Long-running containers.
-# A docs site is the first of those and only the first.
+# Builds the static export and publishes it to the Sites plane through hanzoai/ci's
+# site action, which reads the deploy key from KMS.
 
 on:
   push:
     branches: [main]
-    # HIPs/** belongs here because the site renders it: without it, writing a
-    # spec never rebuilds hips.hanzo.ai.
     paths: ['HIPs/**', 'docs/**', '.github/workflows/deploy.yml']
   workflow_dispatch:
 
 concurrency:
-  # A superseded build is cancelled. The site flips live at the completion
-  # POST, not while bytes are uploading, so a killed run leaves an incomplete
-  # deployment that never became a Release — the live site is untouched. Held
-  # false, a burst of pushes serialised into a train of full builds and the
-  # newest commit waited behind builds of commits nobody wanted.
+  # The site flips live at completion, so a cancelled run leaves the live site untouched.
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   site:
-    # NOT ubuntu-latest: the hanzoai org runner answers linux-amd64, the same
-    # label ci.yml and hanzoai/hanzo.ai's deploy use. A label no runner answers
-    # queues in silence and publishes nothing.
     runs-on: [linux-amd64]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
-      # The runner is persistent and shared; node comes from the toolcache, not
-      # from whatever the host has installed. pnpm comes from corepack, pinned by
-      # docs/package.json packageManager.
+      # pnpm comes from corepack, pinned by docs/package.json packageManager.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -89,21 +30,13 @@ jobs:
         run: |
           set -euo pipefail
           corepack enable
-          # Build from docs/ with HIPs/ as its SIBLING. source.config.ts,
-          # lib/source.ts and scripts/generate-search-index.mjs each resolve
-          # ../HIPs from the working directory; run this anywhere else and
-          # generate-search-index.mjs readdirSyncs a path that does not exist and
-          # dies in prebuild with an unguarded ENOENT.
+          # docs/ reads ../HIPs relative to the working directory.
           cd docs
           pnpm install --frozen-lockfile
           pnpm build
           test -d out || { echo "::error::pnpm build produced no docs/out"; exit 1; }
           echo "exported $(find out -type f | wc -l) files"
 
-      # ONE credential. The 202 carries a prefix-scoped, 30-minute presigned POST
-      # grant, so nothing here holds a bucket key. Do NOT add SITES_S3_* — that is
-      # the standing shared-bucket credential the grant replaced, and it could
-      # overwrite every other org's site.
       - name: Publish to the Sites plane
         uses: hanzoai/ci/.github/actions/site@v1
         with:
