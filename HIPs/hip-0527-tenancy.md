@@ -31,7 +31,8 @@ wallet; `hanzo` is Hanzo Inc's own org, joined by membership like any other.
 `implementation-go: partial`: IAM already decides SuperAdmin on the account row,
 records assume and invitation acceptance on its platform-written trail, and mints
 the `orgs`, `billing_account` and `type` claims. §4 lists what goes, §5 is the
-migration, and §8 is what an implementation must satisfy before it merges.
+migration, §8 is what an implementation must satisfy before it merges, and §9
+extends the same facts to agencies, white-label brands and apps built on Hanzo.
 
 ## Motivation
 
@@ -88,10 +89,12 @@ Every record has exactly one namespace:
     ns(x) = admin    x is a SuperAdmin account
           = id       x is any other account, person or program
           = o        x belongs to org o: its memberships and roles, invitations,
-                     projects, workspaces, teams, keys, its own applications and
-                     identity providers
+                     projects, workspaces, teams, keys, its brands, its own
+                     applications (a brand's `<o>-<app>` included) and identity
+                     providers
           = org      x is an organization record          (id org/<slug>)
-          = app      x is a platform application          (id app/<name>)
+          = app      x is an application holding a platform capability
+                                                          (id app/<name>)
           = iam      everything else IAM keeps: platform certificates and
                      providers, sign-in challenges, federation states, audit
                      rows no org owns, and every per-account record (tokens,
@@ -109,6 +112,12 @@ membership, role, acting org and payer IAM serves is a fold over `F`.
     assumed(a, o, t)            SuperAdmin a enters o for support
     released(a, t)              a leaves the org it assumed
     switched(a, o, t)           a picks o as the org it acts in, on every surface
+    manages(g, c, r, by, t)     org g manages org c; g's people act in c at most as r
+    unmanaged(g, c, by, t)      either side ends it
+    pays(g, c, t), unpaid(g, c, t)      g funds c's usage
+    funds(v, x, t), unfunded(v, x, t)   org v funds every call through its application x
+    branded(b, v, t)            brand b exists, owned by org v
+    hosted(b, h, t)             host h proven to belong to brand b
     appointed(a, p, by, t)      SuperAdmin account a created for person p by `by`
     dismissed(a, by, t)         SuperAdmin account a disabled
     moved(a, from, id, t)       the one migration that sets owner(a) := id (§5)
@@ -139,17 +148,27 @@ another. "Org admin" means `role(a, o) ∈ {owner, admin}` for that one `o`.
     orgs(a)        = [home(a)] ⧺ sort{ o | member(a,o), o ≠ home(a) }     (⊥ omitted)
 
     acting(s)      = assumed(s)              if assumed(s) ≠ ⊥
-                   = switched(a(s))          if member(a(s), switched(a(s)))
+                   = t = switched(a(s))      if brand(t) ∈ {⊥, brand(app(s))}
+                                             ∧ (member(a(s), t) ∨ via(s) = g ∧ manages(g, t)
+                                                              ∧ member(a(s), g))
                    = home(a(s))              otherwise
     payer(s)       = hanzo                   if assumed(s) ≠ ⊥
+                   = seller(s)               if funds(seller(s), app(s))
+                   = g                       if pays(g, acting(s))
                    = acting(s)               otherwise
+    seller(s)      = the org app(s) is registered in
+
+    brand(h)       = ιb. hosted(b, h)         a host with no brand serves nothing
+    brand(o)       = the brand o was founded under; ⊥ for a personal org
+    orgs(a, b)     = [home(a)] ⧺ sort{ o | member(a,o), brand(o) = b, o ≠ home(a) }
 
     ledger(o)      = the commerce account org:o
     platform       = Σ o∉Reserved (paid(o), spent(o), owed(o) = paid(o) − spent(o))
 
-`s` is a token family of account `a(s)`. `switched(a)` is the account's latest
-switch and follows the person across every surface; `assumed(s)` belongs to the
-one token family that assumed. `payer(s) = ⊥` (a SuperAdmin outside assume)
+`s` is a token family of account `a(s)`, minted for application `app(s)`.
+`switched(a)` is the account's latest switch and follows the person across every
+surface of one brand; `via(s)` names the managing org a switch went through (§9);
+`assumed(s)` belongs to the one token family that assumed. `payer(s) = ⊥` (a SuperAdmin outside assume)
 refuses every metered call. `hanzo` is Hanzo Inc's own org: support work is
 Hanzo's cost, never the customer's. `platform` is a view Hanzo's books compute —
 `owed` is the liability Hanzo carries for customer prepaid — and never an account.
@@ -161,11 +180,13 @@ Hanzo's cost, never the customer's. `platform` is a view Hanzo's books compute �
     I3  member(a, o) ⇒ o ∉ Reserved                               the directory confers nothing
     I4  person ∧ owner(a) = id ⇒ ∃! o. founded(a, o) ∧ personal(o) one org of one per person
     I5  personal(o) ⇒ |{a | member(a, o)}| = 1                    no one is invited into it
-    I6  o ∉ Reserved ⇒ ∃! a. founded(a, o)                        every org has one founder
-    I7  o ∉ Reserved ⇒ ∃a. role(a, o) = owner                     no org without an owner
+    I6  o ∉ Reserved ⇒ ∃! f. founded(f, o)                        every org has one founder:
+          f an account, or the agency that created a client org   an account, or its agency (§9)
+    I7  o ∉ Reserved ⇒ ∃a. role(a, o) = owner
+          ∨ ∃g. manages(g, o, owner)                              no org without an owner
     I8  owner(a) ∈ {id, admin};  owner(a) = admin ⇒ person        no org owns an account
-    I9  payer(s) = ⊥ ∨ member(a(s), payer(s))
-          ∨ payer(s) = hanzo ∧ assumed(a(s), acting(s)) ∈ F       payer is a membership or audited support
+    I9  payer(s) = ⊥ ∨ payer(s) is acting(s), its payer by pays, or seller(s) by funds
+          ∨ payer(s) = hanzo ∧ assumed(a(s), acting(s)) ∈ F       payer is named by a fact
     I10 every ledger account is org:o;  a deposit into org:o by b
           ⇒ member(b, o) ∨ superadmin(b)                          no customer money in hanzo's ledger
     I11 subscription x ⇒ org(x) ∈ Org \ Reserved                  a plan attaches to a real org
@@ -180,6 +201,20 @@ Hanzo's cost, never the customer's. `platform` is a view Hanzo's books compute �
     I19 creating a writes only founded(a, home(a)) (person)
           or nothing (program)                                    creation grants nothing
     I20 kind(p) = program ⇒ |orgs(p)| ≤ 1                          a program acts in one org
+    I21 manages(g, c, r) ⇒ g ≠ c ∧ ¬personal(c) ∧ g, c ∉ Reserved
+          ∧ (r = owner ⇒ c has no owner account)                  an agency never outranks its client
+    I22 member(x, c) and orgs(x, b) read no manages fact          manages ⇏ membership
+    I23 via(s) = g ∧ acting(s) = c ⇒ manages(g, c) ∧ member(a(s), g) one hop; no chain composes
+    I24 every via entry and exit is a row on c's own trail        agency access is audited
+    I25 pays(g, c) ⇒ manages(g, c);  funds(v, x) ⇒ seller of x = v  only a manager or a seller funds
+    I26 a debit at a seller's own price draws cash only; its margin
+          is payable to the seller; minted credit never pays a
+          seller and is never paid out; only Hanzo mints credit     cash and credit stay apart
+    I27 payer debit = Hanzo revenue + seller margin, per debit     money is conserved
+    I28 each host has at most one brand; no brand, nothing served  no default brand
+    I29 a page, mail or token under host h names brand(h) only    brands never cross-show
+    I30 a token for app x carries orgs(a, brand(x)); a switch to
+          another brand's org is refused; sessions stay on one host each brand sees only itself
 
 I15 and I16 are the non-implications, stated as independence: adding any fact
 about `(a, o)` leaves `role(a, o′)` unchanged for every `o′ ≠ o`, and leaves
@@ -202,13 +237,14 @@ reads.
 | question | IAM computes | carried as | reader asks (`hanzoai/authz` `Claims`) |
 |---|---|---|---|
 | SuperAdmin? | `superadmin(a)` from the account row | `owner` = owner(a), `type` | `Sudo() = Owner == "admin" && Type != "application"` |
-| member of o? | `member(a, o)`, `role(a, o)` from `F` | `orgs` = orgs(a), `[{org, role}]` | `Role(o)`, `Member(o)` = o ∈ `orgs`; `OrgAdmin(o)` = `Role(o)` ∈ {owner, admin} |
-| acting org? | `acting(s)` | `org`; `assumed` when support | `Org()` |
+| member of o? | `member(a, o)`, `role(a, o)` from `F` | `orgs` = orgs(a, brand(app)), `[{org, role}]` | `Role(o)`, `Member(o)` = o ∈ `orgs`; `OrgAdmin(o)` = `Role(o)` ∈ {owner, admin} |
+| acting org? | `acting(s)` | `org`; `assumed` when support, `via` when managed | `Org()` |
 | payer? | `payer(s)` | `billing_account` = `org:<payer>` | `Payer()` |
 
 - `owner` states where the account lives — `id` or `admin`. It never names the
   application's org.
-- `orgs` never contains a reserved org and never contains an assumed org.
+- `orgs` never contains a reserved org, an assumed org, or an org reached only
+  through `manages`.
 - The edge's `X-User-IsOrgAdmin` is `OrgAdmin(org)` for the acting org only. No
   token and no userinfo answer carries an account-level `isAdmin`.
 - `org` is the only acting org. The edge mints `X-Org-Id` from it and deletes any
@@ -222,6 +258,8 @@ reads.
 
       allow(s, platform)     = superadmin(a(s))
       allow(s, o, need)      = role(a(s), o) ⊇ need
+                             ∨ via(s) = g ∧ acting(s) = o ∧ manages(g, o, r)
+                                          ∧ min(role(a(s), g), r) ⊇ need
                              ∨ superadmin(a(s)) ∧ assumed(s) = o
 
   A resource declares which shape it takes. No check reads an account's `owner`,
@@ -917,6 +955,205 @@ The audit list for R9, read at the commits in §4. Each is deleted or reduced to
 - ai: `controllers/org_resolver.go:165-166`.
 - commerce: `middleware/edgeauth.go:134-141`.
 - gateway: authz `v1.10.29` `claims.go:263-280`.
+
+### 9. Agencies, brands and apps built on Hanzo
+
+A customer builds on Hanzo for customers of their own: an agency runs its clients'
+orgs, a brand sells Hanzo under its own name, an app builder ships an app to its
+users. All three are the same model, kept flat: orgs relate by facts, never by
+nesting, and people are still `id` accounts that belong to orgs by founding or
+accepting.
+
+**9.1 The relationship: `manages`**
+
+`manages(g, c, r)` says org `g` runs org `c` for it, and `g`'s people may act in
+`c` at most as role `r`. It is one fact, and it is the only relation between two
+orgs.
+
+- **Made** one of two ways. An owner or admin of `g` creates a client org:
+  `POST /v1/iam/organizations {name, manager: g}` records `founded(g, c)` and
+  `manages(g, c, owner)` — the agency holds the org until it hands it over. Or an
+  owner of an existing org `c` accepts `g`'s management invitation
+  (`POST /v1/iam/invitations {org: c, manager: g, role: r}` by `g`, accepted by an
+  owner of `c`), which records `manages(g, c, r)` with `r ≤ admin`.
+- **Handed over.** `g` invites the client's person into `c` as `owner`; once they
+  accept, `manages(g, c, owner)` is replaced by `manages(g, c, admin)` (I21). The
+  client can always remove the agency; the agency can never remove the client.
+- **Ended** by an owner or admin of either side: `unmanaged(g, c, by)`. It bites at
+  the next mint, like `revoked`. `pays(g, c)` ends with it.
+- **What it confers.** A member `x` of `g` switches into `c` through `g`
+  (`POST /v1/iam/switch {org: c, via: g}`). The token then carries `org = c` and
+  `via = g`, `c` stays out of `orgs`, and `x` acts in `c` as
+  `min(role(x, g), r)` (§2). Each entry and exit is a row on `c`'s trail, so a
+  client reads which agency person was in their org and when (I24). A plain
+  member of `g` never gets more in `c` than member; an agency admin never gets
+  owner of a client that has an owner account.
+- **What it does not.** `manages` is not membership (I22): nobody at `g` is on
+  `c`'s roster, holds a role there, or sees `c` in their switcher except as a
+  managed client. It does not compose (I23): if `c` manages `d`, `g`'s people
+  reach `d` only through their own `manages(g, d)`. It never names `admin`, and a
+  SuperAdmin still reaches any org only through assume.
+- **A client's end users** are `id` accounts invited into `c`, with their own
+  personal orgs, exactly as anyone else (I1–I20). Their roles are `c`'s facts,
+  not the agency's.
+
+**9.2 Money**
+
+The seller of a call is the org that registered the application it came through:
+Hanzo for Hanzo's own apps, the agency for its branded apps, the builder for a
+custom app. Who pays is still one equation (§1); three facts extend it.
+
+| fact | meaning | who may write it |
+|---|---|---|
+| `pays(g, c)` | the agency pays for its client's usage | an owner of `g`, with `manages(g, c)` |
+| `funds(v, x)` | a seller pays for every call through its own application `x` | an owner of `v`, the org `x` is registered in |
+| a price list of `v` | `v` resells: its retail price per item, never below its wholesale | an owner of `v`; Hanzo sets `v`'s wholesale |
+
+Each debit posts double-entry, in exact cents, in one transaction:
+
+| case | payer | debit | credits |
+|---|---|---|---|
+| Hanzo's own app | acting org | list price, cash first, then credit | Hanzo revenue |
+| a seller that does not resell | acting org | list price, cash first, then credit | Hanzo revenue |
+| a seller that resells, client pays | acting org | the seller's retail, **cash only** | Hanzo revenue: the seller's wholesale; `margin:<seller>`: retail − wholesale |
+| the agency pays (`pays`) | the agency | the agency's wholesale, cash first, then credit | Hanzo revenue |
+| the seller pays (`funds`) | the seller | the seller's wholesale, cash first, then credit | Hanzo revenue |
+
+The cash and credit rules hold unchanged (I26): cash is money a customer paid and
+the only money that buys paid-model work or produces margin; credit is money Hanzo
+minted, and only Hanzo mints it. A resold debit draws cash only, so a seller's
+margin is always cash, payable by payout. A seller who wants to give its customers
+free usage funds it (`funds` or `pays`); it cannot mint credit.
+
+The platform ledger (§3, Pay) gains one line per seller: margin earned, margin
+paid out, margin owed. Owed margin is a liability Hanzo carries for the seller,
+beside the prepaid it carries for every org; neither is Hanzo revenue, and Hanzo's
+revenue is the list and wholesale portions alone (I27).
+
+**9.3 White-label brands**
+
+A brand is a record an org owns: its name, theme, logo, legal pages, support
+address, mail sender, the hosts it serves on, the issuer its tokens carry and the
+certificate that signs them. Hanzo, Lux, Zoo and Pars are brands the same way a
+customer's is.
+
+- **Hostname is the brand.** Every surface resolves `brand(h)` from the request's
+  host, through IAM (`GET /v1/iam/brands?host=`, public fields). A host with no
+  brand serves nothing — there is no default brand (I28). Everything under that
+  host names only that brand: the login and signup pages, every mail, the token
+  issuer (I29). Nothing says "Hanzo" under a customer's brand.
+- **One application per brand surface.** Each brand has its IAM applications,
+  named `<org>-<app>` and registered in the brand's org; a token names the
+  application, so it names the brand. Login, signup, verification, reset and
+  invitation mail render from the brand of the application in play.
+- **Custom domains.** A brand's owner adds a host; IAM issues a DNS-01 TXT
+  challenge by the same proof custom sites use (cloud `internal/fqdn`, as in
+  `apps/projects/domains.go:312`), records `hosted(b, h)` once it verifies, and
+  the host is routed and certified by the same ingress and certificate path. A
+  brand sends mail only from a sender domain it has proven; until then it sends
+  none, rather than sending as Hanzo.
+- **The end user's account.** A person who signs up under a brand gets an `id`
+  account and a personal org like anyone else. The brand is where they signed in,
+  not where the account lives: the same email under another brand is the same
+  account, and it signs in there separately.
+- **No crossing (I30).** A session is a cookie on one brand's IAM host, so there
+  is no single sign-on across brands. A token minted for a brand's application
+  carries only the person's personal org and the orgs founded under that brand;
+  a switch into another brand's org is refused. An org's brand is the brand it
+  was founded under, and a client org an agency creates takes the agency's brand.
+
+**9.4 Apps built on Hanzo**
+
+An app builder is an org `v` that registers an application `x` (`v-x`) under one
+of its brands and ships it. Its users sign up through `x` into `id`, each with a
+personal org, and belong to `v`'s customer orgs only by invitation — or the
+builder creates those orgs as their agency (`manages`). Billing is one of the two
+rows in §9.2: `funds(v, x)` and the builder pays at wholesale for everything
+through `x`, or each user's acting org pays at `v`'s retail and `v` earns the
+margin. The builder's own backend is a program in `id` with a role in `v`, and
+its keys name `v`. A program never acts for users by membership; it acts as
+itself in `v`, or through token exchange on a user's behalf.
+
+**9.5 Flows**
+
+| flow | call | facts |
+|---|---|---|
+| agency creates a client org | `POST /v1/iam/organizations {name, manager: g}` by an admin of `g` | `founded(g, c)`, `manages(g, c, owner)`, `brand(c) = brand of g's app` |
+| agency hands the org over | `POST /v1/iam/invitations {org: c, email, role: owner}`; the client accepts | `accepted(client, n)`; `manages(g, c, admin)` |
+| existing org takes an agency | `POST /v1/iam/invitations {org: c, manager: g, role: r}` by `g`; an owner of `c` accepts | `manages(g, c, r)`, `r ≤ admin` |
+| agency person works in a client | `POST /v1/iam/switch {org: c, via: g}` | `switched(x, c, via g)`; entry row on `c`'s trail |
+| either side ends it | `POST /v1/iam/unmanage {org: c, manager: g}` | `unmanaged(g, c, by)`; `unpaid(g, c)` |
+| agency pays for a client | `POST /v1/billing/pays {org: c}` by an owner of `g` | `pays(g, c)` |
+| seller pays for its app | `POST /v1/billing/funds {application: x}` by an owner of `v` | `funds(v, x)` |
+| seller resells | `PUT /v1/billing/prices` by an owner of `v` | a price list of `v`, each item ≥ its wholesale |
+| brand created | `POST /v1/iam/brands {name, theme, logo, legal, support}` by an owner of `v` | `branded(b, v)` |
+| custom domain | `POST /v1/iam/brands/{b}/hosts {host}`, then `…/verify` | `hosted(b, h)` after the TXT record proves it |
+| builder ships an app | `POST /v1/iam/applications {name: v-x, brand: b}` by an admin of `v` | the application, registered in `v` |
+| margin paid out | `POST /v1/billing/payouts` by an owner of `v` | a payout from `margin:<v>`, cash only |
+
+**9.6 Delete list additions**
+
+| where | what goes | replaced by |
+|---|---|---|
+| cloud `apps/admin/core/scope.go:14-18`, `:65-73` | `Descendants`: a sub-org subtree waiting for an IAM parent link | `manages` facts, one hop |
+| cloud `apps/admin/core/state.go:35-60`; `apps/admin/admin.go:792-815` | `ADMIN_WL_TENANT_ORGS`: an env allowlist deciding which resellers' admins reach the cockpit | `manages` + `role` |
+| cloud `brand/brand.go:74-89`, `:169` | the brand and issuer map in code | brand records read from IAM |
+| console `src/config/index.ts:198-250` | `BRANDS` and `HOST_BRANDS` in code, customer brands (`7stars`, `yotoda`) among them; `brandFromHost` defaults to Hanzo | brand records; no default |
+| chat `src/brand.ts:135-208` | brand list in code; an unknown host is Hanzo's | brand records; no default |
+| id `pkgs/shared/src/org.ts:53` (`DEFAULT_TENANTS`); universe `infra/k8s/id/configmap.yaml` (`SPA_IAM_TENANT_CONFIG_JSON`) | two copies of the host → tenant map for the login page | brand records |
+| commerce `checkout/org_resolver.go:295-311`, `:383` | `brandForHost`; an unknown host falls back to `COMMERCE_DEFAULT_ORG` (`hanzo`) | brand records; no default |
+| IAM `internal/oidc/jwt.go:429-430`; `internal/oidc/invite.go:35` | `isShared` applications and their org-qualified audience: one app serving many orgs | an application belongs to one org and one brand |
+| IAM `internal/bootstrap/bootstrap.go:604-612` | `resolveCert`: the signing certificate named `cert-<org>` from the application's org | the certificate the brand record names |
+| HIP-0521 | a parent edge that nests orgs and moves the payer by ancestry | `manages`, `pays` |
+
+**9.7 Migration of the existing brand orgs**
+
+The census (§5 step 1) also lists every brand in the code maps above — Hanzo, Lux,
+Zoo, Pars and Bootnode in cloud; 7Stars and Yotoda in console; the certificate
+set for Adnexus — with their hosts, issuers and assets, and every account filed
+under a brand org.
+
+1. **Brand records.** One per brand, owned by its org, carrying the hosts,
+   issuer, certificate and assets the maps state today. Additive; every map keeps
+   serving. *[IAM, data]*
+2. **Readers.** Cloud, console, chat, id and commerce resolve the host through IAM
+   and stop defaulting to Hanzo; the maps in §9.6 delete in the same change. An
+   unknown host answers 404. *[edge, sites]*
+3. **Pooled payer (H2).** Self-signups filed under `lux`, `zoo`, `pars` and
+   `bootnode` spend the brand org's pool today, because the signup-org rule
+   exempts only `hanzo`. They are class B (§5): each moves to `id` with its own
+   org, and from step 6 each pays from it. The census reports, per brand org, what
+   non-members drew from its pool; the owner decides write-off or recovery, and
+   books records the decision. *[data]*
+4. **Brand orgs are ordinary orgs.** Their staff hold roles by founding or an
+   owner-vouched fact; their applications move into their own org's namespace
+   (§4.6); none manages another unless the owner records it. *[data]*
+5. **Customer brands** (7Stars, Yotoda, and any org in `ADMIN_WL_TENANT_ORGS`)
+   become brand records owned by the customer org; their cockpit access becomes
+   `manages` facts for the client orgs they actually run, owner-vouched. *[data]*
+
+**9.8 Approval**
+
+| change | kind |
+|---|---|
+| `manages` / `unmanaged`, the management invitation, `switch … via`, `via` in the token, the entry trail | **IAM** |
+| brand records, `hosted` by DNS proof, brand-scoped `orgs`, issuer and certificate from the brand, refusal of cross-brand switches, per-brand mail sender | **IAM** |
+| `isShared` deleted; one application, one org, one brand | **IAM** |
+| `pays`, `funds`, price lists, the margin account and payouts | commerce (money: **approve**) |
+| host → brand from IAM in cloud, console, chat, id, commerce; no default brand | edge, sites |
+| brand records and cockpit `manages` facts for existing brands; H2 write-off or recovery | data |
+
+**9.9 Verification**
+
+| what | how |
+|---|---|
+| a client org without silent membership | Playwright: an agency admin creates `c`; `c`'s roster is empty of agency people; the admin's switcher shows `c` as managed; a switch through `g` writes an entry row on `c`'s trail |
+| handover and revocation | the client accepts ownership; the agency's role in `c` becomes admin; the client ends management and the agency's next token cannot enter `c` |
+| no chains | `g` manages `c`, `c` manages `d`; a person of `g` switching into `d` is refused |
+| money | a resold debit moves the payer's cash by retail, Hanzo revenue by wholesale and `margin:<seller>` by the difference, summing to zero; the same call with only credit is refused 402; `funds` and `pays` debit the seller and the agency |
+| brand | a customer host verifies by TXT, serves TLS, and its login, signup, reset and invitation mail contain no "Hanzo" (a DOM and mail-body scan); an unverified host and an unknown host answer 404 |
+| no crossing | one person, two brands: each brand's token lists only its own orgs and the personal org; signing in to one does not sign in to the other |
+| nightly | `GET /v1/iam/check` adds I21–I25 and I28–I30; `GET /v1/billing/check` adds I26 and I27 |
 
 ## Rationale
 
