@@ -213,9 +213,12 @@ size and checksum read back equal.
 A create is validated like a job's (§3, §4), then forwarded to the engine
 (`ENGINE_UPSTREAM`); the client's id is recorded under the org. Every other client
 operation looks the id up in the org's store first, so another org's client answers
-exactly as an unknown one does. An org holds at most `TRAIN_CLIENTS` (default 2) live
-clients. `save_weights` writes the adapter on the engine, as the engine's wire says;
-exporting it as an artifact is not specified yet.
+exactly as an unknown one does, and one the engine no longer holds leaves the org. An
+org holds at most `TRAIN_CLIENTS` (default 2) live clients and the engine at most
+`TRAIN_ENGINE_CLIENTS` (default 2) across every org, past which a create is `503
+engine_full`; an engine serving no training plane answers `503 training_unavailable`.
+`save_weights` writes the adapter on the engine, as the engine's wire says; exporting
+it as an artifact is not specified yet.
 
 ### §8 Evaluation and research
 
