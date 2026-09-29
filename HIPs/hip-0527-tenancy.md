@@ -733,6 +733,8 @@ batch. **[sites]** changes no authority, only which claim a page reads.
 | 19 | every creation path in §8.1 yields `id/<account>` + personal org and nothing else; programs move to `id` with an explicit `assigned` (R1) | 4, 5, 10 | **IAM** |
 | 20 | `ADMIN_NAMESPACE_INVARIANTS` required for merge in IAM, and its static half in authz, account, cloud, ai, commerce, gateway, `@hanzo/iam` and the sites (R7) | 3 | **IAM**, CI |
 | 21 | registry push = `superadmin(a) ∨ role(a, hanzo) ∈ {owner, admin}` (R8) | 7 | **IAM** (owner-confirmed) |
+| 22 | minting on behalf (`POST /v1/iam/tokens/issue`, token exchange) refuses every `admin/*` target — a SuperAdmin acts only on their own sign-in — and `IAM_ADMIN_TOKEN_EXCHANGE_APPS` is deleted | 4 | **IAM** |
+| 23 | a SuperAdmin account signs in with a second factor, and appointment and dismissal take a sign-in with it | 4 | **IAM** |
 
 The rows marked **[bug]** in §4 are live defects that stand on their own; each can
 ship ahead of this sequence, and each still needs the same approval when it is
@@ -1218,6 +1220,25 @@ row is a cache of the fold and the nightly check can recompute it. The parked
   flag.
   R1, R2 and R5 close them by construction and by test, and R7 fails the build if
   one comes back.
+- **A minting client is a SuperAdmin's equal.** A client on
+  `IAM_TOKEN_EXCHANGE_APPS` and `IAM_ADMIN_TOKEN_EXCHANGE_APPS` (the console) can
+  issue a token for any account, `admin/*` included, from its client secret alone,
+  so that secret carries every SuperAdmin's authority on every surface that
+  accepts such a token. Appointment and dismissal already refuse any token that
+  is not the SuperAdmin's own sign-in from the last ten minutes (the token row of
+  an authorization-code or device grant); §6 row 22 removes the rest: no
+  on-behalf mint names an `admin/*` account, and the admin list goes. Until then
+  the console secret is held as a SuperAdmin credential.
+- **A dismissed SuperAdmin's token outlives the dismissal elsewhere.** IAM refuses
+  it at the next request, because the Guard reads the account; cloud and every
+  reader that validates a JWT locally honour it until `exp`. The fix is the
+  one-hour lifetime of §5 step 2, never a check in cloud (HIP-0519). A token also
+  never names an account created after it was issued, so a name taken again does
+  not revive the tokens its last holder carried.
+- **A bearer is an access token.** An id_token proves a sign-in to the client it
+  was issued to; IAM accepts as a credential only a token of type `access-token`
+  with an audience and an issuer it mints under, and an assume never outlives the
+  token it re-scopes.
 - **Support is Hanzo's cost.** Under assume the debit lands on `org:hanzo` and the
   tenant's own audit trail shows who was inside and when.
 - **Replacement, never deletion (HIP-0519).** `cliOrg` and every recomputation in
