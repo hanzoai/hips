@@ -28,19 +28,13 @@ of those two objects; artifacts, bases and evaluations are what a job produces.
 
 ## Motivation
 
-Three training surfaces existed and none could teach a capability safely:
-
-- `/v1/training/*`, the engine's Tinker-shaped wire, reached by an ingress carve straight
-  to the engine pod, admin-only because the engine authenticates nobody
-  (`hanzoai/universe` `infra/k8s/ingress/routes.yaml`, `training-guard`).
-- `/v1/ai/finetune/*`, the managed-job broker in `hanzoai/ai`, authenticated by the
-  console session cookie, which no bearer caller carries, and submitting Kubeflow
-  `TrainJob` resources the cluster does not serve (`hanzoai/cloud` `apps/ml` package
-  doc).
-- Kai's stage training (`train fit`, `train join`), reachable only from a shell.
-
-Each changed weights without a statement of what must not regress, and none produced an
-artifact that could be evaluated, merged or published apart from its base.
+Training has to teach a base one capability without regressing what it already does, and
+has to produce something that can be evaluated, merged or published apart from that base.
+It also has to sit behind the gateway's bearer and org. The surfaces this replaces (§14)
+do none of that: the engine's wire is an admin-only ingress carve, because the engine
+authenticates nobody; `hanzoai/ai`'s managed jobs take only a console session cookie and
+submit Kubeflow `TrainJob` resources the cluster does not serve; Kai's stage training
+runs only from a shell.
 
 ## Specification
 
@@ -76,15 +70,12 @@ All under `/v1/train`. Every operation is typed.
 | `GET /v1/train/jobs/{id}/events` | its events after a cursor, waiting up to `wait` seconds |
 | `GET /v1/train/jobs/{id}/metrics` | its metric series |
 | `GET /v1/train/jobs/{id}/artifacts` | its artifacts, each with a short-lived download URL |
-| `GET /v1/train/models` | each trainable base and what it supports today |
+| `GET /v1/train/models` | each trainable base and what it supports |
 | `POST /v1/train/jobs/claim` | an executor's long poll for a task |
 | `POST /v1/train/jobs/{id}/events` | an executor's report |
 | `POST /v1/train/jobs/{id}/artifacts` | an executor's artifact, answered with an upload grant |
 
-The client wire is the engine's, byte for byte, except its path: a Tinker-shaped loop
-written against `/v1/training/clients` runs against `/v1/train/clients` with no other
-change. `/v1/training/*` and `/v1/ai/finetune/*` MUST NOT answer once `/v1/train` is
-served; neither is kept as an alias.
+The client wire is the engine's, byte for byte.
 
 ### §3 The job
 
@@ -126,13 +117,11 @@ adaptation trains.
   coefficients alone). `auto` chooses, and `adaptation.chose` says what and why.
 - `protect.suites` names capabilities the base already has, by suite; `capabilities`
   names capability artifacts, by sha256. `projection` projects every update — a full
-  update, an adapter or a residual — off the protected directions, the subspace `P`
-  the suites' gradients span at the base and each named capability's subspace, by its
-  `strength` λ in [0, 1] (default 1): `g' = g − λ·P g`. Orthogonality is a budget,
-  not a switch: at λ = 1 the update keeps only what lies outside `P`, which can be
-  little of it, and at 0 it is untouched; each step reports the share of the gradient
-  removed, per layer.
-  `distillation` adds KL to the base's answers on a preservation set drawn from the
+  update, an adapter or a residual — off the protected directions: the subspace `P` the
+  suites' gradients span at the base, and each named capability's subspace. Its
+  `strength` λ in [0, 1] (default 1) scales it: `g' = g − λ·P g`. At λ = 1 the update
+  keeps only what lies outside `P`; at 0 it is untouched. Each step reports the share
+  of the gradient removed, per layer. `distillation` adds KL to the base's answers on a preservation set drawn from the
   suites. `budget` bounds the regression the job may cause on each protected suite:
   accuracy down at most `accuracy`, calibration error up at most `ece`.
 - `resources.machines` names linked machines (the first leads); absent, the first
@@ -151,14 +140,13 @@ inputs' agreement (`400 incompatible_adapters` when `sources` differ in base, re
 or module set; `400 incompatible_basis` when a basis belongs to another base), then
 each choice against §4 (`400 unsupported_adaptation`, `unsupported_objective`,
 `unsupported_protect`, `unsupported_output`), each naming in `supported` what that base
-runs today. Incompatible inputs are never projected into agreement, and an unsupported
-choice is never accepted and left to fail later. A refusal is an RFC 9457 problem
+runs. A refusal is an RFC 9457 problem
 document carrying `code`.
 
 ### §4 What each base runs
 
 `GET /v1/train/models` answers this table from the same code that validates a create;
-the two cannot disagree. Today:
+the two cannot disagree.
 
 | base | executor | adaptation | protect | objective terms | output |
 |---|---|---|---|---|---|
@@ -167,14 +155,13 @@ the two cannot disagree. Today:
 
 A client on `kai` and a job on an engine LLM are refused as `unsupported_base` for that
 noun. `qlora`, `basis`, `protect.capabilities`, the `basis` and `merged` outputs, and
-`lora` on Kai are specified and run nowhere yet; asking for them is a `400` naming the
+`lora` on Kai are specified and run nowhere; asking for them is a `400` naming the
 supported set. A base gains a row when its executor implements the row.
 
 For Kai the job becomes a stage file (HIP-1332): the stage named by `dataset.uri`, its
 init replaced by `revision`, `objective.terms` its `terms`, `protect.suites` with
 `projection` and `distillation` its `protect.project` (λ its `strength`) and
-`protect.distill`,
-`resources.steps` its `max_steps`.
+`protect.distill`, `resources.steps` its `max_steps`.
 
 ### §5 Lifecycle
 
@@ -233,7 +220,7 @@ org holds at most `TRAIN_CLIENTS` (default 2) live clients and the engine at mos
 `TRAIN_ENGINE_CLIENTS` (default 2) across every org, past which a create is `503
 engine_full`; an engine serving no training plane answers `503 training_unavailable`.
 `save_weights` writes the adapter on the engine, as the engine's wire says; exporting
-it as an artifact is not specified yet.
+it as an artifact is not specified.
 
 ### §8 Evaluation and research
 
@@ -261,7 +248,7 @@ The plugin declares `Price: cloud.Metered`. Through the org's meter (HIP-1313):
 - stored artifacts, per GB-month at `train/storage`, the first month when stored;
 - client compute, per engine-second of each forwarded operation at `train/client`;
 - job compute on a linked machine is the org's own hardware and is recorded, not
-  charged; platform-run executors are not offered yet.
+  charged; no platform-run executor is offered.
 
 Rates are rows in commerce's meter authority read through `cloud.RateCents`, with the
 compiled floor when absent.
@@ -286,9 +273,9 @@ bases and gradient projection are published methods; no code of theirs is used.
 
 ### §14 Migration
 
-`/v1/train` replaces `/v1/training/*` (the engine's wire, now served at
-`/v1/train/clients` by the engine and by cloud) and `/v1/ai/finetune/*` (hanzoai/ai).
-Neither answers once this lands, and neither is an alias.
+`/v1/train` replaces `/v1/training/*` (the engine serves its wire at
+`/v1/train/clients`) and `/v1/ai/finetune/*` (hanzoai/ai). Neither answers, and neither
+is an alias.
 
 In hanzoai/ai, delete `routers/finetune_router.go`, `controllers/finetune.go`,
 `controllers/zap_finetune_test.go`, `object/finetune_job.go`,
@@ -314,10 +301,8 @@ clients and the CLI.
 
 ## Rationale
 
-Folding into one endpoint rather than adding a third was the owner's decision and the
-cheaper one: `/v1/ai/finetune` could not be called with a bearer and its executor did
-not exist in the cluster, and `/v1/training` was an ingress carve around the cloud's
-tenancy. The engine's wire was kept whole because loops already run against it.
+One endpoint puts every training call behind the gateway's bearer and org (§9). The
+client wire is the engine's, so a Tinker-shaped loop runs against it as written.
 
 Jobs run on the org's linked machines because that is where Kai trains and where a
 model's data already is. A scheduler that placed Kai on cluster pods would copy a data
