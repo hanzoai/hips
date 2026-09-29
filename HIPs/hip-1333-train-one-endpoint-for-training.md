@@ -279,6 +279,34 @@ It forks no project. The client wire mirrors the Tinker API's shape (Thinking Ma
 Lab) with Hanzo field names, a wire we implement. Low-rank adaptation, shared subspace
 bases and gradient projection are published methods; no code of theirs is used.
 
+### §14 Migration
+
+`/v1/train` replaces `/v1/training/*` (the engine's wire, now served at
+`/v1/train/clients` by the engine and by cloud) and `/v1/ai/finetune/*` (hanzoai/ai).
+Neither answers once this lands, and neither is an alias.
+
+In hanzoai/ai, delete `routers/finetune_router.go`, `controllers/finetune.go`,
+`controllers/zap_finetune_test.go`, `object/finetune_job.go`,
+`object/finetune_runtime.go`, `object/finetune_billing.go`,
+`object/finetune_billing_test.go`, `object/finetune_hf.go`, `object/finetune_serve.go`
+and `cluster/finetune.go`, and edit:
+
+| file | edit |
+|---|---|
+| `routers/router.go` | drop `registerFinetune(app)` |
+| `routers/wired_gen.go` | regenerate: the nine finetune operations go |
+| `controllers/answers.go` | drop the six `*Finetune*` entries |
+| `object/adapter.go` | drop `&FinetuneJob{}` from the synced tables |
+| `cluster/serve.go` | drop `DeployFinetune`, `UndeployFinetune`, `finetuneServiceName` and the `hanzo.ai/finetune-job` label |
+| `cluster/accelerator_test.go` | drop the `FinetuneJob` fixture |
+| `controllers/zap_ownership_test.go` | drop the `refreshFinetuneJob` entry |
+| `LLM.md` | drop `/v1/finetune/*` from the alias list |
+
+Then in hanzo-inc/cloud, with the new hanzoai/ai pinned:
+`make -f mk/fleet.mk describe/ai && make closure && make -f mk/fleet.mk openapi`, which
+drops `/v1/ai/finetune/*` from `private.yaml` and `openapi.yaml` and so from the generated
+clients and the CLI.
+
 ## Rationale
 
 Folding into one endpoint rather than adding a third was the owner's decision and the
