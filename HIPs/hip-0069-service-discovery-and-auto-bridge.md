@@ -158,6 +158,14 @@ where `<runtime>` is `$XDG_RUNTIME_DIR/zap`, or `~/.zap/run` where
   both doors live in the user's own directories and port, so two users on one
   machine never contend: each has a router of their own.
 
+A node speaks only to the lock holder. Before `HELLO` it compares the socket
+peer's pid (`SO_PEERCRED`, `LOCAL_PEERPID`) with the lock's holder
+(`F_GETLK`, or itself if its own process holds it), and on a mismatch closes and
+retries; a process that bound the socket path without the lock — an older
+daemon still running — is never spoken to. Because closing any descriptor of a
+file drops every record lock the process holds on it, a process opens the lock
+file once and never closes it.
+
 A node that sees its connection drop reconnects to the socket, starting at
 50 ms and doubling to 1 s, and says `HELLO` again under the same name. A router
 takeover is invisible to its user except as a call that fails while it happens.
