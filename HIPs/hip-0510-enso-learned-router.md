@@ -25,7 +25,7 @@ optimizes `quality − λ·cost − μ·latency` over the whole pool. The routin
 GPU. Enso tiers cleanly from a transparent rule router (cold start) to a learned
 policy (`xᵀWp`, closed-form ridge fit + online per-user LinUCB) that takes over
 once eval data exists and falls back to the rules whenever it is unsure. In
-production today the gateway serves overrides, ε-exploration and a prefer table
+production the gateway serves overrides, ε-exploration and a prefer table
 rewritten from mean reward (§3); the `xᵀWp` engine is built and not wired (§8).
 Every routed request produces a content-free training tuple that trains both the router
 and — recursively — the next model. This HIP defines the routing contract, the
@@ -99,7 +99,7 @@ response/usage request id, from either:
   regenerate) posted to `POST /v1/ai/feedback` (HIP-1211) as
   `{request_id, reward|rating}`. The write is org-scoped (a request id from
   another org answers 404, like an unknown one), idempotent, and carries no prompt
-  text. The earlier `/v1/add-routing-reward` is retired and answers 404.
+  text.
 - **LLM-as-judge** — an automatic quality score: a judge model rates the served
   response against a task rubric; only the numeric score is stored.
 
@@ -148,7 +148,7 @@ not.
 
 For callers who prefer not to manage a pool, Enso is also a managed family over
 the same OpenAI-compatible API (`/v1/chat/completions`, `/v1/responses`). The ids
-served on 2026-09-25 (`curl -s https://api.hanzo.ai/v1/models`) are `enso`,
+served (`curl -s https://api.hanzo.ai/v1/models`) are `enso`,
 `enso-auto`, `enso-flash`, `enso-free`, `enso-pro` and `enso-ultra`.
 
 - `enso-auto` is the family's free entry and the default model of `hanzoai/dev`
@@ -162,7 +162,7 @@ served on 2026-09-25 (`curl -s https://api.hanzo.ai/v1/models`) are `enso`,
   to the panel **only** when the probe is low-confidence, so a confident request
   bills one arm. The embedded catalog and `hanzoai/enso` give `enso-ultra` arms and
   `escalate`; the deployed catalog (`hanzoai/universe`
-  `charts/app/files/enso/catalog.yaml`) gives it one route and neither, so today
+  `charts/app/files/enso/catalog.yaml`) gives it one route and neither, so
   `enso-ultra` serves one model.
 
 The family is data, served by the Zen serving engine with `ZEN_FAMILY=enso`.
@@ -204,7 +204,7 @@ auditable number (not a model-card estimate). Two models:
 
 The name covers the members below. This HIP specifies the router (§1–§4, §6–§7)
 and the SKUs (§5); the rest are listed so the name resolves, each with what its
-repository shows on 2026-09-25.
+repository shows.
 
 | Member | What it is | Repository | Status |
 |---|---|---|---|
@@ -228,8 +228,8 @@ any decision Kai defers, goes to a generative model. Each decision program runs 
 `shadow` first (HIP-1332 §13.1), so the policy of §1 keeps serving until a program
 is promoted.
 
-This HIP adds no requirement; HIP-1332 carries it. On 2026-09-25 no repository
-implements `enso.decide`, and `POST https://api.hanzo.ai/v1/decisions` answers 404.
+This HIP adds no requirement; HIP-1332 carries it. No repository implements
+`enso.decide`.
 
 ## Rationale
 

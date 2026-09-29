@@ -13,8 +13,7 @@ requires: HIP-0039
 
 ## Abstract
 
-Zen6 is the current Zen generation (HIP-0039). It was published on 2026-09-21 as three
-open-weight Hugging Face repositories:
+Zen6 is the current Zen generation (HIP-0039): three open-weight Hugging Face repositories.
 
 - **`zenlm/zen6`.** A 64-layer hybrid-attention model in mixed NVFP4 and FP8, with a DFlash 2
   drafter bundled beside it and YaRN scaling to 1,048,576 positions.
@@ -32,15 +31,12 @@ open-weight Hugging Face repositories:
 `zen6` and `zen6-coder` are also served SKU ids on `/v1/models`. Under HIP-0039 §2.3 they do not
 promise these weights.
 
-This HIP records the layout of each repository, where each file came from, what has been measured
-and what is only claimed, and the defects found on 2026-09-25.
+This HIP records the layout of each repository, where each file came from, what is measured and
+what is only claimed, and their defects.
 
 ## Motivation
 
-Zen6 was published on Hugging Face on 2026-09-21 and is served on `/v1/models`. Until
-2026-09-25, no HIP, catalog, site or doc named it.
-
-Its cards also disagree with the files beside them. The zen6 card's architecture table gives a
+Zen6's cards disagree with the files beside them. The zen6 card's architecture table gives a
 different head count, vocabulary and attention type from its `config.json`. The zen6-coder card
 describes a file format that is not in its repository.
 
@@ -51,9 +47,9 @@ it came from, what runs it, and which numbers carry a receipt.
 
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted as in RFC 2119.
 
-Every fact below was read on 2026-09-25 from the Hugging Face API
-(`https://huggingface.co/api/models/<id>?blobs=true`) and from the files at the revision given.
-GGUF metadata was read from the file headers with HTTP range requests.
+Every fact below is read from the Hugging Face API
+(`https://huggingface.co/api/models/<id>?blobs=true`) and from the files at the revision in §1.
+GGUF metadata is read from the file headers with HTTP range requests.
 
 ### §1 Repositories
 
@@ -159,8 +155,8 @@ weights mean anything.
 
 ### §5 Provenance
 
-Files match their upstream when the LFS SHA-256 or git blob id is equal. The comparison was run
-against each upstream's file listing from the same API.
+Files match their upstream when the LFS SHA-256 or git blob id is equal, against each upstream's
+file listing from the same API.
 
 | Checkpoint | Upstream | What matches | What differs |
 |:--|:--|:--|:--|
@@ -215,12 +211,12 @@ The upstream receipt names only one runtime for these weights: SGLang @ `2948168
 - a `--dflash <dir>` draft option;
 - an `--mtp-model` option.
 
-Whether it loads any of these three checkpoints has not been measured.
+Whether it loads any of these three checkpoints is not measured.
 
 ### §8 Defects
 
-As of 2026-09-25. A card fix is a new revision of that repository, and the repository revisions
-in §1 move with it.
+Against the revisions in §1. A card fix is a new revision of that repository, and §1 moves with
+it.
 
 1. **Licence files.** None of the three repositories carries `LICENSE` or `NOTICE`, which
    HIP-0039 §3.2 requires.
@@ -253,7 +249,7 @@ in §1 move with it.
   what a runtime reads and what a reader can re-check. Card prose is neither.
 - **Why the defects are listed here.** A HIP that repeated the cards would carry their errors.
   One that silently corrected them would hide that the published cards are wrong. Listing the
-  defects lets each be fixed and struck through.
+  defects lets each be fixed, then dropped from §8.
 
 ## Security Considerations
 

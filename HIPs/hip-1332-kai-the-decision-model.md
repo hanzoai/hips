@@ -56,8 +56,9 @@ open work; Kai takes bounded judgment.
 ### §1 Vocabulary
 
 Normative terms. **Hanzo Decision**: the capability and API. **Kai**: the decision model.
-**Zen**: the generative family. **Enso**: the router family (HIP-0510); it routes each operation to Kai or Zen. **Decision Program**:
-a versioned, executable description of a decision. **Decision Package**: the reproducible record
+**Zen**: the generative family. **Enso**: the router family (HIP-0510); it routes each
+operation to Kai or Zen. **Decision Program**: a versioned, executable description of a
+decision. **Decision Package**: the reproducible record
 of one program run. **Evidence**: anything a program may read. **Adapter**: maps one modality into
 evidence. **Policy**: deterministic authority. **Decision Plane**: the runtime subsystem that
 evaluates bounded decisions with Kai. Laya and Jev are baselines, not platform vocabulary.
@@ -264,9 +265,10 @@ meetings, pipeline, purchases, unsubscribes, cost per qualified lead) and is eva
 counterfactually, then in shadow and A/B, before it acts. Supervision is the action with the best
 downstream outcome, not the previous model's choice.
 
-Programs, modes, thresholds, adapters and data-use policy are configured in Hanzo Cloud, where decisions mounts as
-an app (HIP-0106), and signals arrive natively from product analytics (HIP-1190), insights and commerce (HIP-1220):
-no export step between the data and the decision.
+Programs, modes, thresholds, adapters and data-use policy are configured in Hanzo Cloud,
+where decisions mounts as an app (HIP-0106), and signals arrive natively from product
+analytics (HIP-1190), insights and commerce (HIP-1220): no export step between the data and
+the decision.
 
 ### §15 Training
 
@@ -302,16 +304,15 @@ typed-decisions baseline) MAY serve as a teacher for the one line. It is never s
 
 The trainer SHOULD span Hanzo's heterogeneous fleet (Metal, CUDA, ROCm) and MUST support resume,
 versioned data, model revision tracking and optimizer-state recovery. A run MUST NOT be the only
-copy of its own progress. A full stage-A run SHOULD start only when resume works, the CUDA and
-ROCm builds are validated, and the stage-A mixture is built and versioned; a run on an obsolete
-encoder is not the Kai lineage because compute was spent on it.
+copy of its own progress. A full stage SHOULD start only when resume works, every device build it
+uses is validated, and its data build is versioned. A run on another encoder is not the Kai
+lineage, whatever it cost.
 
 The trainer is local SGD with an outer Nesterov step: `train fit --listen` coordinates and trains,
-`train join` adds a machine at any time, and deltas are summed in join order. It has run on Metal
-(M4 Max), CUDA (GB10) and ROCm (Radeon 8060S) together. On a 2% pilot, CUDA and Metal agree on mean
+`train join` adds a machine at any time, and deltas are summed in join order. One run spans Metal
+(M4 Max), CUDA (GB10) and ROCm (Radeon 8060S) workers; on a 2% pilot, CUDA and Metal agree on mean
 validation accuracy (0.500 against 0.504 over 48 suites). A unified-memory worker MUST keep its
-micro-batch within the OS memory guard: at half the budget, the ROCm worker was killed by
-`earlyoom` within three rounds, while a quarter held.
+micro-batch within the OS memory guard (`--scale`).
 
 ### §17 API
 
@@ -329,12 +330,11 @@ or a program and evidence:
 
 A response carries the decision id, program and version, model revision, typed answers,
 probabilities, calibration revision, usage and trace link. The request is the Decisions shape Jev
-clients already send, so there is no second endpoint.
+clients send.
 
 ### §18 Evaluation
 
-Rehosted weights are not an improvement: until Kai's own training lands, its quality is its
-source weights' quality, at runtime parity. Every gain names its source (runtime, architecture,
+Rehosted weights are not an improvement. Every gain names its source (runtime, architecture,
 training, calibration, retrieval, modality, joint decoding). Baselines: Laya, Jev, Zen used as a
 decision model, static rules, embedding retrieval. Axes are reported apart:
 
@@ -448,10 +448,6 @@ decision models; **H3** encoding evidence once and resolving variables jointly l
 decisions per state grow; **H4** masked parallel prediction with dependency-aware refinement
 yields consistent program state without serial decision calls.
 
-Observe everything. Encode once. Decide in parallel. Refine uncertainty. Enforce constraints.
-Keep provenance. Escalate when needed. Generate only when generation is the work. Zen generates,
-Enso routes, Kai decides.
-
 ## Security Considerations
 
 Kai's output is untrusted probabilistic computation until the surrounding program accepts it.
@@ -464,9 +460,9 @@ MUST rest on demonstrated integrated capability, never on the architecture descr
 
 ## References
 
-- HIP-0004 LLM gateway; HIP-0010 MCP; HIP-0043 inference engine; HIP-0113 engine provider runtime;
-  HIP-0106 the cloud plugin contract; HIP-0124 bring your own provider; HIP-1190 product analytics; HIP-1220 commerce;
-  HIP-1322 skills; HIP-1330 the agent loop.
+- HIP-0004 LLM gateway; HIP-0010 MCP; HIP-0043 inference engine; HIP-0113 engine provider
+  runtime; HIP-0106 the cloud plugin contract; HIP-0124 bring your own provider; HIP-1190
+  product analytics; HIP-1220 commerce; HIP-1322 skills; HIP-1330 the agent loop.
 - `hanzoai/decision` `LLM.md` at `d419552`: architecture, crates, models, training.
 - Baselines: Laya 0.3.20 (typed decision models and runtime); Jev (typed decision API).
 - Data: mmBERT; MASSIVE; CLINC150; XNLI; SST-5; UCR/UEA; Monash; CWRU; NASA C-MAPSS; MIMII;

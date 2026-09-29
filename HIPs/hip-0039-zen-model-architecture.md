@@ -17,7 +17,7 @@ Zen is Hanzo's generative model family: models that write text and code and make
 speech, music, video and 3D, plus the embedding, rerank and guard models published beside them.
 It ships two ways: open weights in the `zenlm` organization on
 Hugging Face, and served SKUs on `api.hanzo.ai` (HIP-1211). This HIP says what a Zen name means,
-what an open-weight release must carry, and what exists, as measured on 2026-09-25.
+what an open-weight release must carry, and what exists.
 
 ```text
 Zen     generates   open weights, served SKUs      this HIP; Zen6 in HIP-0904
@@ -28,25 +28,19 @@ Policy  governs     deterministic authority        HIP-1332 §10
 
 HIP-0511 maps every family to its HIP, API and host.
 
-The current generation is Zen6, published 2026-09-21 (HIP-0904). Zen7 is upcoming and
-unspecified. Satori is being retired; Zen7 succeeds it.
-
-This revision replaces the 2025 text. That text specified zen-600m to zen-480b checkpoints with a
-"Mixture of Diverse Experts" design, a zen-gateway, benchmark and throughput tables, and prices.
-None of those models exists on Hugging Face, in the catalog or on `/v1/models`, so the text is
-removed rather than corrected. It is still in git history.
+The current generation is Zen6 (HIP-0904). Zen7 is upcoming and unspecified. Satori is being
+retired; Zen7 succeeds it.
 
 ## Motivation
 
-Four places described the family, and no two of them agreed:
+Three places describe the family, and they disagree:
 
-- this HIP listed models that were never built;
 - `@zenlm/models` 1.0.4 lists the zen5 lineup and has no zen5.8 and no zen6;
 - `/v1/models` serves zen5, zen5.8 and zen6;
 - Hugging Face holds 85 `zenlm` repositories, 81 of them public.
 
-So a reader could not tell which Zen models exist, which are open, or what a served id runs. A
-family name that means something different in each place is not a contract.
+A reader cannot tell which Zen models exist, which are open, or what a served id runs. A family
+name that means something different in each place is not a contract.
 
 ## Specification
 
@@ -54,7 +48,7 @@ The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted a
 
 ### §1 Names
 
-1. A generation id is `zen<N>[-<role>]`. The generations so far are `zen3`, `zen4`, `zen5`,
+1. A generation id is `zen<N>[-<role>]`. The generations are `zen3`, `zen4`, `zen5`,
    `zen5.8` and `zen6`, and `zen7` is next. `N` orders releases. It says nothing about
    architecture, size or modality.
 2. An unversioned line is `zen-<role>`, for example `zen-embedding`, `zen-guard` or `zen-vl`.
@@ -103,7 +97,6 @@ Measured against the 81 public repositories:
     (DeepSeek), zen3-guard (Granite), zen3-image-fast (FLUX), zen3-image-ssd (SSD-1B), zen-world,
     zen-director and zen-video-i2v (Wan), zen-musician (YuE) and zen-3d (TRELLIS).
   - 2 declare no base: zen-scribe and zen-translator.
-  - All 15 of these predate this contract.
 - **Licence files (§3.2):** the three zen6 repositories carry no `LICENSE` (HIP-0904 §8).
 - **Upstream (§3.1):** zen5-gguf's card declares `Qwen/Qwen3.6-35B-A3B`. Its prose says the GGUF
   was quantized from `huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated`, and its file name agrees
@@ -112,7 +105,7 @@ Measured against the 81 public repositories:
 ### §4 Lineup
 
 This section is a measurement, not a normative list. The lineup changes with every release; the
-definitions in §2 do not. It was taken on 2026-09-25 with:
+definitions in §2 do not. It is taken with:
 
 ```sh
 curl -s https://api.hanzo.ai/v1/models \
@@ -127,14 +120,14 @@ The authenticated listing returns 85 repositories. The four private ones are `ze
 
 | Generation | Status | Served SKUs | Open weights (`zenlm/…`) |
 |:--|:--|:--|:--|
-| zen3 | open weights only; SKUs retired 2026-05-30 | none | zen3-asr, zen3-asr-0.6B, zen3-asr-aligner, zen3-guard, zen3-image, zen3-image-fast, zen3-image-ssd, zen3-nano, zen3-omni, zen3-tts, zen3-tts-0.6B, zen3-tts-custom-voice, zen3-tts-voice-design, zen3-vl |
-| zen4 | retired 2026-05-30 | none | none |
+| zen3 | open weights only; SKUs retired | none | zen3-asr, zen3-asr-0.6B, zen3-asr-aligner, zen3-guard, zen3-image, zen3-image-fast, zen3-image-ssd, zen3-nano, zen3-omni, zen3-tts, zen3-tts-0.6B, zen3-tts-custom-voice, zen3-tts-voice-design, zen3-vl |
+| zen4 | retired | none | none |
 | zen5 | shipped | zen5, zen5-coder, zen5-flash, zen5-mini, zen5-pro, zen5-spark, zen5-evo | zen5-gguf, zen5-coder-gguf, zen5-mini-gguf, zen5-pro-gguf, zen5-max-gguf, zen5-nano-9B-gguf |
 | zen5.8 | shipped, served only | zen5.8, zen5.8-coder, zen5.8-spark, zen5.8-evo | none |
-| zen6 | shipped 2026-09-21 | zen6, zen6-coder | zen6, zen6-coder, zen6-flash (HIP-0904) |
+| zen6 | shipped | zen6, zen6-coder | zen6, zen6-coder, zen6-flash (HIP-0904) |
 | zen7 | upcoming | none | none |
 
-Four notes on the table:
+Notes on the table:
 
 - **Satori and Zen7.**
   - Satori is being retired. Its GitHub repository `zenlm/satori` is a scaffold over Open-Sora
@@ -144,8 +137,8 @@ Four notes on the table:
 - **The `zenlm/zen5` repository.** On GitHub it describes a routed "Mixture of Diverse Experts"
   design. No checkpoint of that design is published. The Zen5 open weights are the
   single-upstream repositories listed in the table.
-- **Host suffixes.** The `-spark` and `-evo` suffixes name hosts, not models. `evo` is the former
-  name of `halo`.
+- **Host suffixes.** The `-spark` and `-evo` suffixes name hosts, not models; `evo` is the host
+  `halo`.
 - **Served-only.** zen5-max is open weights with no served SKU. zen5.8 is the reverse: served
   SKUs with no open weights.
 
@@ -196,8 +189,6 @@ lines. It has no zen5.8 and no zen6, so it is behind §4.1.
 - **Why one base lineage.** It leaves one upstream to track for runtime support in
   `hanzoai/engine` (HIP-0043) and one provenance chain to audit per release. The 15 exceptions in
   §3 are listed rather than hidden, so each can be retired or re-based on purpose.
-- **Why the 2025 text was deleted rather than marked historical.** It specified models, prices
-  and benchmark numbers that never existed. Kept in place, it would keep being read as the spec.
 
 ## Security Considerations
 

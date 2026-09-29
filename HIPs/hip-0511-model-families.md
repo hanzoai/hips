@@ -24,19 +24,18 @@ It is Living: amended when a model ships, moves or retires.
 
 ## Motivation
 
-One name was carrying several things. "Enso" is a router, a SKU family, a
-diffusion fork and a browser fork. The public `hanzoai/kai-1` repositories hold
-baseline weights, not Kai. Zen6 shipped open weights and a live API with no HIP
-naming it. HIP-0003 described a Jin model that was never built. A reader who
-wants to call a model, run one or cite one needs one table that says what a name
-is, where its spec is, and whether it exists.
+One name carries several things: "Enso" is a router, a SKU family, a diffusion
+fork and a browser fork, and the public `hanzoai/kai-1` repositories hold
+baseline weights, not Kai. A reader who wants to call a model, run one or cite
+one needs one table that says what a name is, where its spec is, and whether it
+exists.
 
 ## Specification
 
 This HIP requires nothing; it describes. Status words: **shipped** (served, or
 downloadable, now), **in progress** (code exists, nothing served), **upcoming**
 (named, not built), **retiring**, **baseline** (not ours; used for comparison).
-Every fact is as of 2026-09-25:
+Every fact is checked with:
 
 ```sh
 curl -s https://api.hanzo.ai/v1/models                           # Hanzo Cloud: what serves
@@ -62,10 +61,10 @@ card. Hanzo Cloud serves the ids in the third column.
 
 | Line | Open weights | Hanzo Cloud | Status |
 |---|---|---|---|
-| Zen6 | `zenlm/zen6`, `zenlm/zen6-coder`, `zenlm/zen6-flash` (2026-09-21) | `zen6`, `zen6-coder` | shipped; HIP-0904 |
+| Zen6 | `zenlm/zen6`, `zenlm/zen6-coder`, `zenlm/zen6-flash` | `zen6`, `zen6-coder` | shipped; HIP-0904 |
 | Zen5.8 | none | `zen5.8`, `zen5.8-coder`, `zen5.8-spark`, `zen5.8-evo` | shipped, cloud only |
 | Zen5 | GGUF: `zenlm/zen5-gguf`, `zen5-coder-gguf`, `zen5-mini-gguf`, `zen5-pro-gguf`, `zen5-max-gguf`, `zen5-nano-9B-gguf`; `zen5-flash-gguf` and three `zen5-nano` sizes private | `zen5`, `zen5-mini`, `zen5-flash`, `zen5-coder`, `zen5-pro`, `zen5-spark`, `zen5-evo` | shipped |
-| Zen7 | none | none | upcoming; the successor to Satori; no repository, weights or spec yet |
+| Zen7 | none | none | upcoming; the successor to Satori; no repository, weights or spec |
 | Satori | none (`zenlm/satori` is a video-generation scaffold on Open-Sora, never trained) | none | retiring; replaced by Zen7 |
 | Vision-language | `zenlm/zen-vl-{4b,8b,30b}-{instruct,agent}`, `zenlm/zen3-vl` | `zen-vl` | shipped |
 | Embedding | `zenlm/zen-embedding`, `zen-embedding-{0.6B,4B,8B}`, GGUF for 0.6B and 8B | `zen-embedding` | shipped |
@@ -93,7 +92,7 @@ Hanzo Cloud also lists `zen-free`.
 
 | Item | HIP | API | Runs | Status |
 |---|---|---|---|---|
-| Kai, one line (`hanzoai/kai`) | HIP-1332 | `POST /v1/decisions` (§17); `enso.decide` in process (§13) | self-hosted or Hanzo Cloud (§20) | in progress: code in `hanzoai/decision` (private); no checkpoint published; `/v1/decisions` answers 404 on api.hanzo.ai |
+| Kai, one line (`hanzoai/kai`) | HIP-1332 | `POST /v1/decisions` (§17); `enso.decide` in process (§13) | self-hosted or Hanzo Cloud (§20) | shipped: `POST /v1/decisions` on api.hanzo.ai; code in `hanzoai/decision` (private); no checkpoint published |
 | `hanzoai/kai-1`, `kai-1-multilingual`, `kai-1-agent` | HIP-1332 §18 | none | open weights on Hugging Face | baseline: Laya weights, byte-identical to upstream; the cards are titled Laya; not a Kai version |
 | Laya, Jev | HIP-1332 §18 | none | upstream | baseline; not ours |
 
@@ -101,7 +100,7 @@ Hanzo Cloud also lists `zen-free`.
 
 | Name | HIP | Status |
 |---|---|---|
-| Jin | HIP-0003 | not built: `hanzoai/jin` was archived 2026-05-12 and holds a copy of `LumenPallidium/jepa` (MIT), not Hanzo model code; no weights |
+| Jin | HIP-0003 | not built: `hanzoai/jin` is archived and holds a copy of `LumenPallidium/jepa` (MIT), not Hanzo model code; no weights |
 | HLLM | HIP-0002 | a specification; no model or weights exist |
 
 ### 6. One request, in order
@@ -123,11 +122,11 @@ deterministic, Kai, Zen, solver, simulation or human, and only the Zen nodes
 generate, so an agent workflow spends generative compute only where generation is
 the work.
 
-Today the routing decision is the router's own policy (HIP-0510 §1): per-org
+The routing decision is the router's own policy (HIP-0510 §1): per-org
 overrides, ε = 0.1 exploration, then the prefer table that the reward-mean trainer
 rewrites every 15m. The `xᵀWp` engine is built (`hanzoai/engine`) but not wired
-(`router.endpoint` is empty). Kai takes a decision over one program at a time, `shadow`, then
-`advisory`, then `enforced` (HIP-1332 §13.1). On 2026-09-25 no program has made
+(`router.endpoint` is empty). Kai takes a decision over one program at a time,
+`shadow`, then `advisory`, then `enforced` (HIP-1332 §13.1). No program has made
 that move: no repository implements `enso.decide`.
 
 ### 7. Calling each family
@@ -148,10 +147,12 @@ curl https://api.hanzo.ai/v1/ai/feedback \
   -H "Authorization: Bearer $HANZO_API_KEY" -H 'Content-Type: application/json' \
   -d '{"request_id":"<id from the response>","reward":1}'
 
-# Kai (HIP-1332 §17). Specified; not served yet.
+# Kai (HIP-1332 §17).
 curl https://api.hanzo.ai/v1/decisions \
   -H "Authorization: Bearer $HANZO_API_KEY" -H 'Content-Type: application/json' \
-  -d '{"model":"kai","program":"agent.preflight@4","evidence":[],"state":{}}'
+  -d '{"model":"kai","state":{"subject":"Charged twice this month"},
+       "questions":{"team":{"type":"choice","instructions":"Which team handles this ticket?",
+         "criteria":{"billing":"charges, refunds","technical":"errors, outages","account":"sign-in, access"}}}}'
 ```
 
 ### 8. Names that collide
@@ -167,8 +168,8 @@ curl https://api.hanzo.ai/v1/decisions \
 
 Families are split by job, not by architecture or vendor, because the job decides
 the API and the cost. A generation spends tokens; a decision has a known answer
-space and generates none. Putting routing and decisions in their own families is what
-lets a request reach a generative model only when generation is the work.
+space and generates none. Putting routing and decisions in their own families lets a
+request reach a generative model only when generation is the work.
 
 ## References
 
