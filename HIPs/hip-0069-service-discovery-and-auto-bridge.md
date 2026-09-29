@@ -185,7 +185,11 @@ configuration: it binds this machine's router to this machine's browsers and
 means nothing elsewhere, and configuration directories are what people commit
 and sync as dotfiles.
 
-The router creates what is missing. Before every read it `lstat`s the pairing
+The router creates what is missing. The runtime directory is created `0700`
+and checked before anything locks, binds or connects in it: a symlink or a
+directory another user owns is refused (the router is never elected and no
+node connects), and one this user left open to others is tightened to `0700`;
+the lock file is opened without following links. Before every read it `lstat`s the pairing
 directory and file: a symlink, an owner other than the process's uid, or any
 group or other permission bit makes the door refuse every connection (the
 socket still serves). A missing file is minted from the OS CSPRNG, written to a
@@ -200,12 +204,12 @@ the token; `zapd pair --reset` replaces it.
 | socket | `<runtime>/zapd.sock` | any process of the user: reaching it is the authentication |
 | WebSocket | `127.0.0.1:<port>` | a browser extension that passes §4.2 and §4.3 |
 
-`<port>` is the one in the pairing code, which the router mints as
-`20000 + uid mod 10000`: below every operating system's ephemeral range, and
-distinct for any two users of one machine. If another program holds the port,
-the router keeps serving the socket, logs the holder once, and retries the
-port, starting at 50 ms and doubling to 2 s. A user whose default port is taken
-edits the port in the pairing file and pairs again.
+`<port>` is the one in the pairing code. It is picked when the code is
+minted: a port in 20000–29999 — below every operating system's ephemeral
+range — that nothing holds at that moment; `zapd pair --reset` picks a new
+one with the new token. If another program holds the port later, the router
+keeps serving the socket, logs an error naming the remedy, and retries the
+port, starting at 50 ms and doubling to 2 s.
 
 ### 4. Joining
 
@@ -217,10 +221,10 @@ replaced), registers the descriptor, and answers `WELCOME` addressed to the
 full id. A `HELLO` that names no known kind or an ill-formed name is answered
 `ERROR bad_id:<proposed>` and closed.
 
-A second connection registering an id already held replaces the first, and the
-router closes the first: a node that reconnects after a router takeover or a
-service-worker restart gets its id back at once, and two connections never
-speak as one node.
+On the socket, a second connection registering an id already held replaces the
+first, and the router closes the first: a node that reconnects after a router
+takeover gets its id back at once, and two connections never speak as one
+node. Through the door, an id that is registered is never taken over (§4.2).
 
 #### 4.2 The WebSocket door
 
@@ -237,8 +241,19 @@ Before upgrading, the router MUST refuse with `403` a request whose
 
 A web page cannot set its `Origin`, so no page gets a socket. The origin is not
 the authentication — a local process can send any header, and Firefox and
-Safari give every install its own uuid — the pairing proof is. The upgrade and
-the proof together MUST finish within 5 s.
+Safari give every install its own uuid — the pairing proof is.
+
+Admission is bounded. At most eight connections MAY be between accept and
+`HELLO` at once; a connection past that is closed on accept. The upgrade, the
+proof and the `HELLO` together MUST finish within 2 s, and no message on the
+door may exceed 16 MiB.
+
+A door context is a browser and nothing else. Its first frame after the proof
+MUST be a `HELLO` naming a `browser/…` id; any other is answered
+`ERROR browser_only:<id>` and closed, so no door context can become an engine,
+an agent or any node other nodes send requests to. Its `HELLO` MUST NOT take
+over an id that is registered: the router checks and registers under one lock
+and answers `ERROR taken:<id>`, so a door context can never evict a node.
 
 A paired browser node:
 
@@ -483,6 +498,19 @@ Threat model, phase 1:
 - **The browser** is the process most exposed to hostile content, so it may
   answer and may not originate: a compromised page or extension context cannot
   drive an agent, a dev session or the desktop.
+- **A door context posing as another node.** A context that holds the token —
+  the extension compromised, or a local process of the same user — could say
+  `HELLO` as an engine or an agent, be listed as a provider, and receive the
+  requests and secrets other nodes send it; or say `HELLO` as a registered id
+  and evict it. The door admits `browser/…` ids only and never takes over a
+  registered id (§4.2); both are tested by playing the attack.
+- **Flooding the door.** Any local process can open connections to the
+  loopback port without a token. The door admits eight at a time for at most
+  2 s each and caps a message at 16 MiB, so a flood holds a bounded number of
+  descriptors, tasks and bytes in the embedding process, and a real browser is
+  admitted once it relents.
+- **A planted runtime directory.** A runtime directory that is a symlink or
+  another user's is never used; one left open is tightened (§3.2).
 - **Spoofing** within the machine: the router stamps every forwarded frame's
   `from` with the registered id and closes a connection whose id is taken over.
 - **The token** is never logged, never returned by a tool, and never sent to a
