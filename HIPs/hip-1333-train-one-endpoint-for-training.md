@@ -8,7 +8,7 @@ status: Draft
 implementation-go: partial
 implementation-rust: partial
 created: 2026-09-28
-requires: HIP-0026, HIP-0043, HIP-0106, HIP-0139, HIP-1145, HIP-1313, HIP-1332
+requires: HIP-0026, HIP-0043, HIP-0106, HIP-0118, HIP-0139, HIP-1145, HIP-1313, HIP-1332
 ---
 
 # HIP-1333: Train — One Endpoint for Training
@@ -95,15 +95,19 @@ served; neither is kept as an alias.
   "objective": {"loss": "cross_entropy",
                 "terms": [{"kind": "pairwise_margin", "weight": 1, "margin": 0.5},
                           {"kind": "consistency", "weight": 0.5}]},
-  "adaptation": {"mode": "orthogonal_subspace"},
+  "adaptation": {"mode": "full"},
   "protect": {"suites": ["typed_decisions", "ag_news"],
-              "methods": ["functional_distillation"],
+              "projection": true, "distillation": true,
               "budget": {"accuracy": 0.02, "ece": 0.03}},
   "resources": {"machines": ["dgx", "evo"], "steps": 2000},
   "evaluation": {"suites": ["labels"]},
   "output": {"kind": "capability", "name": "open-labels"}
 }
 ```
+
+`adaptation` says how the trained parameters are represented; `protect` says what they
+must not damage. The two do not mix: every protection applies to whatever the
+adaptation trains.
 
 - `base_model` names a trainable base (§4); `revision` pins it. The executor resolves the
   revision to the weights' SHA-256, which the job records as `base.sha256`.
@@ -114,20 +118,19 @@ served; neither is kept as an alias.
   group's attack and benign rows, with `margin`), `hard_margin` (a hinge between gold and
   the hardest negative) and `consistency` (symmetric KL across a group's views), each
   with a `weight`.
-- `adaptation.mode` is one of `full`, `lora`, `qlora`, `eigenlorax`,
-  `orthogonal_subspace`, `universal_subspace`, `auto`. `lora` and `qlora` take `rank`,
-  `alpha`, `targets`. `eigenlorax` takes `sources` (lora artifacts) or `basis`, and
-  `residual_rank`. `universal_subspace` takes `basis` and `residual_rank`.
-  `orthogonal_subspace` confines the update to the complement of the subspace the
-  protected suites' gradients span at the base, and requires `protect.suites`. `auto`
-  chooses, and the job's `adaptation.chose` says what and why.
-- `protect.suites` names capabilities the base already has. `methods` are
-  `gradient_projection` (each step's gradient projected off the protected suites'
-  directions, for adapter modes; on a full-weight update that is `orthogonal_subspace`
-  and MUST be spelled so) and `functional_distillation` (KL to the base's answers on a
-  preservation set drawn from those suites). `budget` bounds the regression the job may
-  cause on each protected suite: accuracy down at most `accuracy`, calibration error up
-  at most `ece`.
+- `adaptation.mode` is `full`, `lora`, `qlora`, `basis` or `auto`. `lora` and `qlora`
+  take `rank`, `alpha` and `targets`. `basis` trains coefficients in a subspace: `basis`
+  names a basis artifact (its sha256, or `basis://<base>/<name>`) or `sources` names lora
+  artifacts to build one from; `rank` is how many of its directions are used, and
+  `residual_rank` the rank of an orthonormal residual learned beside them (0: the
+  coefficients alone). `auto` chooses, and `adaptation.chose` says what and why.
+- `protect.suites` names capabilities the base already has, by suite; `capabilities`
+  names capability artifacts, by sha256. `projection` projects every update — a full
+  update, an adapter or a residual — off the protected directions: the subspace the
+  suites' gradients span at the base, and each named capability's subspace.
+  `distillation` adds KL to the base's answers on a preservation set drawn from the
+  suites. `budget` bounds the regression the job may cause on each protected suite:
+  accuracy down at most `accuracy`, calibration error up at most `ece`.
 - `resources.machines` names linked machines (the first leads); absent, the first
   executor of the org that claims leads alone. `steps` bounds optimizer steps; `seconds`
   bounds wall time.
@@ -155,18 +158,18 @@ the two cannot disagree. Today:
 
 | base | executor | adaptation | protect | objective terms | output |
 |---|---|---|---|---|---|
-| `kai` | `train serve`, jobs only | `full`, `orthogonal_subspace`, `auto` (chooses `full`, or `orthogonal_subspace` when `protect.suites` is set) | `functional_distillation` | `pairwise_margin`, `hard_margin`, `consistency` | `checkpoint`, `capability` |
+| `kai` | `train serve`, jobs only | `full`, `auto` (chooses `full`) | `suites`, `projection`, `distillation` | `pairwise_margin`, `hard_margin`, `consistency` | `checkpoint`, `capability` |
 | engine LLMs (Hugging Face causal LMs the engine loads) | engine, clients only | `lora` | none | none | `lora` |
 
 A client on `kai` and a job on an engine LLM are refused as `unsupported_base` for that
-noun. `qlora`, `eigenlorax`, `universal_subspace`, `basis` and `merged` are specified
-and run nowhere yet; asking for them is a `400` naming the supported set. A base gains a
-row when its executor implements the row.
+noun. `qlora`, `basis`, `protect.capabilities`, the `basis` and `merged` outputs, and
+`lora` on Kai are specified and run nowhere yet; asking for them is a `400` naming the
+supported set. A base gains a row when its executor implements the row.
 
 For Kai the job becomes a stage file (HIP-1332): the stage named by `dataset.uri`, its
-init replaced by `revision`, `objective.terms` its `terms`, `protect` its `protect`
-(`orthogonal_subspace` sets `protect.project`; `functional_distillation` sets
-`protect.distill`), `resources.steps` its `max_steps`.
+init replaced by `revision`, `objective.terms` its `terms`, `protect.suites` with
+`projection` and `distillation` its `protect.project` and `protect.distill`,
+`resources.steps` its `max_steps`.
 
 ### §5 Lifecycle
 
@@ -199,19 +202,26 @@ size and checksum read back equal.
 
 - `checkpoint`: the trained model whole (Kai: `kai.json`, `model.safetensors`,
   `tokenizer/`).
-- `capability`: what the job taught, apart from its base: the changed tensors as `W − W₀`
-  in `delta.safetensors`, and `capability.json` naming the base and its SHA-256, the
-  adaptation, the protected suites and the evaluation. Applied to that base it is the
-  checkpoint.
-- `lora`: a PEFT adapter.
-- `basis`: a subspace, `basis://<base>/<name>`, versioned by the jobs that extend it,
-  carrying its explained variance by rank.
+- `capability`: what the job taught, apart from its base: `capability.json` (the base
+  and its SHA-256, the adaptation, the protection, the evaluation, and `form`) and its
+  tensors — `delta.safetensors`, the changed tensors as `W − W₀` (`form` `delta`, a full
+  update); `lora.safetensors`, the adapter's factors per target (`lora`); or
+  `coefficients.safetensors` and `residual.safetensors` over a basis the manifest names
+  by SHA-256 (`basis`). Applied to that base it is the trained model.
+- `lora`: the adapter alone, as the engine loads it.
+- `basis`: a subspace, `basis://<base>/<name>`, versioned by the jobs that extend it:
+  `basis.json` (layer names, rank, singular spectrum, explained variance by rank, the
+  capabilities it was built from, their principal-angle matrix, functional
+  reconstruction at r = 4, 8, 16 and 32, residual energy by capability, the protected
+  directions, and its parent's SHA-256 and version) and `basis.safetensors`.
 - `merged`: a base with a capability or adapter folded in.
 
 ### §7 Clients
 
-A create is validated like a job's (§3, §4), then forwarded to the engine
-(`ENGINE_UPSTREAM`); the client's id is recorded under the org. Every other client
+A client holds a model in the engine's memory, which every org's inference shares, so
+until the engine isolates orgs only a SuperAdmin (HIP-0118) may create one; anyone else
+is refused `403`. A create is validated like a job's (§3, §4), then forwarded to the
+engine (`ENGINE_UPSTREAM`); the client's id is recorded under the org. Every other client
 operation looks the id up in the org's store first, so another org's client answers
 exactly as an unknown one does, and one the engine no longer holds leaves the org. An
 org holds at most `TRAIN_CLIENTS` (default 2) live clients and the engine at most
@@ -266,9 +276,8 @@ this HIP declares no `capability:` (HIP-0139 §5).
 ### §13 Upstream
 
 It forks no project. The client wire mirrors the Tinker API's shape (Thinking Machines
-Lab) with Hanzo field names, a wire we implement. EigenLoRAx, orthogonal-subspace
-learning and gradient projection memory are published methods; no code of theirs is
-used.
+Lab) with Hanzo field names, a wire we implement. Low-rank adaptation, shared subspace
+bases and gradient projection are published methods; no code of theirs is used.
 
 ## Rationale
 
@@ -292,16 +301,18 @@ gateway's org, and absence and foreignness answer the same `404`. A forged repor
 mark a regressing run `accepted`: reports need the task's lease, fenced per claim, and
 the verdict records the executor and machine that produced it, but an org's own
 executor is trusted with its org's verdicts. A client holds a model in the engine's
-memory, which also serves inference: the per-org cap and the stage bound it until
-per-org engine isolation exists. Upload grants are write-only, single-key and
-checksum-bound, so a grant cannot overwrite another object or store bytes under a hash
-they do not have.
+memory, which also serves inference, so clients are a SuperAdmin's until per-org engine
+isolation exists; the stage flag cannot bound them, since an org sets its own flags.
+Upload grants are write-only, single-key, and bound to the declared size and checksum,
+so a grant cannot overwrite another object, store more bytes than it declared, or store
+bytes under a hash they do not have; an object that reads back wrong is deleted.
 
 ## References
 
 - HIP-0026 — Identity & Access Management Standard
 - HIP-0043 — Hanzo Engine — LLM Inference Engine Standard
 - HIP-0106 — The Hanzo Plugin Contract
+- HIP-0118 — SuperAdmin & Tenant Isolation Model
 - HIP-0139 — Capability
 - HIP-1145 — Research — The Experiment Record
 - HIP-1313 — Usage — The Metered Record

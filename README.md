@@ -416,8 +416,8 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 7 | Model Context Protocol (MCP) Integration Standards |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
+| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 7 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
-| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 6 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 5 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |
