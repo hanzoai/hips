@@ -120,7 +120,9 @@ datasets/{name}/items, evaluators, rubrics, runs, scores, traces, metrics}` —
 nine paths, in `plugin/eval/openapi.json`, with the resource still named
 `evaluators` rather than `judge` and no queue routes at all. The table below
 is the target grammar this HIP proposes; until the migration lands, the
-capability's name and address are `eval` (`manifest/apps.go:408`).
+capability's name and address are `eval` (`manifest/apps.go:408`). HIP-1334
+moves datasets and their items to `/v1/research/datasets` and makes a score a
+row of an evaluation; judges, rubrics, runs and traces stay here.
 
 Every eval endpoint MUST live under `/v1/eval` and MUST follow the resource-name
 grammar (HIP-0119 §2): the resource is named **once**, in the singular, and the HTTP
@@ -468,6 +470,7 @@ closed.
 - HIP-0122 zip — ZAP-Native Application Server · HIP-0132 One Telemetry Plane
 - HIP-0105/0116 Extension Runtime
 - HIP-0139 Capability
+- HIP-1334 Research — The Unified Research Runtime
 
 ## Copyright
 

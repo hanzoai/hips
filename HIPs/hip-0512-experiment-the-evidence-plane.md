@@ -120,9 +120,9 @@ the headline aggregate, `GET /v1/experiment/project` the per-project roll-up, `P
 /v1/experiment/artifact` files a content-addressed diary artifact, and `POST
 /v1/experiment/grant` sets visibility.
 
-**What ships today is `/v1/research/*` with plural sub-resources.** The rename to the
-paths above moves the cloud subsystem and all four producers in ONE pass — a surface
-half-renamed is two surfaces, which is the thing this HIP exists to prevent.
+**What ships today is `/v1/research/*` with plural sub-resources, and it stays there.**
+`/v1/experiment` is the A/B plane (HIP-1311), and HIP-1334 keeps the evidence plane at
+`/v1/research` and moves its records into datasets, runs, evaluations and claims.
 
 Auth is the per-org key ONLY. The client MUST NOT send `X-User-Id` or `X-Org-Id` — the
 gateway mints the validated principal, and a client-supplied tenant is a forgery the
@@ -156,4 +156,5 @@ with the rename, in one pass, across the four producers.
 ## References
 
 HIP-0111 (identity) · HIP-0119 (service conventions) · HIP-0129 (the eval plane) ·
+HIP-1311 (the A/B plane) · HIP-1334 (the research runtime) ·
 `hanzoai/cloud/clients/research` · `hanzoai/method`

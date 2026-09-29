@@ -233,6 +233,10 @@ files each suite as a research run (HIP-1145) under its credential's project, th
 as the `baseline`, and reports the project and run ids, which the job carries in
 `result.research`.
 
+HIP-1334 replaces `protect.budget` and `evaluation` with a stored gate the job names, moves
+metrics, artifacts and the result into the job's run, and makes publishing require a passed
+claim on that run.
+
 ### §9 Tenancy
 
 The org is the gateway's verdict, never a body, query or path value (HIP-0026). A job,
@@ -335,6 +339,7 @@ bytes under a hash they do not have; an object that reads back wrong is deleted.
 - HIP-1145 — Research — The Experiment Record
 - HIP-1313 — Usage — The Metered Record
 - HIP-1332 — Kai — The Decision Model and the Decision Plane
+- HIP-1334 — Research — The Unified Research Runtime
 
 ## Copyright
 

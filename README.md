@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 35 | 2 | 91 |
-| C++ | 1 | 2 | 0 | 273 |
-| Rust | 10 | 27 | 1 | 238 |
+| Go | 148 | 36 | 2 | 91 |
+| C++ | 1 | 2 | 0 | 274 |
+| Rust | 10 | 28 | 1 | 238 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -305,6 +305,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1331](./HIPs/hip-1331-patrol-standing-watch-over-an-estate.md) | Patrol — Standing Watch Over an Estate | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) | Kai — The Decision Model and the Decision Plane | Standards Track | Core | Draft | - | - | partial |
 | [HIP-1333](./HIPs/hip-1333-train-one-endpoint-for-training.md) | Train — One Endpoint for Training | Standards Track | Infrastructure | Draft | partial | - | partial |
+| [HIP-1334](./HIPs/hip-1334-research-unified-runtime.md) | Research — The Unified Research Runtime | Standards Track | Infrastructure | Draft | partial | - | partial |
 
 ## HIP Process
 
@@ -392,9 +393,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 129 | Capability |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 125 | Identity & Access Management Standard |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 125 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 130 | Capability |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 126 | Identity & Access Management Standard |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 126 | The Hanzo Plugin Contract |
 
 ### Then the invariants
 
@@ -414,9 +415,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | 8 | Z-Chain — Post-Quantum Identity & Attestation Rollup |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 8 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
+| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 8 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 7 | Model Context Protocol (MCP) Integration Standards |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 7 | One Identity Boundary |
-| [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 7 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 5 | Hanzo Sovereign L1 Chain Architecture |

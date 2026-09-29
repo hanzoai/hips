@@ -22,7 +22,9 @@ branch, dirty, library versions) as queryable columns. It is implemented in
 `hanzoai/cloud` at `apps/research`. A correction appends a new version under
 the same stable id and the prior version is RETAINED, never mutated; faulted
 and failed runs are retained too, because a negative result is evidence
-(`apps/research/research.go:17-22`).
+(`apps/research/research.go:17-22`). HIP-1334 specifies the research runtime
+this record migrates into: datasets, artifacts, event-sourced runs,
+evaluations, gates, comparisons and claims.
 
 ## Motivation
 
@@ -148,7 +150,9 @@ themselves — its own data plane, not telemetry a customer reads back under
 
 ### Stage
 
-`beta`: the manifest row declares `Stage: Beta` (`manifest/apps.go:410`). The
+`alpha`: the manifest row declares `Stage: Alpha` and opens `GET
+/v1/research/runs` to a caller with no org, for the org `?org=` names. The
+prefix answers 404 to an org without the `research` flag. The
 durability contract is still rolling out — the roll-up is best-effort and
 reconciliation is unbuilt, so the record is versioned-append-only today and no
 more is claimed.
@@ -202,6 +206,7 @@ held closed by nothing dialing it.
 - HIP-0106 — The Hanzo Plugin Contract
 - HIP-0139 — Capability
 - HIP-0512 — Experiment — The Evidence Plane
+- HIP-1334 — Research — The Unified Research Runtime
 
 ## Copyright
 
