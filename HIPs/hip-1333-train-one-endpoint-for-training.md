@@ -100,7 +100,7 @@ served; neither is kept as an alias.
               "methods": ["functional_distillation"],
               "budget": {"accuracy": 0.02, "ece": 0.03}},
   "resources": {"machines": ["dgx", "evo"], "steps": 2000},
-  "evaluation": {"suites": ["labels"], "project": "kai"},
+  "evaluation": {"suites": ["labels"]},
   "output": {"kind": "capability", "name": "open-labels"}
 }
 ```
@@ -131,9 +131,9 @@ served; neither is kept as an alias.
 - `resources.machines` names linked machines (the first leads); absent, the first
   executor of the org that claims leads alone. `steps` bounds optimizer steps; `seconds`
   bounds wall time.
-- `evaluation.suites` are the target suites; `project` is the research project the
-  results are filed under (§8).
+- `evaluation.suites` are the target suites (§8).
 - `output.kind` is `checkpoint`, `lora`, `capability`, `basis` or `merged`, with a `name`.
+  A job produces one artifact, of that kind.
 - `from` names an artifact the job starts from. A job with `from` and no `dataset` trains
   nothing: it evaluates (`evaluation` set), merges (`output.kind` `merged`) or extends a
   basis (`output.kind` `basis`).
@@ -224,8 +224,9 @@ base and the trained model on the target and protected suites of the dataset's
 validation split, per suite accuracy, log loss and 15-bin expected calibration error.
 The verdict is `accepted` when every protected suite stays within the budget, else
 `rejected`; the target suites' change is reported and does not decide. The executor
-files each suite as a research run (HIP-1145) under `evaluation.project`, the base as
-the `baseline`, and reports the run ids, which the job carries in `result.research`.
+files each suite as a research run (HIP-1145) under its credential's project, the base
+as the `baseline`, and reports the project and run ids, which the job carries in
+`result.research`.
 
 ### §9 Tenancy
 
