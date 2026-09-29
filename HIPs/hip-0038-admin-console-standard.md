@@ -32,8 +32,49 @@ secret management (HIP-0027), and operator-grade access controls.
 The distinction between Console and Cloud is fundamental to Hanzo's architecture. Cloud (cloud.hanzo.ai) is the customer-facing product where teams manage their AI workloads. Console is the operator-facing product where Hanzo administrators manage the platform itself. This separation follows the control plane vs. management plane pattern established by cloud infrastructure providers.
 
 **Repository**: [github.com/hanzoai/console](https://github.com/hanzoai/console)
-**Port**: 3000
-**Docker**: `ghcr.io/hanzoai/console:latest`
+**Served**: the `hanzo-console` Sites release
+
+## Hosts and convergence
+
+Three consoles serve today, each from one route and one release. SuperAdmin is
+`owner == "admin"` (HIP-0118), and the IAM client `admin-console` in the `admin`
+org is the only way to sign one in.
+
+| Host | Source | Audience | Gate |
+|---|---|---|---|
+| admin.hanzo.ai | hanzoai/admin | Hanzo staff: the company across every org, and the fleet (HIP-1320) | SuperAdmin |
+| console.hanzo.ai | hanzoai/console | Hanzo staff: every module | SuperAdmin |
+| platform.hanzo.ai | hanzoai/console, platform shell | customers | any account |
+
+The target is one console, minimal by default. It lives in hanzoai/platform, takes
+platform's design (one product root and a short rail), and exposes little until an
+org turns more on.
+
+1. **Default.** A new org sees Overview, Models and keys, Usage and billing, and
+   Settings (members, API keys, products). Nothing else is on.
+2. **Enablement.** Each module is on or off per org, stored as that org's setting
+   in cloud and read at render, never a build flag. The org turns modules on under
+   Settings → Products; a SuperAdmin can do it for any org from the admin surface.
+3. **From console**, as modules an org enables: AI (router, providers, agents,
+   automations, inference, fine-tuning, embeddings, decisions, knowledge, prompts,
+   evals), Compute (machines, containers, functions, GPUs, edge, clusters, tasks),
+   Data (SQL, KV, S3, datastore, Base, vector, DocDB, memory), Network (gateway,
+   DNS, domains, CDN, VPC, zero trust), Security (IAM, KMS, secrets, audit, MPC,
+   HSM), Dev (CLI, SDKs, webhooks, code, IDE), Delivery (deploy, builds, registry,
+   releases, pipelines, environments, projects), Observe (logs, errors, metrics,
+   traces, analytics, dashboards, alerts), Apps (chat, bots, CRM, marketing, ads,
+   social, CMS, store: products, orders, customers), Web3 (wallet, tokens,
+   networks, indexer, oracles).
+4. **From admin and console's SuperAdmin boards**, as modules only a SuperAdmin
+   ever sees, in the same shell: Company (growth, customers, money, usage, web),
+   organizations and people, fleet, nodes, machines, clusters, providers and
+   routing, models and pricing, plans and rates, feature flags and launch
+   control, credits and grants, finance and books, revenue and SaaS metrics,
+   referrals, affiliates and authors, treasury, audit, trust.
+5. **Order.** Move the source to hanzoai/platform; add per-org enablement; bring
+   console's modules over one category at a time behind it; bring the SuperAdmin
+   modules over; then console.hanzo.ai and admin.hanzo.ai answer 301 to
+   platform.hanzo.ai.
 
 ## Motivation
 
