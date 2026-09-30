@@ -235,6 +235,55 @@ envelope publish is fail-soft and detached, because the durable copy is already
 committed by the time it runs — a bus that is down for the second vocabulary
 costs deliveries, never data.
 
+### §6.1 The act vocabulary and its readers
+
+An `act` fact is one visit or one thing a person did. Its vocabulary is stated
+here once, and every reader of `event.act` MUST take it as stated: a reader MAY
+rename a field into its own spelling, and MUST NOT change what the field means.
+
+**Names.** `@hanzo/events` (its `catalog.json`) is the one list of event names.
+A page is `$pageview`; a captured exception is `$exception`; every other name is
+lower snake case, among them `signup_viewed`, `signup_submitted`,
+`signup_completed`, `login_completed`, `first_action`, `checkout_started` and
+`order_completed`. Autocapture keeps its `$` names (`$click`, `$submit`).
+
+**Fields.** Each fact carries one spelling of each:
+
+| Meaning | Field |
+|---|---|
+| where | `url`, `path`; the site is the url's host with a leading `www.` removed |
+| from where | `referrer`, `referrer_domain`, `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content` |
+| who | `anonymous_id` (the browser's visitor id), `distinct_id` (the account, after sign-in); a visitor is `anonymous_id`, else `distinct_id` |
+| whose | `org` (the server-resolved tenant, §4), `groups.organization`, and `plan` where a plan is in play |
+| on what | `user_agent`, `browser`, `os`, `device` (`desktop`, `mobile` or `tablet`), `country` (ISO 3166-1 alpha-2), `screen`, `language` |
+| when | `time`, in UTC on the wire and in every store |
+
+The fields under *on what* are stamped at ingest from the visitor's own request,
+so every reader sees the same words. The visitor's address travels on the bus
+message as `ip`, beside `key`, and no store keeps it. A host that is local
+(`localhost`, `127.0.0.1`, `::1`, `*.local`) is not a visit. Reports are cut in
+the `America/Los_Angeles` day; storage never is.
+
+**Readers.** Each binds its own durable on the `EVENT` stream, filtered to
+`event.act`, and none is a destination anything posts to:
+
+- **The warehouse** stores every fact in `event.fact`: the fields above as
+  columns, the rest under `attributes`.
+- **Insights** files a fact under the project whose key admitted it and reads the
+  fields under its own spellings: `$referrer`, `$referring_domain`,
+  `$raw_user_agent`, `$browser`, `$os`, `$device_type`, `$geoip_country_code`,
+  `$browser_language`, `$host`, `$pathname`. A `login_completed` or
+  `signup_completed` that carries an `anonymous_id` different from its
+  `distinct_id` is filed after an `$identify` joining the two, so one person is
+  one person across sign-in.
+- **Analytics** (`hanzoai/analytics`, durable `analytics`) makes a `$pageview`
+  a pageview and a named track fact a custom event, on the website whose domain
+  the host is or ends with; the visitor is its session.
+
+A site reaches every reader by posting to `/v1/event` with one project key. A
+site that posts with a second key, or with a person's session alone, lands in
+the warehouse and not in that project.
+
 ### §7 Observability
 
 Beyond the request span every route gets, one counter and one log line, on
