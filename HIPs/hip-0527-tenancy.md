@@ -1239,6 +1239,23 @@ row is a cache of the fold and the nightly check can recompute it. The parked
   was issued to; IAM accepts as a credential only a token of type `access-token`
   with an audience and an issuer it mints under, and an assume never outlives the
   token it re-scopes.
+- **A released assume ends at IAM at once, elsewhere within the hour.** IAM's
+  Guard looks up the stored record of every assumed token and refuses one whose
+  record release deleted; it looks up nothing for any other token. Cloud and the
+  gateway validate locally and add no check: the one-hour lifetime of §5 step 2
+  bounds an assumed token there, as it bounds a dismissal (HIP-0519).
+- **A session keeps the moment its person signed in.** Every authorization code
+  records when its person proved who they are, and a session minted from a code
+  (`/v1/iam/signin`) or a code minted from a session (a credential-less
+  `POST /v1/iam/login`) carries that moment forward, never the time of the request,
+  so no chain of exchanges refreshes the ten-minute step-up. Signin takes only a
+  code the platform's own application requested, redeemed with its S256 verifier.
+  A session answers only with S256-bound codes, and on an application's own host
+  only for the application it was opened under; the identity provider's host keeps
+  single sign-on. Signing out ends every session the person holds, on every host.
+- **An address is spoken of only to its holder.** Signup checks the code mailed to
+  an address before it says the address already has an account, so naming an
+  address teaches a caller nothing.
 - **Support is Hanzo's cost.** Under assume the debit lands on `org:hanzo` and the
   tenant's own audit trail shows who was inside and when.
 - **Replacement, never deletion (HIP-0519).** `cliOrg` and every recomputation in
