@@ -145,7 +145,7 @@ adaptation trains.
 - `evaluation.suites` are the target suites (§8).
 - `output.kind` is `checkpoint`, `lora`, `capability`, `basis` or `merged`, with a `name`.
   A job's result names one artifact of that kind; a job stopped before its result keeps
-  the checkpoint its executor stored (§5).
+  what its executor stored before the stop (§5).
 - `from` names an artifact the job starts from. A job with `from` and no `dataset` trains
   nothing: it evaluates (`evaluation` set), merges (`output.kind` `merged`) or extends a
   basis (`output.kind` `basis`). No executor runs `from` yet (§4).
@@ -190,8 +190,8 @@ outside the head fixed (the stage's `frozen`). An `artifact:` dataset is fetched
 `queued → running → evaluating →` one of `succeeded`, `rejected`, `failed`,
 `cancelled`, `stopped`. `rejected` means the run finished and broke its regression
 budget: its artifacts are kept and it is not publishable by default. `stopped` means the
-job's own bounds or its payer's money ended it (§10): its `error` is the reason, the
-checkpoint its executor stored is kept, and it is not publishable.
+job's own bounds or its payer's money ended it (§10): its `error` is the reason, what
+its executor stored is kept, and it is not publishable.
 
 A job is one `lead` task and one `join` task per further machine. A task is claimed,
 held under a lease, reported on and ended.
@@ -222,49 +222,43 @@ The answer:
 {"org": "acme",
  "task": {"id": "tsk_0123456789abcdef", "job": "job_0123456789abcdef", "role": "lead",
           "lease": "trl_…", "coordinator": "", "device": "cuda", "devices": 2,
-          "held": 600, "report": 60},
+          "held": 600, "report": 20},
  "job": {"id": "job_0123456789abcdef", "status": "running", "…": "the job as read"}}
 ```
 
 `org` is the job's org, which Hanzo's executor acts in for every later call on the task.
 `lease` is answered once and stored as its SHA-256. `devices` is how many devices the
-task runs on and `held` the device-seconds held for it (§10): it MUST NOT run past them.
-`report` is the most seconds that may pass between its reports.
+task runs on and `held` the device-seconds held for it (§10); the job is stopped before
+the task runs past them. `report` is the most seconds that may pass between its reports.
 
 **Report.** `POST /v1/train/jobs/{id}/events`:
 
 ```json
-{"task": "tsk_0123456789abcdef", "lease": "trl_…", "seconds": 120,
+{"task": "tsk_0123456789abcdef", "lease": "trl_…",
  "events": [{"type": "metric", "name": "nll", "step": 100, "value": 0.66}]}
 ```
 
-`seconds` is the device-seconds the task has used since it was claimed, in all, summed
-over its devices. A report's events are `status` (a lead's `running`, `evaluating`,
-`failed` with `error`, or `stopped`; a join's `done`, `failed` or `stopped`),
+Each report meters the task by the clock (§10); the executor reports no time. A report's
+events are `status` (a lead's `running`, `evaluating`, `failed` with `error`, or
+`stopped` when it stopped on its own; a join's `done`, `failed` or `stopped`),
 `coordinator` (the lead's `addr`, `host:port`), `metric` (`name`, `step`, `value`), `log`
 (`line`, cut to 4096 bytes), `artifact` (`sha256`) and `result`, at most 500 a report. A
 report with no events is a heartbeat, due at least every `report` seconds. The answer:
 
 ```json
-{"cancel": false, "held": 900, "status": "running", "seq": 42,
- "stop": {"reason": "budget", "by": 1800000660}}
+{"cancel": false, "held": 900, "status": "running", "seq": 42}
 ```
 
-`held` is the device-seconds held now. `stop` is present once the job is stopping:
-`reason` is `budget`, `max_seconds`, `insufficient_balance`, `spend_cap`,
-`balance_unavailable` or `no_payer`, and `by` the unix second its leases end. On a stop
-the executor MUST stop training within one report interval, MUST NOT run past `held`,
-and SHOULD store a checkpoint (§6) and report its `artifact` event and then
-`{"type": "status", "status": "stopped"}` before `by`; at `by` the job ends `stopped`
-whatever it reported. `cancel: true` says the job was cancelled: the executor MUST stop
-its trainer and report nothing more. Once the job has succeeded, been rejected or
-cancelled, or stopped before `by`, a report records nothing and answers its status. A
-report on a failed job, under a lease that is not the task's current one, or after `by`
-is `409 lease_lost`, and the executor stops.
+`held` is the device-seconds held now. `cancel: true` says the job was cancelled, or
+stopped at what its bounds or its payer could hold (§10): the executor MUST kill its
+trainer and report nothing more. Once the job has succeeded, been rejected, cancelled or
+stopped, a report records nothing and answers its status. A report on a failed job, or
+under a lease that is not the task's current one, is `409 lease_lost`, and the executor
+stops.
 
 A task with no report or registration for `TRAIN_LEASE_TTL` (default 10 minutes) loses
-its lease. A lost lead fails its job with `executor_lost`, or ends it `stopped` when it
-was stopping: a Kai run resumes only where its checkpoint is, so it is not moved.
+its lease. A lost lead fails its job with `executor_lost`: a Kai run resumes only where
+its checkpoint is, so it is not moved.
 
 ### §6 Artifacts
 
@@ -442,24 +436,24 @@ org's own hardware: its seconds are counted and its `max_seconds` holds, and it 
 charged nothing.
 
 **Hold a window, charge what ran.** A task may use only the device-seconds held for it.
-A claim holds the first window, 300 seconds of wall time on each of the task's devices;
-the executor reports at least every 60 seconds the device-seconds it has used in all
-(§5), and each report is charged exactly what it adds, at the rate read when the task
-was claimed, no more than the task's devices' wall time since it was claimed (plus 5
-seconds) and no more than is held. When less than
-180 seconds a device is left, the report asks for the next window: 300 seconds a device,
+A claim holds the first window, 300 seconds of wall time on each of the task's devices.
+The executor reports at least every 20 seconds (§5), and each report meters the task by
+the clock: its devices times the seconds since it was claimed, no more than is held, at
+the rate read when the task was claimed; the report is charged what that adds. When less
+than 180 seconds a device is left, the report asks for the next window: 300 seconds a device,
 clipped to what `max_seconds` and `budget` leave, then weighed against the payer's
 balance and spend caps — a project's cap as hard as at create, when the job's project was
 claim-bound — together with everything the payer has committed that the ledger does not
 know yet: its live holds beyond what they used, and its charges not yet sent, in every
 org the serving process holds. One payer's weighings and holds are taken one at a time,
 so two claims or reports cannot weigh the same balance. Granted, `held` grows. Refused,
-the job is told to stop with the refusal's reason — `max_seconds`, `budget`,
-`insufficient_balance`, `spend_cap`, `no_payer` — its leases end 300 seconds later, and
-nothing past what is held is charged. A balance or a hold that cannot be read is not a
-refusal: the hold runs down to 120 seconds a device before the job is stopped
-`balance_unavailable`. So a job never runs, and is never charged, past what its payer
-could pay when its last window was held.
+the task runs what is held and asks again at every report; once less than 40 seconds a
+device is left, the job ends `stopped` with the refusal's reason — `max_seconds`,
+`budget`, `insufficient_balance`, `spend_cap`, `no_payer` — and the report's answer says
+`cancel`. A balance or a hold that cannot be read is answered the same way, and a job it
+stops is stopped `balance_unavailable`. So a job is never charged past what its payer
+could pay when its last window was held, and an executor that reports on time and obeys
+`cancel` never runs past it.
 
 A report's seconds and the charge they owe are recorded together, and the charge is sent
 to the ledger once the record is durable; a report that cannot be made durable is
@@ -553,8 +547,15 @@ org's own and differs only in its credential and in being charged.
 A job is billed by the second inside a window held ahead of it, rather than on an
 estimate held at create, because no estimate bounds a run that stops early or runs long:
 holding five minutes at a time keeps at most one window of a payer's money committed to
-a task, a payer whose money runs out mid-run is stopped within one report, and a run is
-charged what it reported, never what was guessed.
+a task, a payer whose money runs out mid-run is stopped before what is held runs out, and
+a run is charged what the clock metered, never what was guessed. The cloud meters by its
+own clock rather than an executor's count, so no executor's word sets a charge, and a
+stop is a cancel because a cancel is what every executor already obeys.
+
+A window is held the way the prepaid gate holds an in-flight call — committed, then
+weighed with the payer's balance and caps — and not as a ledger hold, because a ledger
+hold is paid only by a payment, and a payment is not metered usage: it would count toward
+no spend cap.
 
 Storage is charged for as long as an object is kept, at the bytes kept each hour,
 because a charge taken once at store time bills an object kept for a year the same as
@@ -585,9 +586,10 @@ so a store copied without KMS discloses no org's bytes.
 
 The platform credential reads and charges every org, so it is a SuperAdmin's alone,
 every platform claim is on the audit trail before it is answered — a deployment with
-no trail answers none — and a task Hanzo runs accepts reports under that credential only, so no org's principal can report seconds
-against another payer. Hanzo's executor is trusted with the seconds it reports; the
-charge is still bounded by the task's devices' wall time and by what is held. Deletion
+no trail answers none — and a task Hanzo runs accepts reports under that credential
+only, so no org's principal can keep a task running against another payer. Every task is
+metered by the cloud's clock and bounded by what is held, so no executor sets its own
+charge; an executor that ignores `cancel` runs on Hanzo's devices uncharged. Deletion
 by retention destroys an org's data on the platform's schedule, so each one is audited
 before it is made, and nothing published or in use is ever taken.
 
