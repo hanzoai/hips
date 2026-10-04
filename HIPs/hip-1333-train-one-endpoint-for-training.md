@@ -89,7 +89,7 @@ The client wire is the engine's, byte for byte.
 
 ```json
 {
-  "base_model": "kai", "revision": "kai-1",
+  "base_model": "kai", "revision": "a7",
   "dataset": {"uri": "stage:a11", "splits": {"train": "train", "validation": "validation"}},
   "objective": {"loss": "cross_entropy",
                 "terms": [{"kind": "pairwise_margin", "weight": 1, "margin": 0.5},
@@ -144,10 +144,11 @@ adaptation trains.
   `400 invalid_request`. Whichever bound is reached first stops the job (§10).
 - `evaluation.suites` are the target suites (§8).
 - `output.kind` is `checkpoint`, `lora`, `capability`, `basis` or `merged`, with a `name`.
-  A job produces one artifact, of that kind.
+  A job's result names one artifact of that kind; a job stopped before its result keeps
+  the checkpoint its executor stored (§5).
 - `from` names an artifact the job starts from. A job with `from` and no `dataset` trains
   nothing: it evaluates (`evaluation` set), merges (`output.kind` `merged`) or extends a
-  basis (`output.kind` `basis`).
+  basis (`output.kind` `basis`). No executor runs `from` yet (§4).
 
 A create is validated in this order, and the first failure is the answer: the shape
 (`400 invalid_request`), the base (`400 unsupported_base`, naming the bases), the
@@ -173,9 +174,9 @@ the two cannot disagree.
 | engine LLMs (Hugging Face causal LMs the engine loads) | engine, clients only | `lora` | none | none | `lora` | none | none |
 
 A client on `kai` and a job on an engine LLM are refused as `unsupported_base` for that
-noun. `qlora`, `basis`, `protect.capabilities`, the `basis` and `merged` outputs, and
-`lora` on Kai are specified and run nowhere; asking for them is a `400` naming the
-supported set. A base gains a row when its executor implements the row.
+noun. `qlora`, `basis`, `protect.capabilities`, the `basis` and `merged` outputs, `from`,
+and `lora` on Kai are specified and run nowhere; asking for them is a `400`, naming the
+supported set where there is one. A base gains a row when its executor implements the row.
 
 For Kai the job becomes a stage file (HIP-1332): the stage named by `dataset.uri`, its
 init replaced by `revision`, `objective.terms` its `terms`, `protect.suites` with
@@ -256,9 +257,10 @@ the executor MUST stop training within one report interval, MUST NOT run past `h
 and SHOULD store a checkpoint (§6) and report its `artifact` event and then
 `{"type": "status", "status": "stopped"}` before `by`; at `by` the job ends `stopped`
 whatever it reported. `cancel: true` says the job was cancelled: the executor MUST stop
-its trainer and report nothing more. Once the job has ended a report records nothing and
-answers its status. A report under a lease that is not the task's current one, or after
-`by`, is `409 lease_lost`, and the executor stops.
+its trainer and report nothing more. Once the job has succeeded, been rejected or
+cancelled, or stopped before `by`, a report records nothing and answers its status. A
+report on a failed job, under a lease that is not the task's current one, or after `by`
+is `409 lease_lost`, and the executor stops.
 
 A task with no report or registration for `TRAIN_LEASE_TTL` (default 10 minutes) loses
 its lease. A lost lead fails its job with `executor_lost`, or ends it `stopped` when it
@@ -301,11 +303,20 @@ The org's own rows are uploaded the same way: `POST /v1/train/artifacts`
 each, whether it is published and when retention deletes it; `GET
 /v1/train/artifacts/{sha256}` answers one with a download URL; `DELETE
 /v1/train/artifacts/{sha256}` deletes one, refused `409 published` while a publish names
-it and `409 in_use` while a job that has not ended reads or produced it. An object
-stored more than `TRAIN_RETENTION_DAYS` (default 30; 0 keeps everything) ago that is not
-published and that no job which has not ended reads or produced is deleted by the hourly
-sweep, each deletion on the platform's audit trail before it is made. A deleted object's
+it and `409 in_use` while a job that has not ended reads it. A job reads an object when
+one of the fields that name an artifact to read — `dataset.uri` as `artifact:<sha256>`,
+`adaptation.basis`, `from`, an element of `protect.capabilities` or `adaptation.sources` —
+is its sha256; no other mention counts. An object stored more than
+`TRAIN_RETENTION_DAYS` (default 30; 0 keeps everything) ago that is not published and
+that no job which has not ended reads is deleted by the hourly sweep. The org may hold at
+most 128 GiB granted and not confirmed (`409 pending_limit` past it); bytes whose every
+grant lapsed unconfirmed are deleted by the same sweep, their multipart uploads
+aborted. Each deletion the sweep makes is on the platform's audit trail before it is
+made, and a deployment with no trail deletes nothing on its own. A deleted object's
 artifacts read `deleted`.
+
+Bytes the org stored before objects were encrypted are not held as its own: a
+registration of them is answered a sealed grant, and their read-back seals them.
 
 - `checkpoint`: the trained model whole (Kai: `kai.json`, `model.safetensors`,
   `tokenizer/`).
@@ -360,8 +371,9 @@ service installs, under the platform credential alone (§9):
 `revision` names the list: it moves when a capability is published, replaced or moved to
 another name, and at nothing else. A poll that sends `?revision=` with the one it holds
 is answered `changed: false` and no data while it is current; one without it gets the
-whole list with download URLs that live 10 minutes. An org whose store cannot be read
-fails the answer (`503`) rather than reading as having published nothing.
+whole list with download URLs that live 10 minutes. An org whose store cannot be read,
+or that the serving process holds and does not own, fails the answer (`503`) rather
+than reading as having published nothing.
 
 ### §7 Clients
 
@@ -404,10 +416,12 @@ in the assignment's `org` (`X-Org-Id`). A platform claim by anyone else, and a r
 registration on a task Hanzo runs under any other credential, is `403`. Each platform
 claim is put on the platform's audit trail — the org, job, task, machine, device class
 and count, the rate, the seconds held and the payer — before it is answered; one the
-trail cannot record is given back and answered `503`. A task's reports need its lease
-besides the credential. Artifact grants are scoped to one key under the org's prefix and
-live two hours (§6); download URLs live 10 minutes. A platform claim and `GET
-/v1/train/published` read the org stores held by the process that serves them.
+trail cannot record, or a deployment with no trail, is answered `503` and the task is
+given back. A task's reports need its lease besides the credential. Artifact grants are
+scoped to one key under the org's prefix and are accepted for two hours, after which
+bytes put under them and never confirmed are deleted (§6); download URLs live 10
+minutes. A platform claim, a payer's holds (§10) and `GET /v1/train/published` read the
+org stores held by the process that serves them.
 
 ### §10 Money
 
@@ -435,18 +449,27 @@ was claimed, no more than the task's devices' wall time since it was claimed (pl
 seconds) and no more than is held. When less than
 180 seconds a device is left, the report asks for the next window: 300 seconds a device,
 clipped to what `max_seconds` and `budget` leave, then weighed against the payer's
-balance and spend caps together with every other live hold of that payer and the charge
-the report itself owes. Granted, `held` grows. Refused, the job is told to stop with the
-refusal's reason — `max_seconds`, `budget`, `insufficient_balance`, `spend_cap`,
-`no_payer` — its leases end 300 seconds later, and nothing past what is held is charged.
-A balance that cannot be read is not a refusal: the hold runs down to 120 seconds a
-device before the job is stopped `balance_unavailable`. So a job never runs, and is
-never charged, past what its payer could pay when its last window was held.
+balance and spend caps — a project's cap as hard as at create, when the job's project was
+claim-bound — together with everything the payer has committed that the ledger does not
+know yet: its live holds beyond what they used, and its charges not yet sent, in every
+org the serving process holds. One payer's weighings and holds are taken one at a time,
+so two claims or reports cannot weigh the same balance. Granted, `held` grows. Refused,
+the job is told to stop with the refusal's reason — `max_seconds`, `budget`,
+`insufficient_balance`, `spend_cap`, `no_payer` — its leases end 300 seconds later, and
+nothing past what is held is charged. A balance or a hold that cannot be read is not a
+refusal: the hold runs down to 120 seconds a device before the job is stopped
+`balance_unavailable`. So a job never runs, and is never charged, past what its payer
+could pay when its last window was held.
+
+A report's seconds and the charge they owe are recorded together, and the charge is sent
+to the ledger once the record is durable; a report that cannot be made durable is
+answered `503` and its charge is sent by the next report, the answer to its retry, or the
+hourly sweep. The ledger knows each charge by its name, so one sent twice is charged once.
 
 A platform claim whose payer cannot hold a window on every device the claim offers is
-given fewer, halving down to one; a job whose first window its bounds or its payer
-refuse outright is ended `stopped` before it runs, and one whose payer's balance cannot
-be read waits for the next claim.
+given fewer, halving down to one. A job whose first window its bounds or its payer refuse
+outright is ended `stopped` before it runs; one whose payer's money is held by the
+payer's other work, or whose balance cannot be read, waits for a later claim.
 
 **Ends.** A task that goes silent is charged through its last report, and what it held
 beyond that is released when its lease lapses. A job that succeeds, is rejected, fails,
@@ -454,18 +477,18 @@ is cancelled or is stopped releases what its tasks held; the seconds a cancelled
 after its last report are not charged.
 
 **Create.** A job Hanzo runs is refused at create when its payer cannot hold one
-device's first window — 300 seconds clipped to `max_seconds`, costing at most `budget` —
-at the job's device class (`cpu` when that is all it allows, else `gpu`), with every
-other live hold of the payer: `402 insufficient_balance`, `402 spend_cap_exceeded`, `503
-balance_unavailable` (§3).
+device's first window on its own — 300 seconds clipped to `max_seconds`, costing at most
+`budget` — at the job's device class (`cpu` when that is all it allows, else `gpu`):
+`402 insufficient_balance`, `402 spend_cap_exceeded`, `503 balance_unavailable` (§3). A
+job admitted while the payer's other work holds its money waits for a claim.
 
 **Storage.** Stored objects are charged by the GB-month for as long as they are kept,
 accrued hourly: each payer of an org carries the second through which its storage was
-charged, and each hourly sweep charges the span since at the bytes it keeps now — every
-upload, every output of a job that ended other than rejected, and every published
-output. A running job's output is charged from when the job ends; a rejected job's is
-never charged unless it is published. A deleted object stops being charged at the next
-sweep. Each debit is named by its span, so a span is charged once, and the span's
+charged, and each hourly sweep charges the span since at the bytes it keeps now: every
+stored object, whatever produced it and however that job ended, from the first sweep
+after it is stored. A deleted object stops being charged at the next sweep. Bytes
+granted and not confirmed are not charged; they are bounded and deleted once their
+grants lapse (§6). Each debit is named by its span, so a span is charged once, and the span's
 watermark is made durable before the debit is sent.
 
 Client compute is charged per engine-second of each forwarded operation that succeeds.
@@ -553,14 +576,16 @@ memory, which also serves inference, so clients are a SuperAdmin's until per-org
 isolation exists; the stage flag cannot bound them, since an org sets its own flags.
 Upload grants are write-only, single-key, and bound to the declared size and checksum,
 so a grant cannot overwrite another object, store more bytes than it declared, or store
-bytes under a hash they do not have; an object that reads back wrong is deleted. Every
-object is encrypted under its org's own key, which only the object store reads from KMS,
-and a read-back refuses one that is not, so a store copied without KMS discloses no
-org's bytes.
+bytes under a hash they do not have; an object that reads back wrong is deleted. Bytes
+put under a grant and never confirmed are uncharged, so an org may hold at most 128 GiB
+of them, and they are deleted once the grant lapses. Every object is encrypted under its
+org's own key, which only the object store reads from KMS; a read-back refuses one that
+is not, and bytes stored before encryption are uploaded again sealed before they count,
+so a store copied without KMS discloses no org's bytes.
 
 The platform credential reads and charges every org, so it is a SuperAdmin's alone,
-every platform claim is on the audit trail before it is answered, and a task Hanzo runs
-accepts reports under that credential only, so no org's principal can report seconds
+every platform claim is on the audit trail before it is answered — a deployment with
+no trail answers none — and a task Hanzo runs accepts reports under that credential only, so no org's principal can report seconds
 against another payer. Hanzo's executor is trusted with the seconds it reports; the
 charge is still bounded by the task's devices' wall time and by what is held. Deletion
 by retention destroys an org's data on the platform's schedule, so each one is audited
