@@ -73,8 +73,8 @@ identified by an immutable revision or digest, and every Decision Package MUST r
 ### §3 Encoder
 
 Kai's text encoder is mmBERT-base, initialized from the Laya multilingual weights: one encoder
-for every language, 8K context, smaller than the ModernBERT-large encoder of the English
-baseline. Whether it keeps that baseline's English accuracy is an empirical question the
+for every language, 8K positions, smaller than the ModernBERT-large encoder of the English
+baseline. The served build, kai-1, reads 1,024 tokens of question and state together. Whether it keeps that baseline's English accuracy is an empirical question the
 harness (§18) MUST answer.
 
 ### §4 Evidence
@@ -142,7 +142,8 @@ judgment required). Kai MUST NOT be made to invent certainty.
 Kai MUST NOT depend on packing every option into one shared prompt. Large sets use candidate
 retrieval, then independent option scoring, then joint refinement where needed; candidate
 representations MAY be compiled and cached per program version. Targets span 10 to 100,000+
-candidates; these are scale targets, not results.
+candidates; these are scale targets, not results. kai-1's measured accuracy at 1,000 options
+and more is near zero (§18).
 
 ### §8 Joint decoding
 
@@ -347,36 +348,43 @@ decision model, static rules, embedding retrieval. Axes are reported apart:
 
 Documentation MUST NOT turn a target into a claim.
 
-Measured on the frozen harness (`hanzoai/benchmarks` `decision/`, Laya's own builders, one
-question set scored by one function for every backend). Kai is stage `a5`, one epoch from `a4`
-with typed decisions' official split read whole (`hanzoai/decision` `train/stages/a5.json`),
-results `decision/results/kai-a5` (b07ba42). † marks a suite drawn from rows Laya trained on.
+Measured on the frozen harness (`hanzoai/benchmarks` `decision/` at `2c74e2d`, Laya's own
+builders, one question set scored by one function for every backend). Kai is kai-1, the build
+`/v1/decisions` serves: stage a7's weights (`0834a74f…`) reading options to 512 tokens, plus one
+routed HelpSteer2 capability. It was measured on CUDA in BF16 and recorded 2026-10-03; production
+answers on CPU, where the harness has not been run. Each Kai figure is a run in the research record
+(`GET https://api.hanzo.ai/v1/research/runs?org=hanzo`, ids `<suite>-harness-kai-1.0834a74f-kai`).
+Jev is `typesafe/jev-1.13-20260917`. † marks a suite drawn from rows Laya trained on.
 
-| suite | Kai a5 | Laya | Jev |
-|---|---|---|---|
-| AG News | **0.950** | **0.950** | 0.860 |
-| emotion | **0.925** | 0.595 | 0.603 |
-| Banking77 (77) | **0.907** | 0.425 | 0.835 |
-| support triage | **0.490** | 0.502 † | 0.365 |
-| email spam | 0.995 | **0.998** | 0.978 |
-| phishing | **0.990** | 0.983 † | 0.900 |
-| jailbreak | 0.915 | 0.705 | **0.940** |
-| toxicity | **0.820** | 0.530 | 0.662 |
-| RAG relevance | **0.667** | 0.625 | 0.620 |
-| routing | **1.000** | 0.639 | 0.977 |
-| typed decisions | 0.705 | **0.766** (Laya's typed checkpoint) | 0.736 |
-| MASSIVE, 51 languages | 0.888 | 0.382 | **0.890** |
-| macro, 11 suites | **0.851** | 0.702 | 0.770 |
+| suite | Kai acc | Laya acc | Jev acc | Kai ECE | Jev ECE |
+|---|---|---|---|---|---|
+| AG News | 0.9425 | **0.9500** | 0.8600 | **0.033** | 0.102 |
+| DAIR emotion | **0.9350** | 0.5950 | 0.6025 | **0.018** | 0.280 |
+| Banking77 | **0.9075** | 0.4250 | 0.8350 | 0.074 | **0.073** |
+| support triage | 0.4400 | **0.5025** † | 0.3650 | **0.444** | 0.483 |
+| email spam | **0.9975** | **0.9975** | 0.9775 | **0.003** | 0.060 |
+| phishing | **0.9900** | 0.9825 † | 0.9000 | **0.010** | 0.039 |
+| jailbreak | 0.9175 | 0.7050 | **0.9400** | 0.074 | **0.047** |
+| toxicity | **0.8025** | 0.5300 | 0.6625 | 0.195 | **0.177** |
+| RAG relevance | **0.6800** | 0.6250 | 0.6200 | **0.028** | 0.279 |
+| routing | **1.0000** | 0.6391 | 0.9774 | **0.000** | 0.014 |
+| typed decisions | 0.7590 | 0.766 (Laya's typed checkpoint) | 0.7355 | 0.171 | **0.047** |
+| MASSIVE, 51 languages, macro | **0.9096** | 0.3822 | 0.8902 | **0.060** | 0.064 |
+| mean of 12 | **0.857** | — | 0.780 | **0.093** | 0.139 |
 
-Kai is best of three in 8 of 12 suites, counting only backends that did not train on a suite's
-rows (Laya 3, Jev 2; AG News a tie).
+Against Jev, Kai is more accurate on 11 of 12 suites and behind on jailbreak by 2.25 points (367
+against 376 of 400); its calibration error is lower on 8 of 12, higher on Banking77, jailbreak,
+toxicity and typed decisions. Against the better of Laya and Jev per suite: 7 won, 1 tied (email
+spam), 4 behind (AG News, support triage, jailbreak, typed decisions).
 
-The two † suites are rebuilt on rows none of the three trained on (`decision/held`, 6273430):
-phishing from a corpus outside Laya's mix, deduplicated exactly, by 5-gram Jaccard and by
-containment; support tickets generated through Hanzo's API over the same ten queues and
-cross-checked by a second model (98.6% agreement). There Laya leads both: phishing 0.922 against
-Kai's 0.900 (Laya read 0.983 on its own training rows), support triage 0.580 against 0.417, where
-Kai answers Billing and Payments for 111 of 400 tickets, 40 of them billing.
+The two † suites are rows Laya trained on: all 400 of support triage, and of phishing 350 exactly
+and 50 contained (`decision/trained/overlap.json`, b7eb636). Held-out rows for them
+(`decision/held`) have not been run on kai-1, so no held-out comparison is claimed for the served
+build.
+
+On the cardinality suite (CUDA, F32), kai-1 answers 0.9675, 0.935, 0.9075 and 0.9075 at 4, 16, 77
+and 150 options, against Jev's 0.905, 0.8525, 0.8425 and 0.940; at 1,000, 10,000 and 100,000
+options it answers 0.005, 0 and 0, where Jev refuses.
 
 #### §18.1 Kai in the loop
 
@@ -397,9 +405,9 @@ attribution all read.
 
 ### §20 Deployment
 
-Kai SHOULD run self-hosted: Hanzo Cloud, a customer cloud or cluster, a private GPU fleet,
-on-premises, disconnected, or at the edge, as hardware allows. A conforming deployment MUST NOT
-require sending evidence to a third-party model provider.
+Kai is served by Hanzo: `POST /v1/decisions` on api.hanzo.ai, on CPU. Its weights are not
+published and it is not offered for self-hosting. A conforming deployment MUST NOT require
+sending evidence to a third-party model provider.
 
 ### §21 Conformance
 
@@ -411,7 +419,8 @@ one encoding across a state's decisions; needs no generative call per bounded de
 
 ### §22 Status
 
-Descriptive, not normative, as of `hanzoai/decision` main `bb819a6`.
+Descriptive, not normative, as of Kai release v0.3.14, the release production
+serves.
 
 - **Landed**:
   - Decision Programs and Packages, what-flips analysis, SysML v2 import, the engineering
@@ -419,17 +428,21 @@ Descriptive, not normative, as of `hanzoai/decision` main `bb819a6`.
   - the Laya baseline served natively (21 states, 108/108 labels at parity);
   - the heterogeneous resumable trainer (§16);
   - the stage-A corpus and its barrier, with `official` splits (§15);
-  - trained Kai checkpoints: stage `a5` beside Laya and Jev on the frozen and held-out suites
-    (§18); the shipped programs pin `kai` at a5's calibration `cal_47711d44267fdbdd`;
+  - `POST /v1/decisions` on api.hanzo.ai, serving kai-1 on CPU at $0.021 per million input
+    tokens, output free;
+  - kai-1, measured beside Laya and Jev on the frozen harness (§18); score questions as a choice
+    over their levels, trained with the ranked probability score; one routed capability;
+  - the shipped programs pin `kai` at calibration `cal_47711d44267fdbdd`, so answers from kai-1
+    (`cal_e23c27a1f768bff7`) run them in `shadow`;
   - the structured selector: a program's MAP over each slot's top-K by bucket elimination
     (`kai::field`), and incremental encoding of a new chunk over cached keys and values.
 - **In progress**:
-  - `POST /v1/decisions` on api.hanzo.ai, served privately from Hanzo's own storage;
-  - stage `a6`: score questions as a choice over their levels with the ranked probability
-    score, a typed-decisions teacher, and support-queue data against the held-out losses;
-  - evidence adapters, the joint decoder, the Enso study.
+  - evidence adapters, the joint decoder, the Enso study. The served build answers each
+    question of a request on its own.
 - **Not claimed**:
   - Kai ahead of Laya and Jev on every suite;
+  - dependent multi-question programs, negated yes/no mirrors, 150 or more options, and
+    calibration on typed decisions and jailbreak, where kai-1 is behind Jev;
   - multimodal accuracy;
   - Enso savings;
   - any end-to-end engineering or acquisition result.

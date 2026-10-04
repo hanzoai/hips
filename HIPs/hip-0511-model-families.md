@@ -92,8 +92,8 @@ Hanzo Cloud also lists `zen-free`.
 
 | Item | HIP | API | Runs | Status |
 |---|---|---|---|---|
-| Kai, one line (`hanzoai/kai`) | HIP-1332 | `POST /v1/decisions` (§17); `enso.decide` in process (§13) | self-hosted or Hanzo Cloud (§20) | shipped: `POST /v1/decisions` on api.hanzo.ai; code in `hanzoai/decision` (private); no checkpoint published |
-| `hanzoai/kai-1`, `kai-1-multilingual`, `kai-1-agent` | HIP-1332 §18 | none | open weights on Hugging Face | baseline: Laya weights, byte-identical to upstream; the cards are titled Laya; not a Kai version |
+| Kai, one line (`hanzoai/kai`) | HIP-1332 | `POST /v1/decisions` (§17); `enso.decide` in process (§13) | Hanzo Cloud only (§20) | shipped: kai-1 on `POST /v1/decisions` on api.hanzo.ai; code private; no checkpoint published |
+| `hanzoai/kai-1`, `kai-1-multilingual`, `kai-1-agent` | HIP-1332 §18 | none | private on Hugging Face | baseline: Laya weights, byte-identical to upstream; the cards are titled Laya; not a Kai version, and not the served kai-1 |
 | Laya, Jev | HIP-1332 §18 | none | upstream | baseline; not ours |
 
 ### 5. Other names

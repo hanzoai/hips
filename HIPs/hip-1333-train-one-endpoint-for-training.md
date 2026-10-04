@@ -89,7 +89,7 @@ The client wire is the engine's, byte for byte.
 
 ```json
 {
-  "base_model": "kai", "revision": "a7",
+  "base_model": "kai", "revision": "kai-1",
   "dataset": {"uri": "stage:a11", "splits": {"train": "train", "validation": "validation"}},
   "objective": {"loss": "cross_entropy",
                 "terms": [{"kind": "pairwise_margin", "weight": 1, "margin": 0.5},
