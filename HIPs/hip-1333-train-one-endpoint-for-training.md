@@ -187,6 +187,26 @@ init replaced by `revision`, `objective.terms` its `terms`, `protect.suites` wit
 outside the head fixed (the stage's `frozen`). An `artifact:` dataset is fetched through
 `GET /v1/train/artifacts/{sha256}` and built into the stage's data.
 
+For Kai an `artifact:` dataset trains a `readout`, and each line of it is one decision:
+
+```json
+{"state": "my card was charged twice",
+ "questions": {"queue": {"type": "choice", "instructions": "which queue",
+                         "criteria": ["billing", "bug", "other"]}},
+ "target": {"queue": [1, 0, 0]}}
+```
+
+`state` and the question are as `POST /v1/decisions` takes them; `lang` may name the row's
+language. A row asks one question, every row the same one (its type and its labels, in
+order), and its `target` is a distribution over that question's options, in order: each at
+or above 0, summing to 1. Any other row fails the job, naming its line. The rows split by
+their state, about a fifth of the states held out, the same rows every time; the head
+trains on the rest and the job's result grades the holdout, its one suite. The capability
+answers that question alone (§6): a `noul` by one logit, a `choice` or a `score` by one
+output an option, at the temperature it was graded at, which its `capability.json` names
+beside the question. A route that names another question under a key, its labels in
+another order included, is refused when the decision service installs it.
+
 ### §5 Lifecycle
 
 `queued → running → evaluating →` one of `succeeded`, `rejected`, `failed`,
