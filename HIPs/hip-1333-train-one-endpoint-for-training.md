@@ -9,6 +9,7 @@ implementation-go: partial
 implementation-rust: partial
 created: 2026-09-28
 requires: HIP-0026, HIP-0043, HIP-0106, HIP-0118, HIP-0139, HIP-1145, HIP-1313, HIP-1332
+capability: train
 ---
 
 # HIP-1333: Train — One Endpoint for Training
@@ -140,8 +141,9 @@ adaptation trains.
   the accelerator kinds it may run on — `cuda`, `rocm`, `metal`, `vulkan`, `cpu` — and,
   absent, any its base runs. `steps` bounds optimizer steps. `max_seconds` bounds the
   device-seconds the job's tasks use together, and `budget` what a job Hanzo runs may cost,
-  in US cents; a job on the org's machines costs nothing, so `budget` with `machines` is
-  `400 invalid_request`. Whichever bound is reached first stops the job (§10).
+  in US cents. A job Hanzo runs needs one (`400 budget_required`); a job on the org's
+  machines costs nothing, so `budget` with `machines` is `400 invalid_request`. Whichever
+  bound is reached first stops the job (§10).
 - `evaluation.suites` are the target suites (§8).
 - `output.kind` is `checkpoint`, `lora`, `capability`, `basis` or `merged`, with a `name`.
   A job's result names one artifact of that kind; a job stopped before its result keeps
@@ -483,7 +485,9 @@ stored object, whatever produced it and however that job ended, from the first s
 after it is stored. A deleted object stops being charged at the next sweep. Bytes
 granted and not confirmed are not charged; they are bounded and deleted once their
 grants lapse (§6). Each debit is named by its span, so a span is charged once, and the span's
-watermark is made durable before the debit is sent.
+watermark is made durable before the debit is sent. An upload or an executor's output is
+granted only when its payer holds a month of what it keeps in the org, what the org has
+pending, and the declared bytes (`402`/`503` as a create).
 
 Client compute is charged per engine-second of each forwarded operation that succeeds.
 
@@ -495,9 +499,11 @@ route gets, it emits structured log lines at each job transition.
 
 ### §12 Stage
 
-`alpha`: its prefix answers `404` to an org without the flag `train`. It is promoted
-after an adversarial review of its tenancy and its executor and client paths. Until then
-this HIP declares no `capability:` (HIP-0139 §5).
+`ga` for every org, with no flag (HIP-0139 §8), and this HIP declares `capability: train`
+(§5). Money is the gate: a job Hanzo runs needs a budget and a wallet that holds its first
+window (§10), and every new stored object a wallet that pays a month of what it keeps.
+An org has at most 64 jobs that have not ended (`409 job_limit`), and a job keeps at most
+100,000 log and metric events. Clients stay a SuperAdmin's (Security Considerations).
 
 ### §13 Upstream
 
@@ -574,7 +580,7 @@ mark a regressing run `accepted`: reports need the task's lease, fenced per clai
 the verdict records the executor and machine that produced it, but an org's own
 executor is trusted with its org's verdicts. A client holds a model in the engine's
 memory, which also serves inference, so clients are a SuperAdmin's until per-org engine
-isolation exists; the stage flag cannot bound them, since an org sets its own flags.
+isolation exists.
 Upload grants are write-only, single-key, and bound to the declared size and checksum,
 so a grant cannot overwrite another object, store more bytes than it declared, or store
 bytes under a hash they do not have; an object that reads back wrong is deleted. Bytes
