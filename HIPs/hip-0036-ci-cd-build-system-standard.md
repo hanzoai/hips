@@ -27,7 +27,7 @@ that imports the one reusable workflow. Build and test logic lives in
 `hanzoai/ci`, once, and no repository carries its own.
 
 A build ends at a **published image**. It does not deploy. What runs in a cluster
-is declared in `hanzoai/universe` and applied by `cd.hanzo.ai`; `ci.hanzo.ai`
+is declared in `hanzo-inc/universe` and applied by `cd.hanzo.ai`; `ci.hanzo.ai`
 reports whether the two agree.
 
 **Reusable workflow**: `hanzoai/ci/.hanzo/workflows/build.yml@v1`
@@ -111,7 +111,7 @@ published, and the org prefix never mixes: `hanzoai` for Hanzo, `luxfi` for Lux,
 
 The pipeline publishes an image and stops. It holds no cluster credential, runs
 no `kubectl`, and cannot roll anything out. What runs is declared in
-`hanzoai/universe` as a pinned tag, and `cd.hanzo.ai` reconciles the cluster
+`hanzo-inc/universe` as a pinned tag, and `cd.hanzo.ai` reconciles the cluster
 toward that declaration.
 
 That split is what makes drift nameable rather than a feeling. Four values form
@@ -289,7 +289,7 @@ oci.hanzo.ai/hanzoai/iam:main-a1b2c3d
 oci.hanzo.ai/luxfi/node:1.17.32
 ```
 
-A floating tag never reaches a cluster: `hanzoai/universe` pins a semver tag, and
+A floating tag never reaches a cluster: `hanzo-inc/universe` pins a semver tag, and
 `latest` exists for local pulls and nothing else.
 
 ### 8. Service containers in a test job
@@ -384,7 +384,7 @@ removes.
 its authority. It holds no cloud provider token, no kubeconfig and no SSH key,
 which is why a compromised build cannot reach a cluster.
 
-What runs is declared in `hanzoai/universe` — `charts/app/values/<ns>/<name>.yaml`
+What runs is declared in `hanzo-inc/universe` — `charts/app/values/<ns>/<name>.yaml`
 pins the semver tag — and `cd.hanzo.ai` reconciles the cluster toward that
 declaration within one poll. Promoting a build is therefore an edit to the
 declared state, reviewable as a diff, and rolling back is the same edit in
@@ -409,7 +409,7 @@ failed: there is no log to open, so it is not drawn as a failure.
 | Supply chain attack via a third-party action | Pin to a full commit SHA, never a mutable tag |
 | Malicious PR running CI | PRs from forks do not have access to secrets; workflows use `pull_request_target` carefully |
 | Container image tampering | GHCR images are content-addressed by digest; Kubernetes can pin to digest |
-| Privilege escalation in deploy | The build cannot deploy: it has no cluster credential, and the declared state is a reviewed edit in `hanzoai/universe` |
+| Privilege escalation in deploy | The build cannot deploy: it has no cluster credential, and the declared state is a reviewed edit in `hanzo-inc/universe` |
 | A workflow that looks like CI and is not | One file in `.hanzo/workflows/` retires the whole `.github/workflows/` directory silently; §2 is how that is detected |
 
 ### Secret Hygiene Rules
@@ -462,7 +462,7 @@ head ──build──▶ built ──pin──▶ declared ──reconcile─�
 |---|---|
 | **head** | the repository's default branch |
 | **built** | the newest commit whose run produced an image |
-| **declared** | `charts/app/values/<ns>/<name>.yaml` in `hanzoai/universe` |
+| **declared** | `charts/app/values/<ns>/<name>.yaml` in `hanzo-inc/universe` |
 | **running** | the workload's image in the cluster, by digest |
 
 Three matching values are not health, which is why head is read at all: built,
@@ -477,7 +477,7 @@ no retry, no promotion.
 ## Migration status
 
 The cutover from `arcd` to `act_runner` is done and `arcd` is retired; the
-runbook and teardown live in `hanzoai/universe`. What remains is per-repository:
+runbook and teardown live in `hanzo-inc/universe`. What remains is per-repository:
 every repository that still carries workflow files under `.github/workflows/`
 must sort them into revive / rewrite / drop and delete the directory (§2). Until
 a repository has done that, one of two things is true of it — either it is still

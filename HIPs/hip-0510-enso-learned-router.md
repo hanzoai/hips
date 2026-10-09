@@ -161,7 +161,7 @@ served (`curl -s https://api.hanzo.ai/v1/models`) are `enso`,
   `escalate` stanza in `adaptive` mode first probes one task-ranked arm and widens
   to the panel **only** when the probe is low-confidence, so a confident request
   bills one arm. The embedded catalog and `hanzoai/enso` give `enso-ultra` arms and
-  `escalate`; the deployed catalog (`hanzoai/universe`
+  `escalate`; the deployed catalog (`hanzo-inc/universe`
   `charts/app/files/enso/catalog.yaml`) gives it one route and neither, so
   `enso-ultra` serves one model.
 
@@ -208,7 +208,7 @@ repository shows.
 
 | Member | What it is | Repository | Status |
 |---|---|---|---|
-| Router | the per-request policy (§1) and its mechanism | `hanzoai/ai` (live policy); `hanzoai/engine` (`enso`, `hanzo-router`) | shipped: overrides, ε = 0.1 exploration, the prefer table the reward-mean trainer rewrites every 15m; the `xᵀWp` engine is built, not wired (`router.endpoint` is empty in `hanzoai/universe` `charts/app/values/hanzo/cloud.yaml`) |
+| Router | the per-request policy (§1) and its mechanism | `hanzoai/ai` (live policy); `hanzoai/engine` (`enso`, `hanzo-router`) | shipped: overrides, ε = 0.1 exploration, the prefer table the reward-mean trainer rewrites every 15m; the `xᵀWp` engine is built, not wired (`router.endpoint` is empty in `hanzo-inc/universe` `charts/app/values/hanzo/cloud.yaml`) |
 | SKUs | the managed family (§5) | `hanzoai/enso` | shipped |
 | Replay router | a fingerprint-keyed table: an exact recurring question goes to the cheapest model observed answering it correctly, else a domain fallback, else the strongest servable model | `hanzoai/enso` `router/` | code and tests; not linked by `hanzoai/ai` |
 | Router model | `zen-router`, 0.6B: one pass emits a task, a route distribution and a feature embedding | `zenlm/zen-router`, open weights on Hugging Face | experimental (model card); on no serving path: `router.endpoint` reaches the engine's `/route`, which never loads it, and `enso` refuses its 256-dimension feature head (`policy::D` is 16; `enso/tests/seam.rs`) |

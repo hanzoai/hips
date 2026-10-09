@@ -38,7 +38,7 @@ spent and are not reused.
 The rank is not a preference. It was settled by measurement, and the measurement
 is that the per-app databases were nearly all empty.
 
-Surveyed in `hanzoai/universe` on 2026-07-31, the shared SQL instance held five
+Surveyed in `hanzo-inc/universe` on 2026-07-31, the shared SQL instance held five
 application databases beyond the default. Three of them — `bootnode` (10
 tables), `bothub` (32 tables), and the record half of `sign` (48 tables) — were
 being actively queried, with hundreds of sequential scans between them, and held
