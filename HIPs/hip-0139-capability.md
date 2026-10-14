@@ -295,11 +295,15 @@ text is settled, the stage says whether a customer is shown the thing.
    operation and the public rule (§4.2) drops anything that is not `ga`, so
    a `beta` capability is in no generated client, no tool list, no command
    group and no public page. It is still in the internal document.
-2. The host answers **404** for a `beta` or `alpha` prefix unless the caller's
-   org holds the flag named for the capability (`flags`, key `<name>`). Not
-   403: a capability a customer has not been let into does not exist for
-   them, and an existence oracle is what 403 would be.
-3. A customer who holds the flag sees the capability in the console and may
+2. The capability's app answers **404** for a `beta` or `alpha` prefix unless
+   the caller has been let in: a `beta` capability by the platform's one
+   `beta` flag (`flags`, platform switch `beta`, evaluated for the
+   gateway-validated org and user and targeted by a SuperAdmin), an `alpha`
+   capability by the flag named for it (`flags`, key `<name>`). Not 403: a
+   capability a customer has not been let into does not exist for them, and
+   an existence oracle is what 403 would be. A flag that cannot be read is
+   off.
+3. A customer the flag is on for sees the capability in the console and may
    call it; the document they are served is the internal one filtered to
    what they hold.
 4. Promotion to `ga` is one edit to the manifest row. The ratchets in §5
