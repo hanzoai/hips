@@ -26,20 +26,24 @@ Hanzo IAM (`hanzoai/iam`) is a clean-room, standards-based OAuth 2.0 + OpenID Co
 
 | Brand | IAM origin (`serverUrl`) | Login UI |
 |-------|--------------------------|----------|
-| Hanzo | `https://hanzo.id` | `hanzo.id` |
+| Hanzo | `https://hanzo.ai` | `hanzo.ai` |
 | Lux | `https://lux.id` | `lux.id` |
-| Zoo | `https://zoo.id` | `zoo.id` |
-| Bootnode | `https://id.bootno.de` | `id.bootno.de` |
+| Zoo | `https://zoolabs.id` | `zoolabs.id` |
 | Pars | `https://pars.id` | `pars.id` |
+| Osage | `https://osage.id` | `osage.id` |
+| Adnexus | `https://id.adnexus.dev` | `id.adnexus.dev` |
+| Bootnode | `https://id.bootno.de` | `id.bootno.de` |
 
 The two columns hold the same host on every row, and that is the rule, not a
 coincidence: the authorization server answers on the origin it names as `issuer`,
-so `serverUrl` is always the brand's identity host. `iam.hanzo.ai` is not that
-host — it serves the `200 text/html` SPA on every path, `/v1/iam/*` included, so
-a client pointed there resolves the catch-all described below and fails on
-content type. Discovery is the check: `https://hanzo.id/.well-known/openid-configuration`
-returns `application/json` with `issuer: https://hanzo.id`, and so does the copy
-served from `api.hanzo.ai`.
+so `serverUrl` is always the brand's identity host. Hanzo's is `https://hanzo.ai`
+from the cutover in §10; until it runs, the deployment answers as
+`https://hanzo.id`, and after it `hanzo.id` is a redirect to `hanzo.ai`.
+`iam.hanzo.ai` is not an identity host — it serves the `200 text/html` SPA on
+every path, `/v1/iam/*` included, so a client pointed there resolves the
+catch-all described below and fails on content type. Discovery is the check: the
+identity host's `/.well-known/openid-configuration` returns `application/json`
+whose `issuer` is that host, and so does the copy served from `api.hanzo.ai`.
 
 The library is brand-agnostic. You select the brand by setting `serverUrl`; nothing else changes.
 
@@ -85,7 +89,7 @@ Mandatory parameters, everywhere:
 - **`client_secret_basic`** for confidential clients. HTTP Basic, not body params.
 - **Scopes** `openid profile email` (+ `offline_access` for a refresh token).
 - **`resource` / `audience`** (RFC 8707) name the resource server a token is minted for; the AS stamps `aud` accordingly and validators fail closed on a mismatch.
-- **`iss`** is pinned per deployment (`IAM_ISSUER`, e.g. `https://hanzo.id`) so every token and the discovery document advertise ONE stable issuer regardless of request host — never steerable by `X-Forwarded-Host`.
+- **`iss`** is pinned per deployment (`IAM_ISSUER`, e.g. `https://hanzo.ai`) so every token and the discovery document advertise ONE stable issuer regardless of request host — never steerable by `X-Forwarded-Host`.
 
 The discovery document MUST be self-consistent: `issuer`, `authorization_endpoint`, `token_endpoint`, `userinfo_endpoint`, and `jwks_uri` all share one origin (host-relative to the brand). The IAM knob that controls this is `originFrontend` in `app.prod.conf` — it MUST be empty so discovery is host-relative. A split-origin discovery document breaks strict OIDC clients (`openid-client`, NextAuth) that pin the issuer.
 
@@ -111,7 +115,7 @@ The SDK is split into per-environment entry points. Import the one that matches 
 import { validateToken } from "@hanzo/iam/server";
 
 const result = await validateToken(accessToken, {
-  serverUrl: process.env.IAM_ENDPOINT!, // e.g. https://iam.hanzo.ai
+  serverUrl: process.env.IAM_ENDPOINT!, // e.g. https://hanzo.ai
   clientId: process.env.IAM_CLIENT_ID!,
 });
 
@@ -177,7 +181,7 @@ export default NextAuth({
 import { IAM } from "@hanzo/iam/browser";
 
 const iam = new IAM({
-  serverUrl: "https://iam.hanzo.ai",
+  serverUrl: "https://hanzo.ai",
   clientId: "hanzo-myspa",
   redirectUri: `${location.origin}/auth/callback`,
 });
@@ -190,7 +194,7 @@ const access = await iam.getValidAccessToken(); // auto-refresh
 ```tsx
 import { IamProvider, useIam } from "@hanzo/iam/react";
 
-<IamProvider serverUrl="https://iam.hanzo.ai" clientId="hanzo-myspa">
+<IamProvider serverUrl="https://hanzo.ai" clientId="hanzo-myspa">
   <App />
 </IamProvider>;
 ```
@@ -204,7 +208,7 @@ import passport from "passport";
 import { createIamPassportStrategy } from "@hanzo/iam/passport";
 
 passport.use("iam", createIamPassportStrategy({
-  serverUrl: "https://iam.hanzo.ai",
+  serverUrl: "https://hanzo.ai",
   clientId: "hanzo-myservice",
   clientSecret: process.env.IAM_CLIENT_SECRET!,
   callbackUrl: "https://myservice.hanzo.ai/v1/sso/oidc/callback",
@@ -260,7 +264,7 @@ These break in production and are not permitted under any circumstance:
 
 ### 6. The login entry point — the AS's own concern, not a client surface
 
-OAuth 2.0 / OIDC deliberately do **not** specify how the authorization server authenticates the end user (the credential-entry step). That is the AS's internal concern. So the hosted login page (the per-brand portal at `hanzo.id`/`lux.id`/… and its Worker) has a small first-party API it — and ONLY it — calls, under the canonical `/v1/iam/*` prefix:
+OAuth 2.0 / OIDC deliberately do **not** specify how the authorization server authenticates the end user (the credential-entry step). That is the AS's internal concern. So the hosted login page (the per-brand ID portal at `hanzo.ai`/`lux.id`/… and its Worker) has a small first-party API it — and ONLY it — calls, under the canonical `/v1/iam/*` prefix:
 
 | Purpose | Path |
 |---------|------|
@@ -304,15 +308,33 @@ Creating, reading, updating, and deleting identities is **SCIM 2.0** — the IET
 
 Google, GitHub, and Web3 are configured **once per network** as org-level providers in IAM (`admin/provider-google`, `admin/provider-github`, …). Every app reuses them via a per-app `canSignIn` toggle — an application **never** registers its own social OAuth client (§4.6).
 
-- The shared social OAuth client's redirect URI is **IAM's own callback** (`https://iam.<brand>/callback`); the provider hop happens inside IAM, not in the app. The app only ever sets *its own* `redirect_uri` (its `/auth/callback`).
+- The shared social OAuth client's redirect URI is **IAM's own callback** on the brand's sign-in origin (`https://<sign-in origin>/v1/iam/oauth/callback`; Hanzo's is `https://hanzo.ai/v1/iam/oauth/callback`); the provider hop happens inside IAM, not in the app. The app only ever sets *its own* `redirect_uri` (its `/auth/callback`).
 - An app selects a method with one knob: `startLogin({ provider })` adds `&provider=<name>` to `/v1/iam/oauth/authorize`. Omit `provider` for the IAM login page (password + whatever it offers). **One flow; the provider is a parameter, not a separate code path** — adding a provider is a config entry plus a button, and every app inherits it.
 - Login buttons are presentation, wired through `@hanzo/ui` `<SignIn providers={…}>` to the SDK. A surface that lacks a working button has it *disabled in config* — it is never *deleted from code*, because the shared provider is always available.
+
+### 10. Hanzo's identity host is `hanzo.ai`
+
+Hanzo's issuer is `https://hanzo.ai`. Its sign-in pages are the ID portal (§6, HIP-0449) on `hanzo.ai`, and login and the core apps — chat and dev — are served on `hanzo.ai` as well. The cutover that makes it so has not run: production pins `IAM_ISSUER=https://hanzo.id` (`hanzoai/universe`, `charts/app/values/hanzo/cloud.yaml`), and every Hanzo token and discovery document says `iss: https://hanzo.id` until it does. The cutover changes these things and nothing else:
+
+- **Issuer.** `IAM_ISSUER` and every Hanzo host in `IAM_ISSUER_MAP` name `https://hanzo.ai`, and discovery is served at `https://hanzo.ai/.well-known/openid-configuration` with `issuer: https://hanzo.ai`. Sign-in origin and issuer are one origin, so Hanzo needs no `IAM_FEDERATION_ORIGIN_MAP` entry: a host the map does not name signs in at its issuer.
+- **`hanzo.id` is a redirect.** After cutover it serves no identity surface; every request is redirected to the same path on `https://hanzo.ai`. It is not an issuer, and a token whose `iss` is `https://hanzo.id` fails validation (§1). Hanzo has one issuer, never two accepted at once.
+- **Brand issuers are unchanged.** `lux.id`, `pars.id`, `zoolabs.id`, `osage.id`, `id.adnexus.dev` and `id.bootno.de` keep their issuer, sign-in pages, sessions, passkeys and tokens. Only Hanzo's rows change.
+- **Refresh tokens are revoked at cutover.** A refresh token is a grant from the issuer that minted it, and `https://hanzo.ai` honors none of `https://hanzo.id`'s. The session cookie is host-only (`__Host-hanzo_session`, `internal/sessions/cookie.go`), so a `hanzo.id` session is never presented to `hanzo.ai` either. Every Hanzo account signs in once on `hanzo.ai`.
+- **Passkeys are re-enrolled.** The WebAuthn relying-party id is the issuer's host (`relyingParty`, `internal/oidc/webauthn.go`), and a passkey is bound to one relying-party id for life. The cutover moves Hanzo's from `hanzo.id` to `hanzo.ai`, so a `hanzo.id` passkey no longer signs; each is enrolled again on `hanzo.ai`.
+- **Clients set `serverUrl: https://hanzo.ai`.** The paths (§1), the redirect URIs on the app's own host (§3) and the SDK are unchanged.
+
+**Same site.** With login, chat and dev on `hanzo.ai`, every `hanzo.ai` and `*.hanzo.ai` page is same-site with the identity host. `SameSite=Lax` keeps the session cookie off requests from other sites, not from these pages. Three rules hold the boundary, and each is required:
+
+1. **A strict CSP on `hanzo.ai`.** Login, chat and dev share one origin, so a script that runs on any of them runs as the identity host: `HttpOnly` stops it reading the session cookie, not sending same-origin requests that carry it. Every `hanzo.ai` response carries a strict `Content-Security-Policy` — script only by nonce or hash, no `'unsafe-inline'`, no `'unsafe-eval'`, `object-src 'none'`, `base-uri 'none'`.
+2. **Rendered content runs on a separate origin.** HTML, SVG, markdown, artifacts, previews and uploads that a user or a model authored are served from a separate origin and sandboxed there. They never execute on `hanzo.ai`.
+3. **Cookie-authenticated identity writes are same-origin JSON.** A write the session cookie authorizes is accepted only when `Sec-Fetch-Site` is `same-origin`, or `none` for an address the person typed, and a body, if the write has one, is `application/json` (`sessions.Forgeable`, `internal/sessions/resolve.go`). `same-site` is refused, an HTML form cannot send JSON, and a cross-origin JSON `fetch` must pass a CORS preflight. The rule covers login (SSO, device approval, code minting), the account (profile, password, terms, consent, preferences, onboarding, link, unlink, passkey enrollment) and invitation accept; a refused write is `403` before the session is read. Sign-out asks the same rule, except for a top-level navigation, which is how a relying party signs a person out. A bearer from a client that is not a browser needs no fetch metadata.
 
 ## Conformance status
 
 The prohibitions in §Anti-patterns are **met by the deployment.** Measured against
-`https://hanzo.id` on 2026-09-09; unauthenticated probes, so a `401` would mean the
-route still exists and demands auth, and `410 Gone` means it was removed on purpose
+`https://hanzo.id` on 2026-09-09, before the issuer move (§10); unauthenticated
+probes, so a `401` would mean the route still exists and demands auth, and
+`410 Gone` means it was removed on purpose
 and the server says what replaced it:
 
 | Surface | This HIP says | Production returns |
@@ -360,6 +382,8 @@ is the test.
 - **Confidential-client secrets** — KMS only (HIP-0027). `client_secret_basic` over TLS.
 - **Refresh rotation** — handled by the SDK; refresh tokens rotate on use and the previous token is invalidated.
 - **TLS everywhere** — IAM rejects plaintext. The gateway and ingress (HIP-0519, HIP-0068) terminate and re-encrypt.
+- **Same-site apps** — login, chat and dev share `hanzo.ai`, and every `*.hanzo.ai` page is same-site with it. The strict CSP, the separate origin for rendered content and the same-origin JSON rule for cookie writes (§10) are what keep a sibling page, or content a user or a model authored, from acting as the identity host.
+- **Cutover** — Hanzo refresh tokens are revoked and Hanzo passkeys re-enrolled when the issuer moves (§10); no grant or credential crosses from `https://hanzo.id` to `https://hanzo.ai`.
 
 ## References
 
@@ -371,8 +395,9 @@ is the test.
 6. [HIP-0118: SuperAdmin & Tenant Isolation Model](./hip-0118-superadmin-and-tenant-isolation-model.md) — the reserved-org predicate `IAM_ADMIN_TOKEN_EXCHANGE_APPS` defends
 7. [HIP-0136: One Secret, One Path](./hip-0136-one-secret-one-path.md) — where a client secret is addressed
 8. [HIP-0143: Egress — The Outbound Trust Boundary](./hip-0143-egress-outbound-trust-boundary.md) — the machine identity a caller presents in order to spend
-9. [`@hanzo/iam`](https://github.com/hanzo-js/iam) — the SDK; `src/paths.ts` is the canonical path source
-10. Standards this surface implements (the wire contract, in full):
+9. [HIP-0449: hanzo-login](./hip-0449-hanzo-login.md) — the ID portal that serves the sign-in pages (§6, §10)
+10. [`@hanzo/iam`](https://github.com/hanzo-js/iam) — the SDK; `src/paths.ts` is the canonical path source
+11. Standards this surface implements (the wire contract, in full):
    - [RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749) OAuth 2.0 — authorize, token (authorization_code / refresh_token / client_credentials / password grants)
    - [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636) PKCE `S256`
    - [RFC 7517](https://datatracker.ietf.org/doc/html/rfc7517) JWK / JWKS
