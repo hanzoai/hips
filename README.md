@@ -23,7 +23,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 36 | 2 | 92 |
+| Go | 147 | 37 | 2 | 92 |
 | C++ | 1 | 2 | 0 | 275 |
 | Rust | 10 | 29 | 1 | 238 |
 
@@ -219,7 +219,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1115](./HIPs/hip-1115-compliance.md) | Compliance — Verification of Record | Standards Track | Interface | Final | shipped | - | - |
 | [HIP-1116](./HIPs/hip-1116-content.md) | Content — The Marketing Loop | Standards Track | Interface | Final | shipped | - | - |
 | [HIP-1117](./HIPs/hip-1117-crawl.md) | Crawl — A Page as Markdown | Standards Track | Infrastructure | Final | shipped | - | - |
-| [HIP-1120](./HIPs/hip-1120-crm-sales-pipeline.md) | CRM — The Sales Pipeline | Standards Track | Interface | Final | shipped | - | - |
+| [HIP-1120](./HIPs/hip-1120-crm-sales-pipeline.md) | CRM — The Sales Pipeline | Standards Track | Interface | Final | partial | - | - |
 | [HIP-1121](./HIPs/hip-1121-dataroom-shared-documents.md) | Dataroom — Documents Shared by Link | Standards Track | Interface | Final | shipped | - | - |
 | [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) | Deploy — The GitOps Plane | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1123](./HIPs/hip-1123-domain-registration.md) | Domain — Name Registration | Standards Track | Infrastructure | Final | shipped | - | - |

@@ -5,7 +5,7 @@ author: Hanzo AI
 type: Standards Track
 category: Interface
 status: Final
-implementation-go: shipped
+implementation-go: partial
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139, HIP-1126
 ---
@@ -14,16 +14,49 @@ requires: HIP-0026, HIP-0106, HIP-0139, HIP-1126
 
 ## Abstract
 
-Sales is companies, contacts and opportunities, plus the programme intake that
-lands as an application. It is not an address of its own: CRM is a module on the
-document engine (HIP-1126), so the records are framework documents in module
-`crm` and the whole surface is `/v1/framework`. It is implemented in
-`hanzoai/cloud` at `apps/crm`, which declares the document set and nothing else.
+Sales is companies, people and opportunities, plus hiring and the programme
+intake that lands as an application. Its records live in the org's own Base:
+the `crm` module of `hanzoai/base` (`modules/crm`) is the collection set, an
+org installs it into its Base, and the records are read and written through
+Base's own `/v1/base` surface, rules and realtime.
 
-This HIP declares no capability in front matter, and that is the point: a
-capability is one `/v1/<name>` the cloud serves, and nothing serves `/v1/crm`.
-What this HIP fixes is the record model, the role that reads it, and the
+This HIP declares no capability in front matter: a capability is one
+`/v1/<name>` the cloud serves, and the CRM's records need none of their own.
+What this HIP fixes is the record model, who reads and changes it, and the
 boundary that keeps a prospect out of the user roster.
+
+## Amendment: the store is the org's Base (2026-10-18)
+
+The owner reversed §1 and §2 of this HIP as first written. They put the records
+on the document engine (HIP-1126) as framework documents in module `crm`, served
+at `/v1/framework`. That engine filters by equality alone, over a JSON column,
+with no realtime, no files and no aggregates, and a CRM's views, segments,
+pipeline sums and timeline need every one of those. Base has them, so the
+records move there, one way per capability:
+
+- **Schema.** The `crm` module (companies, people, opportunities, candidates,
+  applications, lists, list_members, segments, activities, notes, tasks,
+  attachments, views) is installed by an org admin with
+  `POST /v1/base/modules/crm`, or by a sibling app with the plane op
+  `base_import`. Installing grows a Base and never drops what an org added.
+- **Field types.** Currency, emails, phones, links, address, full name, actor and
+  rating are Base field types, with a label, description, icon and position on
+  every field and a colour on every select value.
+- **Reads.** Base's records API, its `where` structured filter (per-type
+  operators, AND/OR groups, relative dates, `@me`, in-list and in-segment) and
+  its aggregate route.
+- **Writes from other apps.** The plane ops `base_upsert`, `base_get` and
+  `base_list`, which act for the caller's org only.
+- **History and events.** A collection that keeps history writes who changed
+  what, in the record's own transaction; every record write is a fact on the
+  event bus (`record_created`, `record_updated`, `record_deleted`).
+
+What has not moved yet is the framework documents an org already holds. Until
+their migration lands, `/v1/framework` keeps serving them; when it lands, the
+`crm` DocTypes are retired and §1 and §2 below are history.
+
+The roster boundary in §Security is unchanged: nothing resolves a notification
+audience, a seat or an entitlement from these records.
 
 ## Motivation
 
@@ -45,7 +78,7 @@ already served.
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted
 as in RFC 2119.
 
-### §1 The store is the engine's
+### §1 The store is the engine's (reversed by the Amendment)
 
 crm opens no store. A company, a contact, an opportunity and an application are
 `framework.DocType` documents carrying the module tag `crm`
@@ -58,7 +91,7 @@ boundary is the storage boundary and there is no `org` column to forget.
 every Link resolves to a DocType that exists, every Select is a closed set, and
 that the module is registered (`apps/crm/crm_test.go`).
 
-### §2 The addresses
+### §2 The addresses (reversed by the Amendment)
 
 There is no `/v1/crm`, and no manifest row claims one. The surface is the
 engine's generic, role-gated one under `/v1/framework`: list, read, write and
