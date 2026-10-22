@@ -271,7 +271,7 @@ into agreeing, HIP-0524's ladder still decides whether anything leaves.
 
 - HIP-0523 — Channels — One Store, Two Views, Many Bridges
 - HIP-0524 — The Personal Agent — What It May Send Without You
-- HIP-1066 — Channels — One Inbox (the envelope)
+- HIP-1066 — Transport — One Inbox (the envelope)
 - HIP-1141 — Pref — One Document Per Person
 - HIP-1210 — Agents — Define, Run, Keep the Run
 - HIP-1252 — Meet — The Join Decision

@@ -760,7 +760,7 @@ radius of a successful injection is exactly the agent's reach.
 - HIP-1062 — Tasks — The Durable Run (one engine)
 - HIP-1063 — Auto — Flows That Run Themselves (amplification ceilings)
 - HIP-1065 — Connectors — A User's Own Credentials (the pair is the key)
-- HIP-1066 — Channels — One Inbox (the envelope, and the strict send decode)
+- HIP-1066 — Transport — One Inbox (the envelope, and the strict send decode)
 - HIP-1103 — Audit — The Tamper-Evident Trail
 - HIP-1114 — Code — Search and Symbols (the index, not the product)
 - HIP-1141 — Pref — One Document Per Person
