@@ -167,7 +167,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0520](./HIPs/hip-0520-serving-topology.md) | Serving Topology — Three Tiers, Horizontally Scalabl... | Standards Track | Infrastructure | Final | partial | - | - |
 | [HIP-0521](./HIPs/hip-0521-org-hierarchy.md) | Org Hierarchy | Standards Track | Security | Final | - | - | - |
 | [HIP-0522](./HIPs/hip-0522-the-context-graph.md) | The Context Graph — Edges, Decisions and Derivation ... | Standards Track | Core | Final | partial | - | - |
-| [HIP-0523](./HIPs/hip-0523-rooms-one-store-two-views-many-bridges.md) | Rooms — One Store, Two Views, Many Bridges | Standards Track | Core | Final | partial | - | - |
+| [HIP-0523](./HIPs/hip-0523-channels-one-store-two-views-many-bridges.md) | Channels — One Store, Two Views, Many Bridges | Standards Track | Core | Final | partial | - | - |
 | [HIP-0524](./HIPs/hip-0524-the-personal-agent.md) | The Personal Agent — What It May Send Without You | Standards Track | Core | Final | partial | - | - |
 | [HIP-0525](./HIPs/hip-0525-rendezvous.md) | Rendezvous — When Every Participant Is a Machine | Standards Track | Core | Draft | - | - | - |
 | [HIP-0526](./HIPs/hip-0526-semantic-memory.md) | Semantic Memory — The Substrate Under the Graph | Standards Track | Core | Draft | partial | - | - |
@@ -301,7 +301,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1324](./HIPs/hip-1324-kv-buckets-of-versioned-values.md) | KV — Buckets of Versioned Values | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1325](./HIPs/hip-1325-node-your-machines-on-a-socket.md) | Node — A Machine an Org Owns | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) | AMQP — Exchanges, Queues and Bindings Onto the One Bus | Standards Track | Infrastructure | Final | shipped | - | - |
-| [HIP-1327](./HIPs/hip-1327-public-channels-across-orgs.md) | Public Channels — Finding a Room in Another Org | Standards Track | Core | Draft | - | - | - |
+| [HIP-1327](./HIPs/hip-1327-public-channels-across-orgs.md) | Public Channels — Finding a Channel in Another Org | Standards Track | Core | Draft | - | - | - |
 | [HIP-1328](./HIPs/hip-1328-forge-the-meta-code-host.md) | Forge — The Meta Code Host | Standards Track | Infrastructure | Draft | - | - | - |
 | [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) | Dev — The Agent Loop | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1331](./HIPs/hip-1331-patrol-standing-watch-over-an-estate.md) | Patrol — Standing Watch Over an Estate | Standards Track | Application | Final | shipped | - | - |

@@ -18,14 +18,14 @@ listening, and a meeting nobody listens to should not carry sound.
 
 A **rendezvous** is a meeting whose admitted participants are all machines. It
 opens no audio and no video — not muted, never negotiated — and the agents
-exchange the same envelopes they would exchange in any room. The saving is not a
+exchange the same envelopes they would exchange in any channel. The saving is not a
 new protocol. It is the absence of one: two machines that speak text have no
 reason to synthesize it into speech so the other can transcribe it back.
 
 This HIP specifies when a meeting is a rendezvous, what is exchanged instead of
 media, the bounded profile of a person's preferences one agent may offer another,
 and the consent that gates it. It adds no capability: the meeting is HIP-1252's,
-the envelope is HIP-1066's, the room is HIP-0523's, and the authority to act for
+the envelope is HIP-1066's, the channel is HIP-0523's, and the authority to act for
 a person is HIP-0524's.
 
 ## Motivation
@@ -35,11 +35,11 @@ composes text, synthesizes it to speech, ships the audio; the other transcribes
 it back to text and reads it. Two lossy conversions, an encoder, a media path and
 a listener, to move a sentence between two processes that could have exchanged
 the sentence. Every conversion can drop a digit from a phone number, and none of
-them helps anyone, because there is no ear in the room.
+them helps anyone, because nobody is listening.
 
 The second reason is more useful than the efficiency. A meeting nobody attends
 leaves no record a person can read afterwards. If the agents exchange envelopes
-instead of sound, the meeting IS its own transcript — the person opens the room
+instead of sound, the meeting IS its own transcript — the person opens the channel
 later and reads what their agent agreed to, in the same view as everything else.
 Audio would have required a recorder, a transcriber and a summarizer to arrive at
 what the exchange already was.
@@ -61,8 +61,8 @@ agent or a bot in HIP-0523 §3's sense — and no human has been admitted.
 
 The predicate is over the ADMITTED set, not the invited one. An invitation
 predicts nothing: a person invited to a meeting who never joins has not made it a
-human meeting, and a room that waits for them is a room holding a media path open
-for an audience of none.
+human meeting, and a meeting that waits for them holds a media path open for an
+audience of none.
 
 The kind of a participant is already known at the moment it matters. HIP-1252
 stamps identity server-side at admission and never takes it from the client, so
@@ -87,8 +87,8 @@ this HIP fixes what those grants are when the admitted set has no human in it.
 
 ### §3 What they exchange instead
 
-Envelopes. The ones HIP-1066 already defines, in the room the rendezvous belongs
-to, written to the one store HIP-0523 §6 requires.
+Envelopes. The ones HIP-1066 already defines, in the channel the rendezvous
+belongs to, written to the one store HIP-0523 §6 requires.
 
 There is no second message shape and this HIP defines no wire of its own. Between
 processes in this estate the envelopes ride the transport the estate already
@@ -97,7 +97,7 @@ entirely in what it does NOT do — no synthesis, no transcription, no media pat
 and buying it does not require inventing anything.
 
 The consequence is the useful one: **a rendezvous is legible.** Its exchange is
-ordinary history in an ordinary room, so a person reads what their agent said in
+ordinary history in an ordinary channel, so a person reads what their agent said in
 the same view they read everything else, with no recorder and no summarizer in
 between. A meeting that produced only audio would need all three to arrive back
 at the text it started from.
@@ -150,7 +150,7 @@ Symmetry is not politeness, it is what makes the exchange fair to reason about: 
 profile handed to a counterpart whose own person shared nothing is a one-way
 disclosure, and the person who disclosed cannot tell that it was.
 
-The exchange is written to the room like everything else, so a person can read
+The exchange is written to the channel like everything else, so a person can read
 later what was shared on their behalf and with whom. An exchange that leaves no
 record is indistinguishable from one that never happened, which is the property
 an audit needs and the person deserves.
@@ -172,7 +172,7 @@ race every time two people leave at once. One transition, in one direction, is
 the whole of it.
 
 Nothing that was exchanged before the human arrived is hidden from them. It is
-envelopes in the room, and they are a member of the room.
+envelopes in the channel, and they are a member of the channel.
 
 ### §7 What is built, what is missing
 
@@ -187,7 +187,7 @@ parts, and the rule is the part that is missing.
 | The envelope the exchange rides | **shipped** | HIP-1066; `apps/channels/envelope.go` |
 | Per-person settings to project a profile from | **shipped** | HIP-1141; `apps/pref` — one document per person |
 | The rendezvous predicate, and grants that follow it | **gap** | nothing computes "every admitted participant is a machine", and nothing varies the grants on it |
-| A participant kind distinguishing machine from human | **gap** | see HIP-0523 §13 — a bot is a workspace member today, not a room member, and a meeting participant carries no kind |
+| A participant kind distinguishing machine from human | **gap** | see HIP-0523 §13 — a bot is a workspace member today, not a channel member, and a meeting participant carries no kind |
 | Agent-to-agent exchange with no human between | **gap** | no path in the estate sends a structured message from one agent to another |
 | The profile, its consent, and its record | **gap** | `apps/pref` serves exactly two routes (`apps/pref/prefs.go:146,166`), derives the subject server-side (`:202`), and its package doc states there is no path for an org admin or a SuperAdmin. That is the correct starting point, not the feature: today nothing but the person can read what §4 would project |
 
@@ -205,13 +205,13 @@ An implementation conforms when all of these hold:
    admission, from the server-stamped kind.
 2. No audio or video track is negotiated in a rendezvous — the grant withholds
    the right rather than the client withholding the stream.
-3. The exchange is envelopes in the room's one store; no second message shape and
+3. The exchange is envelopes in the channel's one store; no second message shape and
    no second store exist for it.
 4. A profile carries only the fields of §4, every one from its closed vocabulary,
    and is projected from `pref` alone.
 5. A profile crosses only when both people have consented, consent defaults to
    off, and no agent can write its own.
-6. Every exchange is recorded in the room.
+6. Every exchange is recorded in the channel.
 7. Admitting a human opens media once and never closes it again.
 
 ## Rationale
@@ -237,7 +237,7 @@ checked by reading it.
 
 ## Security Considerations
 
-**A profile is a disclosure about a person who is not in the room.** They are not
+**A profile is a disclosure about a person who is not in the channel.** They are not
 present at the moment it crosses, which is why consent is symmetric, defaults to
 off, cannot be set by an agent, and is recorded. Each of those four exists
 because the person cannot object in the moment.
@@ -248,7 +248,7 @@ field to carry it. If a future field takes a string, that field is the exposure
 and it needs its own review — the fields in §4 are safe because they are closed,
 not because agents are trusted.
 
-**A machine participant that is not really a machine reads the room.** The
+**A machine participant that is not really a machine is a listener.** The
 predicate decides whether media is opened; a forged or defaulted kind on a human
 participant would make a meeting a rendezvous with a person quietly in it. The
 kind MUST be server-stamped from the same admission that stamps identity, and a
@@ -269,7 +269,7 @@ into agreeing, HIP-0524's ladder still decides whether anything leaves.
 
 ## References
 
-- HIP-0523 — Rooms — One Store, Two Views, Many Bridges
+- HIP-0523 — Channels — One Store, Two Views, Many Bridges
 - HIP-0524 — The Personal Agent — What It May Send Without You
 - HIP-1066 — Channels — One Inbox (the envelope)
 - HIP-1141 — Pref — One Document Per Person

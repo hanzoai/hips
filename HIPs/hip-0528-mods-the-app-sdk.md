@@ -666,7 +666,7 @@ mod and the person.
 - HIP-0139 — Capability
 - HIP-0143 — Egress — The Outbound Trust Boundary
 - HIP-0504 — Unified Cross-Platform Design System
-- HIP-0523 — Rooms — One Store, Two Views, Many Bridges
+- HIP-0523 — Channels — One Store, Two Views, Many Bridges
 - HIP-0524 — The Personal Agent
 - HIP-1030 — OpenAPI — The Served Contract
 - HIP-1041 — Authz
