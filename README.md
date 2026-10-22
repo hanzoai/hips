@@ -23,7 +23,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 147 | 37 | 2 | 92 |
+| Go | 145 | 39 | 2 | 92 |
 | C++ | 1 | 2 | 0 | 275 |
 | Rust | 10 | 29 | 1 | 238 |
 
@@ -257,7 +257,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) | Provisioning — Stores on Demand | Standards Track | Core | Final | shipped | - | - |
 | [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) | S3 — Buckets and Objects | Standards Track | Core | Final | shipped | - | - |
 | [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) | Dataset — An Immutable Snapshot | Standards Track | Core | Final | shipped | - | - |
-| [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | visor — Compute You Rent | Standards Track | Infrastructure | Final | shipped | - | - |
+| [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | Compute — Machines You Rent or Link | Standards Track | Infrastructure | Final | partial | - | - |
 | [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) | Network — An Org-Scoped Overlay | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1180](./HIPs/hip-1180-link-account-registry.md) | Link — A Record of Provider Accounts | Standards Track | Core | Final | shipped | - | - |
 | [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) | Plan — The Tier Catalog | Standards Track | Core | Final | partial | - | - |
@@ -269,7 +269,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1202](./HIPs/hip-1202-entitlement.md) | Entitlement — What an Org May Run | Standards Track | Platform | Final | shipped | - | - |
 | [HIP-1203](./HIPs/hip-1203-affiliate.md) | Affiliate — Commission on Referred Spend | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) | Agents — Define, Run, Keep the Run | Standards Track | Application | Final | shipped | - | - |
-| [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) | AI — The Model API | Standards Track | Infrastructure | Final | shipped | - | - |
+| [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) | AI — The Model API | Standards Track | Infrastructure | Final | partial | - | - |
 | [HIP-1212](./HIPs/hip-1212-exec-the-code-interpreter.md) | Exec — The Code Interpreter | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) | Tools — The Tool Plane | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1214](./HIPs/hip-1214-lsp-live-code-intelligence.md) | LSP — Live Code Intelligence | Standards Track | Application | Final | shipped | - | - |
@@ -459,7 +459,7 @@ One capability, one HIP (HIP-0139). 121 of them, grouped as `capabilities.yaml` 
 
 **Platform** — the cloud fabric — deploy · provision · route · host
 
-[HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) `network` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) `dns` · [HIP-1325](./HIPs/hip-1325-node-your-machines-on-a-socket.md) `node`
+[HIP-1113](./HIPs/hip-1113-cloudflare.md) `cloudflare` · [HIP-1122](./HIPs/hip-1122-deploy-gitops-plane.md) `deploy` · [HIP-1123](./HIPs/hip-1123-domain-registration.md) `domain` · [HIP-1127](./HIPs/hip-1127-gateway-edge-policy.md) `gateway` · [HIP-1133](./HIPs/hip-1133-ingress-embedded-edge.md) `ingress` · [HIP-1144](./HIPs/hip-1144-registry-artifact-control-plane.md) `registry` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `compute` · [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) `network` · [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) `platform` · [HIP-1321](./HIPs/hip-1321-dns-zones-and-records.md) `dns` · [HIP-1325](./HIPs/hip-1325-node-your-machines-on-a-socket.md) `node`
 
 **Applications** — the user-facing surfaces built on all of the above
 
@@ -471,4 +471,4 @@ One capability, one HIP (HIP-0139). 121 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) `visor` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills` · [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions` · [HIP-1333](./HIPs/hip-1333-train-one-endpoint-for-training.md) `train`
+[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1066](./HIPs/hip-1066-channels-one-inbox.md) `channels` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills` · [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions` · [HIP-1333](./HIPs/hip-1333-train-one-endpoint-for-training.md) `train`
