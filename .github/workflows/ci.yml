@@ -20,6 +20,16 @@ jobs:
           repository: hanzoai/openapi
           path: .capabilities
 
+      # index.py reads capabilities.yaml with PyYAML, and the runner image carries
+      # a bare Python. Without it the generator's own test refuses and every step
+      # after it is skipped.
+      - name: PyYAML
+        run: |
+          python3 -c 'import yaml' 2>/dev/null ||
+            python3 -m pip install --quiet --user --break-system-packages pyyaml ||
+            python3 -m pip install --quiet --user pyyaml
+          python3 -c 'import yaml; print("PyYAML", yaml.__version__)'
+
       - name: the lint fails when it should
         run: python3 scripts/test-lint-hips.py
 
