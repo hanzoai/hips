@@ -235,7 +235,7 @@ is the measurement. Probe the address, not the spec.
 - HIP-0139 — A Capability Answers At Its Own Name
 - HIP-0523 — Channels — One Store, Two Views, Many Bridges
 - HIP-1048 — Team
-- HIP-1066 — Channels — One Inbox
+- HIP-1066 — Transport — One Inbox
 
 ## Copyright
 

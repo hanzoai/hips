@@ -74,20 +74,20 @@ A channel is the conversation a message lives in. It is the word people already
 say for it, the word `hanzo.team` draws above it, and the class the team store
 keeps it under (`chunter:class:Channel`). One word, from the screen to the store.
 
-Two other things in this estate have been called channels. Each keeps a word of
-its own, and in this HIP channel means neither:
+The network a message travels over has been called a channel too. It is a
+transport, and in this HIP channel never means it:
 
 | Word | What it means | Owner |
 |---|---|---|
 | **channel** | the conversation a message lives in, kinds `dm`, `group`, `thread` | this HIP |
-| transport | a connected chat service — slack, discord, teams, telegram | HIP-1066 |
-| account | a connected social account — X, Facebook, Instagram, LinkedIn | HIP-1153 |
+| transport | the network a message travels over — slack, discord, teams, telegram for conversation; X, Facebook, Instagram, LinkedIn for publishing | HIP-1066, HIP-1153 |
 
-HIP-1066's envelope still names the conversation `Room` and carries the
-transport in a field named `Channel` (`apps/channels/envelope.go:60,153`). It
-takes these words — the conversation `Channel`, the transport `Transport` — by an
-amendment to HIP-1066 in the same wave as §2.1, so that no field anywhere means
-the conversation by one name and the transport by the other.
+HIP-1066's envelope carries both: the transport as `Message.Transport` and the
+channel as `Message.Channel`, at `/v1/transport`. It serves `Message.Channel` for
+the transport and `Message.Room` for the conversation today
+(`apps/channels/envelope.go:60,153`); both move in the same wave as §2.1, so no
+field anywhere means the conversation by one name and the network by the
+other.
 
 ### §2 The channel
 
@@ -278,8 +278,9 @@ exactly four things, and a transport is not connected until it has all four:
 
 **Credentials are not the bridge's.** They live sealed in the key store under a
 path built from the tenant, reached through `integrations` (HIP-1250) or
-`connectors` (HIP-1065). HIP-1066's one-way rule holds unchanged: channels depend
-on integrations; integrations MUST NOT depend on channels.
+`connectors` (HIP-1065). HIP-1066's one-way rule holds for channels too:
+transport and channels depend on integrations; integrations MUST NOT depend on
+either.
 
 A bot is not a bridge. A bot may be a member of a bridged channel, and the
 channel still relays with no bot present. Any transport that only works when a
@@ -480,7 +481,7 @@ transport and the social account by giving it a word nobody says. That made
 every layer translate: people said channel, the screen drew channels, the store's
 class was `Channel`, and only the wire and the SDK said room. One word per
 object, used from the screen to the store, is cheaper than a private word, and
-the two older meanings each keep a word of their own (§1). Renaming without an
+the network a message travels over keeps a word of its own: transport (§1). Renaming without an
 alias is the same choice HIP-0139 makes for an address: two spellings of one
 thing double every table the surface flows into.
 
@@ -537,11 +538,11 @@ first by hand.
 - HIP-0528 — Mods — The App SDK
 - HIP-1048 — Team
 - HIP-1065 — Connectors — A User's Own Credentials
-- HIP-1066 — Channels — One Inbox (the envelope, the transport registry, the gate)
+- HIP-1066 — Transport — One Inbox (the envelope, the transport registry, the gate)
 - HIP-1069 — Tel — Numbers, Calls and Messages
 - HIP-1107 — Bot — A Run on a Surface
 - HIP-1146 — Sandbox — A Lease on Isolated Compute
-- HIP-1153 — Social — Publishing to Connected Channels
+- HIP-1153 — Social — Publishing to Connected Transports
 - HIP-1160 — Todo — The Work Item Board
 - HIP-1210 — Agents — Define, Run, Keep the Run
 - HIP-1250 — Integrations — The Connection Registry

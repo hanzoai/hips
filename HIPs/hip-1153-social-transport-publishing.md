@@ -1,6 +1,6 @@
 ---
 hip: 1153
-title: Social — Publishing to Connected Channels
+title: Social — Publishing to Connected Transports
 author: Hanzo AI
 type: Standards Track
 category: Interface
@@ -8,16 +8,17 @@ capability: social
 status: Final
 implementation-go: shipped
 created: 2026-08-20
+updated: 2026-10-22
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
-# HIP-1153: Social — Publishing to Connected Channels
+# HIP-1153: Social — Publishing to Connected Transports
 
 ## Abstract
 
 `/v1/social` is posting to every social account an org owns, now or on a
-schedule. Two entities: an Account is a connected channel (X, Facebook,
-Instagram, LinkedIn, TikTok, YouTube, Threads) and a Post is content published or
+schedule. Two entities: an Account is the org's account on a connected transport
+(X, Facebook, Instagram, LinkedIn, TikTok, YouTube, Threads) and a Post is content published or
 scheduled to one — scheduling is not a third entity, it is a Post with a future
 `scheduleAt`. It is implemented in `hanzoai/cloud` at `apps/social`, the
 in-process fold of the standalone social stack, and its defining honesty is that
@@ -82,7 +83,7 @@ declares its four alphabetically and the summary's bytes did not move
 
 One path pushes a post out (`publish.go`): on explicit publish, on create when
 scheduled for now-or-earlier, and on the scheduler tick when a scheduled time
-arrives. A post fans out to its channel's connected accounts through the
+arrives. A post fans out to its transport's connected accounts through the
 Publisher edge, selected once at mount. The default Publisher MUST fail closed —
 a publish with missing provider credentials answers 503 naming what is absent,
 and MUST NOT mark the post published. The provider vocabulary is one ordered
@@ -117,7 +118,7 @@ is the worst possible product: a customer schedules a campaign and nothing is
 delivered anywhere, silently. Reporting the missing credentials by name makes
 the 503 an installation instruction. The claim state exists because the same
 post is reachable from three triggers; without a claim, the scheduler and an
-explicit publish racing is a double post on a customer's public channel.
+explicit publish racing is a double post on a customer's public account.
 
 ## Security Considerations
 
@@ -133,6 +134,7 @@ claim guard; the state vocabulary therefore excludes it from every write path.
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — The Hanzo Plugin Contract
 - HIP-0139 — Capability
+- HIP-1066 — Transport — One Inbox
 
 ## Copyright
 
