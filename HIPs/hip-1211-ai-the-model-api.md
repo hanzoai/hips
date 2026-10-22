@@ -29,9 +29,12 @@ That is proposed by the Amendment below and is not served yet.
 ## Amendment: routes to an org's own machines (proposed)
 
 Proposed with HIP-1172's amendment, which starts the engines these routes reach.
-Nothing in this section is served today. Adding a provider is a SuperAdmin act
-(`POST /v1/ai/providers`), and nothing checks where a provider's URL points; the
-org route below is still to be built in `hanzoai/ai`.
+Nothing in this section is served today; the org route below is still to be
+built in `hanzoai/ai`. It retires one way of reaching an org's engine that
+exists today: a provider row added by a SuperAdmin at `POST /v1/ai/providers`
+(the `add-provider` endpoint), which is global rather than the org's and whose
+URL nothing checks, and the Go control binary's `--register-provider`, which
+calls it.
 
 ### R1 The address
 
@@ -56,15 +59,18 @@ resolves to an engine on the org's overlay (HIP-1173).
 }
 ```
 
+- A route is keyed by `(org, model)`, and a request resolves a route only within
+  its own validated org. Two orgs MAY hold the same `model`; neither ever
+  reaches the other's.
 - `model` is `local/<label>/<name>`, each part lowercase `[a-z0-9._-]`, at most
   128 bytes in all. `local/` is reserved for routes: no hosted id begins with
   it, and neither `auto` nor the Enso router (HIP-0510) ever resolves to a
   route, so only a request that names a route's id exactly reaches it. A second
-  route with the same id is 409. compute names a workload's route
+  route with the same key is 409. compute names a workload's route
   `local/<node>/<model>`, from the last segment of the repository path.
 - `upstream` is the id the endpoint's `/models` lists.
-- `token` is write-only, sealed in the org's KMS (HIP-1134), and never answered
-  by a read.
+- `token` is write-only and sealed in the platform's KMS (HIP-1134), not the
+  org's, so no org admin can read it back; no read answers it.
 - `price` is USD per thousand input and output tokens, zero unless the admin
   sets it, never negative, and at most the deployment's ceiling from the price
   list (HIP-1222).
@@ -81,35 +87,43 @@ resolves to an engine on the org's overlay (HIP-1173).
   label, `<org>` the caller's org name as IAM holds it, compared byte for byte
   with nothing folded, and no userinfo, query or fragment. Anything else is 422
   and nothing is dialled.
-- It is dialled only through the overlay's SDK under the cloud's identity, never
-  through system DNS and never to an address, so it cannot reach the cluster, a
-  metadata service or the internet. The cloud's identity can dial every org's
-  names, so the suffix check is the tenant boundary.
+- It is dialled only through the overlay's SDK under the gateway's identity,
+  never through system DNS and never to an address, so it cannot reach the
+  cluster, a metadata service or the internet. That identity can dial every
+  org's names, so the suffix check is the tenant boundary.
 - At create, `GET <endpoint>/models` with the token MUST answer 200 within 10 s,
-  in at most 1 MiB, without a redirect, listing `upstream` in `data[].id`;
-  otherwise 422 with the reason.
+  as JSON, in at most 1 MiB, without a redirect, listing `upstream` in
+  `data[].id`; otherwise 422 with the reason.
 - Plain http is correct here: the overlay authenticates both ends and encrypts
   the connection.
 
 ### R3 Serving
 
 A request naming a route's `model` is sent to the endpoint with `upstream` as
-its model. The gateway sends the body, `Content-Type`, `Accept` and
-`Authorization: Bearer <token>`, and no other header of the caller's: no key,
-cookie or identity header reaches the machine. It relays back the status,
-`Content-Type` and the body, and no other header of the machine's. A streamed
-answer is relayed as it arrives, and a client that goes away closes the overlay
-connection. A request that names media by URL is refused with 400: send media
-inline.
+its model.
 
+- **Headers in.** The gateway sends the body, `Content-Type`, `Accept` and
+  `Authorization: Bearer <token>`, and no other header of the caller's: no key,
+  cookie or identity header reaches the machine.
+- **Answers out.** The gateway relays an answer only as `application/json` or
+  `text/event-stream`; any other type is 502. It relays the status,
+  `Content-Type` and the body and no other header of the machine's, and it
+  overwrites `model` in every JSON body and every event with the route's
+  `model`, so a machine cannot claim to be another model.
+- A streamed answer is relayed as it arrives, and a client that goes away
+  closes the overlay connection. A request that names media by URL is refused
+  with 400: send media inline.
 - If the endpoint fails before a response begins (no connection, or a 401 or
   5xx status), the request goes to `fallback` when the route names one, and
-  otherwise answers 503 `route_unavailable`.
-- Once a response has begun there is no fallback. A stream ends with an error event,
-  and a non-streamed request answers 502.
-
-A fallback is never implicit: an org that routes to its own machine chose where
-its prompts go, and a silent hosted fallback would send them elsewhere.
+  otherwise answers 503 `route_unavailable`. Once a response has begun there is
+  no fallback; a stream ends with an error event, and a non-streamed request
+  answers 502.
+- **A fallback is a hosted request.** It passes the same plan, allowance and
+  balance gates a request naming the hosted model directly would, and when a
+  gate refuses, the caller gets that refusal. A machine that always fails buys
+  its org nothing it could not already buy.
+- A fallback is never implicit: an org that routes to its own machine chose where
+  its prompts go, and a silent hosted fallback would send them elsewhere.
 
 ### R4 Usage, logs, money
 
@@ -131,18 +145,26 @@ its prompts go, and a silent hosted fallback would send them elsewhere.
 
 ### R5 Acceptance
 
-1. An org admin creates `local/evo/zen6-flash` to `http://evo-1.acme.zt/v1`. The same call with
-   `.other.zt`, an IP, `localhost`, a public https URL or a URL with userinfo
-   answers 422 and dials nothing. A member who is not an admin gets 403.
-2. A read never returns `token`.
-3. With `fallback` set and the endpoint unreachable, a request is served by the
+1. An org admin creates `local/evo/zen6-flash` to `http://evo-1.acme.zt/v1`. The
+   same call with `.other.zt`, an IP, `localhost`, a public https URL or a URL
+   with userinfo answers 422 and dials nothing. A member who is not an admin
+   gets 403.
+2. Org B creating `local/evo/zen6-flash` gets its own route; a request from org
+   A naming that id reaches org A's route, and one from an org with no such
+   route gets the unknown-model answer.
+3. No read returns `token`, and no org KMS path holds it.
+4. With `fallback` set and the endpoint unreachable, a request is served by the
    hosted model and leaves exactly one usage record, the hosted one, with
-   `fallbackFrom`. Without `fallback` it answers 503 and debits nothing.
-4. A linked-model call at price zero leaves a usage record with cost 0, the node
+   `fallbackFrom`. Without `fallback` it answers 503 and debits nothing. An org
+   whose plan or balance refuses the hosted model gets that refusal, not an
+   answer.
+5. A linked-model call at price zero leaves a usage record with cost 0, the node
    and workload attributes, and no body.
-5. A caller's `x-api-key`, cookies and identity headers never reach the endpoint,
-   and a `Set-Cookie` from the endpoint never reaches the caller.
-6. `auto`, an Enso id or a hosted id never resolves to a route.
+6. A caller's `x-api-key`, cookies and identity headers never reach the
+   endpoint, and a `Set-Cookie` from the endpoint never reaches the caller.
+7. An endpoint answering `text/html` yields 502; one answering
+   `"model": "zen6"` reaches the caller as `"model": "local/evo/zen6-flash"`.
+8. `auto`, an Enso id or a hosted id never resolves to a route.
 
 ## Motivation
 

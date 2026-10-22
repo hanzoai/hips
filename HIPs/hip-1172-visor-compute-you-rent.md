@@ -32,10 +32,9 @@ Amendment below and is not served yet; the node side is `hanzo link` in
 ## Amendment: linked nodes run nothing until the cloud asks (proposed)
 
 Proposed. Nothing in this section is served today; §1–§9 describe what is. The
-presence and claim routes, the node credential, the policy file, the three
-workload kinds, the per-workload overlay service, the org route (HIP-1211,
-Amendment) and the events below are still to be built. A1 replaces every flag
-`hanzo link` takes today.
+presence and claim routes, the node credential, the policy file, the two
+dedicated users, the workload sandbox, the relay, the three workload kinds, the
+org route (HIP-1211, Amendment) and the events below are still to be built.
 
 compute owns the lifecycle of a workload on a linked machine and not what the
 workload does: the model API is ai's (HIP-1211), the render is Studio's
@@ -50,18 +49,35 @@ store of its own: presence and activities are records in the durable engine
 1. signs in with Hanzo IAM when the machine holds no valid session (HIP-0026),
    then exchanges that session at IAM for a node credential (A2); the agent
    holds the node credential and nothing else;
-2. writes the policy file (A3) when it is absent, admitting no kind;
-3. enrols the machine's identity on the org's overlay (HIP-1173) — a credential
-   on disk, not a process;
-4. registers the presence record (A2) and leaves one agent process holding the
-   claim loop (A4), under the user's own service manager so it survives logout
-   and restarts at boot.
+2. creates, once and with the operating system's administrator consent, two
+   users: `hanzo-link`, which runs the agent, and `hanzo-work`, which runs
+   workloads (A9);
+3. writes the policy file (A3) when it is absent, admitting no kind;
+4. enrols the node's own overlay identity (A7) — a credential on disk, not a
+   process;
+5. registers the presence record (A2) and starts the agent as `hanzo-link`
+   under the system's service manager, so it survives logout and restarts at
+   boot.
 
 It MUST NOT start an inference engine, a render backend, a shell or terminal
 server, an overlay tunnel or daemon, a script runner, or anything that listens
-on an address other than loopback. It MUST NOT register a run target or hold a
-HIP-1325 node socket: those are other things a person may run on the same
-machine, by their own commands.
+on an address other than loopback, and MUST NOT register a run target or hold a
+HIP-1325 node socket.
+
+This retires, from linking, behaviour that exists today:
+
+| Retired | Where it lives |
+|:--|:--|
+| A writable shell served by ttyd and published through the share tunnel, and a run-target registration | `hanzoai/cli`, `src/commands/link.rs` (bare `hanzo link`) |
+| `hanzo link host` and `hanzo link dial`, which supervise an overlay child | `hanzoai/cli`, `src/commands/link.rs` |
+| Starting `hanzod` through `hanzo node up`, and the flags `--serve-engine`, `--engine-url`, `--engine-endpoint`, `--register-provider`, `--studio-dir`, `--studio-url`, `--mirror`, `--jobs-namespace`, `--no-fabric`, `--daemon` | the Go control binary, `cli/link.go` |
+| A sharing policy read from `HANZO_GPU_POLICY` or `HANZO_GPU_POLICY_FILE`, where an absent policy admits everything | the Go control binary, `cli/gpu.go` (`SharePolicy`) |
+| `fn.run` children inheriting the agent's whole environment | the Go control binary, `cli/gpu.go` |
+| Fetching a render input with the user's IAM bearer attached | the Go control binary, `cli/gpu.go` (`fetchInput`) |
+
+A shell, a host-exec node and a published service remain things a person runs
+by their own command. While one runs as the linking user, the agent offers
+nothing (A3).
 
 `hanzo unlink` MUST stop every workload and wait for each to exit (A8), then
 `DELETE /v1/compute/fleet/workers/{id}`, which revokes the node credential at
@@ -74,9 +90,9 @@ node's next claim (410).
 
 The node credential is minted by IAM for one node: it can call only the routes
 under `/v1/compute/fleet/workers/{id}` for that node, carries the linking user
-as `linkedBy`, and is revoked by the node's `DELETE`. A user's own session,
-however privileged, never reaches the agent. Every node route answers 403 to any
-other credential.
+as `linkedBy`, is readable only by `hanzo-link`, and is revoked by the node's
+`DELETE`. A user's own session, however privileged, never reaches the agent.
+Every node route answers 403 to any other credential.
 
 `PUT /v1/compute/fleet/workers/{id}` registers or refreshes a node. `{id}` is the
 hostname folded to `[a-z0-9-]{1,63}`; when another install holds it, the agent
@@ -95,6 +111,7 @@ appends `-` and the first four hex digits of its `key` and registers again.
   "gpus": [{"name": "AMD Radeon 8060S", "memoryTotal": "98304 MiB", "arch": "gfx1151", "unified": true}],
   "rocm": "6.4.1",
   "version": "1.12.0",
+  "engine": "<64 hex: SHA-256 of the pinned engine binary>",
   "lanes": [],
   "offers": ["engine.serve"],
   "policy": {"kinds": ["engine.serve"], "orgs": ["acme"], "...": "A3, verbatim"},
@@ -106,23 +123,25 @@ appends `-` and the first four hex digits of its `key` and registers again.
   `(org, id)` to the first key it sees and answers 409 to a registration or
   claim carrying another. It names an install and authorizes nothing.
 - `offers` is the subset of the policy's `kinds` this host can run now: a kind
-  only where A9's sandbox exists, `studio.render` only with a lane. `disk` is the
-  free bytes on the store's filesystem. `cuda`, `driver`, `rocm` and `hip` are
-  reported where the host has them.
+  only where A9's sandbox exists, `studio.render` only with a lane, and nothing
+  while A3's exec rule holds. `disk` is the free bytes on the store's
+  filesystem. `cuda`, `driver`, `rocm` and `hip` are reported where the host has
+  them.
 - The cloud MUST take the policy only from this call and MUST NOT send a policy
   to a node. Its copy is a mirror.
 
 `GET /v1/compute/fleet/workers` answers these fields, without `key`, plus
 `status` (`online` when a claim landed within 90 s, else `offline`), `linkedBy`,
 `firstSeen`, `lastClaim` and `workloads: [{activity, kind, state, model}]`.
-`capabilities` becomes `offers`. The engine is a workload now, not a property of
-the node, so `engine` and `jobQueue` leave the record.
+`capabilities` becomes `offers`, `engine` now names the pinned binary rather
+than an endpoint, and `jobQueue` leaves the record.
 
 ### A3 The policy file
 
 Consent lives on the node, in `~/.hanzo/link/policy.json` under the linking
-user's home, mode 0600. The schema is closed: a field the agent does not know
-makes it offer nothing and log why. As written by `hanzo link`:
+user's home: owned by the linking user, mode 0644, so `hanzo-link` reads it and
+neither dedicated user can write it. The schema is closed: a field the agent
+does not know makes it offer nothing and log why. As written by `hanzo link`:
 
 ```json
 {
@@ -143,14 +162,21 @@ makes it offer nothing and log why. As written by `hanzo link`:
 | `orgs` | Orgs whose activities it takes | the linking org |
 | `sources` | Model sources: a host and path prefix, and the hosts a download may be redirected to | the Zen weights of HIP-0904 |
 | `models` | A repository path, `huggingface.co/owner/name`, or one pinned as `…@<40-hex commit>`; empty admits every model under a source | empty |
-| `caps` | Bytes of accelerator memory, memory and store; logical cores. 0 means the host's total, less a tenth of the filesystem for the store | 0 |
+| `caps` | Bytes of accelerator memory, memory and store; logical cores. 0 means the host's total less A5's reserve | 0 |
 | `concurrency` | Workloads at once, every kind together | 1 |
 | `idleSec` | Ceiling on any workload's idle seconds | 600 |
 | `maxSec` | Ceiling on any workload's life, idle or not | 86400 |
 
-- The agent reads the file and nothing writes it but `hanzo link` creating it.
-  No cloud message, API call or activity changes it, and no workload can read
-  or write it (A9).
+- Nothing writes the file but `hanzo link` creating it. No cloud message, API
+  call or activity changes it.
+- **The exec rule.** A process that runs as the linking user and executes what
+  the cloud sends can rewrite the file. So the agent MUST offer nothing, and stop
+  every workload with reason `policy`, while any process of the linking user
+  holds a HIP-1325 node socket that admits `system.run`, or serves a shell or a
+  published local service. It finds them by inspecting the linking user's
+  processes at every claim, never by a file such a process could remove.
+  `system.run` is approved by the cloud's `apps/node` policy (HIP-1325 §4), not
+  by the machine's owner, which is why its presence stands the node down.
 - On change the agent re-registers within 5 s and stops, with reason `policy`,
   every workload the new file no longer admits.
 - Enforcement is at claim, twice: the cloud hands a node only what its mirror
@@ -253,6 +279,10 @@ Error codes are a closed set: `denied`, `schema`, `unsupported`, `capacity`,
 `source`, `custom_code`, `integrity`, `pull`, `start`, `crash`, `deadline`,
 `lost`.
 
+**The reserve.** Whatever the caps say, the agent keeps a tenth of the host's
+memory and a tenth of the store's filesystem free, and a workload that would
+take either fails `capacity`.
+
 **`engine.serve`** loads a model and serves it with the Hanzo engine (HIP-0043),
 callable through `api.hanzo.ai` (A7).
 
@@ -268,14 +298,19 @@ callable through `api.hanzo.ai` (A7).
 }
 ```
 
-`files` is every file the engine loads. `vram` is the requester's declared
-need: the agent fails it with `capacity` when it exceeds `caps.vram` less what
-running workloads hold, or the accelerator's free memory; it passes it to the
-engine as its memory ceiling, and stops a workload that holds more (`capacity`).
-`idleSec` is 30 to the policy's `idleSec`. `service` is the overlay label the
-cloud created for this workload (A7). The `ready` report carries `token` (A7)
-and `models`, the ids the engine's `/v1/models` lists; the token never appears
-in a read.
+- `files` is every file the engine loads.
+- `ctx` is at least 1 and at most the context length the model's own
+  configuration declares; more fails `schema`.
+- `vram` is the requester's declared need. The agent computes the need itself —
+  the weight files' total size plus the KV cache for `ctx` from the model's
+  layer count, KV heads, head width and cache precision — and fails `capacity`
+  when that exceeds `vram`, `caps.vram` less what running workloads hold, or the
+  accelerator's free memory. It passes `vram` to the engine as its memory
+  ceiling and stops a workload that holds more (`capacity`).
+- `idleSec` is 30 to the policy's `idleSec`.
+- `service` is the overlay label the cloud created for this workload (A7).
+- The `ready` report carries `token` (A7) and `models`, the ids the engine's
+  `/v1/models` lists.
 
 **`studio.render`** runs one render on the Studio render backend (HIP-0506).
 
@@ -303,8 +338,8 @@ in a read.
   input is checked against its `sha256`.
 - `timeoutSec` is at most the policy's `maxSec`. The output is
   `{"files": [{"name", "sha256", "size"}]}` once uploaded.
-- The backend starts on the first job, reachable only by the agent (A7's rules
-  for the engine apply), and stops after `idleSec` with no job. A warm backend
+- The backend starts on the first job inside A9's sandbox, reachable only
+  through its socket, and stops after `idleSec` with no job. A warm backend
   takes jobs of one org only, and its working directories are emptied between
   jobs.
 
@@ -325,12 +360,10 @@ into `kinds`.
 dependencies included: nothing is resolved. The agent fetches each wheel from
 the public Python package index under A6's transport rules and checks its
 SHA-256; source distributions are refused, so installing runs no code. The
-wheels are installed offline, with no dependency resolution and no user or
-site configuration, inside the same sandbox the script then runs in: it reads
-system runtime paths and its own directory, writes its own directory, and
-reaches no network, loopback included. `timeoutSec` is at most `maxSec`. The
-output is `{"exit", "stdout", "stderr", "truncated"}`, each stream at most
-1 MiB.
+wheels are installed offline, with no dependency resolution and no user or site
+configuration, inside the sandbox the script then runs in (A9), which for
+`fn.run` has no network at all. `timeoutSec` is at most `maxSec`. The output is
+`{"exit", "stdout", "stderr", "truncated"}`, each stream at most 1 MiB.
 
 ### A6 Pulling a model
 
@@ -351,83 +384,111 @@ output is `{"exit", "stdout", "stderr", "truncated"}`, each stream at most
   the matching source's `hosts`, at most five times. A hop elsewhere, to plain
   http, or to an address that resolves into loopback, private, link-local,
   shared or multicast space fails `source`.
-- Each file is written beneath the store, never through a link, to a
-  temporary name, and renamed to `~/.hanzo/link/store/sha256/<hex>` only after
-  its SHA-256 and size match; a mismatch fails `integrity` and removes it. A
-  model is a read-only tree, `store/models/<model>/<revision>/`, of links to
-  blobs. A blob already present is not fetched again. No workload can write the
-  store (A9), so a verified blob stays verified.
-- When the store would pass `caps.disk`, trees no live workload uses go
-  least-recently-used first, and blobs no tree references go with them.
+- Each file is written beneath the store, never through a link, to a temporary
+  name, and renamed to `~/.hanzo/link/store/sha256/<hex>` only after its
+  SHA-256 and size match; a mismatch fails `integrity` and removes it. A model is
+  a read-only tree, `store/models/<model>/<revision>/`, of links to blobs. A
+  blob already present is not fetched again. The store belongs to `hanzo-link`
+  and no workload can write it, so a verified blob stays verified.
+- When the store would pass `caps.disk` or A5's reserve, trees no live workload
+  uses go least-recently-used first, and blobs no tree references go with them.
 - The engine loads the tree and fetches nothing.
 
-### A7 The engine and the data path
+### A7 The engine, the relay and the data path
 
-The agent MUST start the engine:
+**The engine.** The agent runs only the engine binary its own release pins by
+SHA-256 (`engine` in A2), and refuses to start one that does not match. It MUST
+start it:
 
-- listening on a Unix socket in the workload's directory, or, for an engine
-  without one, on `127.0.0.1` at a port the engine itself picks and reports, so
-  no other local process can take the address first;
-- with mDNS and DNS-SD advertising off;
-- refusing every request that lacks `Authorization: Bearer <token>`, where the
-  token is 32 bytes from the OS's CSPRNG, made per start, handed to the engine on
-  stdin or in a 0600 file and never in argv, reported to the cloud once in the
-  `ready` report and gone when the process exits;
-- refusing a request that names media by URL, so a request cannot make the node
-  fetch from its network;
-- stopping generation when its client connection closes.
+- listening on a Unix socket in the workload's directory, inside A9's sandbox,
+  where no network interface exists to bind;
+- with mDNS and DNS-SD advertising, web search, MCP, code execution and every
+  model-management route (reload, tune, download) off;
+- loading the tree A6 built, and fetching nothing.
 
-The gateway cannot dial a machine behind NAT, so the data path is the org's
-overlay (HIP-1173). At claim the cloud creates, through the overlay controller,
-the service `<service>.<org>.zt`, bindable only by this node's identity and
-dialable only by the cloud's gateway identity. Between `ready` and stop, and at
-no other time, the agent hosts that service and relays each connection to the
-engine. Hosting is an outbound connection to the overlay's routers, so nothing
-on the node listens. The relay is the one place that sees every request, which
-is what `idle` measures: a request is in flight until it completes, or until
-60 s pass with no byte relayed in either direction. At stop the agent stops
-hosting, and the cloud deletes the service.
+**The relay.** The agent is the only client of that socket. Each connection
+from the overlay reaches the engine through the agent's relay, which:
 
-On `ready`, compute registers the org route `local/<node>/<last segment of
-model>` — for the example, `local/evo/zen6-flash` — with endpoint
-`http://evo-1.acme.zt/v1` and the token, through HIP-1211's route operation, and
-deletes it at stop or when the node goes offline. HTTP crosses the overlay
-unchanged: a streamed answer is the engine's own server-sent events relayed as
-they arrive, and a client that goes away closes the overlay connection, which
-closes the engine's, which stops generation.
+- MUST refuse with 401 every request that lacks `Authorization: Bearer <token>`,
+  where the token is 32 bytes from the OS's CSPRNG, made per start, reported to
+  the cloud once in the `ready` report, and forgotten when the workload stops;
+- MUST forward only `POST /v1/chat/completions`, `POST /v1/completions`,
+  `POST /v1/messages`, `POST /v1/embeddings` and `GET /v1/models`, and answer
+  404 to everything else;
+- MUST refuse a request that names media by URL, so a request cannot make the
+  node fetch anything;
+- closes the engine connection when the overlay connection closes, and the
+  engine MUST stop generating when that happens;
+- is what `idle` measures: a request is in flight until it completes, or until
+  60 s pass with no byte relayed in either direction.
+
+**The overlay.** The gateway cannot dial a machine behind NAT, so the data path
+is the org's overlay (HIP-1173). At claim the cloud creates the service
+`<service>.<org>.zt` through the overlay controller, with a bind policy naming
+this node's identity by its id and a dial policy naming the cloud's gateway
+identity by its id, and no role in either. The node's identity has its own
+subject and no `org-*` role, so no other device of the org can dial it and it
+can dial nothing. Between `ready` and stop, and at no other time, the agent
+hosts that service in process and relays it to the workload's socket and
+nowhere else: it ignores any host configuration the controller attaches, so the
+controller cannot point a node at another address. Hosting is an outbound
+connection to the overlay's routers, so nothing on the node listens. At stop the
+agent stops hosting and the cloud deletes the service.
+
+This retires two overlay behaviours that exist today in the cloud's
+`apps/network`: a service dial policy that admits the org's role and the admin
+role, and an identity that receives its org's role from the linking user's IAM
+subject.
+
+**The route.** On `ready`, compute seals the token in the platform's KMS — not
+the org's, and never in the activity record — and registers the org route
+`local/<node>/<last segment of model>`, for the example `local/evo/zen6-flash`,
+with endpoint `http://evo-1.acme.zt/v1`, through HIP-1211's route operation. It
+deletes the route and the sealed token at stop or when the node goes offline.
+HTTP crosses the overlay unchanged: a streamed answer is the engine's own
+server-sent events relayed as they arrive, and a client that goes away closes
+the overlay connection, which closes the engine's, which stops generation.
 
 ### A8 Idle and stopping
 
 A workload is `stopped` with reason `idle` after `idleSec` with nothing in
-flight, and with reason `max` after `maxSec` however busy. Stopping sends
-SIGTERM to the workload's process tree, then SIGKILL after 10 s, and the agent
-reports `stopped` only after the tree has exited, which is what frees the
-accelerator. Every workload runs in the agent's process group or control group,
-so an agent that exits for any reason takes its workloads with it. A node
-offline for 90 s has its routes and services reaped and its live activities
-failed with `lost`; on return it is told to stop them.
+flight, and with reason `max` after `maxSec` however busy. Every workload runs
+in its own control group, and stopping it sends SIGTERM to every process in the
+group, then kills the whole group after 10 s (`cgroup.kill`), so no process that
+left its process group or session survives. The agent reports `stopped` only
+after the group is empty, which is what frees the accelerator. An agent that
+exits for any reason kills its workloads' groups first, and the service manager
+kills them if the agent cannot. A node offline for 90 s has its routes and
+services reaped and its live activities failed with `lost`; on return it is told
+to stop them.
 
 ### A9 What a workload is given
 
-Every workload runs in an OS sandbox that shows it the system's runtime paths,
-its own directory `~/.hanzo/link/run/<activity>/` (mode 0700, deleted at stop)
-and, read-only, the model tree it loads, and nothing else of the linking user's
-home: not the policy file, the store's other trees, the node credential or the
-overlay identity. A host that cannot build that sandbox for a kind MUST NOT
-offer the kind. Where the OS has quotas (control groups on Linux), the agent
-applies `caps.memory` and `caps.cpus` to the workload.
+Every workload runs as `hanzo-work`, never as the linking user or `hanzo-link`,
+in its own control group and in its own mount, network, PID and IPC namespaces,
+with `no_new_privs` set. Its mount namespace shows the system's runtime paths,
+its own directory (`~hanzo-work/run/<activity>/`, mode 0700, deleted at stop)
+and, read-only, the model tree it loads, and nothing else: no home directory,
+no session bus, no runtime directory of any user, no policy file, store
+metadata, node credential or overlay identity. Its network namespace has no
+interface but its own loopback, so it reaches nothing but the relay socket in
+its directory. The agent applies `caps.memory` and `caps.cpus` to its control
+group.
+
+A host that cannot build this sandbox — today, any host but Linux with control
+groups v2 and unprivileged namespaces — MUST NOT offer any kind.
 
 A workload's environment is exactly `PATH` (a fixed system path), `HOME` and
 `TMPDIR` (its directory) and `LANG=C.UTF-8`, plus what its kind names. Nothing is
 inherited. The agent MUST NOT pass a workload any IAM credential, its overlay
 identity, its `key`, a KMS credential, an SSH agent socket, a cloud or
-model-host credential, or any variable of its own environment. A per-start
-token is the only secret a workload receives, and only its own.
+model-host credential, or any variable of its own environment.
 
 ### A10 Audit and events
 
-The agent appends one JSON line per link, unlink, policy change, start, stop,
-deny and failure to `~/.hanzo/link/audit.jsonl`:
+The agent appends one JSON line per link, unlink, policy change, exec-rule
+change, start, stop, deny and failure to `~hanzo-link/audit.jsonl`, which the
+linking user can read and no workload can reach:
 `{time, event, activity, kind, org, requester, model, revision, reason}`. It
 carries no token and no input; a `fn.run` line carries the source's SHA-256.
 
@@ -452,77 +513,92 @@ charge for the node itself.
    no policy file it writes A3's default, and the node's record shows
    `offers: []`.
 2. After `hanzo link`, the host's listening sockets show nothing new on an
-   address other than loopback, no process but the agent has started, and the
-   agent holds no credential but the node credential.
+   address other than loopback, no process but the agent has started, the
+   agent runs as `hanzo-link`, and it holds no credential but the node
+   credential.
 3. With `kinds: []`, an enqueue of each kind answers 403 `denied`; an envelope
    for it handed to the agent anyway fails `denied`, with an audit line and a
    `compute.workload.denied` event.
 4. Removing a running workload's kind from the file stops it within 5 s with
-   reason `policy`, and the mirror changes with it.
-5. `engine.serve` of `huggingface.co/zenlm/zen6-flash` at a commit, with correct
-   hashes, reaches `ready`. The engine is reachable only from the node, a
-   request without the token answers 401, and nothing on the LAN sees an engine
-   advert.
-6. One wrong `sha256` fails `integrity`; nothing from that pull is loaded or
+   reason `policy`. Neither `hanzo-link` nor `hanzo-work` can write the file.
+5. While the linking user runs a published shell or a HIP-1325 node that admits
+   `system.run`, the node's `offers` is empty and running workloads stop with
+   reason `policy`.
+6. `engine.serve` of `huggingface.co/zenlm/zen6-flash` at a commit, with correct
+   hashes, reaches `ready`. The engine runs as `hanzo-work` with no network
+   interface but loopback; through the overlay, a request without the token
+   answers 401, `POST /v1/models/reload` answers 404, and nothing on the LAN
+   sees an engine advert.
+7. Only the gateway's identity can dial the workload's service; a second
+   identity of the same org is refused by the controller.
+8. One wrong `sha256` fails `integrity`; nothing from that pull is loaded or
    left outside the store's temporary area.
-7. A branch as `revision`, or a `..` segment in `model` or a path, fails
-   `schema`; a repository with a `.py` file or `auto_map`, or a pickle in
-   `files`, fails `custom_code` before any weight byte is fetched; a redirect
-   off `hosts` or into private space fails `source`.
-8. A streamed chat completion naming `local/evo/zen6-flash` through
-   `api.hanzo.ai` arrives as server-sent events; closing the client ends
-   generation on the node within 2 s.
-9. After `idleSec` with no request the workload is `stopped` with reason `idle`,
-   the engine process is gone, accelerator memory returns to its pre-start
-   level, and the model, route and overlay service are gone.
-10. A node cut off for 120 s reads `offline`, its route is gone, and its
+9. A branch as `revision`, or a `..` segment in `model` or a path, fails
+   `schema`; a `ctx` above the model's declared length fails `schema`; a
+   repository with a `.py` file or `auto_map`, or a pickle in `files`, fails
+   `custom_code` before any weight byte is fetched; a redirect off `hosts` or
+   into private space fails `source`; weights plus KV cache above `vram` fail
+   `capacity`.
+10. A streamed chat completion naming `local/evo/zen6-flash` through
+    `api.hanzo.ai` arrives as server-sent events; closing the client ends
+    generation on the node within 2 s.
+11. After `idleSec` with no request the workload is `stopped` with reason
+    `idle`, its control group is empty — including a process that called
+    `setsid` — accelerator memory returns to its pre-start level, and the
+    model, route, sealed token and overlay service are gone.
+12. A node cut off for 120 s reads `offline`, its route is gone, and its
     workload stops within one claim of its return.
-11. `hanzo unlink` stops every workload, removes the node from
+13. `hanzo unlink` stops every workload, removes the node from
     `/v1/compute/fleet/workers`, revokes its credential and overlay identity,
     and removes the agent's service; the policy, audit log and store remain.
-12. A workload sees only A9's paths and variables and its own token: no IAM
-    credential, overlay identity, `key` or policy file.
-13. A member who is not an admin gets 403 enqueuing `engine.serve`, and another
-    org's caller gets 404 reading or cancelling an activity.
-14. Every start, stop, deny and failure appears once in the audit log and once
+14. A workload sees only A9's paths and variables: no home directory, session
+    bus, IAM credential, overlay identity, `key` or policy file.
+15. A member who is not an admin gets 403 enqueuing `engine.serve`; another
+    org's caller gets 404 reading or cancelling an activity; no read, activity
+    record or org KMS path holds a route token.
+16. Every start, stop, deny and failure appears once in the audit log and once
     on the bus.
 
 ### A13 Threat model
 
 - **A compromised cloud** can start allow-listed kinds for allow-listed orgs, of
   allow-listed models at pinned commits, within the caps, the concurrency and
-  `maxSec`, and call what it started. It cannot change the policy, pick a source
-  or a redirect host, open a listener, point the relay anywhere but a workload
-  the agent started, reach the owner's files, or run code: with `fn.run` off
-  there is no code path, and with it on the code is sandboxed and offline. It
-  holds the node credential, which reaches only this node's routes, and no other
-  credential of the machine. The owner's answer is `kinds: []` or
-  `hanzo unlink`, and both take effect without the cloud.
+  `maxSec`, and call what it started through the relay's five routes. It cannot
+  change the policy: the file belongs to the linking user, and while anything
+  running as that user executes what the cloud sends, the node offers nothing.
+  It cannot pick a source or a redirect host, open a listener, point the relay
+  or the overlay host anywhere but a workload's socket, reach a file outside a
+  workload's directory, or run code: with `fn.run` off there is no code path,
+  and with it on the code runs as `hanzo-work`, sandboxed and offline. It holds
+  the node credential, which reaches only this node's routes. The owner's answer
+  is `kinds: []` or `hanzo unlink`, and both take effect without the cloud.
 - **A malicious org member** is bounded by role (A4), by the node's policy, by
   per-requester rate limits and by attribution: every enqueue names its
   requester in the audit log and on the bus. Publishing a model to the org takes
-  an admin, a published route lives under `local/` where no hosted id or router
-  choice can land on it (HIP-1211), and a member cannot address another org's
-  node or activity.
+  an admin, a route resolves only inside its own org (HIP-1211), and a member
+  cannot address another org's node or activity, or dial a node's service from
+  their own device.
 - **A poisoned model repository** is defeated by the pin. A commit and the
   SHA-256 of every file make a later push irrelevant, and admitting only data
   formats leaves nothing that runs on load. Naming a poisoned commit with
   matching hashes yields data from an allowed source; `models` can pin exact
-  commits. What remains is a parser defect in the engine, and A9's sandbox is
-  what such a defect finds itself in.
+  commits. What remains is a parser defect in the engine, which finds itself as
+  `hanzo-work` in A9's namespaces with no network, no session bus and no
+  credential.
 - **A LAN pivot** has no port to forward and no fetch to ride. Nothing listens
-  off loopback. The relay's only target is a workload the agent started, never a
-  host or port the cloud names. Downloads refuse private space and off-list
-  redirects, render files are single-use grants on the API origin, the engine
-  refuses media URLs, and `fn.run` has no network.
-- **Leakage into a workload** is closed by A9: one token per start, scoped to one
-  process, dead with it. Route tokens are sealed in the org's KMS (HIP-1134).
-- **Cross-tenant dialing.** The cloud's overlay identity can dial every org's
-  names, so the `.<org>.zt` suffix is the tenant boundary. `<org>` is the org's
-  name as IAM holds it, compared byte for byte with nothing folded, and the
-  controller binds a name under `.<org>.zt` only to an identity of that org. A
-  route endpoint (HIP-1211) and an attached cluster's apiserver (§Security) that
-  name an overlay host MUST carry the caller's own org as that suffix.
+  off loopback, a workload has no network, the overlay host ignores controller
+  forwards, and the relay's only target is a workload's socket. Downloads refuse
+  private space and off-list redirects, render files are single-use grants on
+  the API origin, and the relay refuses media URLs.
+- **Leakage into a workload** is closed by A9. A route token lives in the
+  platform's KMS alone, is valid for one workload's life, and is checked by the
+  relay, which no workload can reach around.
+- **Cross-tenant dialing.** Dial and bind are authorized by identity id, never
+  by role, and the cloud's own identity can still reach every org's names, so
+  the `.<org>.zt` suffix is also checked where an endpoint enters. `<org>` is
+  the org's name as IAM holds it, compared byte for byte with nothing folded. A
+  route endpoint (HIP-1211) and an attached cluster's apiserver (§Security)
+  that name an overlay host MUST carry the caller's own org as that suffix.
 
 ### A14 Why
 
@@ -531,15 +607,16 @@ for a request that may never come. When the cloud starts work only on demand,
 an idle machine stays idle.
 
 The data path rides the overlay rather than the claim stream. The overlay is
-already the org-scoped, outbound-only network every linked machine joins, and
-HTTP crosses it unchanged, so streaming, cancellation and back-pressure are the
-engine's own. Tunnelling requests through the claim stream would mean a framing
-protocol, a replica that holds each node's stream, and a peer hop to reach it
-(HIP-1325 needs exactly that). Control stays a long-poll with no replica
-affinity.
+already the outbound-only network a linked machine joins, and HTTP crosses it
+unchanged, so streaming, cancellation and back-pressure are the engine's own.
+Tunnelling requests through the claim stream would mean a framing protocol, a
+replica that holds each node's stream, and a peer hop to reach it (HIP-1325
+needs exactly that). Control stays a long-poll with no replica affinity.
 
 Consent belongs on the node because the policy constrains the cloud, and a
-policy the cloud could edit would constrain nothing.
+policy the cloud could edit would constrain nothing. That is why the agent is
+not the linking user, and why it stands down while the linking user runs
+anything the cloud can drive.
 
 ## Motivation
 
