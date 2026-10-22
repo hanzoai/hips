@@ -35,7 +35,7 @@ persona it wears, the three levels and where each applies, what a waiting window
 means, the personal phone, email and WhatsApp line it answers on, where a person
 configures it, how capacity and runtime are billed, and the rule that every
 message a machine sent says so. It composes
-HIP-0523's rooms, HIP-1210's agents and HIP-1141's per-person settings, and §15
+HIP-0523's channels, HIP-1210's agents and HIP-1141's per-person settings, and §15
 lists the five things it asks of other specifications rather than deciding on
 their behalf. §14 marks each mechanism as shipped, partial or absent, measured in
 the source on 2026-08-27.
@@ -82,7 +82,7 @@ and neither is the other's fallback:
 | | Ambient agent | Personal agent |
 |---|---|---|
 | Belongs to | the org | one person |
-| Is a member of | every room in the org | that person's rooms |
+| Is a member of | every channel in the org | that person's channels |
 | Answers | what is addressed to the org | what is addressed to the person |
 | Configured by | an org admin | that person, and only that person |
 | Authority to send | org policy | the ladder in §4 |
@@ -134,7 +134,7 @@ read with the right filter — the wrong org simply has no such row.
 Within that key, the agent's instructions, its memory and its authority setting
 are the person's own. An org admin MAY see that a person has an agent, because
 the org pays for what it runs. An org admin MUST NOT read its instructions, its
-memory, or the contents of the rooms it works in. Paying for a thing does not
+memory, or the contents of the channels it works in. Paying for a thing does not
 confer the right to read it — the org pays for the person's mailbox too.
 
 ### §3 The persona is who it is
@@ -218,7 +218,7 @@ implementing this HIP:
 
 1. **`draft` is the default for every person and every scope.** A person who has
    never opened a setting has an agent that cannot send. New scopes — a newly
-   connected transport, a new room — start at `draft` too. A default that
+   connected transport, a new channel — start at `draft` too. A default that
    escalates is not a default.
 2. **Escalation is always the person's own act.** No admin, no org policy and no
    agent MAY raise a person's level; an agent MUST NOT be able to reach the
@@ -247,7 +247,7 @@ Semantics, exactly:
   of the three cancels the send.
 - Silence at the end of the window is consent, and this is the only place in this
   specification where silence means anything.
-- The notification and the eventual message are both written into the room's
+- The notification and the eventual message are both written into the channel's
   history. A person MUST be able to read back, later, both what they were told
   and what went out. Nothing about this is hidden from the person it acts for.
 
@@ -269,18 +269,18 @@ here by the same argument. An agent replying on a timer across a connected
 transport is cheap fan-out with a customer's credential on the far end, and it
 inherits those bounds rather than needing new ones.
 
-### §6 The confirmation rides the person's own rooms
+### §6 The confirmation rides the person's own channels
 
 The agent asks on whatever the person is already reading: their `hanzo.ai` chat,
-their room in `hanzo.team`, or the transport they are actually on. It is one
-question in a room, not a queue somewhere they must remember to visit.
+their channel in `hanzo.team`, or the transport they are actually on. It is one
+question in a channel, not a queue somewhere they must remember to visit.
 
 This has a mechanical consequence that decides the design. **Asking requires a
 path that can carry the answer BACK.** The notification capability sends email
 and SMS and has no inbound half at all — HIP-0061 deliberately dropped push,
 in-app delivery and preference management, and what remains cannot hear a reply.
-The rooms of HIP-0523 have both directions by construction. So the confirmation
-MUST ride a room, and MUST NOT be built on a send-only notifier with a link out
+The channels of HIP-0523 have both directions by construction. So the
+confirmation MUST ride a channel, and MUST NOT be built on a send-only notifier with a link out
 to a web page, which is the design that looks equivalent and is not.
 
 ### §7 Attribution
@@ -316,13 +316,13 @@ The setting is a global default per person, with narrower overrides. The
 effective level is the most specific one set:
 
 ```
-    room override        →  most specific
+    channel override     →  most specific
     transport override
     global default       →  least specific, defaults to `draft`
 ```
 
 An unset override inherits; it does not reset to the default. Overrides only
-resolve — they never combine — so there is exactly one effective answer per room
+resolve — they never combine — so there is exactly one effective answer per channel
 and no order-of-evaluation question to get wrong. An org ceiling (§4) applies
 after resolution and can only lower the result.
 
@@ -344,7 +344,7 @@ own.
 
 ### §10 Where it meets the org's agent
 
-Both may be members of one room (HIP-0523 §3). They do not race, because they
+Both may be members of one channel (HIP-0523 §3). They do not race, because they
 answer different things: the org's agent answers what is addressed to the org,
 and the person's agent answers what is addressed to that person. A message
 addressed to neither is answered by neither.
@@ -356,7 +356,7 @@ governs.
 
 A person may connect their own phone number, their own email and their own
 WhatsApp, and the free plan includes doing so (§13). Inbound on any of them lands
-in that person's rooms — their own org's, per §2 and HIP-0523 §5 — and their
+in that person's channels — their own org's, per §2 and HIP-0523 §5 — and their
 agent answers under the ladder. Nothing about this is an org integration: the
 line is the person's, connected as a per-person credential (HIP-1065), and an org
 admin MUST NOT connect, read or disconnect a member's personal line.
@@ -366,8 +366,8 @@ level:
 
 | Level | What happens when a text arrives |
 |---|---|
-| `draft` | the room holds it; the agent writes a reply; the person sends it |
-| `confirm` | the agent writes the reply and asks in the room; the person picks, edits or declines; the chosen text leaves as an SMS from their number |
+| `draft` | the channel holds it; the agent writes a reply; the person sends it |
+| `confirm` | the agent writes the reply and asks in the channel; the person picks, edits or declines; the chosen text leaves as an SMS from their number |
 | `send` | the agent posts what it is about to text, waits the person's window (§5), and sends unless they intervene |
 
 **A live call has no window, so `confirm` and `draft` behave identically on
@@ -417,8 +417,8 @@ waits (§5), and the lines it answers on (§11). Putting it in a directory of
 external services would file the one thing customized TO the person among the
 things customized BY connecting somebody else's.
 
-The same two-layer rule as HIP-0523 §1 applies, and for the same reason: **"App"
-is the product word; the wire and the specification keep their shipped nouns.**
+**"App" is the product word here; the wire and the specification keep their
+shipped nouns.**
 `/v1/integrations` and `/v1/integrations/connectors` do not move, and this HIP
 renames nothing. In the specification the umbrella noun stays **Integration**,
 with the kinds HIP-0126 §2 fixed — Connector, Provider, Tool — and "Connector"
@@ -488,7 +488,7 @@ does an org pay** is a function of how long those agents actually ran. A capacit
 limit refuses; a meter bills. Neither may quietly do the other's job.
 
 The kinds are still the member kinds of HIP-0523 §3 — human, agent, bot —
-because what an org counts is who is in its rooms. What changed is that counting
+because what an org counts is who is in its channels. What changed is that counting
 is no longer charging.
 
 The shape, which is all this HIP fixes:
@@ -558,7 +558,7 @@ on exists, and two of the pieces that look ready are not.
 | Send-on-behalf | **not what the name says** | `apps/agents/onbehalf.go:34 RunOnBehalf` sets the billing and audit actor on a run record (`:102`). It sets no identity on any outbound message |
 | Authorship on a message | **gap, and deliberately closed** | `apps/channels/envelope.go:53 Sender` has no agent/human field; `SendRequest` has no sender at all; identity fields are non-decodable on send and refused loudly (`apps/channels/routes.go:83`) |
 | The agent's reply stored | **gap** | `apps/channels/turn.go:185` sends with no store call; `insertInbox` has one caller, the inbound branch (`ingest.go:78`). `apps/agents/onbehalf_rpc.go:87 transcript()` exists because the answering side has no record of what it said |
-| Notifying one person and hearing back | **gap** | `apps/notify` sends email and SMS only, addressed by raw address string, with no inbound path (`apps/notify/notify.go:131`, `send.go:30`). It cannot carry an answer back — which is why §6 requires a room |
+| Notifying one person and hearing back | **gap** | `apps/notify` sends email and SMS only, addressed by raw address string, with no inbound path (`apps/notify/notify.go:131`, `send.go:30`). It cannot carry an answer back — which is why §6 requires a channel |
 | A cancellable timer | **partial** | The pattern works, in one place: a due-time column, a one-minute sweep, and a cancel guarded on `(org, status)` — `apps/marketing/sequences.go:151,380`, `apps/marketing/drip.go:147`. It sends marketing email; it is not a primitive anyone else can call |
 | A one-shot durable timer | **gap** | `ScheduleSpec` offers only `CronString` and `Interval` — no "run once at T" — and `workflow.Sleep` has no caller in cloud |
 | Cancelling a durable agent task | **unwired** | `apps/agents/agents.go:477` hard-codes `disabledTaskController{}`; no operator dial turns it on, and a live consumer sits at `apps/agents/sessions_typed.go:256` |
@@ -573,11 +573,11 @@ on exists, and two of the pieces that look ready are not.
 | `tel` bring-your-own number | **gap** | no SIP, porting or forwarding verb anywhere in `apps/tel`; there is no way to attach a number an org already controls |
 | `tel` inbound | **gap** | ten routes (`apps/tel/tel.go:106-123`), all outbound or read-only. The `Webhook` field (`tel.go:257`) is forwarded to the CUSTOMER's URL (`rest.go:165`) — the carrier never posts to us |
 | `tel` tenancy | **shipped — org** | `apps/tel/store.go:41` `PRIMARY KEY (org, id)` plus a global unique index on the E.164. No user column |
-| `tel` reaching the room plane | **gap** | `apps/channels/registry.go:76` is a closed four-transport set and telephony is not in it |
+| `tel` reaching the channel store | **gap** | `apps/channels/registry.go:76` is a closed four-transport set and telephony is not in it |
 | Real PSTN, inbound and outbound | **shipped, in the wrong process** | `bot/extensions/voice-call/` — three carriers, inbound webhook at `src/webhook.ts:134`, signature verification, an inbound pairing policy. It is node-local and single-tenant, exposed through a tunnel (`src/tunnel.ts`) |
 | WhatsApp on the person's own number | **shipped, as a linked session** | `bot/src/channels/registry.ts:43` — "WhatsApp (QR link)", a web-multi-device bridge. Cloud's `apps/integrations/whatsapp.go:20` holds a Business credential with no ingress |
 | iMessage | **shipped, and it needs a Mac** | `bot/extensions/imessage/` and `bot/extensions/bluebubbles/`, both inbound and outbound relays |
-| Personal email as a room | **gap** | no email channel in the bot's eight-channel roster (`bot/src/channels/registry.ts:7`); `apps/notify` sends and cannot receive |
+| Personal email as a channel | **gap** | no email transport in the bot's eight-transport roster (`bot/src/channels/registry.ts:7`); `apps/notify` sends and cannot receive |
 | Outbound SMS, voice and WhatsApp on the ORG's own carrier credential | **shipped** | `apps/notify/twilio.go:17` — channels SMS, Voice, WhatsApp, keyed by the org's own account-sid, auth-token and from-number. The closest shipped prior art for a brought number |
 | Plans as one catalog | **shipped** | `@hanzo/plans`: `subscription.json`, `embed.go:15`, normalized by `entitlements.mjs:104 fromLegacy`; cloud reads it at `apps/plan/plan.go:56` through goja rather than reimplementing it |
 | `plan.Limits` as a Go type carrying capacity | **shipped** | `commerce/models/plan/plan.go:298 Limits`, with `Agents` at `:340` and `Bots` at `:341` — "how many of each the plan may RUN". `api/billing` aliases the type rather than declaring a second copy |
@@ -600,7 +600,7 @@ smallest window offered.
 For the line, the order is narrower than it looks. One signature-verified inbound
 route on `tel` is the single highest-leverage change, because without it every
 route in §11 is dead and with it both the provided and the ported number light
-up; a fifth transport in the room plane's registry then buys pairing, gating and
+up; a fifth transport in HIP-1066's registry then buys pairing, gating and
 inbox for free, since the transport shape is already `{id, caps, normalize,
 send}`. Attaching a number an org already controls needs a claim verb distinct
 from `Buy` AND a proof of control, because a global unique index on the E.164
@@ -675,7 +675,7 @@ An implementation conforms when all of these hold:
 
 The alternative to a ladder is a switch: the agent replies, or it does not. It is
 simpler, it is what everything in the estate does today, and it fails because the
-two settings are both right in different rooms on the same afternoon. A person
+two settings are both right in different channels on the same afternoon. A person
 will happily let an agent answer a recurring question from a known correspondent
 and will not let it answer their co-founder. With one switch they must pick the
 stricter setting and hand-write everything, which is the outcome where the agent
@@ -733,15 +733,15 @@ outside network renders the person's name — and why §15 asks HIP-1103 whether
 one-actor audit row can carry a two-principal fact, rather than assuming it can.
 
 **The personal scope is a boundary between an employee and their employer.** The
-agent reads the person's rooms, so anything that can read the agent — its memory,
-its instructions, its transcript — reads those rooms. An admin console that
+agent reads the person's channels, so anything that can read the agent — its
+memory, its instructions, its transcript — reads those channels. An admin console that
 renders a member's agent for support purposes is a manager reading direct
 messages, however it is labelled.
 
 **Prompt content is untrusted input, and at `send` it reaches the outside
 unreviewed.** A message from a stranger becomes text a model reads and answers
 with no person in between. The agent MUST hold only what its member holds
-(HIP-0523 §10) — the room it is in, and no other — because at `send` the blast
+(HIP-0523 §10) — the channel it is in, and no other — because at `send` the blast
 radius of a successful injection is exactly the agent's reach.
 
 ## References
@@ -750,7 +750,7 @@ radius of a successful injection is exactly the agent's reach.
 - HIP-0061 — Notification & Messaging Service Standard
 - HIP-0111 — Hanzo IAM Authentication Standard (token exchange)
 - HIP-0118 — SuperAdmin & Tenant Isolation Model
-- HIP-0523 — Rooms — One Store, Two Views, Many Bridges
+- HIP-0523 — Channels — One Store, Two Views, Many Bridges
 - HIP-0903 — The Agentic Company (the autonomy dial, and why guards do not move responsibility)
 - HIP-1040 — Appearance
 - HIP-1041 — Authz (three roles, closed; a delegation is a narrower grant)

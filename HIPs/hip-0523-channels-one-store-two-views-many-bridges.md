@@ -1,42 +1,44 @@
 ---
 hip: 0523
-title: Rooms — One Store, Two Views, Many Bridges
+title: Channels — One Store, Two Views, Many Bridges
 author: Hanzo AI
 type: Standards Track
 category: Core
 status: Final
 implementation-go: partial
 created: 2026-08-27
+updated: 2026-10-22
 requires: HIP-0139, HIP-1048, HIP-1066, HIP-1107, HIP-1210
 ---
 
-# HIP-0523: Rooms — One Store, Two Views, Many Bridges
+# HIP-0523: Channels — One Store, Two Views, Many Bridges
 
 ## Abstract
 
-A room is the one place work is discussed. `#bugfix-1010` is a room. A direct
-message between two people is a room. A person's thread with an agent is a room.
-An Instagram stranger's first message opens a room. There is no second kind of
-conversation and no second store holding one.
+A channel is the one place work is discussed. `#bugfix-1010` is a channel. A
+direct message between two people is a channel. A person's thread with an agent
+is a channel. An Instagram stranger's first message opens a channel. There is no
+second kind of conversation and no second store holding one.
 
 Its members are of three kinds — human, agent, bot — and the kind changes who
 does the work, never what the object is. Two surfaces render it: `hanzo.team`
-shows the conversation, `hanzo.ai` shows the same room as work in progress. Every
-outside network reaches it through a bridge.
+shows the conversation, `hanzo.ai` shows the same channel as work in progress.
+Every outside network reaches it through a bridge.
 
-This HIP specifies the primitive, the member kinds, the storage line between an
-org's rooms and a person's, the rule that surfaces never copy from each other,
-and what a bridge owes. It adds no capability and no address: it composes the
-ones HIP-1066, HIP-1048, HIP-1210, HIP-1107 and HIP-1252 already specify. §13
+This HIP specifies the primitive, its address, the member kinds, the storage
+line between an org's channels and a person's, the rule that surfaces never copy
+from each other, and what a bridge owes. It adds no capability: `team`
+(HIP-1048) serves channels at `/v1/team/channels` (§2.1), and the rest composes
+what HIP-1066, HIP-1048, HIP-1210, HIP-1107 and HIP-1252 already specify. §13
 marks every mechanism it names as shipped, disabled or absent, measured in the
-source on 2026-08-27.
+source.
 
 ## Motivation
 
 What this is for: anyone can hold one coherent conversation with anyone — a
 colleague, a stranger on any network, an agent — and it is the same conversation
 wherever they open it. Past automation that becomes something better, a place you
-can watch: rooms per problem and per project, swarms visibly working in them,
+can watch: channels per problem and per project, swarms visibly working in them,
 people and agents doing the work side by side. Two faces, one brain — `hanzo.ai`
 for a person's own chat and building, `hanzo.team` for the org's shared space —
 and both are thin renderings of one cloud, not two products with a pipe between
@@ -66,47 +68,77 @@ there is nothing else to configure.
 The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted
 as in RFC 2119.
 
-### §1 The word "channel" is taken twice, so the primitive is the room
+### §1 The primitive is the channel
 
-Three meanings of "channel" are live, and two of them ship:
+A channel is the conversation a message lives in. It is the word people already
+say for it, the word `hanzo.team` draws above it, and the class the team store
+keeps it under (`chunter:class:Channel`). One word, from the screen to the store.
+
+Two other things in this estate have been called channels. Each keeps a word of
+its own, and in this HIP channel means neither:
 
 | Word | What it means | Owner |
 |---|---|---|
-| `channel` | a connected chat transport — slack, discord, teams, telegram | HIP-1066; `Message.Channel` (`apps/channels/envelope.go:153`) is the transport name |
-| `channel` | a connected social account — X, Facebook, Instagram, LinkedIn | HIP-1153, "an Account is a connected channel" |
-| `room` | **the conversation a message lives in**, kinds `dm`, `group`, `thread` | HIP-1066's envelope; `Room` (`apps/channels/envelope.go:60`) |
+| **channel** | the conversation a message lives in, kinds `dm`, `group`, `thread` | this HIP |
+| transport | a connected chat service — slack, discord, teams, telegram | HIP-1066 |
+| account | a connected social account — X, Facebook, Instagram, LinkedIn | HIP-1153 |
 
-The collaboration primitive is the third one, and the shipped envelope already
-names it correctly: `// Room is the conversation a message lives in`. This HIP
-therefore says **room** and never overloads `channel`, for the same reason
-HIP-1107 §3 refuses to let one word mean a run, a rented box and a connected
-machine at once.
+HIP-1066's envelope still names the conversation `Room` and carries the
+transport in a field named `Channel` (`apps/channels/envelope.go:60,153`). It
+takes these words — the conversation `Channel`, the transport `Transport` — by an
+amendment to HIP-1066 in the same wave as §2.1, so that no field anywhere means
+the conversation by one name and the transport by the other.
 
-The two layers are named separately on purpose: **`room` is the wire and the
-specification; "channel" is the product word.** A surface renders a room as
-`#name` and the people using it say channel; nothing behind the screen does. No
-envelope field is renamed and neither HIP-1066 nor HIP-1153 is amended by this
-HIP — the two shipped meanings of `channel` keep their addresses, and this
-specification simply does not use the word.
+### §2 The channel
 
-### §2 The room
-
-A room is an ordered, durable sequence of envelopes (HIP-1066) plus a member
+A channel is an ordered, durable sequence of envelopes (HIP-1066) plus a member
 list plus a name. It has exactly these properties and no others:
 
 - **A scope** — an org or a person (§5). The scope decides where it is stored.
 - **Members** — one or more, of the kinds in §3.
-- **A life** — `standing` or `bound`. A standing room persists until deleted. A
-  bound room names one work object and archives when that object closes.
+- **A life** — `standing` or `bound`. A standing channel persists until deleted.
+  A bound channel names one work object and archives when that object closes.
 - **Bindings** — zero or more references to work objects: a project, a
   repository, an issue. A binding is a REFERENCE, never a copy. HIP-1160 §1 makes
-  the issue the one work-item primitive and forbids a parallel store; a room
+  the issue the one work-item primitive and forbids a parallel store; a channel
   holding an issue's title or status would be exactly that store. A surface
   showing a bound issue reads it through `todo` at render time.
 - **An origin** — native, or the bridge that opened it (§7).
 
-There is no separate object for a direct message, a group, a work room or an
-agent thread. Those are a room's member count and its `Room.Kind`.
+There is no separate object for a direct message, a group, a work channel or an
+agent thread. Those are a channel's member count and its kind.
+
+#### §2.1 The addresses
+
+`team` (HIP-1048) serves channels under `/v1/team/channels`. Every operation is
+typed (HIP-0106) and reads the one store of §6.
+
+| Operation | What it does |
+|---|---|
+| `GET /v1/team/channels` | the channels the caller may see, each with its kind, life and bindings |
+| `POST /v1/team/channels` | opens a channel |
+| `PUT /v1/team/channels/{id}` | states its life and bindings |
+| `PATCH /v1/team/channels/{id}` | renames it, sets its topic, archives it |
+| `GET /v1/team/channels/{id}/members` | its roster |
+| `POST /v1/team/channels/{id}/members` | adds members |
+| `DELETE /v1/team/channels/{id}/members/{account}` | removes one |
+| `GET /v1/team/channels/{id}/messages` | its history |
+| `POST /v1/team/channels/{id}/messages` | sends to it |
+| `POST /v1/team/dms` | opens the direct channel between the people named, or answers the one that exists |
+
+Every body and answer says channel. A list is `{"channels": […]}`, one is
+`{"channel": {…}}`, and a message names the channel it is in as `channel`. A
+channel's `kind` on this surface is `public`, `private` or `dm`. The work facet
+stored on a channel's document is `hanzo:mixin:Channel`. The SDK carries the same
+nouns — `Channel`, `useChannels`, `useMessages`, `open` (HIP-0528) — and so does
+every projection of the served document: the tool, the CLI, the generated
+clients.
+
+There is no second spelling. The same operations are served today under
+`/v1/team/rooms` (§13). They are renamed, not aliased: the server's routes and
+bodies, a one-time rewrite of the stored facet from `hanzo:mixin:Room`, and the
+SDK's switch ship in one wave, and after it `/v1/team/rooms` answers 404 like any
+address nothing serves.
 
 ### §3 Members: human, agent, bot
 
@@ -124,25 +156,25 @@ a session; the session ends; the membership does not. A `bot` member is resident
 whether or not anyone is talking to it — the Slack presence is one — and the
 thing behind the seat is a HIP-1107 bot run. **This HIP mints no fourth meaning
 of "bot."** HIP-1107 §3 names three values for that word; the member kind here is
-a SEAT in a room, and the run occupying the seat is HIP-1107's.
+a SEAT in a channel, and the run occupying the seat is HIP-1107's.
 
 Membership is authorization. HIP-1048 already states this for a workspace —
 "the membership rows ARE the authorization" — and this HIP extends that roster to
-rooms rather than introducing a second one. A reader MUST NOT find two places
+channels rather than introducing a second one. A reader MUST NOT find two places
 that answer "who is in here".
 
-### §4 Two views of one room
+### §4 Two views of one channel
 
-Two surfaces render the same room from the same store. Neither owns it.
+Two surfaces render the same channel from the same store. Neither owns it.
 
-- **`hanzo.team` — the conversation view.** The org's shared space: the room
+- **`hanzo.team` — the conversation view.** The org's shared space: the channel
   list, the message history, the members, the calls, the virtual offices.
-- **`hanzo.ai` — the work view.** The same room shown as what is happening in
+- **`hanzo.ai` — the work view.** The same channel shown as what is happening in
   it: the agent sessions under way, the code they are touching, the transcript, a
   live preview of the result.
 
-Same room, same history, same members, different rendering. A message sent from
-either appears in both because both read one store, not because anything
+Same channel, same history, same members, different rendering. A message sent
+from either appears in both because both read one store, not because anything
 reconciles them. `meet` (HIP-1252) and `todo` (HIP-1160) render inside both
 views; neither is a third surface with its own copy.
 
@@ -150,7 +182,7 @@ views; neither is a third surface with its own copy.
 that rule: one substrate (`@hanzo/gui`) and one component library per brand
 (`@hanzo/ui`) across web, native and desktop. So `hanzo.ai` in a browser, Hanzo
 Desktop and Hanzo Mobile are one surface on three hosts rather than three
-implementations of it — a room renders the same in all three because it is the
+implementations of it — a channel renders the same in all three because it is the
 same code reading the same store. Note the direction HIP-0504 requires: an app
 imports its brand's `ui` and never the substrate directly, which it calls
 non-conformant. "One codebase" is therefore a statement about the substrate
@@ -158,8 +190,8 @@ underneath, not a licence for an app to reach past its own library.
 
 ### §5 Two scopes, one mechanism, and the tenancy line is the storage line
 
-A room belongs to an org. That is the whole rule, and a person's own rooms are
-not an exception to it.
+A channel belongs to an org. That is the whole rule, and a person's own channels
+are not an exception to it.
 
 Every person has a home org, and not by convention: a user's id is
 `<owner>/<name>` and the owner half IS an org, so a resolved principal always
@@ -167,20 +199,20 @@ carries one (HIP-0026). One human may belong to many orgs, and exactly one of
 them is their home. So the two scopes are two ADDRESSES on one mechanism, never
 two mechanisms:
 
-- **Org scope** — a shared org's rooms and their whole history, canonical in
+- **Org scope** — a shared org's channels and their whole history, canonical in
   that org's store. Today that is `apps/team`'s per-(org, workspace) SQLite
   (`apps/team/store.go`), which already holds channels, direct messages and chat
   messages. `hanzo.ai` READS this store; it MUST NOT keep a copy.
 - **Personal scope** — the same mechanism at the person's own org: their threads
   with their agents, and anything addressed to them rather than to an employer.
 
-**The isolation is therefore free, and no query has to remember it.** Work rooms
-sit in the work org's file and personal rooms in the person's own org's file
-because per-org storage already puts them in different files. A colleague cannot
-read a personal room for exactly the reason one org cannot read another's — not
-because a predicate excluded them. A shared store with an `is_personal` column
-would be the same fact one bug away from an org admin reading their reports'
-direct messages, and this design never writes that column.
+**The isolation is therefore free, and no query has to remember it.** Work
+channels sit in the work org's file and personal channels in the person's own
+org's file because per-org storage already puts them in different files. A
+colleague cannot read a personal channel for exactly the reason one org cannot
+read another's — not because a predicate excluded them. A shared store with an
+`is_personal` column would be the same fact one bug away from an org admin
+reading their reports' direct messages, and this design never writes that column.
 
 This is the same line HIP-1065 draws for credentials: "which accounts has this
 ORGANIZATION connected" is an administrative fact, and "which accounts has THIS
@@ -191,8 +223,8 @@ A person's own org is an ordinary org and gets no special case anywhere. It is
 smaller, and that is the only difference. Anything that would need to ask "is
 this the personal one" has reintroduced the predicate this section removes.
 
-Promotion is a copy, never a move: a person MAY post a personal room's content
-into an org room, and that act creates new envelopes in the org store with the
+Promotion is a copy, never a move: a person MAY post a personal channel's content
+into an org channel, and that act creates new envelopes in the org store with the
 person as sender. Nothing is silently reclassified.
 
 ### §6 One store, N views, M bridges
@@ -202,7 +234,7 @@ person as sender. Nothing is silently reclassified.
 disagree; two stores kept in step always eventually do, and the estate has paid
 for that lesson three times — HIP-1107 §1 keeps no second copy of a run for it,
 HIP-1160 §1 forbids mirroring the forge for it, and HIP-1252's Rationale refuses
-to hold rooms and membership for it.
+to hold membership of its own for it.
 
 The shape is fixed:
 
@@ -211,7 +243,7 @@ The shape is fixed:
                                        ├─ bridge ─┐
                     external network ──┘          │
                                                   ▼
-    hanzo.team ────── view ──────────────▶  THE ROOM STORE
+    hanzo.team ────── view ──────────────▶  THE CHANNEL STORE
     hanzo.ai   ────── view ──────────────▶  (org scope | personal scope)
 ```
 
@@ -221,23 +253,23 @@ One consequence is immediate and is a defect today: the store must hold **both
 halves of every conversation.** `apps/channels` writes an arriving message to
 `channel_inbox` and a sent one to `channel_send`, and the two are different
 tables (`apps/channels/store.go:109,126`) — so no single read returns the
-conversation. A room is the sequence, so a room store that records only what
-arrived is not one.
+conversation. A channel is the sequence, so a channel store that records only
+what arrived is not one.
 
 ### §7 A bridge
 
-A bridge joins one external network to the room store. Every bridge owes exactly
-four things, and a transport is not connected until it has all four:
+A bridge joins one external network to the channel store. Every bridge owes
+exactly four things, and a transport is not connected until it has all four:
 
-1. **A binding table** — our room ↔ theirs, both directions, so either side can
-   be resolved from the other. Creation is bridged both ways: a room created on
-   an outside network with our presence in it opens a room here, and a room
-   created here with that transport bound opens one there.
+1. **A binding table** — our channel ↔ theirs, both directions, so either side
+   can be resolved from the other. Creation is bridged both ways: a channel
+   created on an outside network with our presence in it opens a channel here,
+   and a channel created here with that transport bound opens one there.
 2. **A relay** — messages move in both directions as they happen, normalized
    into and rendered out of HIP-1066's envelope. A bridge MUST NOT invent a
    second message shape.
 3. **Echo suppression** — a message this estate sent and the network echoed back
-   MUST NOT re-enter the room. Without it every reply appears twice and every
+   MUST NOT re-enter the channel. Without it every reply appears twice and every
    agent answers its own message.
 4. **Identity mapping** — external account ↔ our principal, so a bridged sender
    is a member and not an anonymous string. HIP-1066 already places this question
@@ -246,28 +278,28 @@ four things, and a transport is not connected until it has all four:
 
 **Credentials are not the bridge's.** They live sealed in the key store under a
 path built from the tenant, reached through `integrations` (HIP-1250) or
-`connectors` (HIP-1065). HIP-1066's one-way rule holds unchanged: rooms depend on
-integrations; integrations MUST NOT depend on rooms.
+`connectors` (HIP-1065). HIP-1066's one-way rule holds unchanged: channels depend
+on integrations; integrations MUST NOT depend on channels.
 
-A bot is not a bridge. A bot may be a member of a bridged room, and the room
-still relays with no bot present. Any transport that only works when a bot is
-resident has been built wrong.
+A bot is not a bridge. A bot may be a member of a bridged channel, and the
+channel still relays with no bot present. Any transport that only works when a
+bot is resident has been built wrong.
 
 ### §8 Transports, and what each one honestly costs
 
 HIP-1066's transport registry is closed and enumerated — four members today
 (`apps/channels/registry.go:76`). A new transport is a tagged member added to
 that registry declaring what it can actually render — direct messages, group
-rooms, threading — and those declarations are honest rather than aspirational. It
-is not a new subsystem.
+channels, threading — and those declarations are honest rather than
+aspirational. It is not a new subsystem.
 
 The roster, with the real remaining cost of each stated rather than implied:
 
 | Transport | State | What is actually left to do |
 |---|---|---|
-| slack, discord, teams, telegram | in the registry | bind them to a room store; today they reach an inbox, not a room. Discord carries no direct message and says so |
+| slack, discord, teams, telegram | in the registry | bind them to the channel store; today they reach an inbox, not a channel. Discord carries no direct message and says so |
 | whatsapp, imessage, signal, and ~20 more | adapter exists, elsewhere | `@hanzo/bot` already speaks these (`bot/src/channels/registry.ts`, plus extensions); `apps/integrations` holds only a WhatsApp credential connector. The work is a registry member and a relay, not an adapter |
-| email | send-only | outbound connectors exist (`apps/integrations/messaging.go`); HIP-0061 owns `/send/email`. Nothing binds an arriving mail to a room |
+| email | send-only | outbound connectors exist (`apps/integrations/messaging.go`); HIP-0061 owns `/send/email`. Nothing binds an arriving mail to a channel |
 | sms, voice | send-only | `tel` (HIP-1069) owns numbers, calls and messages and is not a registry member |
 | x, linkedin, facebook, instagram | publish-only | `social` (HIP-1153) publishes to these; publishing is not conversation. Messaging on the Meta networks is a new adapter with its own review and its own reply-window rules |
 
@@ -279,44 +311,44 @@ account, which is an operational and policy commitment before it is an
 engineering one. `@hanzo/bot` reaches it by exactly that route. Do not list it
 beside the others as though it were an adapter.
 
-### §9 The hub room and the correspondent room
+### §9 The hub channel and the correspondent channel
 
-Each connected transport gets one **hub** room — `#whatsapp`, `#instagram` —
+Each connected transport gets one **hub** channel — `#whatsapp`, `#instagram` —
 standing, org-scoped, whose members are the people and agents who work that
 network. The hub is where that network's outbound work is done: a post is
 drafted, discussed and published from it through `social` (HIP-1153), which
 remains the one publisher.
 
 Each inbound conversation from an outside person opens one **correspondent**
-room, named `#<transport>-dm-<their-handle>`, created on the first message with
-no setup. It is a child of the hub, org-scoped, standing, and visible in both
-views. A reply sent from any surface leaves on the transport it arrived on, as
-the org's identity there.
+channel, named `#<transport>-dm-<their-handle>`, created on the first message
+with no setup. It is a child of the hub, org-scoped, standing, and visible in
+both views. A reply sent from any surface leaves on the transport it arrived on,
+as the org's identity there.
 
-A correspondent room is a shared inbox: **any member may answer, and members
+A correspondent channel is a shared inbox: **any member may answer, and members
 include agents.** There is no assignment step and no owner column. Handling is
-whoever picks it up, which is the property that makes a room worth having instead
-of a queue.
+whoever picks it up, which is the property that makes a channel worth having
+instead of a queue.
 
-Two limits are not negotiable. Auto-creation is bounded — an unbounded room per
-inbound stranger is a room-creation flood with a name attached — so it is subject
-to the access decision HIP-1066 already makes per (org, transport): pairing,
-allowlist, or open. And HIP-1066's rule that sender identifiers MUST NOT appear
-in logs holds here too; the room's name carries the correspondent's handle, and
-the room is not a log.
+Two limits are not negotiable. Auto-creation is bounded — an unbounded channel
+per inbound stranger is a channel-creation flood with a name attached — so it is
+subject to the access decision HIP-1066 already makes per (org, transport):
+pairing, allowlist, or open. And HIP-1066's rule that sender identifiers MUST NOT
+appear in logs holds here too; the channel's name carries the correspondent's
+handle, and the channel is not a log.
 
 ### §10 The ambient agent
 
-The org's agent is a member of every new room, by default, as org policy.
+The org's agent is a member of every new channel, by default, as org policy.
 
-This is one line in one function. There MUST be exactly one place a room is
+This is one line in one function. There MUST be exactly one place a channel is
 created, and default membership is applied there. Applied anywhere else it is a
-policy with holes: a room made by a bridge, by an agent, or by a person would
+policy with holes: a channel made by a bridge, by an agent, or by a person would
 each get their own answer. That single place does not exist today (§13), and
 creating it is the prerequisite for this section, not a detail of it.
 
 The agent is addressed by mention and runs a session (HIP-1210). It holds no
-authority a member does not have: it reads the room it is in, and no other.
+authority a member does not have: it reads the channel it is in, and no other.
 
 First contact with an outside person is answered by a human. What the agent MAY
 do without review is recurrence — an answer a person already approved, asked
@@ -324,8 +356,8 @@ again — and the authority a specific member has to send without a person's act
 specified per user in HIP-0524, not here.
 
 **One responder, not two.** `apps/channels`' turn and `apps/team`'s responder are
-two implementations of "a model answers a message", and with one room store they
-answer the same message. They MUST fold to one, and the survivor is the one
+two implementations of "a model answers a message", and with one channel store
+they answer the same message. They MUST fold to one, and the survivor is the one
 beside the store that holds the message, for the reason HIP-1066 already gives:
 everything the turn needs — the policy, the reply route, the egress — is already
 there.
@@ -342,19 +374,20 @@ controls to pause, resume, stop or message any node of it. Compute under a
 session is a `sandbox` lease (HIP-1146) — one primitive, whatever the lifetime.
 
 The point of rendering it is not display. It is that a person can see and steer
-every piece of agentic work from the room the work was asked for in, rather than
-learning where each subsystem hid its own console.
+every piece of agentic work from the channel the work was asked for in, rather
+than learning where each subsystem hid its own console.
 
-### §12 A call happens in the room
+### §12 A call happens in the channel
 
-A call is not a separate place. `meet` (HIP-1252) mints a join token for a room,
-and holds no membership of its own: it asks the roster who is in.
+A call is not a separate place. `meet` (HIP-1252) mints a join token for a
+channel's call, and holds no membership of its own: it asks the roster who is in.
 
 Three consequences follow, and each is a constraint rather than a feature:
 
 1. **The join decision still asks the roster.** `meet` asks `team` who is a
-   member; with rooms it asks the room's member list. It MUST NOT grow a second
-   membership store, which is precisely the design HIP-1252's Rationale rejects.
+   member; with channels it asks the channel's member list. It MUST NOT grow a
+   second membership store, which is precisely the design HIP-1252's Rationale
+   rejects.
 2. **An agent that joins a call is a participant with an identity and a seat.**
    `meet` stamps identity server-side and debits per seat. An agent listener is
    therefore a named participant and a billed one; there is no free silent
@@ -364,7 +397,7 @@ Three consequences follow, and each is a constraint rather than a feature:
    browser-to-server and never passes through the API binary, so nothing in the
    join decision can see a word that was said. The path is: a recording
    participant receives the media, transcription runs over it, and the summary is
-   posted into the room as ordinary envelopes — read in the conversation view,
+   posted into the channel as ordinary envelopes — read in the conversation view,
    streamed into the work view. The recording half of that already exists
    (`apps/meet/record.go`, `apps/meet/egress.go`); transcription and the posting
    step do not (§13). Note that HIP-1252 §1 says recording "is either the media
@@ -373,17 +406,17 @@ Three consequences follow, and each is a constraint rather than a feature:
 
 ### §13 What is built, what is off, what is missing
 
-Measured in `hanzoai/cloud`, `hanzoai/team` and `@hanzo/bot`
-on 2026-08-27. A specification claiming built things that are not built is worse
-than no specification, so each mechanism this HIP names carries its state and the
-symbol that proves it.
+Measured in `hanzoai/cloud`, `hanzoai/team` and `@hanzo/bot`. A specification
+claiming built things that are not built is worse than no specification, so each
+mechanism this HIP names carries its state and the symbol that proves it.
 
 | Mechanism | State | Evidence |
 |---|---|---|
+| The channel addresses, `/v1/team/channels` (§2.1) | **gap** | the same operations are served as `/v1/team/rooms` (`apps/team/room.go:122`, `room_members.go:105`, `message.go:250`), answering `rooms` and `room`, with the facet stored as `hanzo:mixin:Room`; renamed in one wave with the SDK |
 | Session tree — `rootSessionId`, `children`, the tree endpoint, `project`, `target` | **shipped** | `apps/agents/sessions.go:112,141,151,164`; `GET /v1/agents/sessions/:id/tree` (`sessions.go:329`), `sessions_store.go:331 ListTree` |
-| Agents as room participants, mention detection, run-on-behalf | **off by default** | `apps/team/team.go:119` `TEAM_AGENTS_ENABLED`; `apps/team/chat.go:371 mentionsBot`; `apps/agents/onbehalf.go:34 RunOnBehalf`. The dial is necessary, not sufficient — the roster must also resolve (`apps/team/bots.go:152`) |
+| Agents as channel participants, mention detection, run-on-behalf | **off by default** | `apps/team/team.go:119` `TEAM_AGENTS_ENABLED`; `apps/team/chat.go:371 mentionsBot`; `apps/agents/onbehalf.go:34 RunOnBehalf`. The dial is necessary, not sufficient — the roster must also resolve (`apps/team/bots.go:152`) |
 | Bot as a WORKSPACE member | **shipped** | `apps/team/bots.go:65 botMember`; reconciled on every transactor connect (`apps/team/transactor.go:150`) and by `POST /v1/team/bots/sync` |
-| Bot as a ROOM member | **gap** | the only function that adds a bot to a room's members is `team/services/slack/pod-slack/src/botmembers.ts:138 addToSpace`, invoked only when an admin passes an explicit space |
+| Bot as a CHANNEL member | **gap** | the only function that adds a bot to a channel's members is `team/services/slack/pod-slack/src/botmembers.ts:138 addToSpace`, invoked only when an admin passes an explicit space |
 | Slack transport — send, inbox, pairing | **shipped** | `apps/channels/slack.go:22`; `apps/channels/routes.go:73,74,96` |
 | The inbox holds both halves of a conversation | **gap** | inbound writes `channel_inbox` (`apps/channels/ingest.go:78`), outbound writes `channel_send` (`store.go:126`); no read returns the sequence |
 | A bridged sender resolved to a principal on the stored row | **gap** | `senderUser` is a live column and a published field that is never populated — no normalizer sets `Sender.UserID` (`apps/channels/{slack,discord,teams,telegram}.go`), asserted empty by `ingest_test.go:457`. The link IS resolved later, for the turn only |
@@ -391,18 +424,18 @@ symbol that proves it.
 | Identity mapping, external account ↔ principal | **shipped, two designs** | sealed per user in the key store in cloud (`apps/integrations/channel.go:371 userLink`, not enumerable); a queryable table in `team-go` (`pkg/slack/installs.go:113`) |
 | Meet join tokens | **shipped** | `POST /v1/meet/getToken` (`apps/meet/meet.go:350`), minted at `meet.go:784` |
 | Call recording | **shipped** | `apps/meet/record.go`, `apps/meet/egress.go:234` |
-| Call transcription, summary posted to a room | **gap** | no transcription anywhere in `apps/*`; no agent participant in a call |
-| Correspondent room auto-created from an inbound message | **gap** | ingest writes rows, never a room; `team-go/pkg/slack/slack.go:242` returns when no mapping exists |
-| Room creation bridged both directions | **gap** | only a hand-made mapping of two rooms that both already exist (`team-go/pkg/slack/slack.go:801 mapChannel`); neither leg creates one. Cloud has no equivalent |
-| One room-creation choke point | **gap** | three unrelated paths — a REST create in `team-go`, the transactor `applyTx` (cloud's only path), and a mirror projection. Cloud has no server-side create at all. The nearest hook is where `apps/team/seed.go:70` already reacts to a channel create |
-| The ambient agent added at creation | **gap** | follows from the line above. A mirrored room inherits bots incidentally, as workspace roster members, not by rule |
+| Call transcription, summary posted to a channel | **gap** | no transcription anywhere in `apps/*`; no agent participant in a call |
+| Correspondent channel auto-created from an inbound message | **gap** | ingest writes rows, never a channel; `team-go/pkg/slack/slack.go:242` returns when no mapping exists |
+| Channel creation bridged both directions | **gap** | only a hand-made mapping of two channels that both already exist (`team-go/pkg/slack/slack.go:801 mapChannel`); neither leg creates one. Cloud has no equivalent |
+| One channel-creation choke point | **gap** | three unrelated paths — a REST create in `team-go`, the transactor `applyTx` (cloud's only path), and a mirror projection. Cloud has no server-side create at all. The nearest hook is where `apps/team/seed.go:70` already reacts to a channel create |
+| The ambient agent added at creation | **gap** | follows from the line above. A mirrored channel inherits bots incidentally, as workspace roster members, not by rule |
 | Transports beyond the four | **gap in cloud, shipped in the bot** | `apps/channels/registry.go:76` is exactly four; `@hanzo/bot` speaks ~28 including whatsapp, imessage and signal |
 | One responder | **gap** | two exist: `apps/channels/turn.go` and `apps/team`'s `runAgent` |
-| One room store | **gap** | at least three conversation stores, no sync between them and no cross-imports: `apps/team/store.go` (per org+workspace), `apps/channels/store.go`, and the agent threads owned by the external `hanzoai/agent` module (`apps/agents/conversation.go`) |
+| One channel store | **gap** | at least three conversation stores, no sync between them and no cross-imports: `apps/team/store.go` (per org+workspace), `apps/channels/store.go`, and the agent threads owned by the external `hanzoai/agent` module (`apps/agents/conversation.go`) |
 
 Two corrections to beliefs that were in circulation while this was written, both
 found by reading the source. The bot-member projection is **not** uncalled — it
-reconciles on every transactor connect; what is uncalled is the *room*-level
+reconciles on every transactor connect; what is uncalled is the *channel*-level
 projection, which is a different function in a different service. And
 `senderUser` is not unpopulated on one path; it is unpopulated on **every** path,
 by construction, because identity resolution was deliberately removed from
@@ -412,18 +445,21 @@ ingest.
 
 An implementation conforms when all of these hold:
 
-1. One store answers "what was said in this room", holding both halves of the
+1. One store answers "what was said in this channel", holding both halves of the
    conversation, and no surface holds a second copy.
-2. Org rooms and personal rooms are in different stores, not separated by a
-   predicate.
-3. Exactly one function creates a room, and default membership is applied there.
+2. Org channels and personal channels are in different stores, not separated by
+   a predicate.
+3. Exactly one function creates a channel, and default membership is applied
+   there.
 4. Exactly one responder decides whether a model answers a message.
 5. Every bridge has all four properties of §7. A transport with three of them is
    not connected, and MUST NOT be listed as though it were.
 6. Every stored message carries a resolved sender, or is refused. A member list
    over unresolved identifiers is not a member list.
-7. A room's binding to a work object resolves through `todo`; no room row carries
-   an issue's title, state or assignee.
+7. A channel's binding to a work object resolves through `todo`; no channel row
+   carries an issue's title, state or assignee.
+8. Every address, body, stored name and SDK noun for the conversation says
+   channel (§2.1). No second spelling is served.
 
 ## Rationale
 
@@ -439,55 +475,66 @@ The alternative to one member model is a per-surface participant type, which is
 how the estate got two responders. The moment "who may reply" is answered twice,
 one of the answers is stale.
 
-The alternative to naming the primitive `room` is to redefine `channel`, which
-means renaming a field on a shipped envelope that every transport adapter reads,
-plus amending two Draft HIPs. That may still be the right call — it is a
-product-language decision, not a technical one — but it is a decision to take
-deliberately, not a consequence of a specification quietly using a taken word.
+The alternative to `channel` is `room`, which kept the conversation clear of the
+transport and the social account by giving it a word nobody says. That made
+every layer translate: people said channel, the screen drew channels, the store's
+class was `Channel`, and only the wire and the SDK said room. One word per
+object, used from the screen to the store, is cheaper than a private word, and
+the two older meanings each keep a word of their own (§1). Renaming without an
+alias is the same choice HIP-0139 makes for an address: two spellings of one
+thing double every table the surface flows into.
 
 ## Security Considerations
 
-**The scope line is the isolation boundary.** Org rooms and personal rooms in one
-store make privacy a query predicate. Any defect in that predicate — a missing
-clause, a join, an admin surface that forgets it — reads a person's direct
+**The scope line is the isolation boundary.** Org channels and personal channels
+in one store make privacy a query predicate. Any defect in that predicate — a
+missing clause, a join, an admin surface that forgets it — reads a person's direct
 messages to their manager. Separate stores make the same defect impossible to
 write.
 
 **A bridge is an identity translator, and translators forge.** A bridged message
 arrives claiming an external sender; the mapping in §7 turns that claim into a
 member. An unverified mapping lets anyone who can post on the external network
-speak in the room as a member. The mapping MUST be resolved by `integrations`,
+speak in the channel as a member. The mapping MUST be resolved by `integrations`,
 which holds the link, and MUST NOT be inferred from a display name. Note that
 this is not hypothetical today: the stored inbox row's `senderUser` is always
 empty (§13), so anything that promotes a stored row to a member would be
 promoting an unauthenticated external string.
 
-**Auto-created rooms are an unauthenticated write.** §9 opens a room on a
+**Auto-created channels are an unauthenticated write.** §9 opens a channel on a
 stranger's message. Without the access decision it inherits from HIP-1066, that
 is unbounded creation of named objects by anyone who can find the org's account
 on any connected network.
 
 **The ambient agent is a member of everything, which makes it the widest
 principal in the estate.** It MUST hold only what a member holds. An agent that
-reads across rooms because it is convenient is a cross-room read with a friendly
-name, and in a bridged room the party on the other end is not an employee.
+reads across channels because it is convenient is a cross-channel read with a
+friendly name, and in a bridged channel the party on the other end is not an
+employee.
 
 **Attribution is a security property, not a courtesy.** A message an agent sent
-MUST be recorded as agent-sent. A room whose history cannot distinguish a
+MUST be recorded as agent-sent. A channel whose history cannot distinguish a
 person's words from a model's words cannot be used as evidence of anything, which
 is the whole reason to keep the history.
 
 **Echo suppression is a safety limit, not tidiness.** Without it, an agent
-answering a bridged room can answer its own relayed reply. Two such rooms bridged
-to each other do it without stopping.
+answering a bridged channel can answer its own relayed reply. Two such channels
+bridged to each other do it without stopping.
+
+**The rename leaves no reachable old name.** `/v1/team/rooms` stops answering in
+the wave that serves `/v1/team/channels`; nothing forwards it. A forwarding alias
+would be a second address whose authorization has to be kept identical to the
+first by hand.
 
 ## References
 
 - HIP-0026 — Identity & Access Management Standard
 - HIP-0061 — Notification & Messaging Service Standard
+- HIP-0106 — The Hanzo Plugin Contract
 - HIP-0139 — Capability
 - HIP-0504 — Unified Cross-Platform Design System (one substrate, three hosts)
 - HIP-0524 — The Personal Agent
+- HIP-0528 — Mods — The App SDK
 - HIP-1048 — Team
 - HIP-1065 — Connectors — A User's Own Credentials
 - HIP-1066 — Channels — One Inbox (the envelope, the transport registry, the gate)
