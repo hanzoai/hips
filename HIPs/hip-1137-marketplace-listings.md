@@ -6,8 +6,9 @@ type: Standards Track
 category: Interface
 capability: marketplace
 status: Final
-implementation-go: shipped
+implementation-go: partial
 created: 2026-08-20
+updated: 2026-10-22
 requires: HIP-0026, HIP-0106, HIP-0139
 ---
 
@@ -22,6 +23,44 @@ registry's activation writes — plus a listing store that says what a tool cost
 and which wallet is paid. Marketplace never dispatches a tool and never moves
 money itself. It is implemented in `hanzoai/cloud` at `apps/marketplace`
 (HIP-0106).
+
+A listing is discoverable outside its publisher org once a SuperAdmin approves
+it. That rule is proposed by the Amendment below and is not served yet.
+
+## Amendment: a public listing is reviewed (proposed)
+
+Proposed with HIP-0528. Nothing in this section is served today; §1–§5 describe
+what is. The column, the operator route, the filter in discovery and the audit
+records below are all still to be built.
+
+- **The state.** Every listing carries `review` — `submitted`, `approved` or
+  `refused` — and a `reason`, which a refusal requires. Publish writes
+  `submitted`. A republish that changes what an install would activate — the
+  tool it names, the price, the payee, and for a mod listing (HIP-0528) the
+  pinned bundle digest or the permission set — writes `submitted` again. Rows
+  that exist when this lands enter `submitted`.
+- **Who decides.** Only a SuperAdmin — `owner == "admin"`, the one predicate
+  (HIP-0118, HIP-0026) — sets `approved` or `refused`, at
+  `PUT /v1/admin/marketplace/listings/{org}/{id}/review` with `{state, reason}`:
+  the operator's view of this capability (HIP-0139 §3.2), drawn in the admin
+  console (HIP-1320). The queue is
+  `GET /v1/admin/marketplace/listings?review=submitted`. An org admin's
+  `isAdmin` admits nothing here, in any org, its own included.
+- **The record.** Each decision is written to the tamper-evident trail
+  (HIP-1103) before the row changes: the SuperAdmin, the listing key, the state
+  it left and the one it entered, the reason, and for a mod the digest decided
+  on. A decision that cannot be recorded changes nothing.
+- **What it changes.** Discovery answers another org with approved listings
+  only, and installing a listing that is not approved answers as if it did not
+  exist, so the state is not an oracle. The publisher org's own-listings
+  operation returns every listing it published with its state and reason, and
+  the publisher MAY install its own listing in any state into its own projects.
+  An install that already happened is an activation (§1), and a later refusal
+  does not undo it; withdrawing installed code is HIP-0528's block.
+- **A reviewer's verdict is evidence.** A verdict from HIP-0528's review seam
+  attaches to the submission and is shown beside it. It never sets the state: a
+  pass approves nothing, and approving over a refusal takes a reason, recorded
+  as above.
 
 ## Motivation
 
@@ -116,7 +155,11 @@ publisher-org-payable only. The listing store's own writes are bounded by the
 
 - HIP-0026 — Identity and Access Management
 - HIP-0106 — Hanzo Plugin Contract
+- HIP-0118 — SuperAdmin & Tenant Isolation Model
 - HIP-0139 — Capability
+- HIP-0528 — Mods — The App SDK
+- HIP-1103 — Audit — The Tamper-Evident Trail
+- HIP-1320 — Admin — The Operator Console
 
 ## Copyright
 
