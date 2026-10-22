@@ -57,7 +57,7 @@ records below are all still to be built.
   the publisher MAY install its own listing in any state into its own projects.
   An install that already happened is an activation (§1), and a later refusal
   does not undo it; withdrawing installed code is HIP-0528's block.
-- **A reviewer's verdict is evidence.** A verdict from HIP-0528's review seam
+- **A reviewer's verdict is evidence.** A verdict from HIP-0528's review (§7)
   attaches to the submission and is shown beside it. It never sets the state: a
   pass approves nothing, and approving over a refusal takes a reason, recorded
   as above.
