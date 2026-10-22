@@ -257,7 +257,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1164](./HIPs/hip-1164-provisioning-stores-on-demand.md) | Provisioning — Stores on Demand | Standards Track | Core | Final | shipped | - | - |
 | [HIP-1165](./HIPs/hip-1165-s3-buckets-and-objects.md) | S3 — Buckets and Objects | Standards Track | Core | Final | shipped | - | - |
 | [HIP-1167](./HIPs/hip-1167-dataset-the-versioned-snapshot.md) | Dataset — An Immutable Snapshot | Standards Track | Core | Final | shipped | - | - |
-| [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | Compute — Machines You Rent or Link | Standards Track | Infrastructure | Final | partial | - | - |
+| [HIP-1172](./HIPs/hip-1172-visor-compute-you-rent.md) | Compute — Machines You Rent or Link | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1173](./HIPs/hip-1173-network-the-zero-trust-overlay.md) | Network — An Org-Scoped Overlay | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1180](./HIPs/hip-1180-link-account-registry.md) | Link — A Record of Provider Accounts | Standards Track | Core | Final | shipped | - | - |
 | [HIP-1181](./HIPs/hip-1181-plan-tier-catalog.md) | Plan — The Tier Catalog | Standards Track | Core | Final | partial | - | - |
@@ -269,7 +269,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1202](./HIPs/hip-1202-entitlement.md) | Entitlement — What an Org May Run | Standards Track | Platform | Final | shipped | - | - |
 | [HIP-1203](./HIPs/hip-1203-affiliate.md) | Affiliate — Commission on Referred Spend | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) | Agents — Define, Run, Keep the Run | Standards Track | Application | Final | shipped | - | - |
-| [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) | AI — The Model API | Standards Track | Infrastructure | Final | partial | - | - |
+| [HIP-1211](./HIPs/hip-1211-ai-the-model-api.md) | AI — The Model API | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1212](./HIPs/hip-1212-exec-the-code-interpreter.md) | Exec — The Code Interpreter | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) | Tools — The Tool Plane | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1214](./HIPs/hip-1214-lsp-live-code-intelligence.md) | LSP — Live Code Intelligence | Standards Track | Application | Final | shipped | - | - |

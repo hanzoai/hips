@@ -4,7 +4,7 @@ title: AI — The Model API
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-status: Final
+status: Draft
 implementation-go: partial
 created: 2026-08-20
 updated: 2026-10-22
@@ -67,7 +67,9 @@ resolves to an engine on the org's overlay (HIP-1173).
   it, and neither `auto` nor the Enso router (HIP-0510) ever resolves to a
   route, so only a request that names a route's id exactly reaches it. A second
   route with the same key is 409. compute names a workload's route
-  `local/<node>/<model>`, from the last segment of the repository path.
+  `local/<node>/<name>`, where `<name>` is the last segment of the repository
+  path folded to lowercase, so every name a repository may carry is a valid
+  route name.
 - `upstream` is the id the endpoint's `/models` lists.
 - `token` is write-only and sealed in the platform's KMS (HIP-1134), not the
   org's, so no org admin can read it back; no read answers it.
@@ -129,8 +131,12 @@ its model.
 
 - Every request is one usage record through the module's one usage hook, keyed
   to the validated org: provider `node`, model the route's, tokens as the engine
-  reports them, cost `price` times tokens. A count that is negative or missing
-  is zero, so a machine can lower a bill to nothing and never below it.
+  reports them, cost `price` times tokens.
+- A reported count is untrusted. One that is negative or missing is zero, and
+  one above the bytes the gateway relayed for that side of the exchange is that
+  byte count, since no token is shorter than a byte. The cost is computed with
+  overflow checked; a cost that overflows or comes out negative is refused, the
+  request is recorded at zero, and nothing is debited.
 - At price zero nothing is debited and no hosted allowance is drawn. A nonzero
   price is debited like any priced call.
 - A request served by `fallback` is recorded as the hosted model's, at the
@@ -159,7 +165,9 @@ its model.
    whose plan or balance refuses the hosted model gets that refusal, not an
    answer.
 5. A linked-model call at price zero leaves a usage record with cost 0, the node
-   and workload attributes, and no body.
+   and workload attributes, and no body. At a nonzero price, an endpoint
+   reporting 2^62 completion tokens, or −1, is billed for at most the bytes
+   relayed and never credited.
 6. A caller's `x-api-key`, cookies and identity headers never reach the
    endpoint, and a `Set-Cookie` from the endpoint never reaches the caller.
 7. An endpoint answering `text/html` yields 502; one answering
