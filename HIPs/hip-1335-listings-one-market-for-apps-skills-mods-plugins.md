@@ -152,6 +152,30 @@ unless the org's policy names the kind as auto; every call audited), `market.upd
 `mod.create` (an agent writes a mod from a prompt, validates it against the manifest, offers it to
 the member, and on approval publishes it to the org's private listing).
 
+## Share, list and sell: one action
+
+Whatever a member creates on the platform is a listing's `kind`: agent, persona, skill, plugin,
+mod, app, automation, pack, prompt, template. One **Share** action everywhere in the platform moves
+a thing up one ladder: **Private** (the creator), **Org** (their org's members), **Public link**
+(anyone with the link, not searchable), **Listed** (in the market, after review). Each step is a
+ledger-visible change, reversible, and `Listed` is the only one that needs a reviewer.
+
+A listing carries: a **price** (`free`, `one-time`, `subscription`, `usage`; in the publisher's
+currency), a **license** (an SPDX id), the publisher's verified IAM identity, and a **yank and
+refund policy** (a yanked listing leaves the shop and stops installing; refunds follow the plan's
+terms, decided in commerce). **Buying** is one transaction: an install-ledger row and a Hanzo
+Commerce charge to the **buyer's org**; the publisher sees sales and installs. The platform's
+cut is **one field in the registry's configuration, set by the owner, default 0**; this HIP sets
+no revenue share.
+
+| part | state |
+|---|---|
+| Private and Listed (public flag, review), manifest, artifact hash, install by copy, ledger, remove | built (`apps/marketplace`) |
+| Org and Public-link rungs; a Share action in each platform surface | designed |
+| Price on a listing with a manifest | refused at publish and at install (402) until the charge below exists, so nothing priced installs for free |
+| Settlement through commerce: charge the buyer's org, pay the publisher's payout wallet (`/v1/marketplace/seller/payout` already binds a proved wallet; `x402` settles per call and per job today), the registry-config cut | designed; to be built behind the owner-set cut and tested against commerce's sandbox before any money moves |
+| Subscription and usage-based prices | designed (commerce plans) |
+
 ## Out of scope
 
 Pricing and revenue share for paid listings are the existing marketplace's (x402, per listing);
