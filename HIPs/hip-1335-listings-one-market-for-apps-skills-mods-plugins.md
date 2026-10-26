@@ -1,6 +1,6 @@
 ---
 hip: 1335
-title: Listings — One Market for Apps, Skills, Mods and Plugins
+title: Listings — One Market for Apps, Skills, Mods, Plugins, Automations and Packs
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
@@ -11,7 +11,7 @@ created: 2026-10-26
 requires: HIP-0026, HIP-0118, HIP-0126, HIP-0139
 ---
 
-# HIP-1335: Listings — One Market for Apps, Skills, Mods and Plugins
+# HIP-1335: Listings — One Market for Apps, Skills, Mods, Plugins, Automations and Packs
 
 ## Abstract
 
@@ -27,6 +27,13 @@ a value of `kind`.
 
 ## Kinds
 
+Six kinds carry a manifest: `app`, `skill`, `mod`, `plugin`, and two more that earn their place:
+`automation` (a scheduled or triggered workflow, the `/v1/auto` object, installed as a copy the org
+owns: the most-asked-for thing a business installs that is neither prose nor a connector) and `pack`
+(a named bundle of listings, §Packs: the unit a person actually chooses). `agent` already is a kind;
+`theme` is a mod with only theme keys, so it is not a seventh.
+
+
 | kind | artifact | where it lives once installed | runs |
 |---|---|---|---|
 | `app` | a project template, or a host that a frame may embed | the installer's projects; the embed registry of `@hanzo/app` | its own origin, in a frame |
@@ -35,6 +42,61 @@ a value of `kind`.
 | `mod` | a theme and layout contract (`@hanzo/mod` `ModTheme`) and nothing else | the user's or org's mods | the client, through CSS custom properties |
 
 `agent`, `persona`, `mcp`, `tool` and `template` keep their meaning and their install semantics.
+
+## A plugin is MCP, or a Hanzo plugin
+
+`plugin` has two forms, and both are reachable the same way by an agent, as MCP tools:
+
+1. an **MCP server**: a remote URL, or a package/command the sandbox launches; its credential is the
+   installer's own, through the connection plane (`/v1/connection`, `/v1/provider`).
+2. a **Hanzo plugin**: a manifest and a backend module that runs isolated with declared
+   permissions and no ambient network or filesystem. It may expose MCP tools itself and may carry
+   skills and a mod.
+
+Isolation, one runtime per kind, from what already runs (measured in `hanzo-inc/cloud`):
+
+| kind of code | runtime | evidence |
+|---|---|---|
+| TypeScript/JavaScript actions | the tool plane's embedded interpreter (goja) | `script/`: its only impure primitive is a Go HTTP doer, the credential arrives already resolved; the one JS dependency in `go.mod`; 448 connectors run on it today |
+| a compiled backend (Rust, Go, C) | WebAssembly (WASI) under wazero | no runtime today (`go.mod` has none); pure Go, no cgo (cloud gates cgo hard, see the Dockerfile's sqlite gate); deny-by-default: no preopened files, no sockets, host functions only for declared permissions. Specified, not built |
+| anything else (a package, a binary, a language server) | the sandbox microVM (`apps/sandbox`: `runc`, `visor`, `kata-clh`, `kata-fc`) | already serves exec, dev and desktop leases and bills them |
+
+A V8 isolate is not chosen: it needs cgo and a second JS engine beside the one that already runs.
+The doer enforces `network:<host>`: a plugin reaches only the hosts it declared.
+
+## The catalog is curated; the rest is the long tail
+
+Measured on 2026-10-26: the MCP shelf (`/v1/tool/catalog`) holds **50,589** servers; the connector
+catalog 754 (448 run in-process, 734 have actions, 383 triggers); the skills catalogue 722 `SKILL.md`
+under 116 products; the market's shop 9 public listings. The default view is a **curated set of about
+1,000**, the plugins page's `All` is the rest with an `unverified` marker, and both install through
+the same ledger and permission screen. One registry, one ranking field (`rank`, 0-100, higher first);
+the rules are data in the registry (`rank.rules`), never code: official (a domain-attested
+namespace: necessary, not sufficient, since 94% of the first 6,000 qualify), a working remote or
+runnable install path (required), installs in our ledger, our own tool-call volume, and the upstream
+repository's public star count fetched with an authenticated, cached, rate-limited read. The curated
+set is the top 1,000 by `rank` with no category above 12%, and every entry in it must pass an install
+smoke. Today's 448 runnable connectors are the floor of the set.
+
+## Mods change the running app
+
+A mod declares the surfaces it touches from a closed list: `theme` (the CSS custom properties of
+`@hanzo/mod`), `layout` (density, radius, sidebar order), `pane` (one pane beside the chat),
+`band` (a status band), `command` (a slash command), `hook` (a handler on a tool call). It loads
+without a reload through the one `apply` call that already reapplies a theme; the previous state is
+kept and **Revert** restores it in one action; a mod's CSS cannot import, fetch or leave its sheet
+(the validator refuses it). An agent authors a mod with `mod.create`, validates it, previews it for
+the member, and offers it; it applies only on approval.
+
+## Packs, and Personal or Business
+
+A pack is a listing whose manifest lists listings (`contents`) and defaults (permissions granted,
+models, spend limit). Applying a pack is **one confirmable ledger transaction**: the screen shows
+exactly what it installs and permits, the ledger records each row under one `pack` id, and Remove
+reverses them together. platform.hanzo.ai opens a Customize flow at first run and from Settings:
+choose **Personal** or **Business**, then a starter pack, for example Personal assistant (calendar,
+mail and documents through the member's own Google connection), Developer (GitHub, Dev, MCP
+tools), Business (CRM, commerce, CMS, analytics, insights, Slack agent).
 
 ## One manifest
 
