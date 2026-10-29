@@ -25,7 +25,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 |:--|--:|--:|--:|--:|
 | Go | 143 | 41 | 3 | 92 |
 | C++ | 1 | 2 | 0 | 276 |
-| Rust | 10 | 29 | 1 | 239 |
+| Rust | 10 | 30 | 1 | 238 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -36,7 +36,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | LLM Gateway - Unified AI Provider Interface | Standards Track | Interface | Final | shipped | - | - |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | Post-Quantum Security for AI Infrastructure | Standards Track | Security | Final | partial | - | partial |
 | [HIP-0006](./HIPs/hip-0006-per-user-fine-tuning-architecture-for-personalized-ai.md) | Per-User Fine-Tuning Architecture for Personalized AI | Standards Track | Core | Final | - | - | - |
-| [HIP-0007](./HIPs/hip-0007-active-inference-integration-for-hamiltonian-llms.md) | Active Inference Integration for Hamiltonian LLMs | Standards Track | Core | Final | - | - | - |
+| [HIP-0007](./HIPs/hip-0007-active-inference-integration-for-hamiltonian-llms.md) | Active Inference — Local Beliefs, World Models and P... | Standards Track | Core | Final | - | - | partial |
 | [HIP-0008](./HIPs/hip-0008-hmm-hanzo-market-maker-native-dex-for-ai-compute-resources.md) | HMM (Hanzo Market Maker) - Native DEX for AI Compute... | Standards Track | Core | Final | - | - | - |
 | [HIP-0009](./HIPs/hip-0009-agent-sdk-multi-agent-orchestration-framework.md) | Agent SDK - Multi-Agent Orchestration Framework | Standards Track | Core | Final | partial | - | - |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | Model Context Protocol (MCP) Integration Standards | Standards Track | Interface | Final | - | - | shipped |
@@ -405,11 +405,11 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 |:--|--:|:--|
 | [HIP-0027](./HIPs/hip-0027-secrets-management-standard.md) | 24 | Secrets Management Standard |
 | [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 17 | Hanzo Service Conventions |
-| [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | 15 | AI Token - Hanzo's Native Currency |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 15 | Post-Quantum Security for AI Infrastructure |
-| [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 13 | Hanzo IAM Authentication Standard |
+| [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | 14 | AI Token - Hanzo's Native Currency |
+| [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 14 | Hanzo IAM Authentication Standard |
+| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 11 | What Is Public |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
-| [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 10 | What Is Public |
 | [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 10 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | 9 | Responsible AI Principles and Commitments |
@@ -424,6 +424,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | 6 | In-Process Extension Runtime Standard |
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | 6 | Integrations, Connectors & the Extension Runtime — One Registry, One Way |
+| [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | 5 | Hanzo Engine — LLM Inference Engine Standard |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 5 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |

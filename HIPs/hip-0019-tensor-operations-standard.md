@@ -277,7 +277,10 @@ fn index_select(&self, indices: &Tensor, dim: usize) -> Result<Tensor>;
 
 #### Hamiltonian Dynamics Operations
 
-The HMM protocol (HIP-0008) and active inference framework (HIP-0007) require physics-informed tensor operations that preserve energy and symplectic structure. These are not available in standard ML frameworks. Candle extends its operation set with:
+Hamiltonian model and market applications can use tensor operations that preserve
+symplectic structure. Active inference (HIP-0007) may use these operations for a
+continuous Hamiltonian sampling backend; its exact finite-state profile requires
+no Hamiltonian integrator. The tensor framework exposes the following operations:
 
 ```rust
 /// Symplectic Euler integrator: advances (q, p) by one timestep dt
@@ -310,10 +313,12 @@ fn hamiltonian_energy(
 ) -> Result<Tensor>;  // scalar energy per batch element
 ```
 
-These operations are critical for:
+Applications of these operations:
 - **HMM (HIP-0008)**: Hamiltonian Market Maker uses symplectic integrators to evolve market state along energy-preserving trajectories, ensuring conservation laws that prevent arbitrage.
 - **HLLM (HIP-0002)**: Hamiltonian LLMs use leapfrog integration for HMC sampling during inference, enabling Bayesian uncertainty quantification over token probabilities.
-- **Active Inference (HIP-0007)**: Free energy minimization via variational inference requires Hamiltonian dynamics for efficient posterior sampling.
+- **Active Inference (HIP-0007)**: Hamiltonian dynamics are an optional continuous
+  posterior-sampling backend. Categorical Bayesian filtering and finite-state EFE
+  use stochastic tables, normalized beliefs and entropy/KL operations directly.
 
 ### Model Formats
 
