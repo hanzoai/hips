@@ -232,8 +232,9 @@ I_q((s,theta); o | pi) = I_q(theta; o | pi)
                        + E_q(theta) I_q(s; o | theta, pi).
 ```
 
-The parameter term is the expected KL from the prior over theta to the posterior
-after an outcome. An implementation MUST NOT add unconditional state and parameter
+The parameter term is
+`E_q(o|pi) KL(q(theta|o,pi) || q(theta))`: posterior relative to prior after
+an outcome. An implementation MUST NOT add unconditional state and parameter
 information gains as if they were independent; their shared information can be
 double-counted. With fixed theta this reduces to the categorical state term. The
 core MUST NOT claim parameter information gain from state information gain alone.
