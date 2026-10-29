@@ -6,7 +6,7 @@ type: Informational
 category: Core
 status: Living
 created: 2026-09-25
-requires: HIP-0039, HIP-0510, HIP-1211, HIP-1332
+requires: HIP-0007, HIP-0039, HIP-0510, HIP-1211, HIP-1332
 ---
 
 # HIP-0511: Model Families — Zen Generates, Enso Routes, Kai Decides
@@ -16,7 +16,9 @@ requires: HIP-0039, HIP-0510, HIP-1211, HIP-1332
 Hanzo's models fall into families by the job each does. **Zen** generates: the
 open-weight generative family. **Enso** routes: the router family that picks what
 serves each request. **Kai** decides: the typed decision model. **Policy**
-governs: deterministic authority, not a model. This HIP maps every family and
+governs: deterministic authority, not a model. **Sekai** models local world beliefs
+and predicts consequences (HIP-0007); its experimental world runtime is in progress.
+This HIP maps every family and
 model line to its HIP, its API and where it runs, and states the order of one
 request: Enso asks Kai before it asks Zen.
 
@@ -47,11 +49,12 @@ curl -s 'https://huggingface.co/api/models?author=hanzoai'
 
 ### 1. Families
 
-| Family | Job | Output | HIP | API (HIP-1211) |
+| Family | Job | Output | HIP | API |
 |---|---|---|---|---|
 | Zen | generates | text, code, embeddings, images, audio, video | HIP-0039 | `/v1/chat/completions`, `/v1/responses`, `/v1/messages`, `/v1/embeddings`, `/v1/rerank`, `/v1/images/*`, `/v1/audio/*`, `/v1/videos/*` |
 | Enso | routes | a model per request | HIP-0510 | `model=auto` and the `enso*` ids on the wire above; `/v1/ai/router`, `/v1/ai/feedback` |
 | Kai | decides | typed state: choice, score, predicate, defer | HIP-1332 | `POST /v1/decisions` |
+| Sekai | models and predicts | local beliefs, rollouts and candidate-plan terms | HIP-0007 | `/v1/worlds`; experimental profile, not a generally served cloud family |
 | Policy | governs | allow, ask, deny | HIP-1332 §10 | none of its own |
 
 ### 2. Zen
