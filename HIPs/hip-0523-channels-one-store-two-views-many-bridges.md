@@ -7,7 +7,7 @@ category: Core
 status: Final
 implementation-go: partial
 created: 2026-08-27
-updated: 2026-10-22
+updated: 2026-10-30
 requires: HIP-0139, HIP-1048, HIP-1066, HIP-1107, HIP-1210
 ---
 
@@ -45,7 +45,7 @@ and both are thin renderings of one cloud, not two products with a pipe between
 them.
 
 What stands in the way is that four things in this estate already hold a
-conversation and none of them can see the others. `apps/channels` holds an inbox
+conversation and none of them can see the others. `apps/transport` holds an inbox
 of messages that arrived from Slack, Discord, Teams and Telegram.
 `apps/team` holds Chunter channels and chat messages, one SQLite per (org,
 workspace). `apps/agents` delegates its threads to an external module.
@@ -56,7 +56,7 @@ Nobody can read the sequence back, because no store holds it.
 
 The cost is not tidiness. It is that the agent which could do the work is a
 member of none of them, so each subsystem grew its own answer to "may a model
-reply here" — `apps/channels` has a turn, `apps/team` has a responder — and the
+reply here" — `apps/transport` has a turn, `apps/team` has a responder — and the
 two now answer the same message twice or not at all. HIP-1066's Motivation
 records the first version of that defect; the estate has since reproduced it
 across capabilities rather than inside one. One object with one member list ends
@@ -83,11 +83,9 @@ transport, and in this HIP channel never means it:
 | transport | the network a message travels over — slack, discord, teams, telegram for conversation; X, Facebook, Instagram, LinkedIn for publishing | HIP-1066, HIP-1153 |
 
 HIP-1066's envelope carries both: the transport as `Message.Transport` and the
-channel as `Message.Channel`, at `/v1/transport`. It serves `Message.Channel` for
-the transport and `Message.Room` for the conversation today
-(`apps/channels/envelope.go:60,153`); both move in the same wave as §2.1, so no
-field anywhere means the conversation by one name and the network by the
-other.
+channel as `Message.Channel`, at `/v1/transport` (`apps/transport/envelope.go`).
+Both moved in the same wave as §2.1, so no field anywhere means the conversation
+by one name and the network by the other.
 
 ### §2 The channel
 
@@ -134,11 +132,12 @@ nouns — `Channel`, `useChannels`, `useMessages`, `open` (HIP-0528) — and so 
 every projection of the served document: the tool, the CLI, the generated
 clients.
 
-There is no second spelling. The same operations are served today under
-`/v1/team/rooms` (§13). They are renamed, not aliased: the server's routes and
-bodies, a one-time rewrite of the stored facet from `hanzo:mixin:Room`, and the
-SDK's switch ship in one wave, and after it `/v1/team/rooms` answers 404 like any
-address nothing serves.
+There is no second spelling. These operations were served as `/v1/team/rooms`
+until the wave that renamed them, not aliased: the server's routes and bodies, a
+one-time rewrite of the stored facet from `hanzo:mixin:Room` (`renameFacet`,
+`apps/team/store.go`, the first time a process opens a space), and the SDK's
+switch shipped together, and `/v1/team/rooms` answers 404 like any address
+nothing serves.
 
 ### §3 Members: human, agent, bot
 
@@ -250,9 +249,9 @@ The shape is fixed:
 A view holds no messages. A bridge holds no messages. Exactly one store does.
 
 One consequence is immediate and is a defect today: the store must hold **both
-halves of every conversation.** `apps/channels` writes an arriving message to
+halves of every conversation.** `apps/transport` writes an arriving message to
 `channel_inbox` and a sent one to `channel_send`, and the two are different
-tables (`apps/channels/store.go:109,126`) — so no single read returns the
+tables (`apps/transport/store.go:109,126`) — so no single read returns the
 conversation. A channel is the sequence, so a channel store that records only
 what arrived is not one.
 
@@ -289,7 +288,7 @@ bot is resident has been built wrong.
 ### §8 Transports, and what each one honestly costs
 
 HIP-1066's transport registry is closed and enumerated — four members today
-(`apps/channels/registry.go:76`). A new transport is a tagged member added to
+(`apps/transport/registry.go:76`). A new transport is a tagged member added to
 that registry declaring what it can actually render — direct messages, group
 channels, threading — and those declarations are honest rather than
 aspirational. It is not a new subsystem.
@@ -356,7 +355,7 @@ do without review is recurrence — an answer a person already approved, asked
 again — and the authority a specific member has to send without a person's act is
 specified per user in HIP-0524, not here.
 
-**One responder, not two.** `apps/channels`' turn and `apps/team`'s responder are
+**One responder, not two.** `apps/transport`' turn and `apps/team`'s responder are
 two implementations of "a model answers a message", and with one channel store
 they answer the same message. They MUST fold to one, and the survivor is the one
 beside the store that holds the message, for the reason HIP-1066 already gives:
@@ -413,14 +412,14 @@ mechanism this HIP names carries its state and the symbol that proves it.
 
 | Mechanism | State | Evidence |
 |---|---|---|
-| The channel addresses, `/v1/team/channels` (§2.1) | **gap** | the same operations are served as `/v1/team/rooms` (`apps/team/room.go:122`, `room_members.go:105`, `message.go:250`), answering `rooms` and `room`, with the facet stored as `hanzo:mixin:Room`; renamed in one wave with the SDK |
+| The channel addresses, `/v1/team/channels` (§2.1) | **shipped** | `apps/team/channel.go` `register`, `channel_members.go` `registerChannelMembers`, `message.go` `registerMessages`; answers `{channels}` and `{channel}`, kind `public`/`private`/`dm`, the facet stored as `hanzo:mixin:Channel`; `/v1/team/rooms` is served by nothing |
 | Session tree — `rootSessionId`, `children`, the tree endpoint, `project`, `target` | **shipped** | `apps/agents/sessions.go:112,141,151,164`; `GET /v1/agents/sessions/:id/tree` (`sessions.go:329`), `sessions_store.go:331 ListTree` |
 | Agents as channel participants, mention detection, run-on-behalf | **off by default** | `apps/team/team.go:119` `TEAM_AGENTS_ENABLED`; `apps/team/chat.go:371 mentionsBot`; `apps/agents/onbehalf.go:34 RunOnBehalf`. The dial is necessary, not sufficient — the roster must also resolve (`apps/team/bots.go:152`) |
 | Bot as a WORKSPACE member | **shipped** | `apps/team/bots.go:65 botMember`; reconciled on every transactor connect (`apps/team/transactor.go:150`) and by `POST /v1/team/bots/sync` |
 | Bot as a CHANNEL member | **gap** | the only function that adds a bot to a channel's members is `team/services/slack/pod-slack/src/botmembers.ts:138 addToSpace`, invoked only when an admin passes an explicit space |
-| Slack transport — send, inbox, pairing | **shipped** | `apps/channels/slack.go:22`; `apps/channels/routes.go:73,74,96` |
-| The inbox holds both halves of a conversation | **gap** | inbound writes `channel_inbox` (`apps/channels/ingest.go:78`), outbound writes `channel_send` (`store.go:126`); no read returns the sequence |
-| A bridged sender resolved to a principal on the stored row | **gap** | `senderUser` is a live column and a published field that is never populated — no normalizer sets `Sender.UserID` (`apps/channels/{slack,discord,teams,telegram}.go`), asserted empty by `ingest_test.go:457`. The link IS resolved later, for the turn only |
+| Slack transport — send, inbox, pairing | **shipped** | `apps/transport/slack.go:22`; `apps/transport/routes.go:73,74,96` |
+| The inbox holds both halves of a conversation | **gap** | inbound writes `channel_inbox` (`apps/transport/ingest.go:78`), outbound writes `channel_send` (`store.go:126`); no read returns the sequence |
+| A bridged sender resolved to a principal on the stored row | **gap** | `senderUser` is a live column and a published field that is never populated — no normalizer sets `Sender.UserID` (`apps/transport/{slack,discord,teams,telegram}.go`), asserted empty by `ingest_test.go:457`. The link IS resolved later, for the turn only |
 | Echo suppression | **shipped** | `apps/integrations/slack_events.go:148,413,424`; `apps/team/chat.go:171` |
 | Identity mapping, external account ↔ principal | **shipped, two designs** | sealed per user in the key store in cloud (`apps/integrations/channel.go:371 userLink`, not enumerable); a queryable table in `team-go` (`pkg/slack/installs.go:113`) |
 | Meet join tokens | **shipped** | `POST /v1/meet/getToken` (`apps/meet/meet.go:350`), minted at `meet.go:784` |
@@ -430,9 +429,9 @@ mechanism this HIP names carries its state and the symbol that proves it.
 | Channel creation bridged both directions | **gap** | only a hand-made mapping of two channels that both already exist (`team-go/pkg/slack/slack.go:801 mapChannel`); neither leg creates one. Cloud has no equivalent |
 | One channel-creation choke point | **gap** | three unrelated paths — a REST create in `team-go`, the transactor `applyTx` (cloud's only path), and a mirror projection. Cloud has no server-side create at all. The nearest hook is where `apps/team/seed.go:70` already reacts to a channel create |
 | The ambient agent added at creation | **gap** | follows from the line above. A mirrored channel inherits bots incidentally, as workspace roster members, not by rule |
-| Transports beyond the four | **gap in cloud, shipped in the bot** | `apps/channels/registry.go:76` is exactly four; `@hanzo/bot` speaks ~28 including whatsapp, imessage and signal |
-| One responder | **gap** | two exist: `apps/channels/turn.go` and `apps/team`'s `runAgent` |
-| One channel store | **gap** | at least three conversation stores, no sync between them and no cross-imports: `apps/team/store.go` (per org+workspace), `apps/channels/store.go`, and the agent threads owned by the external `hanzoai/agent` module (`apps/agents/conversation.go`) |
+| Transports beyond the four | **gap in cloud, shipped in the bot** | `apps/transport/registry.go:76` is exactly four; `@hanzo/bot` speaks ~28 including whatsapp, imessage and signal |
+| One responder | **gap** | two exist: `apps/transport/turn.go` and `apps/team`'s `runAgent` |
+| One channel store | **gap** | at least three conversation stores, no sync between them and no cross-imports: `apps/team/store.go` (per org+workspace), `apps/transport/store.go`, and the agent threads owned by the external `hanzoai/agent` module (`apps/agents/conversation.go`) |
 
 Two corrections to beliefs that were in circulation while this was written, both
 found by reading the source. The bot-member projection is **not** uncalled — it
