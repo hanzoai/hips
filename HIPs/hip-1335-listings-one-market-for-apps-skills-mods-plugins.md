@@ -25,7 +25,9 @@ app they work in by installing a listing or by writing one.
 The noun is **listing** (the market's own). No new word is introduced for the four kinds; each is
 a value of `kind`.
 
-## Kinds
+## Specification
+
+### Kinds
 
 Six kinds carry a manifest: `app`, `skill`, `mod`, `plugin`, and two more that earn their place:
 `automation` (a scheduled or triggered workflow, the `/v1/auto` object, installed as a copy the org
@@ -43,7 +45,7 @@ owns: the most-asked-for thing a business installs that is neither prose nor a c
 
 `agent`, `persona`, `mcp`, `tool` and `template` keep their meaning and their install semantics.
 
-## A plugin is MCP, or a Hanzo plugin
+### A plugin is MCP, or a Hanzo plugin
 
 `plugin` has two forms, and both are reachable the same way by an agent, as MCP tools:
 
@@ -53,7 +55,7 @@ owns: the most-asked-for thing a business installs that is neither prose nor a c
    permissions and no ambient network or filesystem. It may expose MCP tools itself and may carry
    skills and a mod.
 
-Isolation, one runtime per kind, from what already runs (measured in `hanzo-inc/cloud`):
+Isolation, one runtime per kind, from what already runs (measured in `hanzoai/cloud`):
 
 | kind of code | runtime | evidence |
 |---|---|---|
