@@ -372,7 +372,7 @@ Eight spellings came before these three, and every one of them is folded in
 ## Resources
 
 - Documentation: [docs.hanzo.ai](https://docs.hanzo.ai)
-- Discord: [discord.gg/CJCyAsm9Vr](https://discord.gg/CJCyAsm9Vr)
+- Discord: [discord.gg/XthHQQj](https://discord.gg/XthHQQj)
 - GitHub: [github.com/hanzoai](https://github.com/hanzoai)
 - Twitter: [@hanzoai](https://twitter.com/hanzoai)
 

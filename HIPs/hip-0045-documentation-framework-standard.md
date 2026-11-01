@@ -304,7 +304,7 @@ Each site configures its brand identity through CSS custom properties and layout
   }}
   links={[
     { text: 'GitHub', url: 'https://github.com/hanzoai' },
-    { text: 'Discord', url: 'https://discord.gg/CJCyAsm9Vr' },
+    { text: 'Discord', url: 'https://discord.gg/XthHQQj' },
   ]}
 >
 ```
