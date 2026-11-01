@@ -133,7 +133,7 @@ mutation SuperAdmin-only.
 
 - HIP-0026 — Identity and Access Management
 - HIP-0027 — Secrets Management Standard
-- HIP-1001 — Books — The Double-Entry Ledger
+- HIP-1001 — Ledger — The Double-Entry Ledger
 
 ## Copyright
 

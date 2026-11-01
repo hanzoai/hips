@@ -33,7 +33,7 @@ The key words MUST, MUST NOT, SHOULD, SHOULD NOT and MAY are to be interpreted a
 
 Every organization formed on Hanzo functions in dual roles:
 * **As Payee**: Maintains a single active tax profile (W-9 for domestic U.S. persons; W-8BEN / W-8BEN-E for foreign individuals and entities). Controls which payers are granted access to read certification details and receives furnished Copy B statements in its inbox.
-* **As Payer**: Requests counterparty tax documentation, ingests settled transactions from the event and books plane (`hanzoai/treasury`), classifies reportable amounts, drafts 1099-NEC / 1099-MISC returns for payees exceeding annual thresholds, and exports the IRS IRIS transmission bundle.
+* **As Payer**: Requests counterparty tax documentation, ingests settled transactions from the event and ledger plane (`hanzoai/ledger`, `hanzoai/treasury`), classifies reportable amounts, drafts 1099-NEC / 1099-MISC returns for payees exceeding annual thresholds, and exports the IRS IRIS transmission bundle.
 
 ### 2. TIN Encryption via Hanzo KMS
 

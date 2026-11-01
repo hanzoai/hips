@@ -78,7 +78,7 @@ What an autonomous firm actually requires, and where it lives:
 | **Legal** | Hold and sign agreements | `/v1/legal` |
 | **Ownership** | Record who owns what | `/v1/captable` |
 | **Capital** | Raise | `/v1/company/fundraise` |
-| **Money** | Hold, move, settle | `/v1/treasury`, `/v1/books`, `/v1/x402`, `/v1/wallet` |
+| **Money** | Hold, move, settle | `/v1/treasury`, `/v1/ledger`, `/v1/x402`, `/v1/wallet` |
 | **Commerce** | Charge for things | `/v1/commerce`, `/v1/billing`, `/v1/pricing` |
 | **Product** | Build and run software | `/v1/git`, `/v1/build`, `/v1/deploy`, `/v1/platform`, `/v1/function` |
 | **Demand** | Find and keep customers | `/v1/guide`, `/v1/campaign`, `/v1/marketing` |
@@ -308,7 +308,7 @@ automating it.
 
 **Money.** `/v1/treasury` and `/v1/treasury/accounts`, with admin sweep,
 policy, and anchoring under `/v1/admin/treasury`. Double-entry discipline through
-`/v1/books` and `apps/treasury/ledger`. On-chain settlement via `/v1/wallet`,
+`/v1/ledger` and `apps/treasury/ledger`. On-chain settlement via `/v1/wallet`,
 smart-account custody included — there is no separate wallet prefix. And `/v1/x402` — HTTP-native payment, where a request
 carrying insufficient funds gets `402` and a settlement path rather than a
 rejection. That matters more than it sounds: **x402 is how one agent pays

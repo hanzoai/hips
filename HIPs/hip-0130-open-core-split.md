@@ -222,7 +222,7 @@ which was derived independently from "what does a dev's app need on line one".
 Two derivations, one answer, again.
 
 **Hanzo's own business applications are NOT developer primitives.** `crm`,
-`marketing`, `social`, `ad`, `campaign`, `books`, `esign`, `dataroom`,
+`marketing`, `social`, `ad`, `campaign`, `ledger`, `esign`, `dataroom`,
 `captable`, `company`, `legal`, `help`, `content`, `tracker`, `team`,
 `leaderboard`, `benchmark`, `research`, `experiment`, `guide`, `product`,
 `sbom`, `do` — publishing these hands a competitor our entire product suite and
@@ -548,7 +548,7 @@ load-bearing (§4).
 | 75 | entitlements | Money. Commercial policy. |
 | 81 | authors | Money. Royalty computation. |
 | 84 | affiliates | Money. |
-| 91 | books | Money. Revenue ledger of record. |
+| 91 | ledger | Money. Revenue ledger of record. |
 | 92 | treasury | Money. |
 | 93 | admin | Cross-tenant authority. → **a private repository of its own**. |
 | 94 | admission | Cross-tenant authority. Per-service launch gating across orgs. |

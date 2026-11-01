@@ -1,6 +1,6 @@
 ---
 hip: 1001
-title: Books — The Double-Entry Ledger
+title: Ledger — The Double-Entry Ledger
 author: Hanzo AI
 type: Standards Track
 category: Application
@@ -8,23 +8,23 @@ status: Final
 implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0139
-capability: books
+capability: ledger
 ---
 
-# HIP-1001: Books — The Double-Entry Ledger
+# HIP-1001: Ledger — The Double-Entry Ledger
 
 ## Abstract
 
-`/v1/books` is double-entry accounting for an org: a chart of accounts, an
+`/v1/ledger` (and `/v1/books`) is double-entry accounting for an org: a chart of accounts, an
 append-only general ledger, bank feeds with reconciliation, receipt capture, and
-the reports that prove the books balance. It is implemented in `hanzoai/cloud` at
-`apps/books`. This HIP states the two properties that make it trustworthy — that
+the reports that prove the ledger balances. It is implemented in `hanzoai/ledger` and
+`hanzoai/cloud` at `apps/ledger`. This HIP states the two properties that make it trustworthy — that
 it records money it never moves, and that every posting balances or is refused.
 
 ## Motivation
 
 The money plane holds balances and the customer-facing billing surface projects
-them. Neither keeps books: a chart of accounts, a general ledger, revenue
+them. Neither keeps a double-entry ledger: a chart of accounts, a general ledger, revenue
 recognition, a trial balance. Without those there is no statement anyone can audit
 and no way to answer a question about last quarter that survives a restatement.
 
@@ -49,17 +49,17 @@ so a route added untyped goes red rather than unlisted.
 
 ### Free, metered nowhere, publishing nothing
 
-Every books route is **free** — the plugin declares `Price: cloud.Free`
-(`plugin/books/main.go:21`) and no handler gates or meters spend. Books spends
+Every ledger route is **free** — the plugin declares `Price: cloud.Free`
+(`plugin/books/main.go:21`) and no handler gates or meters spend. Ledger spends
 no provider's money: it restates the ledger feed it reads. It publishes **no
 events** on the bus, so a customer's webhooks receive nothing from this
 capability, and it emits nothing to observability beyond the request span
-every route already gets — there is no tracer, meter or log surface of books'
+every route already gets — there is no tracer, meter or log surface of ledger's
 own in `apps/books`.
 
 ### Stage
 
-Books is a vertical application, not the agentic-OS core: its stage is
+Ledger is a financial application, not the agentic-OS core: its stage is
 **beta**, declared in the manifest row (`manifest/apps.go:412`, `Stage: Beta`;
 HIP-0139 §8).
 
@@ -78,7 +78,7 @@ read-only bank connector, and a reviewed receipt capture. All three land through
 one choke point, `store.post` (`apps/books/store.go:238`), and none of them can
 mint a deposit, a credit or a payout (`apps/books/books.go:14-19`).
 
-This is the invariant the whole capability rests on: **books can restate money,
+This is the invariant the whole capability rests on: **the ledger can restate money,
 never create it.** Any new posting source MUST arrive through the same choke point
 and MUST carry no authority to move funds.
 
