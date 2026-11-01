@@ -32,7 +32,7 @@ authentication, non-repudiation, and encryption in transit. However, existing PK
 solutions suffer from four architectural defects:
 
 1. **Branding and Fragmentation**: Legacy systems carry disjoint naming and
-   fragmented repos (e.g. "trusty", "trustyca", "xpki"), complicating platform
+   fragmented repos, complicating platform
    discoverability and deployment.
 2. **Post-Quantum Vulnerability**: Most enterprise CAs are locked into classical
    RSA and ECDSA signatures. Adversaries recording ciphertext today can decrypt
