@@ -13,7 +13,7 @@ requires: HIP-0005, HIP-0119, HIP-0122, HIP-0134
 
 ## Abstract
 
-**Hanzo CA** (repository: `hanzoai/ca`, formerly TrustyCA) specifies the canonical
+**Hanzo CA** (repository: `hanzoai/ca`) specifies the canonical
 zero-trust certification authority, mutual TLS (mTLS) infrastructure, and workload
 identity engine for the Hanzo and Lux cloud ecosystem. Hanzo CA eliminates legacy
 branding and manual certificate bootstrapping, replacing them with a modular,
