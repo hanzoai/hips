@@ -239,7 +239,6 @@ Hanzo follows the L1 specification defined in LP-0011:
 
 - [LP-0011: Chain Types Specification](https://lps.lux.network/lp-0011)
 - [HIP-0000: Hanzo AI Architecture](./hip-0000-hanzo-ai-architecture-framework.md)
-- [HIP-0006: AI Mining Protocol](./HIP-006-ai-mining-protocol.md)
 - [ZIP-0015: Zoo L2 Architecture](https://zips.zoo.ngo/zip-0015)
 
 ## Copyright
