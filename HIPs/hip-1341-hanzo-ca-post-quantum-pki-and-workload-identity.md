@@ -144,6 +144,18 @@ the public internet.
    supported during transition periods to maintain backward compatibility with
    legacy TLS clients while ensuring quantum resistance.
 
+## Acknowledgements & Upstream Inspiration
+
+Hanzo CA builds upon the foundational PKI and cloud security architecture created
+by Denis Issoupov ([@dissoupov](https://github.com/dissoupov)) and the
+[Effective Security](https://github.com/effective-security) organization
+([`effective-security/trustyca`](https://github.com/effective-security/trustyca),
+[`effective-security/xpki`](https://github.com/effective-security/xpki),
+[`effective-security/kubeca`](https://github.com/effective-security/kubeca),
+and [`effective-security/porto`](https://github.com/effective-security/porto)).
+Hanzo AI cites and forks these repositories into `hanzoai/*` as the baseline
+for the Hanzo Zero-Trust Post-Quantum cloud stack.
+
 ## Roadmap
 
 ```text
