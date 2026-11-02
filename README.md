@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 42 | 3 | 92 |
-| C++ | 1 | 2 | 0 | 282 |
-| Rust | 10 | 30 | 1 | 244 |
+| Go | 148 | 42 | 3 | 93 |
+| C++ | 1 | 2 | 0 | 283 |
+| Rust | 10 | 30 | 1 | 245 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -314,6 +314,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1338](./HIPs/hip-1338-tax-informational-returns-and-w9-compliance.md) | Tax — Informational Returns, Tax Profiles & Form 109... | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1339](./HIPs/hip-1339-environment-codebase-preflight-and-secrets.md) | Environment — Codebase Pre-Flight Environments, Sand... | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1340](./HIPs/hip-1340-principal-identity-statements-and-clearance.md) | Principal — Cryptographic Identity Statements & Auth... | Standards Track | Security | Final | shipped | - | - |
+| [HIP-1341](./HIPs/hip-1341-hanzo-ca-post-quantum-pki-and-workload-identity.md) | Hanzo CA — Post-Quantum PKI and Zero-Trust Workload ... | Standards Track | Security | Draft | - | - | - |
 
 ## HIP Process
 
@@ -410,9 +411,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0027](./HIPs/hip-0027-secrets-management-standard.md) | 24 | Secrets Management Standard |
-| [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 17 | Hanzo Service Conventions |
+| [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 18 | Hanzo Service Conventions |
+| [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 16 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 15 | Hanzo IAM Authentication Standard |
-| [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 15 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 15 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | 14 | AI Token - Hanzo's Native Currency |
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 11 | What Is Public |
@@ -480,4 +481,4 @@ One capability, one HIP (HIP-0139). 126 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1001](./HIPs/hip-1001-ledger-double-entry-ledger.md) `ledger` · [HIP-1066](./HIPs/hip-1066-transport-one-inbox.md) `channels` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills` · [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions` · [HIP-1333](./HIPs/hip-1333-train-one-endpoint-for-training.md) `train` · [HIP-1336](./HIPs/hip-1336-patent-inventorship-conception-provenance.md) `patent`
+[HIP-0060](./HIPs/hip-0060-serverless-functions-standard.md) `functions` · [HIP-0063](./HIPs/hip-0063-feature-flags-standard.md) `flags` · [HIP-1001](./HIPs/hip-1001-ledger-double-entry-ledger.md) `ledger` · [HIP-1066](./HIPs/hip-1066-transport-one-inbox.md) `transport` · [HIP-1145](./HIPs/hip-1145-research-experiment-record.md) `research` · [HIP-1201](./HIPs/hip-1201-admission.md) `admission` · [HIP-1210](./HIPs/hip-1210-agents-define-run-keep.md) `agents` · [HIP-1213](./HIPs/hip-1213-tools-the-tool-plane.md) `tools` · [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) `projects` · [HIP-1250](./HIPs/hip-1250-integrations-the-connection-registry.md) `integrations` · [HIP-1320](./HIPs/hip-1320-admin-the-operator-console.md) `admin` · [HIP-1322](./HIPs/hip-1322-skills-the-discovery-catalogue.md) `skills` · [HIP-1323](./HIPs/hip-1323-kafka-the-wire-every-client-speaks.md) `kafka` · [HIP-1326](./HIPs/hip-1326-amqp-exchanges-queues-and-bindings.md) `amqp` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions` · [HIP-1333](./HIPs/hip-1333-train-one-endpoint-for-training.md) `train` · [HIP-1336](./HIPs/hip-1336-patent-inventorship-conception-provenance.md) `patent`

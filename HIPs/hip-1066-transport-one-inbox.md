@@ -4,11 +4,11 @@ title: Transport — One Inbox
 author: Hanzo AI
 type: Standards Track
 category: Interface
-capability: channels
+capability: transport
 status: Final
 implementation-go: partial
 created: 2026-08-20
-updated: 2026-10-22
+updated: 2026-10-30
 requires: HIP-0026, HIP-0106, HIP-0126, HIP-0139
 ---
 
@@ -25,8 +25,8 @@ A transport is the network a message travels over — slack, discord, teams,
 telegram. The conversation the message lives in is a channel (HIP-0523). This HIP
 specifies the envelope contract, where the access decision is made, and the
 one-way dependency that keeps identity and token custody out of this package. The
-implementation is `hanzoai/cloud` `apps/channels`, which takes the name
-`transport` in the wave that renames it (The words, below).
+implementation is `hanzoai/cloud` `apps/transport`, renamed from `apps/channels`
+in the wave The words describes.
 
 ## Motivation
 
@@ -52,20 +52,19 @@ A transport is the network a message travels over. A channel is the conversation
 it lives in (HIP-0523 §1). The envelope, the address and the capability carry
 those two words and no others:
 
-| Served today | After the rename |
+| Served before the rename | Served now |
 |---|---|
 | capability `channel`, at `/v1/channel` | capability `transport`, at `/v1/transport` |
 | `POST /v1/channel/{channel}/send` | `POST /v1/transport/{transport}/send` |
 | `Message.Channel` (`"channel"`), the transport's name | `Message.Transport` (`"transport"`) |
 | `Message.Room` (`"room"`), the types `Room` and `RoomKind` | `Message.Channel` (`"channel"`), the types `Channel` and `ChannelKind` |
-| `apps/channels`, `plugin/channels`, the tracer `hanzo.channels` | `apps/transport`, `plugin/transport`, the tracer `hanzo.transport` |
+| `apps/channels`, `plugin/channel`, the tracer `hanzo.channels`, plane ops `channels_*` | `apps/transport`, `plugin/transport`, the tracer `hanzo.transport`, plane ops `transport_*` |
 
-The rename ships in the same wave as HIP-0523's `/v1/team/channels`, with no
+The rename shipped in the same wave as HIP-0523's `/v1/team/channels`, with no
 alias. A field that names the transport under one word on this surface and the
 conversation under the same word on the next is the confusion the rename removes,
 and a second spelling would keep it. The manifest row, the served document and
-this HIP's `capability:` field move together in that wave; the field still names
-the served capability until then. The store keeps its database and table names
+this HIP's `capability:` field moved together in that wave. The store keeps its database and table names
 (`channel_inbox`, `channel_send`, `channel_policy`): they are storage, never on
 the wire, and renaming them would be a migration that changes nothing a caller
 sees.
@@ -76,7 +75,7 @@ number, and this is not one.
 ### The envelope
 
 There is one message shape. Every transport normalizes into it on ingress and
-renders out of it on egress (`apps/channels/envelope.go`).
+renders out of it on egress (`apps/transport/envelope.go`).
 
 Every union in it is **closed and kind-tagged**: channel kind, action kind,
 attachment kind. Nothing in the envelope infers meaning from the shape of a
@@ -104,7 +103,7 @@ subsystem. Only the answer crosses. **A token never does.**
 ### The gate
 
 Access is decided per (org, transport), on two axes
-(`apps/channels/policy.go`):
+(`apps/transport/policy.go`):
 
 - Direct messages: pairing, allowlist, or open.
 - Group surfaces: open, allowlist, or disabled.
@@ -159,24 +158,24 @@ a stated wire fact fails.
 ### What it owns, charges and emits
 
 The store is one SQL database (`sqlpool.Open("channels", …)`,
-apps/channels/store.go:43): policy, pairing, allowlist, access-group and owner
+apps/transport/store.go): policy, pairing, allowlist, access-group and owner
 rows beside the inbox and the send record. The four transports in the closed
-registry are discord, slack, teams and telegram (apps/channels/registry.go).
+registry are discord, slack, teams and telegram (apps/transport/registry.go).
 
 The addresses are the operations at `/v1/transport`
-(plugin/channels/openapi.json until the rename): the transport listing, the inbox
+(plugin/transport/openapi.json): the transport listing, the inbox
 read, the allowlist (read, replace), pairing (list, approve), the agent (read,
 replace), and the per-transport send — the send being the one declared route, per
 the section above.
 
 It is free, in those words: the plugin declares `Price: cloud.Free`
-(plugin/channels/main.go:21). The model completion a turn spends is metered
+(plugin/transport/main.go). The model completion a turn spends is metered
 where inference is metered, behind the AI endpoint, not here.
 
 It publishes no events on the platform bus, so a customer's webhooks (HIP-1310)
 receive nothing from it. Beyond the request span every route gets, the turn's
-span comes from this package's own tracer, `hanzo.channels`
-(apps/channels/turn.go:35), named `hanzo.transport` after the rename.
+span comes from this package's own tracer, `hanzo.transport`
+(apps/transport/turn.go).
 
 The stage is `ga` — the manifest row declares none, and absent is `ga`
 (HIP-0139 §8). The capability derives from no OSS upstream: transport wire
