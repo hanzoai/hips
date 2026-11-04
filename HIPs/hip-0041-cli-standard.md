@@ -330,6 +330,40 @@ Requirements:
 `cargo install hanzo-cli` instruction therefore fails, and MUST be removed or
 corrected wherever it appears until publication.
 
+### §13.1 One install, the whole native stack
+
+**One command MUST install everything a user needs, on every published platform,
+Windows included:** `npm i -g hanzo`. On Linux and macOS `curl -fsSL https://hanzo.sh | sh`
+is the equivalent; both resolve the same release assets.
+
+1. The npm package `hanzo` is a launcher, not a payload. It depends on `@hanzo/cli`,
+   whose install fetches only the `hanzo` binary; it MUST NOT fetch companion
+   binaries up front. A user installing the CLI does not pay for an inference
+   engine they never run.
+2. Each companion is fetched the first time it is needed, by the launcher, into
+   the package's own `bin/`: `hanzo` (bare) and `hanzo dev` fetch `dev` and
+   `hanzo-mcp`; `hanzo mcp` fetches `hanzo-mcp` and runs it over stdio;
+   `hanzo engine serve` fetches `hanzo-engine`; `hanzo link` fetches `zt`;
+   `hanzo vm`, `hanzo up` and `hanzo build` fetch `hanzo-vm`. Each download MUST be
+   verified against the `.sha256` its release publishes, and a mismatch MUST
+   refuse to install.
+3. The launcher MUST prepend its own `bin/` to the child's `PATH`, matching the
+   variable case-insensitively (Windows names it `Path`), so the native CLI finds
+   its companions without touching the user's environment.
+4. Install scripts MUST NOT be load-bearing. npm 11 blocks them by default; the
+   launcher fetches the `hanzo` binary itself on first run when `postinstall`
+   never ran.
+5. npm's own global shims for the package's bins (`hanzo-dev`, `hanzo-mcp`,
+   `hanzo-engine`) MUST NOT count as the tool being present: they are links to
+   the launcher.
+6. Every Hanzo surface that prints an install line MUST print one of these two
+   commands. Per-component installs (`@hanzo/dev`, `@hanzo/mcp`, `@hanzo/cli`) MAY
+   remain published for embedding but MUST NOT be the line a page leads with.
+
+**State: implemented** in `hanzoai/cli` `npm/` (launcher and installer) and
+`hanzo-js/hanzo`. `hanzod` is wired the same way and lands the day its release
+publishes `hanzod-<os>-<arch>.tar.gz`.
+
 ### §14 Conformance
 
 An implementation conforms when all of the following hold. Each is a command that

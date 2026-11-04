@@ -30,7 +30,13 @@ HIP carries in the same three words and the index counts.
 | **Rust** | [github.com/hanzoai/mcp/rust](https://github.com/hanzoai/mcp/tree/main/rust) | `hanzo-mcp` (crates.io) |
 | **Go** | [github.com/hanzoai/mcp/go](https://github.com/hanzoai/mcp/tree/main/go) | `github.com/hanzoai/mcp/go` |
 
-**CLI**: `hanzo-mcp` (available via `pip install hanzo-mcp` or `cargo install hanzo-mcp`)
+**CLI**: `hanzo-mcp`, the native Rust server, served over stdio when run bare (`-t sse` for HTTP).
+The canonical install is the unified `hanzo` package, on any OS: `npx -y hanzo mcp` runs it with
+nothing installed first, and after `npm i -g hanzo` (or `curl -fsSL https://hanzo.sh | sh`) it is
+`hanzo mcp`. The launcher downloads the release binary for the platform on first use and verifies
+it against the `.sha256` published beside it. A client registers it as
+`claude mcp add --scope user hanzo -- npx -y hanzo mcp`. The language packages in the table above
+remain for embedding.
 
 ### Core Tools (All Implementations)
 
