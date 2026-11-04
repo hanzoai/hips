@@ -701,7 +701,7 @@ The agent runs directly on the developer machine. Screen capture and input contr
 ```bash
 pip install hanzo-operative
 # or
-pip install hanzo-mcp  # includes operative tools
+npm i -g hanzo && hanzo mcp  # the native MCP server; carries the computer and browser tools
 ```
 
 #### Docker Container
