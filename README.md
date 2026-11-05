@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 42 | 3 | 93 |
-| C++ | 1 | 2 | 0 | 283 |
-| Rust | 10 | 30 | 1 | 245 |
+| Go | 148 | 42 | 3 | 94 |
+| C++ | 1 | 2 | 0 | 284 |
+| Rust | 10 | 30 | 1 | 246 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
