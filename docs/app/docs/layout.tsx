@@ -56,13 +56,13 @@ export default function Layout({ children }: { children: ReactNode }) {
               Contribute on GitHub
             </a>
             <a
-              href="https://github.com/hanzoai/hips/discussions"
+              href="https://discord.gg/XthHQQj"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <Users className="size-4" />
-              Discussions
+              Discord
             </a>
             <a
               href="https://docs.hanzo.ai"
@@ -84,7 +84,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         },
         {
           text: 'Contribute',
-          url: 'https://github.com/hanzoai/hips/blob/main/CONTRIBUTING.md',
+          url: 'https://docs.hanzo.ai/docs/contributing',
           icon: <GitPullRequest className="size-4" />,
           external: true,
         },

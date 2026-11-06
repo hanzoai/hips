@@ -63,8 +63,8 @@ export function DocsFooter() {
                 </a>
               </li>
               <li>
-                <a href="https://github.com/hanzoai/hips/discussions" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Discussions
+                <a href="https://docs.hanzo.ai/docs/contributing" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Contributing Guide
                 </a>
               </li>
               <li>

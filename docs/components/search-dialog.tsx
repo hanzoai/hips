@@ -192,11 +192,11 @@ export function SearchDialog() {
         },
         {
           id: 'discuss',
-          label: 'Join Discussion',
-          description: 'Discuss on GitHub',
+          label: 'Join Discord',
+          description: 'Discuss on Hanzo Discord',
           icon: <MessageSquare className="h-4 w-4" />,
-          action: () => window.open(`https://github.com/hanzoai/hips/discussions`, '_blank'),
-          keywords: ['discuss', 'forum', 'comment', 'feedback'],
+          action: () => window.open(`https://discord.gg/XthHQQj`, '_blank'),
+          keywords: ['discuss', 'discord', 'forum', 'comment', 'feedback'],
         },
       ];
       return [...hipActions, ...baseActions];

@@ -46,7 +46,7 @@ export function SiteHeader({ showBrowse = true, showFork = false, showDiscuss = 
             Proposals
           </Link>
           <a
-            href="https://github.com/hanzoai/hips/blob/main/CONTRIBUTING.md"
+            href="https://docs.hanzo.ai/docs/contributing"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground transition-colors hover:text-foreground"
@@ -54,12 +54,12 @@ export function SiteHeader({ showBrowse = true, showFork = false, showDiscuss = 
             Contribute
           </a>
           <a
-            href="https://github.com/hanzoai/hips/discussions"
+            href="https://discord.gg/XthHQQj"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
           >
-            Discussions
+            Discord
             <ExternalLink className="h-3 w-3" />
           </a>
         </nav>
@@ -73,11 +73,11 @@ export function SiteHeader({ showBrowse = true, showFork = false, showDiscuss = 
           </button>
           {showDiscuss && (
             <a
-              href="https://github.com/hanzoai/hips/discussions"
+              href="https://discord.gg/XthHQQj"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
-              title="Join Discussion"
+              title="Join Discord"
             >
               <MessageSquare className="h-4 w-4" />
             </a>

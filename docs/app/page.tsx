@@ -283,7 +283,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://github.com/hanzoai/hips/blob/main/CONTRIBUTING.md"
+              href="https://docs.hanzo.ai/docs/contributing"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-foreground text-background font-medium hover:bg-foreground/90 transition-colors"
@@ -291,12 +291,12 @@ export default function HomePage() {
               Read Contributing Guide
             </a>
             <a
-              href="https://github.com/hanzoai/hips/discussions"
+              href="https://discord.gg/XthHQQj"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border font-medium hover:bg-muted transition-colors"
             >
-              Join Discussions
+              Join Discord
             </a>
           </div>
         </div>
