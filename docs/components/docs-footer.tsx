@@ -85,8 +85,8 @@ export function DocsFooter() {
                 </a>
               </li>
               <li>
-                <a href="https://llm.hanzo.ai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                  LLM Gateway
+                <a href="https://api.hanzo.ai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Hanzo API
                 </a>
               </li>
               <li>
