@@ -8,7 +8,8 @@ capability: s3
 status: Final
 implementation-go: shipped
 created: 2026-08-20
-requires: HIP-0026, HIP-0106, HIP-0139
+updated: 2026-11-15
+requires: HIP-0026, HIP-0027, HIP-0106, HIP-0139
 ---
 
 # HIP-1165: S3 — Buckets and Objects
@@ -20,6 +21,100 @@ for upload and download. It is the DATA plane over the shared object store —
 `provisioning` (HIP-1164) is the control plane that allocates the bucket
 resource, and both derive a bucket's real name from the caller's org the same
 way. It is implemented in `hanzoai/cloud` at `apps/s3` (HIP-0106).
+
+The store behind it, `hanzoai/s3`, keeps three promises that other capabilities
+build on, and the Amendment below states them: conditional writes that have
+exactly one winner, a bucket quota that refuses in bytes and not in minutes, and
+a scheduled archive of a bucket to a remote bucket. The first holds today. The
+other two are not served yet.
+
+## Amendment: what the object store guarantees (A2 and A3 proposed)
+
+Proposed with HIP-1342, whose Disk depends on all three. A1 describes what the
+store does today. Nothing in A2 or A3 is served today; §1 to §9 describe the
+capability as it is.
+
+### A1 Conditional writes
+
+`PUT` of an object with `If-None-Match: *` creates it only when the key is
+absent. `PUT` with `If-Match: <entity tag>` replaces it only when the stored
+entity tag is that one (RFC 9110, section 13.1). A failed precondition answers
+412 and writes nothing. Of any number of concurrent requests that name the same
+precondition on one key, exactly one succeeds and the rest answer 412: the check
+and the write are one atomic step in the store, whichever process of the store
+receives the request.
+
+A store that cannot give that MUST refuse a request carrying either header, and
+MUST NOT ignore it: an ignored precondition is a write that always wins, and it
+turns every client's fence into a fiction.
+
+Acceptance: 1,000 concurrent pairs of `If-None-Match: *` creates, and 1,000
+concurrent pairs of `If-Match` replacements, on distinct keys; every pair is one
+200 and one 412, with none that has two winners or none. The test runs against
+the store directly and again through every proxy that fronts it. The
+`hanzoai/vfs` suite carries the same race against a real store
+(`TestRealServerRaceStress`: 16 writers for 150 rounds on one version, and 16
+creators for 100 keys).
+
+### A2 Bucket quota
+
+A bucket MAY carry a byte quota. An operator sets it; the tenant that writes into
+the bucket does not. The quota is accounted per bucket, so a bucket per org has
+its own.
+
+Once the bytes in a bucket reach the quota, every request that would add bytes
+(`PUT` of an object, upload of a part, copy, completion of a multipart upload) is
+refused with a client error, status 4xx and never 5xx, whose S3 error code is
+`QuotaExceeded` and whose message names the bucket and its quota. Reads and
+deletes keep working over quota, so a bucket can be brought back under it.
+
+The bytes the store accepts beyond the quota MUST NOT exceed the size of one
+object for each request in flight when the quota is reached, plus a margin the
+operator configures and the store reports beside the quota. Enforcement MUST NOT
+wait on a periodic sweep whose period lets the store ingest more than that bound.
+
+Acceptance: set a quota of 50 MiB, write 10 MiB objects from `N` concurrent
+writers until the first refusal. The bytes accepted are at most 50 MiB plus
+`N` × 10 MiB plus the margin, the refusal has the status class and code above, and
+a delete makes the next write succeed.
+
+The need is measured. The present quota loop marks a bucket read-only about once
+a minute from the master's heartbeats; with a 50 MiB quota the first refusal came
+after 190 MiB had been accepted, and it was a 500 (2026-11-14, `hanzoai/s3` issue
+23).
+
+### A3 Scheduled archive
+
+A bucket MAY be archived to a remote S3-compatible bucket. The store already
+mirrors a bucket continuously (`filer.backup` with an S3 sink); A3 adds the
+setting, the schedule, retention, restore and status. The setting belongs to the
+bucket and is read and written through this capability; its addresses are
+declared when A3 is served.
+
+- **The setting.** A destination (an endpoint, a bucket and a prefix), a reference
+  to the destination's credential in the secret manager (HIP-0027) and never the
+  credential, a cadence of `off`, `hourly`, `daily` or `weekly`, and a retention.
+  A bucket with no destination is not archived. A bucket with a destination and
+  no cadence is archived `daily`.
+- **A pass.** A pass is incremental: it copies what changed since the offset it
+  last recorded in the store's change log, and records the new offset only after
+  every change up to it is in the destination. A pass that is interrupted resumes
+  from the recorded offset, and running a pass twice copies nothing twice. A pass
+  starts on a timer the cadence sets and not by polling, and it reads the change
+  log and not the write path.
+- **Retention.** The destination keeps an object for the retention period after
+  it is deleted or replaced in the bucket, and may remove it afterwards.
+- **Status.** Per bucket and readable: the time of the last completed pass, the
+  recorded offset, the objects, bytes and requests of the last pass and in total,
+  the lag (the age of the oldest change not yet in the destination), and the last
+  error.
+- **Restore.** A restore writes the destination's objects into an empty bucket and
+  into no other. It needs neither the source bucket nor its volumes.
+
+Acceptance: write a workload, let a pass complete, destroy the bucket's volumes,
+restore into a new empty bucket, and compare every object byte for byte: no
+difference. While a workload writes, the lag is reported and never exceeds the
+cadence plus the duration of a pass.
 
 ## Motivation
 
@@ -175,6 +270,16 @@ than an honest 503 under this capability's own name.
 What a wrong implementation here gives an attacker is every tenant's files,
 from one request.
 
+The Amendment adds three ways to be wrong. A store that ignores a precondition
+gives two writers the same object, and every client that fences itself with a
+conditional write is then unfenced without an error (A1). A quota that answers
+500, or answers late, lets a tenant consume more than it was given while the
+caller retries a request that can never succeed (A2). An archive setting that held
+a credential would put it in every read of the bucket's configuration, which is
+why it holds a reference to one; and a restore into a non-empty bucket would let
+an archive overwrite live objects, which is why it writes into an empty bucket
+only (A3).
+
 The object layer does not enforce the boundary: the gateway holds ONE admin
 identity for the binary, so isolation is entirely the org-derived naming plus
 the member gate. That is stated rather than assumed, and it is why the
@@ -197,11 +302,14 @@ cannot escape the bucket the caller was scoped to.
 ## References
 
 - HIP-0026 — Identity and Access Management
+- HIP-0027 — Secrets Management Standard
 - HIP-0106 — Hanzo Plugin Contract
 - HIP-0139 — Capability
 - HIP-1060 — Pubsub — The Tenant Endpoint on the Bus
 - HIP-1061 — MQ — Queues and Streams
 - HIP-1164 — Provisioning — Stores on Demand
+- HIP-1342 — Disk — A Filesystem on an Object Store
+- RFC 9110 — HTTP Semantics, section 13.1, preconditions
 
 ## Copyright
 
