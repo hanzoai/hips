@@ -34,7 +34,7 @@ What is shipped and what is Draft:
 | Part | State |
 |---|---|
 | §1 the runtime and its supported configuration | shipped |
-| §2 serving a host-mounted directory with exclusive access and a directory cache | shipped in the runtime; the daemon that mounts a Disk on the host (HIP-1342) is not |
+| §2 serving a host-mounted directory with exclusive access and a directory cache | shipped in the runtime, and the measured supported path; `vfs mount` mounts a Disk on a host (HIP-1342), and the node agent that does it for a sandbox is not built |
 | §3 fsync across the boundary | holds on the path of §2, where the sentry syncs the host file descriptor; violated by a FUSE mount inside the sandbox, which is a defect |
 | §4 checkpoint and restore to a local directory | shipped |
 | §4 checkpoint and restore to object storage | Draft |
@@ -71,7 +71,7 @@ file metadata operation.
 
 ### §2 Serving a host-mounted directory
 
-A Disk is mounted on the host by its own daemon (HIP-1342, §11). The runtime
+A Disk is mounted on the host by its own daemon, `vfs mount` (HIP-1342, §11). The runtime
 serves that host directory into the sandbox as an ordinary bind mount through the
 gofer. The sandbox receives a directory. It receives no store credential, no Disk
 key and no privilege to mount anything, and the process that uses it needs none.
@@ -144,8 +144,8 @@ following are Draft.
    process outside the checkpoint, and no process may write to the Disk after it
    is detached. To suspend, the caller stops the sandbox so that nothing writes,
    with its acknowledged writes delivered to the host mount (a checkpoint does
-   both, §2 item 4), then detaches the Disk (HIP-1342, §8: a flush of the mount, a
-   publication of everything, no further writes). To resume, the caller attaches
+   both, §2 item 4), then detaches the Disk (HIP-1342, §6 and §8: a flush of the
+   mount, a publication of everything, no further writes). To resume, the caller attaches
    the Disk at a higher Round, then restores. The restored sandbox's filesystem is
    re-attached, never carried in the image.
 

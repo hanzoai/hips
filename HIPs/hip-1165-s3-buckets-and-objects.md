@@ -51,10 +51,15 @@ turns every client's fence into a fiction.
 Acceptance: 1,000 concurrent pairs of `If-None-Match: *` creates, and 1,000
 concurrent pairs of `If-Match` replacements, on distinct keys; every pair is one
 200 and one 412, with none that has two winners or none. The test runs against
-the store directly and again through every proxy that fronts it. The
-`hanzoai/vfs` suite carries the same race against a real store
-(`TestRealServerRaceStress`: 16 writers for 150 rounds on one version, and 16
-creators for 100 keys).
+the store directly and again through every proxy that fronts it.
+
+Measured, 2026-11-14, `hanzoai/s3` at `cbf3d65009` in its own-storage mode, directly
+and behind a proxy adding 0.3 ms, 2 ms and 20 ms of round trip: 1,000 concurrent
+pairs for each header at each of the four settings, 8,000 pairs in all, and every one
+was one 200 and one 412. The repeatable command is the `hanzoai/vfs` suite against a
+real store, `PATH=$DIR:$PATH go test -run 'TestRealServerCAS|TestRealServerRaceStress'`
+with `$DIR` holding the `s3` binary: 16 writers race one version for 150 rounds and 16
+creators race one key for 100 keys, and exactly one wins every time.
 
 ### A2 Bucket quota
 
