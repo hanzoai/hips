@@ -44,7 +44,7 @@ What is shipped and what is Draft:
 | §10 crash outcomes of a commit and of the journal package | shipped |
 | §11 the mount: no request answered as interrupted, SIGTERM, unsupported operations refused | shipped |
 | POSIX operations beyond those in §11 (rename, links, attributes, locks, statistics) | Draft |
-| §13 concurrency targets, §14 collection | Draft |
+| §13 concurrency targets, §14 prefetch, §15 collection | Draft |
 | snapshots, links and base layers (reserved bits of §2), quota and usage accounting | Draft |
 
 ## Motivation
@@ -80,7 +80,8 @@ and does not restate either.
   canonical location string is the same for every process that opens it:
   `s3://<bucket>/<prefix>`, or `file://<absolute directory>`. The prefix has no
   leading or trailing `/`; a directory is absolute, cleaned and free of symbolic
-  links. The string holds no credential, endpoint or query.
+  links. The string holds no credential, endpoint or query. A `file://` location that
+  names a host is refused.
 - **Head** — the one mutable object of the tree (§2). Replacing it is the commit.
 - **Sequence** — every mutation the journal admits takes the next number, 1, 2, 3
   and so on without gaps, in the order the appends are admitted. The watermarks of
@@ -343,7 +344,7 @@ The store, and not any process, decides which Round owns the Disk.
 open pack, writes the shards that changed, leaf to root, and then writes the Head once,
 at the writer's Round, with the next `Seq`. Only the Head changes any object a reader
 can reach, so a crash or failure before it leaves the previous tree whole; the objects
-already written are unreferenced garbage and never corruption (§14). The shard and
+already written are unreferenced garbage and never corruption (§15). The shard and
 pack writes are idempotent by name, so repeating them is harmless. A commit that
 returns `nil` landed. Any other error leaves its outcome unknown to the caller, which
 keeps its changes for the next attempt. A stale-round error means the writer was
@@ -561,7 +562,7 @@ stalls its callers, and a caller that is killed is not freed: the kernel keeps a
 request the daemon holds until the daemon answers it. Killing the daemon frees every
 caller at once, in about 20 ms, and loses what was not committed. The daemon holds about
 134 KiB for each abandoned request. The next change gives every store request a
-deadline and the Disk a lock that honours a request's context, and a collector (§14)
+deadline and the Disk a lock that honours a request's context, and a collector (§15)
 waits for it. Until then a supervisor MUST, before it gives a tenant a mount, watch the
 store's latency and kill the daemon when the store does not answer, limit the processes
 and the memory of the mount's callers and of the daemon, and unmount lazily at
@@ -705,7 +706,55 @@ deadlines are in (Draft).
 5. Simultaneous misses for one immutable object share one fetch. A local cache of chunks
    holds clean, validated data only and never the only copy of a write.
 
-### §14 Reclamation (Draft)
+### §14 Prefetch (Draft)
+
+A coding run reads the same files each time it repeats. The measurement (`docs/prefetch.md`
+of `hanzoai/vfs`) is that 92.5 % to 100 % of the pages a second run read from the disk it
+started with had been read by the first, and the order does not repeat for parallel work. So
+what is kept is a trace per workflow, and what is fetched is bounded by bytes and not by
+order. The engine owns the cache, the fetching and every budget; a prefetcher only proposes.
+
+1. **Observation.** The engine gives the prefetcher, for every read, the time since attach,
+   the calling thread, the inode, the byte range, the chunks that served it in order, the
+   outcome (hit, late, miss) and the time the caller waited. It MUST NOT block a read on
+   the prefetcher: it delivers through a bounded queue, drops the newest when it is full and
+   counts the drops. It MUST NOT give the prefetcher file contents, path names or identity.
+2. **Fetching.** A prefetcher asks for chunks only by identifier, in priority order. The
+   engine fetches a requested chunk only if the Head's tree reaches it, ignores the rest and
+   says how many, and never fetches a chunk that is cached or in flight. A read that needs a
+   queued chunk is served by a demand fetch no later than it would be without a prefetcher;
+   the queued entry is promoted and not fetched twice. A prefetch uses the lowest priority
+   class of the worker budget, MUST NOT hold the Disk's lock, the journal's or the
+   publisher's, and MUST NOT delay a journal append, a group fsync, an upload or the
+   publication of the root.
+3. **Budgets.** The engine sets and enforces the bytes fetched and not yet read (256 MiB by
+   default), the fetches in flight (64 by default) and the share of the worker budget. What a
+   run that diverges wastes is at most the unread bound plus one chunk.
+4. **Cancellation.** Every plan carries one. The engine cancels all plans at detach, suspend,
+   end, loss of the fence, and whenever the oldest unpublished write is older than half the
+   bound; after Detach returns, no prefetch request of that attachment is outstanding.
+5. **Cache.** Prefetched chunks enter a probationary segment and move to the protected one on
+   their first read, and unread probationary chunks are evicted first. Dirty and unpublished
+   data are never evictable.
+6. **Traces.** At detach the engine SHOULD store the trace of the attachment, the distinct
+   chunks it read in first-touch order, as one extension object (§2) of the extension `trace`,
+   at `ext/trace/<keyed hash of the workflow key>`, where the workflow key is an opaque string
+   the party attaching the Disk supplies. With no workflow key the engine does not prefetch
+   from a trace. A trace holds chunk identifiers and nothing else that identifies content, at
+   most 1,000,000 of them with the earliest kept, behind a header a reader refuses if it does
+   not know it (`docs/prefetch.md`, S6, holds the encoding). A trace belongs to its Disk and
+   MUST NOT be used to fetch for another. It is replaced atomically, and only by a run that
+   finished with a zero exit status or at the party's request. The engine never deletes one;
+   an operator MAY delete the objects under `ext/trace/` at any time, since a trace is a hint.
+   Reading one is a `GET` after the Head, one more serial round trip before the first
+   prefetch request.
+7. **Read-ahead.** After two reads of consecutive chunks of one file the engine MAY read
+   ahead, at most 8 chunks, drawing on the same budgets and cancellation, and resets the
+   window on a read that is not consecutive. Adjacent trace entries that are adjacent in one
+   pack MAY be merged into one ranged request of at most 4 MiB, which changes no byte
+   fetched.
+
+### §15 Reclamation (Draft)
 
 An object that no retained Head reaches is garbage. The collector is decided and not
 built, and a change to one of these rules is a change to this text.
@@ -720,7 +769,9 @@ built, and a change to one of these rules is a change to this text.
 - Age is the store's: the object's modification time as `List` reports it, against the
   store's own time, which the collector learns by writing an object of its own and listing
   it, never a writer's clock or its own. A store's time has a granularity (S3 reports
-  whole seconds, truncated down), so the grace MUST exceed it by one second.
+  whole seconds, truncated down), so the grace MUST exceed it by one second, and the
+  conformance suite checks that every store it runs on lists a time within 2 seconds of
+  the write.
 - The grace is longer than the longest a commit can take, which is bounded only when every
   store request has a deadline, so no collector is built before them; it is more than twice
   the sum of the deadlines of a commit's requests. The collector marks from the Head it
@@ -730,7 +781,7 @@ built, and a change to one of these rules is a change to this text.
   Disk goes on committing, finds a shard gone and sees `ErrCorrupt`, so the grace is the
   longest a Head may be held, and it is published with the collector.
 
-### §15 Conformance
+### §16 Conformance
 
 An implementation conforms when these hold against a real store that satisfies §12, and
 not only an in-memory one. The tests named are the reference suite's.
