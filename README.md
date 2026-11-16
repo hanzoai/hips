@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 44 | 4 | 94 |
-| C++ | 1 | 2 | 0 | 287 |
-| Rust | 10 | 30 | 1 | 249 |
+| Go | 148 | 49 | 4 | 94 |
+| C++ | 1 | 2 | 0 | 292 |
+| Rust | 10 | 32 | 1 | 252 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -319,6 +319,11 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1341](./HIPs/hip-1341-hanzo-ca-post-quantum-pki-and-workload-identity.md) | Hanzo CA — Post-Quantum PKI and Zero-Trust Workload ... | Standards Track | Security | Draft | - | - | - |
 | [HIP-1342](./HIPs/hip-1342-disk-a-filesystem-on-an-object-store.md) | Disk — A Filesystem on an Object Store | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1343](./HIPs/hip-1343-visor-the-sandbox-runtime.md) | Visor — The Sandbox Runtime | Standards Track | Infrastructure | Draft | partial | - | - |
+| [HIP-1344](./HIPs/hip-1344-agent-optimized-storage-and-recovery.md) | Agent-Optimized Storage and Recovery | Standards Track | Infrastructure | Draft | partial | - | - |
+| [HIP-1345](./HIPs/hip-1345-agent-aware-model-serving-and-cache-reuse.md) | Agent-Aware Model Serving and Cache Reuse | Standards Track | Infrastructure | Draft | partial | - | partial |
+| [HIP-1346](./HIPs/hip-1346-evidence-grounded-retrieval-and-decision-evaluation.md) | Evidence-Grounded Retrieval and Decision Evaluation | Standards Track | Core | Draft | partial | - | partial |
+| [HIP-1347](./HIPs/hip-1347-event-driven-agent-reliability.md) | Event-Driven Agent Reliability | Standards Track | Application | Draft | partial | - | - |
+| [HIP-1348](./HIPs/hip-1348-reliable-economical-and-verifiable-ai-infrastructure.md) | Reliable, Economical and Verifiable AI Infrastructure | Standards Track | Security | Draft | partial | - | - |
 
 ## HIP Process
 
@@ -415,15 +420,15 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0027](./HIPs/hip-0027-secrets-management-standard.md) | 26 | Secrets Management Standard |
-| [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 19 | Hanzo Service Conventions |
+| [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 24 | Hanzo Service Conventions |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 16 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 15 | Hanzo IAM Authentication Standard |
 | [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 15 | SuperAdmin & Tenant Isolation Model |
 | [HIP-0001](./HIPs/hip-0001-ai-coin-hanzos-native-currency.md) | 14 | AI Token - Hanzo's Native Currency |
 | [HIP-0135](./HIPs/hip-0135-what-is-public.md) | 13 | What Is Public |
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
+| [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 10 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
-| [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 9 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | 9 | Responsible AI Principles and Commitments |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | 8 | Q-Chain — Quasar Finality Block Standard |
@@ -431,6 +436,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 8 | One Identity Boundary |
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | 7 | Integrations, Connectors & the Extension Runtime — One Registry, One Way |
+| [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) | 6 | Kai — The Decision Model and the Decision Plane |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 6 | Model Context Protocol (MCP) Integration Standards |
 | [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | 6 | ZAP-Native Transport & gRPC Elimination |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |

@@ -1,0 +1,63 @@
+name: Research Bounty
+description: Propose or claim a Hanzo AI research or implementation bounty
+title: "[Bounty]: "
+labels: ["research", "bounty", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for contributing to the Hanzo AI research program. Please choose the bounty class below and verify every item in the Research-to-PR Acceptance Contract before opening a PR.
+
+  - type: dropdown
+    id: class
+    attributes:
+      label: Bounty Class
+      description: Distinguish reproducible experiments from production-merged code.
+      options:
+        - Research Bounty (reproducible experiment, results, limitations, integration recommendation — valid negative results accepted)
+        - Implementation Bounty (license-cleared code, tests, benchmarks, and merged PR)
+    validations:
+      required: true
+
+  - type: input
+    id: hip
+    attributes:
+      label: Umbrella HIP & Target Repo
+      description: Reference one of HIP-1344..1348 and the canonical repository.
+      placeholder: "e.g., HIP-1345 · hanzoai/engine"
+    validations:
+      required: true
+
+  - type: input
+    id: upstream
+    attributes:
+      label: Primary Research Paper / Code & License
+      description: Link paper/repo and verify license compatibility (prefer Apache-2.0/MIT; clean-room implementation otherwise). Paper claims belong to authors' test environments until reproduced on Hanzo.
+    validations:
+      required: true
+
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Falsifiable Hypothesis & Canonical Architecture Fit
+      description: State expected metrics, failure modes, and confirm alignment with vfs -> hanzoai/s3 -> visor, Cloud, Enso, Zen, Kai (no parallel replacement components).
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contract
+    attributes:
+      label: Research-to-PR Acceptance Contract (0 of 6 requirements)
+      options:
+        - label: "1. Primary paper/code link, research summary, and license + patent audit completed (Apache-2.0/MIT cleared for production code)."
+          required: false
+        - label: "2. Reproducible upstream baseline AND identical Hanzo baseline script/config provided."
+          required: false
+        - label: "3. One falsifiable hypothesis with target metrics and explicit expected failure modes documented."
+          required: false
+        - label: "4. Bounded implementation PR submitted (or documented negative result for research-only bounties)."
+          required: false
+        - label: "5. Correctness, concurrency, security, and regression test evidence appropriate to the change."
+          required: false
+        - label: "6. Before/after measurements, raw results, methodology, and umbrella HIP status update included."
+          required: false
