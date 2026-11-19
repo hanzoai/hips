@@ -99,3 +99,7 @@ in the text.
 describes something that exists; `type: Process` is for how we work and need not
 map to a repository. Before writing a HIP, check whether the thing already has
 one, and rewrite that one rather than duplicate it.
+
+## Notable Platform Standards
+
+- **HIP-1349 (`hip-1349-sensei-certification-standard.md`)**: Specifies the L1–L9 Hanzo Sensei Certification Standard (`hanzo.university` / `docs.hanzo.ai/docs/university`), L1–L3 free forever + L4–L9 `$100` per exam attempt + optional monthly sandbox subscription, on-chain credential attestation on Hanzo Network (`eip155:36963`), the `sensei.group` `minLevel >= 3` gate over `hanzo.market`, and the Agent-to-Human Hiring Protocol (`hire_sensei` / `POST /v1/sensei/hire`).
