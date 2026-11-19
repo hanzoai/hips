@@ -7,6 +7,7 @@ category: Infrastructure
 status: Draft
 created: 2025-01-15
 requires: HIP-0027, HIP-0111, HIP-0144
+capability: iam
 ---
 
 # HIP-0026: Identity & Access Management Standard

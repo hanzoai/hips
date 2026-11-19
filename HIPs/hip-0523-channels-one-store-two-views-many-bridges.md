@@ -9,6 +9,7 @@ implementation-go: partial
 created: 2026-08-27
 updated: 2026-10-30
 requires: HIP-0139, HIP-1048, HIP-1066, HIP-1107, HIP-1210
+capability: channel
 ---
 
 # HIP-0523: Channels — One Store, Two Views, Many Bridges

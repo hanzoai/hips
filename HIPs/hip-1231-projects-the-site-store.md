@@ -8,7 +8,7 @@ status: Final
 implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0026, HIP-0106, HIP-0139
-capability: projects
+capability: project
 ---
 
 # HIP-1231: Projects — The Site Store

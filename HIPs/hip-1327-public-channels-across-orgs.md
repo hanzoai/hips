@@ -4,7 +4,6 @@ title: Public Channels — Finding a Channel in Another Org
 author: Hanzo AI
 type: Standards Track
 category: Core
-capability: team
 status: Draft
 created: 2026-09-01
 requires: HIP-0139, HIP-0523, HIP-1048

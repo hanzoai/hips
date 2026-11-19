@@ -8,6 +8,7 @@ status: Final
 implementation-go: partial
 created: 2025-01-15
 requires: HIP-0027, HIP-0033, HIP-0142
+capability: ci
 ---
 
 
