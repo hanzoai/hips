@@ -256,12 +256,86 @@ Hanzo's proprietary multimodal AI models supporting:
 - Neuromorphic computing
 - Quantum AI algorithms
 
+## Hanzo OS (Hanzo Dō) Architectural Pillars
+
+Hanzo OS (also referred to as **Hanzo Dō**) organizes the vertically integrated AI operating system into five decoupled, independently evolvable layers governed by open specifications and verifiable evidence:
+
+1. **Specification (`hanzoai/hips`, `standard.json`)**: The curated, versioned AI OS specification (HIP-1400). Acts as the single authority for all interfaces, schemas, wire formats, and conformance requirements across the stack.
+2. **Harness (`hanzoai/kata`)**: The reproducible execution form. Owns agent lifecycle management, policy enforcement, resource budgeting, supervision, and evaluation triggering.
+3. **Agent Engine (`hanzoai/gen`)**: The core intelligence loop. Owns reasoning, action selection, tool orchestration, context management, and error recovery. Domain-specialized agents such as the coding agent (`hanzoai/dev`, HIP-1330) compose on top of the Engine.
+4. **Sandbox (`hanzoai/visor`)**: The isolated execution environment (HIP-0053, HIP-0123, HIP-1172). Provides reproducible, isolated compute, networking, and filesystem access for both production workloads and experimental evaluations.
+5. **Evidence & XP (`hanzoai/audit`, `hanzoai/research`)**: Immutable provenance and tamper-evident audit records (HIP-1103, HIP-1334) together with deterministic contribution projections (**Hanzo XP**, HIP-1402). XP is strictly non-transferable and subordinate to Evidence.
+
+## Evolutionary Fitness Protocol
+
+Every layer of Hanzo OS is independently evolvable under an evidence-based recursive improvement loop (HIP-1401, HIP-1403). Progress is governed by two levels of fitness:
+
+### Level 1: Product Fitness
+
+Measures the capability, efficiency, and reliability of a deployed system (Agent, Harness, Router, or Model):
+
+- **Verified Success**: Task completion verified under independent holdout evaluation.
+- **Cost Efficiency**: Total compute and token execution cost per verified success.
+- **Latency**: Wall-clock time to verified completion (median and tail percentiles).
+- **Robustness**: Regression rates across private holdout, edge-case, and adversarial suites.
+
+### Level 2: Evolutionary Fitness
+
+Measures the system's ability to discover, validate, and reproduce improvements to itself:
+
+- **Research Yield ($Y_R$)**: Verified capability gain per unit of total research expenditure, defined as $Y_R = \Delta H_{\text{verified}} / C_{\text{total\_research}}$.
+- **Successor Research Lift ($L_R$)**: Relative improvement in research yield of a successor configuration over its predecessor, defined as $L_R = Y_R(\text{successor}) / Y_R(\text{predecessor})$.
+- **Discovery Rate**: Count of independently qualified improvements per 100 executed experiments.
+- **Transfer Rate**: Generalization of a qualified improvement across unseen tasks, repositories, and environments.
+- **Reproducibility**: Fraction of claimed discoveries independently replicated under clean sandboxed runs.
+
+### Evolutionary Requirements
+
+- **Provenance**: Every evolutionary candidate MUST maintain immutable parent lineage recorded in the Evidence ledger (HIP-1103, HIP-1401).
+- **Isolation**: Research agents propose mutations within declared mutation surfaces; they MUST NOT modify production security boundaries, evaluation holdouts, or promotion authority.
+- **Independent Qualification**: Promotion to production requires independent holdout verification, integrity checks, and a validated rollback path (HIP-1334, HIP-1401).
+- **Population-based Search**: The system preserves diverse evolutionary branches along a multi-objective Pareto frontier (Quality, Cost, Latency, Robustness, Safety) to avoid local optima.
+
+## Appendix A: Repository Responsibility Matrix
+
+This matrix maps Hanzo OS layers to public repositories, defining ownership boundaries and decoupling targets:
+
+| Layer | Canonical Repository | Current Audit Focus | Target Responsibility | Boundary & Migration Note |
+| :--- | :--- | :--- | :--- | :--- |
+| **Specification** | `hanzoai/hips` | HIPs, OpenAPI, schemas | Curated AI OS standards, `standard.json` manifest, conformance suites | Authoritative spec layer (HIP-1400); no runtime code |
+| **Harness** | `hanzoai/kata` | Harness logic, execution supervision | Reproducible harness, agent lifecycle, policy enforcement, evaluation triggering | Keep domain-specific coding triage out of Harness (belongs in `hanzoai/dev`) |
+| **Agent Engine** | `hanzoai/gen` | Reasoning loop, launching, integrations | Generic agent engine, context management, tool orchestration, recovery | Move process/container launching concerns into Harness (`hanzoai/kata`) |
+| **Coding Agent** | `hanzoai/dev` | Agent loop, repo tools, patch workflows | Coding-specialized agent built on the Agent Engine (HIP-1330) | Retain specialized coding intelligence; consume Harness and Sandbox interfaces |
+| **Sandbox** | `hanzoai/visor` | Sandboxed execution, compute isolation | Universal isolated execution environment (compute, network, filesystem) | Canonical Sandbox runtime (HIP-0053, HIP-0123, HIP-1172) |
+| **Model Router** | `hanzoai/enso` | Model routing and cascades | Learned model orchestration and cost/quality routing (HIP-0510) | Retain as independent routing layer between Engine and inference backends |
+| **Model & Kernel Engines** | `hanzoai/ml` | Training, inference, DSL kernels | Model training, inference runtime, and hardware kernel lowering | Keep orthogonal to Harness and Agent Engine loops |
+| **Evidence & XP** | `hanzoai/audit`, `hanzoai/research` | Audit trail, research records, evals | Tamper-evident Evidence ledger (HIP-1103), Research runtime (HIP-1334), XP projection (HIP-1402) | XP is a deterministic, non-transferable projection strictly subordinate to Evidence |
+
+## Appendix B: Evolutionary Research Roadmap
+
+The Hanzo OS evolutionary progression is structured into six verifiable stages (**E0** through **E5**):
+
+| Stage | Name | Entry Gate | Exit Criteria |
+| :--- | :--- | :--- | :--- |
+| **E0** | **Specification & Baseline** | `standard.json` published (HIP-1400) | Conformance suites passing; baseline Level 1 Product Fitness measured on frozen holdouts |
+| **E1** | **Controlled Harness Evolution** | Immutable Evidence & Sandbox isolation live | Automated single-surface mutations (prompts, harness policies) passing independent qualification |
+| **E2** | **Population Search** | E1 qualification and rollback gates proven | Multi-objective Pareto population archive active (HIP-1401) across Quality, Cost, and Latency |
+| **E3** | **Cross-Layer Co-Evolution** | E2 transfer rate verified across domains | Coordinated candidate evaluation across Harness, Engine, and Model Router with zero security regressions |
+| **E4** | **Autonomous Scientific Research** | E3 reproducibility threshold met | Agents register falsifiable hypotheses, execute sandboxed experiments, and pass independent replication (HIP-1403) |
+| **E5** | **Recursive Improvement ($L_R > 1$)** | E4 replication & retraction workflows proven | Sustained Successor Research Lift ($L_R > 1$) verified across consecutive generations under frozen gates |
+
 ## References
 
 1. [Hanzo AI Documentation](https://docs.hanzo.ai)
 2. [Hanzo Node Repository](https://github.com/hanzoai/node)
 3. [Model Context Protocol](https://modelcontextprotocol.io)
 4. [NIST PQC Standards](https://csrc.nist.gov/projects/post-quantum-cryptography)
+5. HIP-1103 — Audit Tamper-Evident Trail
+6. HIP-1334 — Research: The Unified Research Runtime
+7. HIP-1400 — Hanzo OS Conformance & Specification Manifest
+8. HIP-1401 — Evolutionary Candidate & Population Protocol
+9. HIP-1402 — Hanzo XP — Verified Contribution Protocol
+10. HIP-1403 — Autonomous Scientific Research Protocol
 
 ## Copyright
 
