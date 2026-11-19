@@ -4,7 +4,7 @@ title: Integrations — The Connection Registry
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: integrations
+capability: provider
 status: Final
 implementation-go: shipped
 created: 2026-08-20

@@ -8,7 +8,7 @@ status: Final
 implementation-go: shipped
 created: 2026-08-20
 requires: HIP-0139, HIP-0106, HIP-0300
-capability: tools
+capability: tool
 ---
 
 # HIP-1213: Tools — The Tool Plane

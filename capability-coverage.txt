@@ -69,3 +69,15 @@ zen
 
 plugins
 
+# Renamed to `ledger` in HIP-1001; the published OpenAPI pin still carries `books` until the next spec sync.
+books
+
+# Capabilities grouped in hanzoai/openapi whose standalone HIPs are not yet cut.
+email
+form
+library
+market
+reward
+standing
+trust
+

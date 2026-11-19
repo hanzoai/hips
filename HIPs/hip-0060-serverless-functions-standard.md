@@ -8,7 +8,7 @@ status: Final
 implementation-go: shipped
 created: 2026-02-23
 requires: HIP-1061, HIP-0050, HIP-0139
-capability: functions
+capability: function
 ---
 
 

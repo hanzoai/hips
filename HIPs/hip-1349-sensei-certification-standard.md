@@ -1,5 +1,5 @@
 ---
-hip: 1342
+hip: 1349
 title: Sensei — L1–L9 Certification Standard, sensei.group Gate & Agent-to-Human Hiring Protocol
 author: Hanzo AI
 type: Standards Track
@@ -10,7 +10,7 @@ created: 2026-11-19
 requires: HIP-0024, HIP-0097, HIP-0119, HIP-1332, HIP-1335, HIP-1340
 ---
 
-# HIP-1342: Sensei — L1–L9 Certification Standard, sensei.group Gate & Agent-to-Human Hiring Protocol
+# HIP-1349: Sensei — L1–L9 Certification Standard, sensei.group Gate & Agent-to-Human Hiring Protocol
 
 ## Abstract
 

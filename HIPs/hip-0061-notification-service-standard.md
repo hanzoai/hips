@@ -7,6 +7,7 @@ category: Interface
 status: Draft
 created: 2026-02-23
 requires: HIP-0026, HIP-0144, HIP-0143, HIP-1061, HIP-1190
+capability: notify
 ---
 
 # HIP-0061: Notification & Messaging Service Standard

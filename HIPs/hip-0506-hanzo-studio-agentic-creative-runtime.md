@@ -7,6 +7,7 @@ category: Application
 status: Final
 created: 2026-07-15
 requires: HIP-0106, HIP-0504
+capability: studio
 ---
 
 
