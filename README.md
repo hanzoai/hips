@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 42 | 4 | 94 |
-| C++ | 1 | 2 | 0 | 285 |
-| Rust | 10 | 30 | 1 | 247 |
+| Go | 148 | 43 | 4 | 94 |
+| C++ | 1 | 2 | 0 | 286 |
+| Rust | 10 | 30 | 1 | 248 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -317,6 +317,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1339](./HIPs/hip-1339-environment-codebase-preflight-and-secrets.md) | Environment — Codebase Pre-Flight Environments, Sand... | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1340](./HIPs/hip-1340-principal-identity-statements-and-clearance.md) | Principal — Cryptographic Identity Statements & Auth... | Standards Track | Security | Final | shipped | - | - |
 | [HIP-1341](./HIPs/hip-1341-hanzo-ca-post-quantum-pki-and-workload-identity.md) | Hanzo CA — Post-Quantum PKI and Zero-Trust Workload ... | Standards Track | Security | Draft | - | - | - |
+| [HIP-1342](./HIPs/hip-1342-sensei-certification-standard.md) | Sensei — L1–L9 Certification Standard, sensei.group ... | Standards Track | Platform | Draft | partial | - | - |
 
 ## HIP Process
 
@@ -413,7 +414,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0027](./HIPs/hip-0027-secrets-management-standard.md) | 24 | Secrets Management Standard |
-| [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 19 | Hanzo Service Conventions |
+| [HIP-0119](./HIPs/hip-0119-hanzo-service-conventions.md) | 20 | Hanzo Service Conventions |
 | [HIP-0005](./HIPs/hip-0005-post-quantum-security-for-ai-infrastructure.md) | 16 | Post-Quantum Security for AI Infrastructure |
 | [HIP-0111](./HIPs/hip-0111-iam-authentication-standard.md) | 15 | Hanzo IAM Authentication Standard |
 | [HIP-0118](./HIPs/hip-0118-superadmin-and-tenant-isolation-model.md) | 15 | SuperAdmin & Tenant Isolation Model |
@@ -430,12 +431,13 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 8 | One Identity Boundary |
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | 7 | Integrations, Connectors & the Extension Runtime — One Registry, One Way |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 6 | Model Context Protocol (MCP) Integration Standards |
+| [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 6 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | 6 | ZAP-Native Transport & gRPC Elimination |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | 6 | In-Process Extension Runtime Standard |
 | [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | 5 | Hanzo Engine — LLM Inference Engine Standard |
+| [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) | 5 | Kai — The Decision Model and the Decision Plane |
 | [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
-| [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 5 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |
 | [HIP-0085](./HIPs/hip-0085-wallet-pq-account-type.md) | 5 | Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID) |
 | [HIP-0136](./HIPs/hip-0136-one-secret-one-path.md) | 5 | One Secret, One Path |
