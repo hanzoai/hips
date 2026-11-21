@@ -218,6 +218,7 @@ permission from that provider.
 
     GET    /v1/providers/accounts
     POST   /v1/providers/accounts            { provider, kind: "key", label, value }
+    → 201 { id, provider, kind, label, fingerprint, created }   (fingerprint = first 8 hex of sha256 of the value; value never returned)
     DELETE /v1/providers/accounts/{id}
 
 A `login` account is created by the desktop's heartbeat (it appears when the user logs
@@ -232,30 +233,38 @@ nobody else in the org can resolve it.
 
 ### What is reported
 
-Default level `metadata`. A report is a batch of records, one per provider window or
-run. The record carries the same fields as the Dev desktop's typed usage module
-(the CodexBar-derived `usage/` model), so desktop and cloud share one model:
+Default level `metadata`. The report is the Dev desktop's typed usage model, unchanged
+(`packages/usage/src/schema.ts`, `@hanzodev/usage`), so desktop, extension and cloud share
+one definition:
 
-    UsageRecord {
-      desktop, provider, instance,
-      window:    "session" | "weekly" | "monthly" | "run",
-      used, limit?, unit: "tokens" | "requests" | "credits" | "usd",
-      resets_at?,
-      credits?:  { remaining, unit },
-      cost?:     { amount, currency },
-      model?, tokens?: { input, output, cached, reasoning },
-      started_at, duration_ms?, outcome?: "ok" | "error" | "cancelled",
-      run?:      "<hash of thread id>"
-    }
+    UsageReport { version: 1, deviceId, from, to, cost: [CostDay], snapshots: [ProviderSnapshot] }
+    CostDay { day, provider, model, inputTokens, outputTokens, cacheTokens, costUsd? }
+    ProviderSnapshot { provider, fetchedAt, source: oauth|api|local|cookies|none, plan?, account?,
+                       windows: [UsageWindow], credits?: Credits, status?: ProviderStatus, error? }
+    UsageWindow { kind: session|daily|weekly|monthly|credits|other, label, usedPercent,
+                  windowMinutes?, resetsAt? }
+    Credits { currency, balance?, spent?, limit? }
 
-At `metadata` the schema has no field for prompt, response, file path, repository name,
-branch, diff or command text; a payload with one is rejected whole, never trimmed. `run`
-is a salted hash so a user can count runs without cloud learning the thread.
+`deviceId` is the source's registry id (`src_…`). The schema has no field for a prompt,
+reply, file path, repository, branch, diff or command, and the transport adds none. Two
+fields carry free text and are constrained at `metadata`: `account` must be absent (the
+reporter strips it; cloud rejects a non-empty value), and `error` is a short code
+(`^[a-z0-9_.-]{1,64}$`). `status.description` and incident names are public provider status
+text, capped at 200 characters. A payload that breaks a rule is rejected whole with 400,
+never trimmed. `cost` is per day, so cloud can count tokens and spend without learning a run.
 
-Level `metadata+content` is a per-desktop opt-in the user turns on. Content goes to the
-user's own Space (HIP-1337) for that user, readable only by them, and is deleted when
-they turn the level off or revoke the desktop. It is never aggregated and never visible
-to an org admin.
+    POST /v1/sources/{id}/usage        body: UsageReport
+    header x-hanzo-sig: ed25519 by the device key, unpadded base64url, over
+           "hanzo-source-usage/1\n" + id + "\n" + lowercase-hex(sha256(body)) + "\n"
+    → 200 { "accepted": <records> }    410 when revoked, 401 on a bad signature
+
+Idempotent: `cost` rows replace by `(source, day, provider, model)` and snapshots by
+`(source, provider)`, so a resend never double counts. At most one report per source per
+10 s and 1 MiB.
+
+Level `metadata+content` is a per-source opt-in the user turns on. Content goes to the
+user's own Space (HIP-1337), readable only by them, deleted when they turn the level off
+or revoke the source. It is never aggregated and never visible to an org admin. Not built.
 
 ### The user sees exactly what is sent
 
@@ -272,13 +281,15 @@ browsers), its state, and its usage by provider and window, from `GET /v1/source
 
 ### Aggregation
 
-Cloud keeps rows by `(owner, subject, desktop, provider, model, day)` and answers
+    GET /v1/sources/usage?by=source|provider|model|user&from=&to=
+    → { "rows": [ { "key", "inputTokens", "outputTokens", "cacheTokens", "costUsd" } ],
+        "snapshots": [ ProviderSnapshot & { "sourceId" } ] }
 
-    GET /v1/sources/usage?by=user|source|provider|model&from=&to=
-
-for the caller (their own rows), and for an org admin the same query with `by=user`
-returning per-user totals only: tokens, requests, cost. No admin read reaches content,
-desktop names or provider labels of another user.
+For the caller: their own rows and the latest snapshot per `(source, provider)`. For an org
+admin, `by=user` returns per-user totals only (key is the user subject); no admin read
+reaches another user's sources, snapshots, plans or labels, and a SuperAdmin has no extra
+read. Aggregate storage is `source_cost(owner, subject, source, day, provider, model, …)`
+and `source_snapshot(owner, subject, source, provider, json)`.
 
 ## Routing
 
