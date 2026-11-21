@@ -329,6 +329,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1401](./HIPs/hip-1401-evolutionary-candidate-and-population-protocol.md) | Evolutionary Candidate & Population Protocol | Standards Track | Core | Draft | - | - | - |
 | [HIP-1402](./HIPs/hip-1402-hanzo-xp-verified-contribution-protocol.md) | Hanzo XP — Verified Contribution Protocol | Standards Track | Governance | Draft | - | - | - |
 | [HIP-1403](./HIPs/hip-1403-autonomous-scientific-research-protocol.md) | Autonomous Scientific Research Protocol | Standards Track | Infrastructure | Draft | - | - | - |
+| [HIP-1404](./HIPs/hip-1404-errors-become-fixes.md) | Errors Become Fixes | Standards Track | Infrastructure | Draft | - | - | - |
 
 ## HIP Process
 
