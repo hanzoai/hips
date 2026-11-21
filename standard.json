@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "name": "Hanzo OS Specification",
+  "version": "1.0.0",
+  "hips": [
+    "0000",
+    "1400",
+    "1401",
+    "1402",
+    "1403"
+  ],
+  "layers": {
+    "specification": {
+      "repository": "hanzoai/hips",
+      "hips": ["0000", "1400"]
+    },
+    "harness": {
+      "repository": "hanzoai/kata",
+      "hips": ["1400", "1401"]
+    },
+    "engine": {
+      "repository": "hanzoai/gen",
+      "hips": ["1330", "1400"]
+    },
+    "sandbox": {
+      "repository": "hanzoai/visor",
+      "hips": ["0053", "0123", "1172"]
+    },
+    "router": {
+      "repository": "hanzoai/enso",
+      "hips": ["0510", "1401"]
+    },
+    "evidence": {
+      "repository": "hanzoai/audit",
+      "hips": ["1103", "1334", "1402"]
+    },
+    "research": {
+      "repository": "hanzoai/research",
+      "hips": ["1145", "1334", "1401", "1403"]
+    }
+  }
+}
