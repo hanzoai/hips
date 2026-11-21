@@ -341,6 +341,7 @@ engine then moves into it piece by piece.
       subsystems  started on first frame to their prefix, stopped when idle
         /v1/dev     the Dev engine: in-process (Rust) + the TS worker for what has not moved
         /v1/*       hanzo-cloud host, spawned lazily (moved from cli host.rs)
+        /v1/engine  Hanzo Engine, the default local inference engine: a child on a private port, OpenAI-compatible
         /v1/chain   `hanzo-chain`, a child fetched on opt-in; OFF until then
         sources     linked-source registration for runtime `source` (HIP-1350)
 
@@ -359,6 +360,33 @@ engine then moves into it piece by piece.
   name `hanzod`. Each piece of its tool and agent surface is either served by the
   Dev engine and cloud, or gets a HIP of its own. None of it is carried forward
   silently.
+
+### Local inference
+
+Hanzo Engine (`hanzoai/engine`) is the default local inference engine. It is the
+`/v1/engine` subsystem: a child of `hanzod` on a private loopback port that `hanzod`
+picks, started on the first request and stopped when idle, so there is no listener of
+its own (the old `:36900` goes away). The surface is OpenAI-compatible and has one
+spelling, on both the socket and `:3690`:
+
+    GET  /v1/engine/models
+    POST /v1/engine/chat/completions
+    POST /v1/engine/embeddings
+
+An OpenAI client's base URL is `http://127.0.0.1:3690/v1/engine`. The loopback view
+proxies this prefix byte for byte, so streamed replies stay streams; it checks `Host`
+and `Origin` instead of demanding a bearer, because it is local inference. Other
+engines (Ollama, LM Studio, any OpenAI-compatible server) are not routed through
+`hanzod`: a caller treats each as an endpoint of its own.
+
+**LAN discovery (specified, not built).** An install that has the engine enabled and
+has opted in to LAN serving advertises it over mDNS/DNS-SD as service type
+`_hanzo-engine._tcp`, with TXT keys `path=/v1/engine` and `v=<hanzod version>`. A client
+discovers LAN engines by browsing `_hanzo-engine._tcp` (and may also browse the generic
+`_openai._tcp`, which `hanzod` does not publish). LAN serving is off by default and is
+the one case in which `hanzod` listens beyond loopback for inference; it must require a
+verified IAM bearer on every request before it can be turned on, so it is not offered
+until that gate exists.
 
 ### Chain participation is opt-in
 
