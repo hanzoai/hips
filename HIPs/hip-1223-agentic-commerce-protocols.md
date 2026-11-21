@@ -15,18 +15,17 @@ requires: HIP-0018, HIP-0106, HIP-0139, HIP-1163, HIP-1220
 ## Abstract
 
 An agent buys things for a person: it reads a price, agrees to it, pays, and keeps a receipt, with
-no human in the loop for the click. Five published specifications define the wire for that, each
-for a different part of it, and `hanzoai/commerce` implements them as Go packages:
+no human in the loop for the click. Published specifications define the wire for that, each for a
+different part of it, and `hanzoai/commerce` implements them as Go packages:
 
 | Part | Specification | Package |
 |---|---|---|
 | A resource asks for a payment per request | x402 version 2 | `payment/x402` |
 | An agent opens, changes and completes a merchant's checkout | Agentic Commerce Protocol (ACP), API 2026-04-17 | `agentic/acp` |
-| A merchant declares what it sells, negotiates capabilities and signs its messages | Universal Commerce Protocol (UCP), release 2026-08-25 | `agentic/ucp` |
 | A person's authority to buy is a signed mandate, verified before money moves | Agent Payments Protocol (AP2), v0.2 | `agentic/ap2` |
 | A resource names a payment method and an intent in the HTTP authentication framework | "Payment" HTTP authentication scheme (MPP), Internet-Draft draft-httpauth-payment-01 | `agentic/mpp` |
 
-This HIP states what is implemented of each, where each one stops, and the rules that hold for all
+The Universal Commerce Protocol (UCP) follows in its own change and is not covered here. This HIP states what is implemented of each, where each one stops, and the rules that hold for all
 of them. The wire of every one is its specification's, not ours. What is ours is only where they meet
 commerce's own checkout and order model, and everything priced, paid to or limited is data the
 operator sets.
@@ -125,7 +124,7 @@ Implemented, seller side, API version 2026-04-17:
 - `API-Version` with `supported_versions` on a version error, `Authorization`, `Request-Id`, and
   `Idempotency-Key` as the specification defines it: the same key and body replays the stored answer,
   the same key with another body is the specified error, a request in flight is told to retry.
-- The order webhook the merchant sends the agent, signed and verified as the specification states.
+- The order webhook the merchant sends the agent, signed as the specification states.
 - The discovery document, capability negotiation, and the declaration of the tokenized-card payment
   handler.
 - Request signing: the specification leaves the algorithm and the keys out of band, so a `Verifier`
@@ -142,30 +141,7 @@ merchant), 3-D Secure authentication, seller-backed handlers and business-to-bus
 the discount extension, cart, the product feed API, the MCP binding, and delegate authentication.
 Affiliate attribution, intent traces and marketing consent are validated and accepted but not stored.
 
-### §4 UCP: `agentic/ucp`
-
-Implemented, business side, release 2026-08-25:
-
-- The profile served at `/.well-known/ucp` (public, cacheable), the validation of a platform's profile,
-  the authority binding, and capability negotiation: intersection, highest shared version, pruning of
-  orphans.
-- A profile fetcher that is safe to point at a stranger: https only, no redirects, special-use
-  addresses refused at connect time, bounded size, time, concurrency and cache.
-- The Checkout capability over the REST transport: create, get, update, complete, cancel; messages,
-  totals, the status machine, `continue_url`; `UCP-Agent`, `Idempotency-Key`, the error registry.
-- HTTP Message Signatures (RFC 9421) as the specification profiles them: ES256, ES384, EdDSA, coverage
-  of method, authority, path, query, content digest and the integrity headers, `created` and
-  `expires`, response signing. The specification's own Ed25519 test vector is reproduced byte for byte.
-- The Order capability: get order, and the signed webhook to the platform's profile, over a client that
-  does not follow redirects or connect to special-use addresses.
-
-Behind commerce as in §3, with the same refusal of a stale plan price.
-
-Not implemented: cart and catalog, the MCP, A2A and embedded transports, fulfillment, discount, buyer
-consent and the other extensions (their members round-trip untouched), identity linking, food,
-lodging, location, ask, and stablecoin payment.
-
-### §5 AP2: `agentic/ap2`
+### §4 AP2: `agentic/ap2`
 
 Implemented from the normative documents and schemas of version 0.2. The reference SDK and samples are
 not normative and differ from them in places; where they differ the documents were followed.
@@ -179,16 +155,16 @@ not normative and differ from them in places; where they differ the documents we
   expiry, nonce, replay, the binding of the cart to the payment mandate, and every constraint, with a
   negative test for each. An unknown constraint is `unresolved_constraint`, never ignored.
 - A `Seller` that issues the merchant-signed checkout and completes a verified mandate against a
-  `Backend`; `Commerce` is the one over `api/billing`, one unit of one item, USD, shared payment token
-  only, refusing any mismatch of amount, currency or item before money moves.
+  `Backend`; `Commerce` is the one over `api/billing`, one unit of one credit pack, USD, shared payment token
+  only, refusing any mismatch of amount, currency or item and every plan before money moves.
 
 Not implemented: the user credential model (OpenID4VP), a trailing key-binding token, `x5c`, mDoc,
 delegation between agents, and any transport: AP2 defines no wire for carrying a mandate, so the
-transport is the host's or UCP's. A success payment receipt is not issued by commerce, because the
+transport is the host's. A success payment receipt is not issued by commerce, because the
 schema requires a network confirmation identifier commerce's payment result does not carry; the library
 signs one when a `Backend` supplies it.
 
-### §6 MPP: `agentic/mpp`
+### §5 MPP: `agentic/mpp`
 
 The "Payment" HTTP authentication scheme is an Internet-Draft, not a standard, and the package says so.
 It follows draft-httpauth-payment-01 and, where the editors' later working copy publishes test vectors
@@ -197,7 +173,7 @@ the published text lacks, the working copy; each such place is named in the pack
 Implemented: the challenge with its HMAC binding, the request-body digest binding, the credential, the
 receipt, the problem types, `Accept-Payment`, canonical JSON, and the `x-payment-info` discovery
 extension. `Gate` is a resource server's middleware: replay and concurrent-use protection, expiry,
-amount and body binding, a TLS requirement, size limits, `Idempotency-Key` replay. The challenge is
+amount and body binding, and a TLS requirement. The challenge is
 bound to the caller and to the route it was issued for. `Client` is a `RoundTripper` that answers a 402
 through a payer, never over plain http and never past an expired challenge. A payment method is a
 plug-in (`Method`); the shared-payment-token charge method is implemented, and `Commerce` settles it
@@ -206,12 +182,11 @@ through the checkout and spends the credit it grants against the priced resource
 Not implemented: the session and subscription intents, and every method whose draft needs a chain, a
 channel, a card network or a facilitator commerce does not run. Rate limiting belongs to the host.
 
-### §7 Configuration
+### §6 Configuration
 
 What an operator supplies, and what a package refuses to start without: the payee, token, network,
 timeout and price of an x402 resource; the merchant's account at its payment service provider, the
-order permalink and the identity function for ACP and UCP; the business signing key (from KMS), the
-trust registry of platforms and the idempotency retention for UCP; the issuer and merchant keys and a
+order permalink, the retry interval and the identity function for ACP; the issuer and merchant keys and a
 shared secret of at least 32 bytes for AP2; the realm, the secret, the replay store and the price
 function for MPP. None has a default, and none is a value this HIP or the code states.
 
@@ -236,11 +211,8 @@ with the stored result and a different body is refused, and the charge is bound 
 key so a completion sent twice is one purchase. A price quoted to an agent and the price charged are the
 same number or nothing is charged.
 
-Message signatures are checked over everything the specification says they cover, with the algorithm
-taken from the key and never from the message; a key is found only through the profile the request names
-and only for a platform the host trusts. A profile or a webhook address supplied by a stranger is
-fetched without following redirects and without connecting to a special-use address, with bounds on size,
-time and concurrency. A mandate's signature, hashes, expiry, nonce and constraints are all checked before
+A request signature is verified by a host function that sees the method, the path, the key, the timestamp
+and the body, and a timestamp outside the skew in either direction is refused. A mandate's signature, hashes, expiry, nonce and constraints are all checked before
 a checkout is opened from it.
 
 The packages were reviewed adversarially before they merged; the findings and their fixes are in the
@@ -250,7 +222,6 @@ commit history of each package.
 
 - x402 specification version 2, HTTP transport and the exact scheme on EVM (`x402-foundation/x402`).
 - Agentic Commerce Protocol, API 2026-04-17 (`agentic-commerce-protocol/agentic-commerce-protocol`).
-- Universal Commerce Protocol, release 2026-08-25 (`Universal-Commerce-Protocol/ucp`).
 - Agent Payments Protocol, v0.2 (`google-agentic-commerce/AP2`).
 - The "Payment" HTTP Authentication Scheme, draft-httpauth-payment-01, and the payment intent and
   discovery drafts it names.
