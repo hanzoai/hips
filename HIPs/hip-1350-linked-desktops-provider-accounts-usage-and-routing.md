@@ -398,3 +398,19 @@ opt in/opt out.
   terms and the one rule.
 - A second usage model: the desktop's typed usage module is the schema.
 - WebSocket or HTTP session bridges: ZAP only.
+
+## Amendment: how every client reaches a source (2026-11-21)
+
+Desktop, mobile and web reach `/v1/dev` the same way (HIP-1330 amendment): lease a
+session, then open a ZAP session to it. What they add is the list of places a session
+can run, which they read from `GET /v1/sources` for the person's machines and from
+`GET /v1/dev/sessions` for their cloud sessions, and merge. There is no third list.
+
+A route to a source is the session lease with `runtime: "source"` and the source's id.
+The reply has the same shape as every other session, `{id, label, zap}` with no
+`sandbox`; `zap` is the source's Connect relay endpoint, and the IAM bearer in the first
+envelope is the credential there as it is for a cell. Cloud does not carry the
+session's bytes for a source: it names the endpoint and the relay carries them, so a
+person's machine is never routed through a cloud cell and a cloud cell is never given a
+machine's credentials.
+
