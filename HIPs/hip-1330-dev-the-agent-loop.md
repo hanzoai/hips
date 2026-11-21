@@ -200,6 +200,39 @@ Go host maps each environment frame to a core event and each core action, or its
 observation, to frames; the core, the client and the Dev server are unchanged. The
 adapter is the one place the two vocabularies meet.
 
+### Chat-mode subset
+
+Recorded from the real Dev server (0.1.10) in chat mode, a thread with no workspace: connect,
+launch, send, reply, rename, settle. Schemas are in `packages/contracts` of `hanzoai/dev`
+(`rpc.ts`, `orchestrationV2.ts`, `server.ts`). The frames are Effect RPC JSON; a client that
+opens with `frameParts=1` is sent a frame over 48 KiB as parts, each but the last led by U+001E.
+
+Answered by the adapter (`hanzoai/dev` `go/frame`):
+
+| method | answer |
+|--------|--------|
+| `subscribeServerConfig` | stream: `snapshot`, `usageLimitSourcesUpdated`, `environmentThemesUpdated` (`ServerConfigStreamEvent`) |
+| `subscribeServerLifecycle` | stream: `welcome` |
+| `orchestration.subscribeShell` | stream: `snapshot`, `synchronized`, then `thread.updated` per change (`OrchestrationV2ShellStreamItem`) |
+| `orchestration.subscribeThread` | stream: `snapshot`, `synchronized`, then `event` (`OrchestrationV2ThreadStreamItem`) |
+| `orchestration.launchThread` | `OrchestrationV2ThreadLaunchResult` |
+| `orchestration.dispatchCommand` | `thread.visit`, `thread.metadata.update` (rename), `thread.settle`, `message.dispatch`; result `{sequence}` |
+| `orchestration.getArchivedShellSnapshot`, `server.refreshProviders`, `server.reportClientActivity`, `peerLinks.list` | as the server answers them |
+| read side of an empty workspace: `vcs.listRefs`, `projects.readFile` (`allowMissing`), `preview.list`, `preview.reportProfiles`, `subscribeVcsStatus`, `subscribeVcsBranch`, `subscribeTerminalMetadata`, `subscribeWorktreeSetup`, `subscribeDiscoveredLocalServers`, `subscribeProjectClones`, `scheduledTasks.subscribe`, `subscribePreviewEvents` | what the server says of a thread with no workspace: not a repository, no files, terminals, previews or servers |
+
+A turn writes `run.created`, `run-attempt.created`, `node.updated`, `message.updated`,
+`turn-item.updated`, `provider-thread.updated`, then `run.updated`/`run-attempt.updated`/`node.updated`
+(running), `provider-turn.updated`, a `node.updated`/`message.updated`/`turn-item.updated` per
+assistant message (`streaming: true` while text arrives), and the run's closing events. The
+adapter writes no `provider-session.*` or `checkpoint*` events: there is no provider session
+and no workspace to checkpoint.
+
+A method that acts on a workspace (terminals, file writes, checkout and worktrees, previews,
+browser, devices) is not answered. The adapter returns a typed `NeedsSandbox` to the session
+layer, which leases a cell and carries the request there, or refuses it with
+`EnvironmentAuthorizationError {requiredScope, requiredPermission: "sandbox"}`, a failure every
+method's error union already holds.
+
 **Upgrade in place.** A wasm session whose loop emits an Exec, Git or Browse action
 leases a cell then, from the sandbox, and the action runs there: the loop's THINK/DO
 split already says the cell is leased per effect, so nothing is migrated. A session that
