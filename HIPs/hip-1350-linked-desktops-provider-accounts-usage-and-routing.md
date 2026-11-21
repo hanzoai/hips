@@ -102,10 +102,21 @@ it should be reviewed against the OpenAI terms.
 
 ## Registry
 
+### Sign-in and token verification
+
+Sign-in and billing live at `https://hanzo.ai`. A client sends the person to
+`https://hanzo.ai/login` and nothing else names an identity host. Neither the login host
+nor the issuer is hard-coded: a client reads `https://hanzo.ai/.well-known/openid-configuration`
+and takes the `issuer`, `authorization_endpoint`, `token_endpoint` and `jwks_uri` from it
+(the issuer is `https://hanzo.id` today and may change). Cloud verifies a bearer against
+the issuer and JWKS from that same discovery document, through the identity boundary every
+`/v1` app already uses; `source.v1` adds no verifier of its own. The Hanzo IAM remains the
+only identity.
+
 ### Link
 
-The desktop signs the user in with Hanzo IAM (device code or loopback PKCE, already in
-Dev's `CliTokenManager`), then:
+The desktop signs the user in (device code or loopback PKCE, already in Dev's
+`CliTokenManager`, against the discovered endpoints), then:
 
     POST /v1/sources
     { "kind": "desktop", "name": "Zach's MacBook", "os": "darwin", "arch": "arm64", "version": "1.8.4",
@@ -179,8 +190,8 @@ column exists.
 The extension (`~/work/hanzo/extension`, `packages/browser`) already reaches the user's
 computer over native ZAP (`hanzo-zap-host`). As a source it does three things and no more:
 
-1. **Register.** The user signs in with Hanzo IAM from the extension (PKCE in a browser
-   tab); the extension keeps a device key in `chrome.storage.local`/`browser.storage.local`
+1. **Register.** The user signs in from the extension (PKCE in a browser tab opened at
+   `https://hanzo.ai/login`, endpoints from discovery); the extension keeps a device key in `chrome.storage.local`/`browser.storage.local`
    and calls `POST /v1/sources` with `kind: "browser"`, `os` set to the browser name and
    version, and `zap` omitted unless a Connect tunnel exists. Idempotent on `(subject, key)`.
 2. **Heartbeat.** Same call and cadence as a desktop. `providers` lists which AI web
