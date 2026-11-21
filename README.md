@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 51 | 4 | 98 |
-| C++ | 1 | 2 | 0 | 298 |
-| Rust | 10 | 32 | 1 | 258 |
+| Go | 148 | 52 | 4 | 99 |
+| C++ | 1 | 2 | 0 | 300 |
+| Rust | 10 | 32 | 1 | 260 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -326,6 +326,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1347](./HIPs/hip-1347-event-driven-agent-reliability.md) | Event-Driven Agent Reliability | Standards Track | Application | Draft | partial | - | - |
 | [HIP-1348](./HIPs/hip-1348-reliable-economical-and-verifiable-ai-infrastructure.md) | Reliable, Economical and Verifiable AI Infrastructure | Standards Track | Security | Draft | partial | - | - |
 | [HIP-1349](./HIPs/hip-1349-sensei-certification-standard.md) | Sensei — L1–L9 Certification Standard, sensei.group ... | Standards Track | Platform | Draft | partial | - | - |
+| [HIP-1350](./HIPs/hip-1350-linked-desktops-provider-accounts-usage-and-routing.md) | Linked Sources — Desktops and Browsers, Provider Acc... | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1400](./HIPs/hip-1400-os-conformance-and-specification-manifest.md) | Hanzo OS Conformance & Specification Manifest | Standards Track | Core | Draft | - | - | - |
 | [HIP-1401](./HIPs/hip-1401-evolutionary-candidate-and-population-protocol.md) | Evolutionary Candidate & Population Protocol | Standards Track | Core | Draft | - | - | - |
 | [HIP-1402](./HIPs/hip-1402-hanzo-xp-verified-contribution-protocol.md) | Hanzo XP — Verified Contribution Protocol | Standards Track | Governance | Draft | - | - | - |
@@ -418,9 +419,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 135 | Capability |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 132 | The Hanzo Plugin Contract |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 130 | Identity & Access Management Standard |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 136 | Capability |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 133 | The Hanzo Plugin Contract |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 131 | Identity & Access Management Standard |
 
 ### Then the invariants
 
@@ -436,11 +437,11 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 10 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
+| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 9 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | 9 | Responsible AI Principles and Commitments |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | 8 | Q-Chain — Quasar Finality Block Standard |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | 8 | Z-Chain — Post-Quantum Identity & Attestation Rollup |
-| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 8 | One Identity Boundary |
 | [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) | 7 | Kai — The Decision Model and the Decision Plane |
 | [HIP-1334](./HIPs/hip-1334-research-unified-runtime.md) | 7 | Research — The Unified Research Runtime |
@@ -461,7 +462,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 133 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 134 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & trust** — who you are · what you may touch · where secrets live
 
@@ -501,4 +502,4 @@ One capability, one HIP (HIP-0139). 133 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-1001](./HIPs/hip-1001-ledger-double-entry-ledger.md) `ledger` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions`
+[HIP-1001](./HIPs/hip-1001-ledger-double-entry-ledger.md) `ledger` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions` · [HIP-1350](./HIPs/hip-1350-linked-desktops-provider-accounts-usage-and-routing.md) `sources`
