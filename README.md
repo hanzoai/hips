@@ -1,5 +1,7 @@
 # Hanzo Improvement Proposals (HIPs)
 
+[![Open in Hanzo](https://hanzo.app/badges/open-in-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/hips&ref=main&action=open) [![Edit with Hanzo](https://hanzo.app/badges/edit-with-hanzo.svg)](https://hanzo.app/dev/open?repo=github.com/hanzoai/hips&ref=main&action=edit)
+
 Hanzo Improvement Proposals (HIPs) are the primary mechanism for proposing new features, gathering community input, and documenting design decisions for the [Hanzo AI](https://hanzo.ai) ecosystem. This process ensures that changes to the Hanzo platform are transparently reviewed and achieve community consensus before implementation.
 
 ## What is a HIP?
