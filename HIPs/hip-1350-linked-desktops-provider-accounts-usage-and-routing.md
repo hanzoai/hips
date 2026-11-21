@@ -96,9 +96,7 @@ A provider's classes are fail-closed: one not in this table is `local`. Browser 
 
 Conditions on every `desktop` route, enforced in cloud and on the desktop: the caller is
 the source's owner (never another user, never an org admin); the source is the caller's
-own and online; the provider instance is `ready` and the user has turned **Share with my
-other surfaces** on for it on that device (default off, a local setting reported in the
-heartbeat as `shared`); one routed run per login instance at a time; no pooling across
+own and online; the provider instance is `ready` and **Share with my other surfaces** is on for it on that device (a local setting reported in the heartbeat as `shared`; default on for the owner's own surfaces, meaning the same IAM principal, for the providers that allow remote control, default off for every other provider, and the user can turn it off; a run from any other principal is refused); one routed run per login instance at a time; no pooling across
 users or accounts; every dispatch audited. The desktop starts only the unmodified official
 client and never hands out its token, `auth.json` or session.
 
@@ -113,7 +111,7 @@ Sign-in and billing live at `https://hanzo.ai`. A client sends the person to
 nor the issuer is hard-coded: a client reads `https://hanzo.ai/.well-known/openid-configuration`
 and takes the `issuer`, `authorization_endpoint`, `token_endpoint` and `jwks_uri` from it
 (the issuer is `https://hanzo.id` today and may change). Cloud verifies a bearer against
-the issuer and JWKS from that same discovery document, through the identity boundary every
+the issuer and JWKS from that same discovery document (cached with a TTL, last good copy kept), through the identity boundary every
 `/v1` app already uses; `source.v1` adds no verifier of its own. The Hanzo IAM remains the
 only identity.
 
