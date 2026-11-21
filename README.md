@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 50 | 4 | 98 |
-| C++ | 1 | 2 | 0 | 297 |
-| Rust | 10 | 32 | 1 | 257 |
+| Go | 148 | 52 | 4 | 99 |
+| C++ | 1 | 2 | 0 | 300 |
+| Rust | 10 | 32 | 1 | 260 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -279,6 +279,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1220](./HIPs/hip-1220-commerce-the-merchant-half.md) | Commerce — The Merchant Half | Standards Track | Application | Final | partial | - | - |
 | [HIP-1221](./HIPs/hip-1221-treasury-the-reserve-fund.md) | Treasury — The Reserve Fund | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1222](./HIPs/hip-1222-pricing-the-price-list.md) | Pricing — The Price List and Who May See It | Standards Track | Platform | Final | shipped | - | - |
+| [HIP-1223](./HIPs/hip-1223-agentic-commerce-protocols.md) | Agentic Commerce — Pay-per-Request, Checkout, Mandat... | Standards Track | Application | Draft | partial | - | - |
 | [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) | Platform — The Container Plane | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) | Projects — The Site Store | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1232](./HIPs/hip-1232-git-repository-hosting.md) | Git — Repository Hosting | Standards Track | Infrastructure | Final | shipped | - | - |
@@ -325,6 +326,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1347](./HIPs/hip-1347-event-driven-agent-reliability.md) | Event-Driven Agent Reliability | Standards Track | Application | Draft | partial | - | - |
 | [HIP-1348](./HIPs/hip-1348-reliable-economical-and-verifiable-ai-infrastructure.md) | Reliable, Economical and Verifiable AI Infrastructure | Standards Track | Security | Draft | partial | - | - |
 | [HIP-1349](./HIPs/hip-1349-sensei-certification-standard.md) | Sensei — L1–L9 Certification Standard, sensei.group ... | Standards Track | Platform | Draft | partial | - | - |
+| [HIP-1350](./HIPs/hip-1350-linked-desktops-provider-accounts-usage-and-routing.md) | Linked Sources — Desktops and Browsers, Provider Acc... | Standards Track | Infrastructure | Draft | partial | - | - |
 | [HIP-1400](./HIPs/hip-1400-os-conformance-and-specification-manifest.md) | Hanzo OS Conformance & Specification Manifest | Standards Track | Core | Draft | - | - | - |
 | [HIP-1401](./HIPs/hip-1401-evolutionary-candidate-and-population-protocol.md) | Evolutionary Candidate & Population Protocol | Standards Track | Core | Draft | - | - | - |
 | [HIP-1402](./HIPs/hip-1402-hanzo-xp-verified-contribution-protocol.md) | Hanzo XP — Verified Contribution Protocol | Standards Track | Governance | Draft | - | - | - |
@@ -417,9 +419,9 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 134 | Capability |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 131 | The Hanzo Plugin Contract |
-| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 130 | Identity & Access Management Standard |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 136 | Capability |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 133 | The Hanzo Plugin Contract |
+| [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 131 | Identity & Access Management Standard |
 
 ### Then the invariants
 
@@ -435,23 +437,23 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0077](./HIPs/hip-0077-mesh-identity-gossip-and-payments.md) | 11 | Mesh Identity, Gossip & Payments (PQ) |
 | [HIP-0302](./HIPs/hip-0302-encrypted-sqlite-replication-standard.md) | 10 | Hanzo Replicate: Encrypted SQLite Durability for Base Services |
 | [HIP-0084](./HIPs/hip-0084-pulsar-m-dkg.md) | 9 | Pulsar-M — Threshold ML-DSA DKG & Signing |
+| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 9 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0200](./HIPs/hip-0200-responsible-ai-principles.md) | 9 | Responsible AI Principles and Commitments |
 | [HIP-0004](./HIPs/hip-0004-llm-gateway-unified-ai-provider-interface.md) | 8 | LLM Gateway - Unified AI Provider Interface |
 | [HIP-0079](./HIPs/hip-0079-q-chain-finality-blocks.md) | 8 | Q-Chain — Quasar Finality Block Standard |
 | [HIP-0078](./HIPs/hip-0078-z-chain-pq-identity-rollup.md) | 8 | Z-Chain — Post-Quantum Identity & Attestation Rollup |
-| [HIP-0114](./HIPs/hip-0114-zap-inter-vm-cognitive-transport.md) | 8 | ZAP — Inter-VM Cognitive Transport for Thinking Chains |
 | [HIP-0519](./HIPs/hip-0519-one-identity-boundary.md) | 8 | One Identity Boundary |
 | [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) | 7 | Kai — The Decision Model and the Decision Plane |
 | [HIP-1334](./HIPs/hip-1334-research-unified-runtime.md) | 7 | Research — The Unified Research Runtime |
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | 7 | Integrations, Connectors & the Extension Runtime — One Registry, One Way |
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | 6 | Hanzo AI Architecture & Framework |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 6 | Model Context Protocol (MCP) Integration Standards |
+| [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 6 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 6 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | 6 | ZAP-Native Transport & gRPC Elimination |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | 6 | In-Process Extension Runtime Standard |
 | [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | 5 | Hanzo Engine — LLM Inference Engine Standard |
-| [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |
 | [HIP-1103](./HIPs/hip-1103-audit-tamper-evident-trail.md) | 5 | Audit — The Tamper-Evident Trail |
 | [HIP-0085](./HIPs/hip-0085-wallet-pq-account-type.md) | 5 | Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID) |
@@ -460,7 +462,7 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 
 ### The capabilities
 
-One capability, one HIP (HIP-0139). 133 of them, grouped as `capabilities.yaml` groups them.
+One capability, one HIP (HIP-0139). 134 of them, grouped as `capabilities.yaml` groups them.
 
 **Identity & trust** — who you are · what you may touch · where secrets live
 
@@ -500,4 +502,4 @@ One capability, one HIP (HIP-0139). 133 of them, grouped as `capabilities.yaml` 
 
 **Not yet grouped**
 
-[HIP-1001](./HIPs/hip-1001-ledger-double-entry-ledger.md) `ledger` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions`
+[HIP-1001](./HIPs/hip-1001-ledger-double-entry-ledger.md) `ledger` · [HIP-1330](./HIPs/hip-1330-dev-the-agent-loop.md) `dev` · [HIP-1332](./HIPs/hip-1332-kai-the-decision-model.md) `decisions` · [HIP-1350](./HIPs/hip-1350-linked-desktops-provider-accounts-usage-and-routing.md) `sources`
