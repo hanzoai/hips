@@ -23,9 +23,9 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 
 | | shipped | partial | none | not assessed |
 |:--|--:|--:|--:|--:|
-| Go | 148 | 50 | 4 | 98 |
-| C++ | 1 | 2 | 0 | 297 |
-| Rust | 10 | 32 | 1 | 257 |
+| Go | 148 | 51 | 4 | 98 |
+| C++ | 1 | 2 | 0 | 298 |
+| Rust | 10 | 32 | 1 | 258 |
 
 | Number | Title | Type | Category | Status | Go | C++ | Rust |
 |:-------|:------|:-----|:---------|:-------|:--|:--|:--|
@@ -279,6 +279,7 @@ A Hanzo Improvement Proposal (HIP) is a design document that provides informatio
 | [HIP-1220](./HIPs/hip-1220-commerce-the-merchant-half.md) | Commerce — The Merchant Half | Standards Track | Application | Final | partial | - | - |
 | [HIP-1221](./HIPs/hip-1221-treasury-the-reserve-fund.md) | Treasury — The Reserve Fund | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1222](./HIPs/hip-1222-pricing-the-price-list.md) | Pricing — The Price List and Who May See It | Standards Track | Platform | Final | shipped | - | - |
+| [HIP-1223](./HIPs/hip-1223-agentic-commerce-protocols.md) | Agentic Commerce — Pay-per-Request, Checkout, Mandat... | Standards Track | Application | Draft | partial | - | - |
 | [HIP-1230](./HIPs/hip-1230-platform-the-container-plane.md) | Platform — The Container Plane | Standards Track | Infrastructure | Final | shipped | - | - |
 | [HIP-1231](./HIPs/hip-1231-projects-the-site-store.md) | Projects — The Site Store | Standards Track | Application | Final | shipped | - | - |
 | [HIP-1232](./HIPs/hip-1232-git-repository-hosting.md) | Git — Repository Hosting | Standards Track | Infrastructure | Final | shipped | - | - |
@@ -417,8 +418,8 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | | Required by | |
 |:--|--:|:--|
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | — | Hanzo AI Architecture & Framework — the map |
-| [HIP-0139](./HIPs/hip-0139-capability.md) | 134 | Capability |
-| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 131 | The Hanzo Plugin Contract |
+| [HIP-0139](./HIPs/hip-0139-capability.md) | 135 | Capability |
+| [HIP-0106](./HIPs/hip-0106-hanzo-plugin-contract.md) | 132 | The Hanzo Plugin Contract |
 | [HIP-0026](./HIPs/hip-0026-identity-access-management-standard.md) | 130 | Identity & Access Management Standard |
 
 ### Then the invariants
@@ -446,12 +447,12 @@ Every HIP by number is indexed below. This is the order it is learnable in, deri
 | [HIP-0126](./HIPs/hip-0126-integrations-connectors-and-the-extension-runtime.md) | 7 | Integrations, Connectors & the Extension Runtime — One Registry, One Way |
 | [HIP-0000](./HIPs/hip-0000-hanzo-ai-architecture-framework.md) | 6 | Hanzo AI Architecture & Framework |
 | [HIP-0010](./HIPs/hip-0010-model-context-protocol-mcp-integration-standards.md) | 6 | Model Context Protocol (MCP) Integration Standards |
+| [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 6 | Payment Processing Standard |
 | [HIP-0024](./HIPs/hip-0024-hanzo-sovereign-l1-chain-architecture.md) | 6 | Hanzo Sovereign L1 Chain Architecture |
 | [HIP-0120](./HIPs/hip-0120-zap-native-transport-and-grpc-elimination.md) | 6 | ZAP-Native Transport & gRPC Elimination |
 | [HIP-0036](./HIPs/hip-0036-ci-cd-build-system-standard.md) | 6 | CI/CD Build System Standard |
 | [HIP-0105](./HIPs/hip-0105-in-process-extension-runtime-standard.md) | 6 | In-Process Extension Runtime Standard |
 | [HIP-0043](./HIPs/hip-0043-llm-inference-engine-standard.md) | 5 | Hanzo Engine — LLM Inference Engine Standard |
-| [HIP-0018](./HIPs/hip-0018-payment-processing-standard.md) | 5 | Payment Processing Standard |
 | [HIP-0128](./HIPs/hip-0128-resource-surface-standard.md) | 5 | Resource Surface Standard — Generated REST over ZAP |
 | [HIP-1103](./HIPs/hip-1103-audit-tamper-evident-trail.md) | 5 | Audit — The Tamper-Evident Trail |
 | [HIP-0085](./HIPs/hip-0085-wallet-pq-account-type.md) | 5 | Wallet PQ Account Type (ML-DSA-65 native, 48-byte AccountID) |

@@ -20,8 +20,8 @@ the resource. It speaks x402 protocol version 2 — challenge, EIP-3009
 `transferWithAuthorization` signed over the advertised terms, verify, settle
 exactly once, serve — native to the cloud binary. It is a rail and nothing
 else: the marketplace declares what is priced and who is paid, wallets says
-where the money lands, and this capability enforces. The implementation is
-`hanzoai/cloud` `apps/x402`.
+where the money lands, and this capability enforces. The protocol is `hanzoai/commerce` `payment/x402` (HIP-1223); the
+implementation of this capability, the ledger settlement over it, is `hanzoai/cloud` `apps/x402`.
 
 ## Motivation
 
@@ -44,7 +44,7 @@ as in RFC 2119.
 The protocol is x402 version 2 as specified by `x402-foundation/x402`
 (`specs/x402-specification-v2.md` and its HTTP transport binding). Every field
 name, header name and error reason on the wire MUST be the one the
-specification prints (`apps/x402/protocol.go`): the wire is a contract with
+specification prints (the protocol is `hanzoai/commerce` `payment/x402`, HIP-1223): the wire is a contract with
 other people's clients, and a client that has never heard of Hanzo must be
 able to pay us. The version is a number on the wire (`x402Version: 2`) and the
 only thing that decides how a message is read — a wire whose shape depends on
