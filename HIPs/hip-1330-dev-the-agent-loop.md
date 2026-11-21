@@ -455,8 +455,49 @@ RPC until the same cutover, and then becomes generated from `dev-protocol`.
   shell, and 120–190 MiB per native `dev serve` agent. The provider CLIs that run
   during a turn are the user's own cost and are not changed by this. What changes is
   the cost when nothing is running, which goes from more than 600 MiB across the
-  daemons to the phase 1 target. Chain cost has not been measured yet, and phase 6
-  measures it before it is offered.
+  daemons to the phase 1 target. Chain cost with no traffic is measured below. Cost under
+  traffic is not, and the Settings toggle waits for it.
+
+### Chain cost, measured (phase 6)
+
+`hanzo-chain` is `hanzoai/node` `src/` at `e6f75ba8c` (source identical to
+v0.2.5, whose `darwin-arm64` tarball matched its published sha256
+`08e65e33…ccd01`). Five validators, one committee, devnet (network id 3, chain
+id 36964), all on one Apple M1 Max, macOS 27.0.1, at `nice -n19`, measured
+over 7 minutes of uptime. Per node, no transactions:
+
+| metric | measured |
+|---|---|
+| RSS | 1.7 MiB (`ps`); 3.7 MiB physical footprint (`vmmap`) |
+| CPU | 1.0–1.1% of one core, steady; 4.6 s CPU in 7 min |
+| context switches | about 890/s (38,342 in 43 s); 21 threads |
+| BSD syscalls | about 940/s |
+| disk | 8 KiB (two 32-byte keys, four empty journals); growth 0 B |
+| bandwidth | 26 KiB in, 26 KiB out at connect, then 0 B for the rest of the run |
+| listeners | RPC and mesh only; 4 established peers |
+
+Findings:
+
+- **An idle devnet builds no blocks.** `eth_blockNumber` stayed `0x0`, and the
+  `votes` journal stayed at 0 bytes. The mempool does not gossip (see the
+  chain-traffic note: it writes each transaction to every node), so blocks, votes,
+  disk growth and bandwidth all exist only under traffic. The mainnet sender
+  beats about every 3.9 s.
+- **The idle cost is wakeups, not memory.** About 890 context switches a second
+  per node with nothing to do is a polling loop, and on a laptop on battery that
+  is the cost that matters. It is a defect in `lux-node` 0.2.2 to report
+  upstream, not something the opt-in plumbing can hide.
+- `--genesis` refuses any block zero that is not the network's own, so a local
+  devnet cannot fund a throwaway sender. Driving traffic needs the devnet
+  traffic sender's key (`hanzod-faucet`, in KMS).
+
+Not measured, and required before the Settings toggle ships:
+
+- disk growth and bandwidth per day under the mainnet-rate traffic model;
+- whether a validator misses votes across sleep and resume (there are no votes
+  without traffic, so an idle run cannot show it);
+- Linux amd64. `halo`'s SSH host key no longer matches the pinned one, so it
+  was not used; a cloud sandbox or a re-verified host is needed.
 
 ## Rationale
 
