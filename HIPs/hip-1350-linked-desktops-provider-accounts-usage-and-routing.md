@@ -1,19 +1,25 @@
 ---
 hip: 1350
-title: Linked Desktops — Provider Accounts, Usage and Routing for Hanzo Dev
+title: Linked Sources — Desktops and Browsers, Provider Accounts, Usage and Routing for Hanzo Dev
 author: Hanzo AI
 type: Standards Track
 category: Infrastructure
-capability: desktop
+capability: sources
 status: Draft
 implementation-go: partial
 created: 2026-11-20
 requires: HIP-0026, HIP-0106, HIP-0114, HIP-1330
 ---
 
-# HIP-1350: Linked Desktops
+# HIP-1350: Linked Sources
 
 ## Abstract
+
+The Hanzo browser extension is a second kind of source. If the user is signed in to an AI
+web product in that browser, the extension registers as a **linked browser** in the same
+registry, with the same heartbeat, the same usage model and the same routing. There is one
+registry, not two; `kind` is `desktop` or `browser`. Wherever this document says desktop,
+the rule holds for a browser unless Browser sources says otherwise.
 
 A developer installs the Hanzo Dev desktop app, links their other AI accounts there,
 and links the desktop to their Hanzo account through Hanzo IAM. Hanzo cloud then
@@ -21,13 +27,13 @@ knows each linked desktop, what providers it can reach, and what it used. When t
 developer codes at hanzo.app/dev they pick where a session runs: a linked desktop, a
 cloud cell with an API key held in Hanzo KMS, or a cell on Hanzo's own models.
 
-Four nouns, one owner each, all under `/v1/desktops` and `/v1/providers` on
+Four nouns, one owner each, all under `/v1/sources` and `/v1/providers` on
 `api.hanzo.ai`, served over ZAP (HIP-0114); the HTTP and OpenAPI forms are
 projections of the same typed ops.
 
 | Noun | Meaning | Where it lives |
 |------|---------|----------------|
-| Desktop | One installed Dev app, linked to one IAM user | cloud registry row |
+| Source | One linked place the user's AI accounts live: a **desktop** (installed Dev app) or a **browser** (the Hanzo extension), linked to one IAM user | cloud registry row |
 | Provider account | A login or key the user holds with a provider, by reference | cloud row (reference), desktop (login), KMS (key) |
 | Usage | What a desktop reports about runs on its providers | cloud, per user and org |
 | Route | Which desktop or key a web session executes through | `/v1/dev` session field |
@@ -62,7 +68,7 @@ enforced by cloud, not chosen by the client.
 | `key` | Runs from the user's API key in KMS, in a cell or via the gateway, from any session. |
 
 A provider can carry several: a user's Anthropic API key is `key`; the same user's Claude
-subscription is `local`. The table is data in `apps/desktop/policy.go`
+subscription is `local`. The table is data in `apps/source/policy.go`
 and in the Dev desktop's provider catalog, and a change is a HIP amendment.
 
 Terms were read from each provider's own pages (November 2026). No provider's terms
@@ -101,10 +107,10 @@ it should be reviewed against the OpenAI terms.
 The desktop signs the user in with Hanzo IAM (device code or loopback PKCE, already in
 Dev's `CliTokenManager`), then:
 
-    POST /v1/desktops
-    { "name": "Zach's MacBook", "os": "darwin", "arch": "arm64", "version": "1.8.4",
+    POST /v1/sources
+    { "kind": "desktop", "name": "Zach's MacBook", "os": "darwin", "arch": "arm64", "version": "1.8.4",
       "key": "<ed25519 public key, base64url>", "zap": "https://…" }
-    → 201 { "id": "dsk_…", "interval": 30, "level": "metadata" }
+    → 201 { "id": "src_…", "interval": 30, "level": "metadata" }
 
 - Identity is the validated IAM token. `owner` (org) and `subject` (user) come from
   it, never from the body. A machine token is refused.
@@ -114,13 +120,13 @@ Dev's `CliTokenManager`), then:
   given by the `machine` DevRuntime. Optional: a desktop with no tunnel is registered
   and not routable.
 - Idempotent on `(subject, key)`: relinking the same install returns the same id.
-- Cap: 25 active desktops per user.
+- Cap: 25 active sources per user.
 
 ### List, read, revoke
 
-    GET    /v1/desktops          the caller's desktops, newest heartbeat first
-    GET    /v1/desktops/{id}
-    DELETE /v1/desktops/{id}     revoke
+    GET    /v1/sources          the caller's sources, newest heartbeat first
+    GET    /v1/sources/{id}
+    DELETE /v1/sources/{id}     revoke
 
 Only the owner reads or revokes. An org admin sees *counts* in the org view (Usage),
 not another person's desktop rows, and a SuperAdmin (`owner == "admin"`) has no
@@ -130,7 +136,7 @@ link. Revoke is also offered from the desktop and from hanzo.app.
 
 ### Heartbeat
 
-    POST /v1/desktops/{id}/heartbeat
+    POST /v1/sources/{id}/heartbeat
     { "at": "2026-11-20T10:00:00Z", "version": "1.8.4", "zap": "https://…",
       "providers": [ { "provider": "claude", "instance": "claude-1", "kind": "login",
                        "state": "ready", "plan": "max" } ],
@@ -147,11 +153,11 @@ link. Revoke is also offered from the desktop and from hanzo.app.
 
 ### ZAP service
 
-One service, `desktop.v1`, on cloud's ZAP port; HTTP is its projection.
+One service, `source.v1`, on cloud's ZAP port; HTTP is its projection.
 
-    Link(LinkRequest) → Desktop
-    List() → [Desktop]
-    Get(id) → Desktop
+    Link(LinkRequest) → Source
+    List() → [Source]
+    Get(id) → Source
     Revoke(id) → Ok
     Heartbeat(id, Beat) → BeatReply
     Report(id, UsageBatch) → Ok            (slice 3)
@@ -159,13 +165,54 @@ One service, `desktop.v1`, on cloud's ZAP port; HTTP is its projection.
 
 Desktop wire type:
 
-    Desktop { id, name, os, arch, version, state: online|offline|revoked,
+    Source { id, kind: desktop|browser, name, os, arch, version, state: online|offline|revoked,
               last_seen, linked_at, zap?, providers: [ProviderState] }
 
-Storage is the per-tenant SQLite store every cloud app uses: table `desktops`
+Storage is the per-tenant SQLite store every cloud app uses: table `sources`
 (`owner, subject, id, name, os, arch, version, key, zap, last_seen, linked_at,
-revoked_at`) and `desktop_providers` (`id, instance, kind, state, plan`). No secret
+revoked_at`) and `source_providers` (`id, instance, kind, state, plan`). No secret
 column exists.
+
+
+## Browser sources
+
+The extension (`~/work/hanzo/extension`, `packages/browser`) already reaches the user's
+computer over native ZAP (`hanzo-zap-host`). As a source it does three things and no more:
+
+1. **Register.** The user signs in with Hanzo IAM from the extension (PKCE in a browser
+   tab); the extension keeps a device key in `chrome.storage.local`/`browser.storage.local`
+   and calls `POST /v1/sources` with `kind: "browser"`, `os` set to the browser name and
+   version, and `zap` omitted unless a Connect tunnel exists. Idempotent on `(subject, key)`.
+2. **Heartbeat.** Same call and cadence as a desktop. `providers` lists which AI web
+   products the browser is signed in to: `{ provider: "chatgpt", instance: "<profile>",
+   kind: "login", state: "ready" | "needs_login", plan?: "plus" }`, derived from page
+   state the user already has open (a signed-in marker the extension checks), never from
+   cookies, tokens or page content. Nothing is sent when no AI product is signed in.
+3. **Report usage.** Metadata records for each run the user starts through the browser:
+   provider, window `run`, duration, outcome, and token counts only where the product's page
+   shows them. No prompt, no reply, no URL beyond the provider name.
+
+A browser source is never a `key` source and never holds one. It is **not routable**:
+Hanzo Dev does not submit prompts into a signed-in AI web page. Read from each product's
+own terms (November 2026), driving a consumer web UI by script or extension is barred
+(it is "automated or non-human access") for ChatGPT, Claude.ai, Perplexity and Cursor,
+and nothing was found that permits it for Gemini, Grok or Copilot. So every browser login
+is class `local`: the browser source gives the user visibility (which products are signed
+in, usage the user generates by hand in the page) and nothing else. Work the user wants
+run through a provider goes through their API key (`key`) or a desktop's official client.
+
+| Web product | Driven by extension? | Basis |
+|-------------|----------------------|-------|
+| ChatGPT | no | Bars programmatic extraction, circumventing limits, making the account available to others (openai.com/policies/terms-of-use) |
+| Claude.ai | no | Bars access "through automated or non-human means, whether through a bot, script, or otherwise" except an API key (anthropic.com/legal/consumer-terms) |
+| Perplexity | no | Bars bots and automation software (perplexity.ai/hub/legal/terms-of-service) |
+| Cursor web | no | Bars scraping and extraction (cursor.com/terms-of-service) |
+| Gemini | no (unclear; unread policy) | Google terms bar automated access against machine-readable rules; Prohibited Use Policy not reviewed |
+| Grok | no (unread) | xAI terms not retrievable |
+| Copilot chat | no (unread) | One person per login; Section J not reviewed |
+
+A provider may be moved to a routable class only by a HIP amendment citing written
+permission from that provider.
 
 ## Provider accounts
 
@@ -217,11 +264,17 @@ Hanzo" screen has a "What is reported" view that renders the outbox verbatim: th
 JSON, last 100 batches, with sent/pending state and a "Send nothing" switch. The reply
 level is shown next to it. What the user reads is the bytes that left.
 
+### One view
+
+hanzo.app and the Hanzo desktop app render the same view: every linked source (desktops and
+browsers), its state, and its usage by provider and window, from `GET /v1/sources` and
+`GET /v1/sources/usage`. There is no second list for browsers.
+
 ### Aggregation
 
 Cloud keeps rows by `(owner, subject, desktop, provider, model, day)` and answers
 
-    GET /v1/desktops/usage?by=user|desktop|provider|model&from=&to=
+    GET /v1/sources/usage?by=user|source|provider|model&from=&to=
 
 for the caller (their own rows), and for an org admin the same query with `by=user`
 returning per-user totals only: tokens, requests, cost. No admin read reaches content,
@@ -286,6 +339,7 @@ opt in/opt out.
 2. Provider accounts and KMS keys; route chips.
 3. Usage reports, outbox viewer, aggregation.
 4. Routing: `execution` on `/v1/dev`, Dispatch, hanzo.app picker.
+5. Browser source: the extension registers, heartbeats and reports usage (Browser sources).
 
 ## Rejected
 
