@@ -167,7 +167,7 @@ to it. Nothing about the surface depends on where the loop runs.
     POST   /v1/dev/sessions        {runtime, thread?, source?} -> {id, label, zap, sandbox?}
     GET    /v1/dev/sessions        the caller's open sessions, in the same shape
     DELETE /v1/dev/sessions/:id    release it; the disk is kept
-    POST   /v1/dev/sessions/:id/{suspend,resume}
+    POST   /v1/dev/sessions/:id/{suspend,resume,interrupt}
     GET    /v1/dev/health
 
 The task-shaped surface above (`POST /v1/dev/:id` for a turn, `GET /v1/dev/:id/stream`)
@@ -212,6 +212,20 @@ carries the `sandbox` id.
 core's snapshot, a workspace id, and the action ledger (dispatch and completion under
 one id, so a replay answers the recorded result and never re-runs the command). A
 `sandbox` session's record is its lease. Durability is hanzoai/tasks.
+
+**Where the ledger and tasks split.** The ledger (per-org SQLite beside the session) keeps
+every fact about what happened: which action ids were dispatched and what each answered,
+the core's snapshot, the work the core has asked for and not yet had done, and what the
+person was shown. It is what makes an effect happen once, and what a resume reads. Tasks
+keeps the one thing the ledger cannot, that somebody must come back: a turn is submitted
+into the ledger first, and a workflow whose one activity drives the session's pending
+work is started over it. If the process dies, the gateway is down or a lease is refused,
+the engine runs the activity again with backoff, here or in a successor, and the ledger
+answers every id already done from its row. The workflow decides nothing and the ledger
+runs nothing. A session can be suspended (its cell given back, its disk and work kept; it
+takes no turn until resumed) and interrupted (the commands it is running stop; the cell
+and the session stay), and both are the same two routes for a `sandbox` session, where
+they park and stop the cell.
 
 The implementation is `hanzoai/cloud` `apps/dev`, mounted by the sandbox app, with
 `zap.hanzo.ai` as the browser edge (UDP, DNS-only, because the proxy in front of the
