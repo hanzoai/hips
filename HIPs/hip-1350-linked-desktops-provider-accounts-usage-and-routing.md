@@ -71,34 +71,38 @@ A provider can carry several: a user's Anthropic API key is `key`; the same user
 subscription is `local`. The table is data in `apps/source/policy.go`
 and in the Dev desktop's provider catalog, and a change is a HIP amendment.
 
-Terms were read from each provider's own pages (November 2026). No provider's terms
-permit relaying a consumer-subscription session to another device or a web session;
-Anthropic and Google forbid it outright, the rest are silent or bar sharing a login.
-So **no subscription login is `desktop`-routable today**. The `desktop` class exists
-and stays empty until a provider confirms in writing that the user driving their own
-official client on their own machine from a web screen is permitted.
+Terms were read from each provider's own pages (November 2026), for two different
+patterns. **Relaying** a subscription (token or session leaves the device, or a service
+calls the provider with it) is permitted by no provider and forbidden by Anthropic and
+Google; it is not built. **Remote control** is the user's own machine running the
+provider's unmodified official client under the user's own login, started from another of
+the same user's surfaces; the credential never leaves the machine. That is what class
+`desktop` means.
 
 | Provider | Subscription login | API key in KMS | Basis |
 |----------|--------------------|----------------|-------|
-| Anthropic Claude Code | `local` | `key` | Forbids routing, collecting, storing or intermediating Claude.ai credentials or session tokens (code.claude.com/docs/en/legal-and-compliance); consumer terms bar sharing credentials. The user's own key, billed to them, is allowed. |
-| OpenAI Codex / ChatGPT | `local` | `key` | Bars sharing credentials or making the account available to others; `auth.json` is "like a password". Own key allowed; no resale or transfer to third parties. |
-| Google Gemini CLI / Antigravity | `local` | `key` | Third-party tools on subscription OAuth are a stated violation, with documented bans. Gemini API has no key-sharing clause. |
-| GitHub Copilot | `local` | none (no user key) | One login, one person. |
-| OpenCode (Zen/Go) | `local` | `key` | Own internal use only; third-party models need the user's keys. |
-| Cursor | `local` | not found, `local` | Silent on credential sharing; bars lease or rental of the service. |
-| xAI Grok | `local` | `key` (verify) | Consumer terms not retrievable; enterprise terms bar time-sharing. |
-| AWS Kiro | `local` | `key` | AWS agreement, no sharing clause found. |
-| Pi | `local` | inherits upstream | No terms of its own. |
+| Anthropic Claude Code | `local`, `desktop` | `key` | Anthropic ships Remote Control (the session runs locally, the web is "a window into" it) and says its rules do not prevent a user signing in to the unmodified binary with their own plan (code.claude.com/docs/en/remote-control, /legal-and-compliance). Its pages also bar third parties routing plan credentials or intermediating tokens, and its consumer terms bar bots and scripts; the texts conflict on headless use, so Hanzo drives only the unmodified `claude` binary, never the token. Written confirmation is sought before this leaves Draft. |
+| OpenAI Codex / ChatGPT | `local`, `desktop` | `key` | OpenAI ships Codex remote from the ChatGPT phone app; credentials and files "stay on the machine where Codex is operating" (openai.com/index/work-with-codex-from-anywhere). `auth.json` is never moved. |
+| GitHub Copilot CLI | `local`, `desktop` | none | GitHub ships `copilot --remote` steering from mobile and web for the same account (docs.github.com copilot-cli steer-remotely). |
+| Google Gemini CLI / Antigravity | `local` | `key` | Third-party tools on subscription access are a stated violation; whether a controller of the official binary counts is unanswered (unclear, off). |
+| Cursor | `local` | not found | `agent -p` exists; no remote feature or wrapper rule found (unclear, off). |
+| AWS Kiro | `local` | `key` | Headless needs an API key, not the login (unclear, off). |
+| xAI Grok | `local` | `key` (verify) | No primary text found (off). |
+| OpenCode, Pi | `local` | inherits upstream | Third-party harnesses; they inherit the provider's rule (off). |
 | Anthropic, OpenAI, Gemini, xAI API; OpenRouter | n/a | `key` | Per-user custody, billed to the key owner; never pooled across users, never resold. |
 
-A provider's class is fail-closed: a provider not in this table is `local`.
-Hanzo's own models (Zen) are `cell` and need no account.
+A provider's classes are fail-closed: one not in this table is `local`. Browser logins are
+`local` only (view-only, below). Hanzo's own models (Zen) are `cell` and need no account.
 
-Consequence for web sessions: at hanzo.app/dev a user runs on a Hanzo cell with Zen, or
-with their own API key from KMS. Their subscription logins work on the desktop itself,
-and the web can show them (state, usage) but cannot drive them. The existing
-ChatGPT-profile transfer between machines in Dev predates this HIP and is outside it;
-it should be reviewed against the OpenAI terms.
+Conditions on every `desktop` route, enforced in cloud and on the desktop: the caller is
+the source's owner (never another user, never an org admin); the source is the caller's
+own and online; the provider instance is `ready` and the user has turned **Share with my
+other surfaces** on for it on that device (default off, a local setting reported in the
+heartbeat as `shared`); one routed run per login instance at a time; no pooling across
+users or accounts; every dispatch audited. The desktop starts only the unmodified official
+client and never hands out its token, `auth.json` or session.
+
+A route is chosen by the user's own action: a turn starts when the user presses send.
 
 ## Registry
 
@@ -150,7 +154,7 @@ link. Revoke is also offered from the desktop and from hanzo.app.
     POST /v1/sources/{id}/heartbeat
     { "at": "2026-11-20T10:00:00Z", "version": "1.8.4", "zap": "https://…",
       "providers": [ { "provider": "claude", "instance": "claude-1", "kind": "login",
-                       "state": "ready", "plan": "max" } ],
+                       "state": "ready", "plan": "max", "shared": false } ],
       "busy": 0 }
     → 200 { "interval": 30, "level": "metadata", "revoked": false }
 
@@ -315,13 +319,38 @@ online, have a `zap` endpoint, report the provider instance `ready`, and the pro
 class must include `desktop`. Anything else is refused up front with the reason, never
 silently falling back to another credential. The `machine` DevRuntime
 (`apps/web/src/embed/runtime.ts`) is the resolved target: ZAP over WebTransport, the
-user's IAM bearer as cap, no new transport. `Dispatch` is only the lookup-and-policy
+user's IAM bearer as cap, no new transport. `POST /v1/sources/{id}/dispatch {provider, instance}` is only the lookup-and-policy
 step that returns that runtime's endpoint; frames flow browser to desktop, not through
 cloud. `key` is resolved by the gateway from KMS at call time for the session's model
 calls.
 
 The session's usage is reported by the executing side: a desktop reports its own, the
 gateway meters `key` and `cell`.
+
+## One view, one picker, four surfaces
+
+People see and use their accounts along one chain: Hanzo extension, Hanzo desktop/Dev,
+hanzo.app, hanzo.team and hanzo.bot. There is one shared component package,
+`@hanzo/sources` (in `hanzoai/app`, `pkg/sources`): the sources view, the account picker,
+the cloud client and the pure availability logic. The extension popup, the desktop
+Settings, hanzo.app, hanzo.team and hanzo.bot mount it; none keeps a copy. The source of
+truth is `/v1/sources` and `source.v1` and nothing else.
+
+**See.** Every source and every provider account it detects shows in all surfaces with
+plan, usage windows, credits and state, labelled `on <device name>`.
+
+**Use.** The picker lists the user's accounts and, for the current surface, whether each
+is usable. Availability is one pure function of (account, its source, the surface, the
+account's classes from cloud):
+
+| Account | Usable on | Otherwise (greyed, with this reason) |
+|---------|-----------|--------------------------------------|
+| key | every surface that runs sessions | extension: "Runs from Hanzo Dev or hanzo.app" |
+| login, device is this surface | yes | |
+| login with `desktop`, shared, source online | web surfaces: "Run on <device>" | "Turn on Share on <device>" / "<device> is offline" |
+| login with only `local` | its own device | "Stays on <device>: its terms do not allow remote use" |
+| browser login | never | "Browser accounts are view-only" |
+| revoked or unsupported source | never | "<device> was unlinked" |
 
 ## Desktop UI
 
