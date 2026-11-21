@@ -27,7 +27,7 @@ knows each linked desktop, what providers it can reach, and what it used. When t
 developer codes at hanzo.app/dev they pick where a session runs: a linked desktop, a
 cloud cell with an API key held in Hanzo KMS, or a cell on Hanzo's own models.
 
-Four nouns, one owner each, all under `/v1/sources` and `/v1/providers` on
+Four nouns, one owner each, all under `/v1/sources` on
 `api.hanzo.ai`, served over ZAP (HIP-0114); the HTTP and OpenAPI forms are
 projections of the same typed ops.
 
@@ -227,10 +227,10 @@ permission from that provider.
 
 ## Provider accounts
 
-    GET    /v1/providers/accounts
-    POST   /v1/providers/accounts            { provider, kind: "key", label, value }
+    GET    /v1/sources/accounts
+    POST   /v1/sources/accounts            { provider, kind: "key", label, value }
     → 201 { id, provider, kind, label, fingerprint, created }   (fingerprint = first 8 hex of sha256 of the value; value never returned)
-    DELETE /v1/providers/accounts/{id}
+    DELETE /v1/sources/accounts/{id}
 
 A `login` account is created by the desktop's heartbeat (it appears when the user logs
 in there and disappears when they log out); users cannot create one from the web. A
