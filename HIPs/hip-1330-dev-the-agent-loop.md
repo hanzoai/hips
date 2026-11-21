@@ -233,6 +233,16 @@ layer, which leases a cell and carries the request there, or refuses it with
 `EnvironmentAuthorizationError {requiredScope, requiredPermission: "sandbox"}`, a failure every
 method's error union already holds.
 
+**Calls before the stream.** A client asks three things before it opens the frame stream:
+the environment descriptor, its session, and the shell snapshot with its sequence. The Dev
+server answers them over HTTP (`/.well-known/hanzo/environment`, `/v1/auth/session`,
+`/v1/event/shell`); a ZAP runtime has no HTTP, so they are methods 1, 2 and 3 on the same
+session, answered with the same JSON (`frame.Adapter.Call`, `Snapshot() (shell, sequence)`).
+A call's promise id has bit 30 set so its response says it answers a call and not a frame. The
+bearer authenticates the stream on any envelope that carries it; until then only the
+descriptor, which is public, is answered. Bodies are validated against `packages/contracts`
+(`ExecutionEnvironmentDescriptor`, `AuthSessionState`, `OrchestrationV2ShellHttpSnapshot`).
+
 **Upgrade in place.** A wasm session whose loop emits an Exec, Git or Browse action
 leases a cell then, from the sandbox, and the action runs there: the loop's THINK/DO
 split already says the cell is leased per effect, so nothing is migrated. A session that
