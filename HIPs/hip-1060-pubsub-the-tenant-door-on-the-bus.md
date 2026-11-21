@@ -57,8 +57,7 @@ reaches the bus.
 
 ### Isolation is a namespace, not an account
 
-Within a deployment's account the node runs one domain shared with the platform's
-own streams, so the endpoint maps
+The node runs one domain shared with the platform's own streams, so the endpoint maps
 names on the way in and strips them on the way out:
 
 - Subjects live under a per-org root. A caller sees its own clean subject space
@@ -111,40 +110,6 @@ Every app in the process reaches the bus through one resolver, which defaults to
 the loopback address of the server this same binary bound. There is deliberately
 no per-app address variable and no way to run with the bus off: mount fails
 closed, so a cloud that is up has a bus.
-
-### The topology: a server per replica, one cluster that remembers
-
-A replica MUST hold nothing a restart or a sibling cannot rebuild, so the bus has
-two layers and the process owns only the one that forgets.
-
-- Each replica embeds a core server with durable storage OFF. It has no store
-  directory and no disk. The replicas of one deployment form one cluster of
-  those servers through the headless service, so fan-out inside the deployment
-  (cache invalidation, coordination, request and reply) is answered locally and
-  never leaves the cluster of pods.
-- Every replica is also a leaf of one durable cluster of three members on the
-  state nodes. Every stream and bucket lives there, replicated three ways, in
-  one account per deployment. The bus address names that cluster and carries the
-  account's credentials; the deployment's secret store holds it, never the
-  repository.
-
-Callers see neither layer. Apps dial the local server, `/v1/event` and
-`/v1/pubsub` remain the only API, and publishers and subscribers never name a
-broker. Durable event history also reaches the analytics store and the object
-store, as it does today. A deployment is an account, an org is a namespace, and
-the two do not substitute for each other: an account keeps development, test and
-production apart on one cluster, and the endpoint keeps tenants apart inside an
-account.
-
-A server that holds streams of its own and is being retired joins the cluster as
-a leaf in a domain of its own, and the cluster's stream names it as a source;
-the copy is verified by message count and first and last sequence, with no lag,
-before the replica serves without storage. Consumers are recreated at the source's
-acknowledged position.
-
-Implementation status: a replica that is given the cluster's address embeds
-nothing and dials it directly (shipped); the per-replica server and the
-migration are specified here and not yet built.
 
 ### What it owns, charges and emits
 
