@@ -217,6 +217,233 @@ The implementation is `hanzoai/cloud` `apps/dev`, mounted by the sandbox app, wi
 `zap.hanzo.ai` as the browser edge (UDP, DNS-only, because the proxy in front of the
 API host cannot carry WebTransport).
 
+## Amendment: one daemon per machine, one engine everywhere (2026-11-21)
+
+Status: proposed. Nothing below is built.
+
+Every Hanzo desktop install becomes a node: one Rust process per machine, `hanzod`,
+that holds the identity, owns the one local ZAP socket, serves the local cloud, runs
+the Dev backend and can join the chain. The Dev orchestration engine moves out of
+the TypeScript server into the same Rust core that cloud runs as wasm, one module at
+a time. The TypeScript server keeps running behind `hanzod` as a worker until the
+last module has moved, and is then deleted.
+
+### What is on a machine today
+
+"hanzod" names three programs, and none of them is the daemon this amendment needs.
+
+| program | repo | what it is | where it listens |
+|---|---|---|---|
+| `hanzod` 0.2.0 | `hanzoai/node` | L1 validator, ~950 lines over `lux-rs/node` (a private dependency fetched with a credential) | `:9630` RPC, `:9631` mesh, `~/.hanzod` |
+| `hanzo-node` (its crate also builds a binary named `hanzod`) | `hanzoai/node-v1` (its forge remote is still `hanzoai/node`) | the old agent node: ~334k lines in 40 crates, a sidecar of `Hanzo.app` (`ai.hanzo.desktop`) | `127.0.0.1:3690`, 27 MiB RSS |
+| `hanzo-cloud` host | `hanzoai/cloud` (Go) | the local cloud: a router that starts each subsystem as a process on the first request to its prefix (cold ~15 ms, warm ~0.5 ms) | ZAP on `<data>/hanzo/host/host.zap.sock`, HTTP on loopback |
+
+Identity (`~/.hanzo/identities.json`, `{active, identities}`) belongs to the CLI
+(`hanzoai/cli` `src/iam/store.rs`), not to any of them. `hanzo up` also puts the
+cloud API on `127.0.0.1:3690`, and `hanzo serve` takes whatever answers on `:3690`
+to be the local cloud. On a machine that runs `Hanzo.app`, `:3690` is the old agent
+node, so the CLI is pointed at a program that does not serve the Cloud API.
+
+The Dev backend is a fifth process. `apps/server` is about 306k lines of non-test
+TypeScript (`orchestration-v2` 111k, of which `Orchestrator.ts` is 16.7k), plus 31k
+in `packages/contracts` and about 75k in the `provider-*` packages. In the shipped
+`Hanzo Dev.app` it uses 512 MiB RSS, and it runs on whatever Node it finds on the
+machine (`backend.rs` `resolve_node_executable` tries `/opt/homebrew/bin/node` and
+then version-manager shims). The app does not bundle Node, so a machine without
+Node cannot run Dev desktop.
+
+Five local servers on four ports, in three languages, and two of them claim one
+port. That is the problem this amendment solves.
+
+### Decision
+
+**Strangler (option B).** `hanzod` becomes the one local daemon first, and the
+engine then moves into it piece by piece.
+
+- **Not a full rewrite (A).** Rewriting about 410k lines while 500k users ship on
+  them stops feature work for months and puts everything at risk at once. The
+  provider adapters are the code that changes most often (upstream CLIs change
+  every week), and a rewrite would freeze them at their worst moment.
+- **Not keeping TypeScript (C).** It leaves 512 MiB resident per install, a Node
+  dependency the app does not own, and five daemons. It cannot make an install a
+  node, because the engine could never be linked into the process that is the
+  node.
+- **The daemon is Rust, not the Go host.** Everything that has to be in-process
+  with it is already Rust: the Dev core, the CLI's ZAP codec and identity store,
+  and both Tauri hosts. The validator is Rust as well, but it runs as a child
+  process (see below). The Go cloud host is server-shaped, it is the same program
+  the cluster runs, and it already starts lazily as a child process, so `hanzod`
+  starts it the way the CLI does today. Porting the cloud to Rust is explicitly out
+  of scope.
+
+### The daemon
+
+    hanzod (Rust, hanzoai/node, user-level, one per machine)
+      socket     <data>/hanzo/hanzod.zap.sock (0600) + loopback HTTP view on :3690
+      identity   the CLI's store as a shared crate; tokens stay IAM's (HIP-0026)
+      subsystems  started on first frame to their prefix, stopped when idle
+        /v1/dev     the Dev engine: in-process (Rust) + the TS worker for what has not moved
+        /v1/*       hanzo-cloud host, spawned lazily (moved from cli host.rs)
+        /v1/chain   `hanzo-chain`, a child fetched on opt-in; OFF until then
+        sources     linked-source registration for runtime `source` (HIP-1350)
+
+- **One socket, one way in.** The CLI, Dev desktop, `Hanzo.app` and mobile (through
+  Connect) all reach the machine through `hanzod`. Tauri stops supervising Node, and
+  `hanzo host` becomes a client of `hanzod`. Windows gets the loopback HTTP view, as
+  the CLI already does there.
+- **Children hold no credential.** A worker gets one end of a socketpair as a
+  descriptor, the same THINK/DO rule as the cell. The first envelope on every
+  external session carries the caller's IAM bearer, as `apps/server/src/zap/ZapAuth.ts`
+  already requires, and `hanzod` verifies it before routing.
+- **Idle means idle.** No subsystem runs until a frame needs it. Idle subsystems
+  are stopped and their state is persisted (Dev is event-sourced, so nothing is
+  lost). This is the `hanzo host` laziness applied one level up.
+- **`hanzo-node` v1 is replaced.** It leaves `Hanzo.app` and gives up `:3690` and the
+  name `hanzod`. Each piece of its tool and agent surface is either served by the
+  Dev engine and cloud, or gets a HIP of its own. None of it is carried forward
+  silently.
+
+### Chain participation is opt-in
+
+A desktop install is a node by default in identity, ZAP and the local cloud. It is
+**not a validator** by default. A seat needs stake, two keys kept at `0600`
+(ML-DSA-65 identity, BLS votes), uptime that laptops do not have, an open mesh port
+(which triggers firewall prompts) and disk that grows with the chain. A user turns it
+on in Settings or with `hanzo chain up`. Until then `/v1/chain` is a route entry and
+nothing else: no port, no peers, no state.
+
+The validator is a separate binary, `hanzo-chain` (today's `hanzoai/node` code,
+moved into `chain/` in the same repo). It is **fetched on opt-in** with a pinned
+digest and runs as a child of `hanzod`, the same way the cloud host does. There are
+three reasons. A default install has to build from open source ("open at the core"),
+and `lux-rs/node` is private. A consensus crash must not take Dev down with it. And
+users who never opt in should not carry its disk cost. Whether `lux-rs/node` is
+public or private, the validator stays a child process, so there is only one way
+it runs.
+
+### Security and update model
+
+- `hanzod` runs as the user: a launchd user agent, `systemd --user` unit or per-user
+  Windows task, never root. It binds only the user's socket and loopback. The only
+  non-loopback listener is the chain mesh, and only after opt-in.
+- **One binary on the machine**, at `~/.hanzo/bin/hanzod`. Each app bundles a pinned
+  `hanzod` and installs it only if it is newer than the one there; an app never
+  downgrades it. Releases are semver, signed and notarized, and the sha256 digests
+  are compiled into each bundle (the CLI's `link/zt.rs` pattern). Floating tags are
+  never fetched. The previous binary is kept for rollback.
+- **The ZAP surface is `/v1` and additive-only,** so an older app keeps working
+  against a newer `hanzod`.
+- The chain subsystem starts only when its `lux-node` tag is the tag the network
+  currently runs (two nodes on different tags are two networks), so it upgrades on
+  the network's schedule, not the app's.
+- Every privileged action, whether a chain key operation, an exec, or adding a
+  linked source, goes to the action ledger under its id (above).
+
+### One engine: the convergence point
+
+`hanzo-inc/dev` is the right shape and the wrong size and place. It has no I/O,
+exposes a C ABI, is a wasm export list, and its import list proves the core touches
+nothing. But it is about 2.5k lines and only one layer: an agent loop that speaks
+eight events in and ten actions out. Dev's orchestrator is the layer above that.
+It handles threads, turns, many providers, projections and checkpoints, and its
+decide step is already I/O-free (`Orchestrator.ts` decides events without doing any
+I/O). They converge as one Rust workspace. Three of its crates are pure and are
+built both natively and for `wasm32-wasip1`:
+
+    protocol      the Dev environment protocol as ZAP frames: the one alphabet
+                  (the Go frame adapter in cloud is deleted when this lands)
+    core          today's hanzo-inc/dev core: Session.step / snapshot / restore
+    orchestrator  pure decide: (state, command) -> (events, outbox effects)
+
+`ffi` exports the pure crates through one C ABI, which builds to `libdev.a` and to
+`dev.wasm`. Three crates do I/O and are native only, linked by `hanzod`: `store`
+(the event sink and projections, over SQLite), `checkpoint` (hidden git refs) and
+`provider` (adapters). Every package is named `dev-<dir>`, as the existing ones
+are.
+
+`hanzod` links them natively. Cloud `/v1/dev` hosts the same build as wasm under
+wazero, so the `wasm` runtime and the desktop are **literally one engine**, and the
+upgrade from `wasm` to `sandbox` stops being a change of program. Mobile can link
+the same static library (iOS, Android NDK) for offline use. That is possible, not
+planned: mobile stays a remote control until a use case needs it, and the
+import-list property is what keeps the option free.
+
+The crates move to an **open source home, `hanzoai/dev` `crates/`**, because
+`hanzoai/dev` and `hanzoai/node` are open and cannot link a private repo.
+The move keeps history (`git subtree` from `hanzo-inc/dev` `crates/` into
+`hanzoai/dev` `crates/`) and keeps the 0.x version line. The Go host moves to
+`hanzoai/dev` `go/` in the same way. `hanzo-inc/dev` is deleted when cloud imports
+the host from the open repo.
+
+### What stays TypeScript, and for how long
+
+Effects stay at the adapter boundary, as they do now. The **external provider
+adapters** (Codex, Claude, Cursor, Grok, OpenCode, Antigravity, Kiro, Pi, Muse, fx)
+are protocol translators for subprocesses that change every week, and moving them
+costs the most velocity. They stay in TypeScript in a worker that `hanzod` starts on
+the first turn that needs one and stops when it goes idle. The order they move in:
+the native Hanzo and Hanzo Gen drivers first (both are already Rust binaries), then
+one Rust ACP adapter (which covers every provider that speaks ACP), then the rest by
+usage. When the last adapter has moved, Node is no longer shipped, `apps/server` is
+deleted, and Effect leaves the backend. Web and mobile clients stay TypeScript, and
+their contract types are generated from `protocol`.
+
+### Phases and their exit tests
+
+The phases run in parallel as four workstreams (below). Each phase ships on its
+own and is reverted on its own. A phase is done when its test passes in CI and on a
+release build, not when its code merges.
+
+| # | phase | exit test |
+|---|---|---|
+| 0 | **Names and ports.** One `hanzod` (`hanzoai/node`). `node-v1` stops building a binary named `hanzod`. `Hanzo.app` stops claiming `:3690`. Dev desktop bundles its own Node until phase 5 removes it. | On a machine with `Hanzo.app`, `Hanzo Dev.app` and the CLI, `lsof -iTCP:3690` shows only `hanzod` or the cloud host. `hanzo authz health` reaches the cloud host. Dev desktop starts on a machine with no Node on `PATH`. |
+| 1 | **`hanzod` is the daemon.** One socket, identity crate shared with the CLI, a lazy subsystem table. The cloud host and the TS server become children over socketpairs. Tauri and `hanzo host` become clients. | A Playwright turn in Dev desktop goes app → `hanzod` → worker → provider and back. `kill -9` of the worker in the middle of a turn: the next frame restarts it, and every committed event and outbox effect completes exactly once (ledger ids). `hanzod` idle with nothing started uses ≤ 25 MiB RSS and 0% CPU over 10 min. A trace of the CLI and the desktop shows only `AF_UNIX` connects. |
+| 2 | **One engine crate set** in `hanzoai/dev` `crates/` (`protocol`, `loop` moved from `hanzo-inc/dev`), and cloud imports it. | Cloud `/v1/dev` `wasm` sessions pass on the open-source build. The wasm import list is still exactly `environ_get`, `environ_sizes_get`, `fd_write`, `proc_exit`. The Go frame adapter is deleted. |
+| 3 | **Pure decide in Rust.** The `orchestrator` crate. The TS server loads the same `dev.wasm` with Node's built-in WebAssembly (no native addon, no per-platform build) in place of `Orchestrator.ts`. | Replaying every recorded command stream from the V2 test corpus and a snapshot of real `statev2.sqlite` data gives byte-identical events and outbox rows from the Rust and TS decide functions. `Orchestrator.ts` is deleted. |
+| 4 | **Sink, projections and checkpoints in `hanzod`.** Same `statev2.sqlite` schema; checkpoints stay hidden git refs. | An existing user's `statev2.sqlite` opens unchanged, and every projection query returns what TS returned. A checkpoint diff and a restore are identical to the TS ones on the checkpoint test corpus. The TS persistence layer and checkpointing are deleted. |
+| 5 | **Adapters move.** Native drivers in-process, one Rust ACP adapter, then the rest by usage. Each adapter is cut over only when its V2 testkit passes against Rust. | For each provider, its testkit passes against the Rust adapter, and then the TS adapter is deleted. At the end, a machine that runs only Hanzo and ACP providers runs no Node process. When the last one moves, `apps/server` is deleted. |
+| 6 | **Chain opt-in.** Measure first. Then `hanzo-chain` is fetched on opt-in with a pinned digest and runs as a child of `hanzod`. | With chain off, there is no `:9630`/`:9631` listener and no `~/.hanzod` state. After opt-in on devnet the node takes a seat and votes, and turning it off releases the ports. Cost per network (RSS, CPU, disk growth per day) is measured and published before the Settings toggle ships. |
+
+### Workstreams
+
+Four workstreams run at once. Each one owns its paths outright. They meet only at
+the interfaces named here, and an interface changes only with its owner's commit.
+
+| stream | phases | owns | publishes |
+|---|---|---|---|
+| a, daemon | 0–1 | `hanzoai/node` root and `daemon/`; `hanzoai/dev` `apps/server/src/zap/`, the server entry point and `apps/desktop/src-tauri/src/backend.rs`; `hanzoai/cli` `src/commands/host.rs` and the identity crate split from `src/iam/store.rs`; in `hanzoai/desktop`, the `hanzo-node` sidecar and `:3690`; the binary name in `node-v1` | the `Subsystem` trait, the socket path, the `/v1` prefix table, the digest table, the worker's socketpair descriptor |
+| b, engine | 2–4 | `hanzoai/dev` root `Cargo.toml` and the `crates/{protocol,core,ffi,orchestrator,store,checkpoint}` crates; `apps/server/src/orchestration-v2/{Orchestrator,EventSink,ProjectionStore,EffectWorker}.ts`, `persistence/` and `checkpointing/`; `hanzo-inc/dev`; cloud's import of the host | the event and command types in `dev-protocol`, `dev.wasm`, the replay corpus |
+| c, adapters | 5 | `hanzoai/dev` `crates/provider`, `packages/provider-*`, `apps/server/src/provider/` and `orchestration-v2/Adapters/` | the language-neutral fixtures in `crates/provider/fixtures/` |
+| d, chain | 6 | `hanzoai/node` `chain/` (`hanzo-chain`), the chain implementation behind `/v1/chain`, and `hanzoai/cli` `src/commands/chain.rs` | the measurements, and the `hanzo-chain` release and its digests |
+
+The first commit to `hanzoai/node` belongs to stream a. It makes the repo a
+workspace, moves today's `src/` and `genesis/` unchanged into `chain/` (binary
+`hanzo-chain`), and adds `daemon/` (binary `hanzod`). Until that commit lands, no
+other stream writes to `hanzoai/node`. The first commit to the `hanzoai/dev` root
+`Cargo.toml` belongs to stream b, and stream c adds `crates/provider` only after it.
+
+`statev2.sqlite` has **one writer**, the TS worker, until stream b's phase 4 exit
+test passes and the store cuts over in a single commit. Before that, the Rust store
+runs only against copies. `packages/contracts` stays the source of truth for client
+RPC until the same cutover, and then becomes generated from `dev-protocol`.
+
+### Costs, stated
+
+- **Velocity.** Phases 3 to 5 port about 17k lines of decide logic, the persistence
+  layer, and the adapters, each one gated on byte-identical replay. Feature work
+  continues on TS through all of them, and every phase deletes its TS counterpart,
+  so there is never a second implementation in production.
+- **Effect.** The service and layer structure carries over as Rust modules. Effect
+  itself (spans, `TestClock`, schema) does not. The tests carry over as replay
+  corpora and testkits, which is why the exit tests are written against recorded
+  data and not against code.
+- **Memory.** Measured today: 512 MiB for the TS server, 88 MiB for the Dev desktop
+  shell, and 120–190 MiB per native `dev serve` agent. The provider CLIs that run
+  during a turn are the user's own cost and are not changed by this. What changes is
+  the cost when nothing is running, which goes from more than 600 MiB across the
+  daemons to the phase 1 target. Chain cost has not been measured yet, and phase 6
+  measures it before it is offered.
+
 ## Rationale
 
 **Why not put the whole agent in the cell.** Every model token, state transition
