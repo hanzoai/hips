@@ -184,7 +184,7 @@ events are pushed as they happen.
 | runtime | who answers | needs a cell | when |
 |---------|-------------|--------------|------|
 | `sandbox` | the real Dev server (`hanzo-dev serve`) in a visor cell, on its own ZAP socket, reached by the sandbox plane's `sandbox_stream` op | yes, at lease | a thread that needs the whole of Dev: shell, browser, checkout, the dock |
-| `wasm` | this document's loop: the Rust core as wasm (`hanzo-inc/dev`, wazero or wasm2go) hosted in cloud, behind a frame adapter | no; one is leased the first time an action needs it | chat, planning and quick agent turns |
+| `wasm` | this document's loop: the Rust core as wasm (`hanzoai/dev`, wazero or wasm2go) hosted in cloud, behind a frame adapter | no; one is leased the first time an action needs it | chat, planning and quick agent turns |
 | `source` | a linked desktop (HIP-1350), reached through its Connect relay | no | the person's own machine |
 | `auto` | `wasm`, until a turn emits an action that needs a shell, a browser or a checkout | | the default for a new web thread |
 
@@ -426,7 +426,7 @@ it runs.
 
 ### One engine: the convergence point
 
-`hanzo-inc/dev` is the right shape and the wrong size and place. It has no I/O,
+The initial Rust loop crate is the right shape and the wrong size. It has no I/O,
 exposes a C ABI, is a wasm export list, and its import list proves the core touches
 nothing. But it is about 2.5k lines and only one layer: an agent loop that speaks
 eight events in and ten actions out. Dev's orchestrator is the layer above that.
@@ -440,7 +440,7 @@ built both natively and for `wasm32-wasip1`:
 
     protocol      the Dev environment protocol as ZAP frames: the one alphabet
                   (the Go frame adapter in cloud is deleted when this lands)
-    core          today's hanzo-inc/dev core: Session.step / snapshot / restore
+    core          the pure Rust loop core: Session.step / snapshot / restore
     orchestrator  pure decide: (state, command) -> (events, outbox effects)
 
 `ffi` exports the pure crates through one C ABI, which builds to `libdev.a` and to
@@ -456,11 +456,11 @@ the same static library (iOS, Android NDK) for offline use. That is possible, no
 planned: mobile stays a remote control until a use case needs it, and the
 import-list property is what keeps the option free.
 
-The crates move to an **open source home, `hanzoai/dev` `crates/`**, because
-`hanzoai/dev` and `hanzoai/node` are open and cannot link a private repo.
-The move keeps history (`git subtree` from `hanzo-inc/dev` `crates/` into
+The crates live in one **open source home, `hanzoai/dev` `crates/`**, because
+`hanzoai/dev` and `hanzoai/node` are open and cannot link a non-public repo.
+The consolidation keeps history (`git subtree` into
 `hanzoai/dev` `crates/`) and keeps the 0.x version line. The Go host moves to
-`hanzoai/dev` `go/` in the same way. `hanzo-inc/dev` is deleted when cloud imports
+`hanzoai/dev` `go/` in the same way, and cloud imports
 the host from the open repo.
 
 ### What stays TypeScript, and for how long
@@ -486,7 +486,7 @@ release build, not when its code merges.
 |---|---|---|
 | 0 | **Names and ports.** One `hanzod` (`hanzoai/node`). `node-v1` stops building a binary named `hanzod`. `Hanzo.app` stops claiming `:3690`. Dev desktop bundles its own Node until phase 5 removes it. | On a machine with `Hanzo.app`, `Hanzo Dev.app` and the CLI, `lsof -iTCP:3690` shows only `hanzod` or the cloud host. `hanzo authz health` reaches the cloud host. Dev desktop starts on a machine with no Node on `PATH`. |
 | 1 | **`hanzod` is the daemon.** One socket, identity crate shared with the CLI, a lazy subsystem table. The cloud host and the TS server become children over socketpairs. Tauri and `hanzo host` become clients. | A Playwright turn in Dev desktop goes app → `hanzod` → worker → provider and back. `kill -9` of the worker in the middle of a turn: the next frame restarts it, and every committed event and outbox effect completes exactly once (ledger ids). `hanzod` idle with nothing started uses ≤ 25 MiB RSS and 0% CPU over 10 min. A trace of the CLI and the desktop shows only `AF_UNIX` connects. |
-| 2 | **One engine crate set** in `hanzoai/dev` `crates/` (`protocol`, `loop` moved from `hanzo-inc/dev`), and cloud imports it. | Cloud `/v1/dev` `wasm` sessions pass on the open-source build. The wasm import list is still exactly `environ_get`, `environ_sizes_get`, `fd_write`, `proc_exit`. The Go frame adapter is deleted. |
+| 2 | **One engine crate set** in `hanzoai/dev` `crates/` (`protocol`, `loop`), and cloud imports it. | Cloud `/v1/dev` `wasm` sessions pass on the open-source build. The wasm import list is still exactly `environ_get`, `environ_sizes_get`, `fd_write`, `proc_exit`. The Go frame adapter is deleted. |
 | 3 | **Pure decide in Rust.** First `decide(state, command)` is extracted from `Orchestrator.ts` in TS, slice by slice, with I/O moving to the effect worker; each slice is then ported to the `orchestrator` crate. The TS server loads the same `dev.wasm` with Node's built-in WebAssembly (no native addon, no per-platform build) in place of `Orchestrator.ts`. | Replaying every recorded command stream from the V2 test corpus and a snapshot of real `statev2.sqlite` data gives byte-identical events and outbox rows from the Rust and TS decide functions. `Orchestrator.ts` is deleted. |
 | 4 | **Sink, projections and checkpoints in `hanzod`.** Same `statev2.sqlite` schema; checkpoints stay hidden git refs. | An existing user's `statev2.sqlite` opens unchanged, and every projection query returns what TS returned. A checkpoint diff and a restore are identical to the TS ones on the checkpoint test corpus. The TS persistence layer and checkpointing are deleted. |
 | 5 | **Adapters move.** Native drivers in-process, one Rust ACP adapter, then the rest by usage. Each adapter is cut over only when its V2 testkit passes against Rust. | For each provider, its testkit passes against the Rust adapter, and then the TS adapter is deleted. At the end, a machine that runs only Hanzo and ACP providers runs no Node process. When the last one moves, `apps/server` is deleted. |
@@ -500,7 +500,7 @@ the interfaces named here, and an interface changes only with its owner's commit
 | stream | phases | owns | publishes |
 |---|---|---|---|
 | a, daemon | 0–1 | `hanzoai/node` root and `daemon/`; `hanzoai/dev` `apps/server/src/zap/`, the server entry point and `apps/desktop/src-tauri/src/backend.rs`; `hanzoai/cli` `src/commands/host.rs` and the identity crate split from `src/iam/store.rs`; in `hanzoai/desktop`, the `hanzo-node` sidecar and `:3690`; the binary name in `node-v1` | the `Subsystem` trait, the socket path, the `/v1` prefix table, the digest table, the worker's socketpair descriptor |
-| b, engine | 2–4 | `hanzoai/dev` root `Cargo.toml` and the `crates/{protocol,core,ffi,orchestrator,store,checkpoint}` crates; `apps/server/src/orchestration-v2/{Orchestrator,EventSink,ProjectionStore,EffectWorker}.ts`, `persistence/` and `checkpointing/`; `hanzo-inc/dev`; cloud's import of the host | the event and command types in `dev-protocol`, `dev.wasm`, the replay corpus |
+| b, engine | 2–4 | `hanzoai/dev` root `Cargo.toml` and the `crates/{protocol,core,ffi,orchestrator,store,checkpoint}` crates; `apps/server/src/orchestration-v2/{Orchestrator,EventSink,ProjectionStore,EffectWorker}.ts`, `persistence/` and `checkpointing/`; `hanzoai/dev` `go/`; cloud's import of the host | the event and command types in `dev-protocol`, `dev.wasm`, the replay corpus |
 | c, adapters | 5 | `hanzoai/dev` `crates/provider`, `packages/provider-*`, `apps/server/src/provider/` and `orchestration-v2/Adapters/` | the language-neutral fixtures in `crates/provider/fixtures/` |
 | d, chain | 6 | `hanzoai/node` `chain/` (`hanzo-chain`), the chain implementation behind `/v1/chain`, and `hanzoai/cli` `src/commands/chain.rs` | the measurements, and the `hanzo-chain` release and its digests |
 

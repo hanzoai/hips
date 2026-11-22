@@ -151,6 +151,11 @@ def m_pl002(root):
     write(root, STANDARDS_SUBJECT,
           s.replace("## Abstract", "## Abstract\n\nSee `hanzo-inc/payments` for the rest.", 1))
 
+def m_sm001(root):
+    std = os.path.join(root, "standard.json")
+    s = open(std, encoding="utf-8").read()
+    open(std, "w", encoding="utf-8").write(s.replace('"0000"', '"9999"', 1))
+
 
 CASES = [
     ("FM001", "front matter removed", m_fm001),
@@ -175,6 +180,7 @@ CASES = [
     ("IX003", "a second file claiming HIP-0517", m_ix003),
     ("PL001", "'as good as Terraform' added", m_pl001),
     ("PL002", "a private-org repository cited", m_pl002),
+    ("SM001", "standard.json names a HIP that does not exist", m_sm001),
 ]
 
 
@@ -186,6 +192,7 @@ def main() -> int:
         shutil.copytree(os.path.join(ROOT, "HIPs"), os.path.join(clean_root, "HIPs"))
         shutil.copy(os.path.join(ROOT, "README.md"), clean_root)
         shutil.copy(os.path.join(ROOT, "vocabulary.json"), clean_root)
+        shutil.copy(os.path.join(ROOT, "standard.json"), clean_root)
 
         rc, out = run(clean_root)
         if rc != 0:

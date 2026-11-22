@@ -29,6 +29,7 @@ from collections import Counter, defaultdict
 HIP_DIR = "HIPs"
 README = "README.md"
 VOCABULARY = "vocabulary.json"
+STANDARD = "standard.json"
 
 # ---------------------------------------------------------------------------
 # The closed vocabularies live in ONE file, which the doc site imports too.
@@ -144,6 +145,7 @@ CHECKS = [
     ("IX003", "two files claim one HIP number"),
     ("PL001", "normative comparison to a third-party product"),
     ("PL002", "the spec depends on a repository in the private org"),
+    ("SM001", "standard.json is missing, malformed, or names an unknown HIP or non-public repository"),
 ]
 
 # README's index is NOT checked here any more. It is GENERATED, and
@@ -414,7 +416,60 @@ def lint() -> Report:
                 rep.error("PL002", name,
                           f"depends on the private repository {hit.group(0)}")
 
+    lint_standard(rep, known)
     return rep
+
+
+def lint_standard(rep: Report, known: set[int]) -> None:
+    if not os.path.exists(STANDARD):
+        rep.error("SM001", STANDARD, "missing standard.json at repository root")
+        return
+    try:
+        doc = json.loads(open(STANDARD, encoding="utf-8").read())
+    except Exception as exc:
+        rep.error("SM001", STANDARD, f"invalid JSON: {exc}")
+        return
+    if not isinstance(doc, dict):
+        rep.error("SM001", STANDARD, "root must be a JSON object")
+        return
+    for key in ("schema_version", "name", "version"):
+        val = doc.get(key)
+        if not isinstance(val, str) or not val.strip():
+            rep.error("SM001", STANDARD, f"missing or empty {key!r}")
+    if doc.get("name") != "Hanzo OS Specification":
+        rep.error("SM001", STANDARD, f"name must be 'Hanzo OS Specification', got {doc.get('name')!r}")
+
+    hips = doc.get("hips")
+    if not isinstance(hips, list) or not hips:
+        rep.error("SM001", STANDARD, "hips must be a non-empty list of 4-digit HIP strings")
+    else:
+        for h in hips:
+            if not isinstance(h, str) or not re.fullmatch(r"\d{4}", h):
+                rep.error("SM001", STANDARD, f"hips entry {h!r} is not a 4-digit HIP string")
+            elif int(h) not in known:
+                rep.error("SM001", STANDARD, f"hips names HIP-{h}, which does not exist in HIPs/")
+
+    layers = doc.get("layers")
+    if not isinstance(layers, dict) or not layers:
+        rep.error("SM001", STANDARD, "layers must be a non-empty object")
+    else:
+        for lname, layer in sorted(layers.items()):
+            where = f"{STANDARD}:layers.{lname}"
+            if not isinstance(layer, dict):
+                rep.error("SM001", where, "layer entry must be an object")
+                continue
+            repo = layer.get("repository")
+            if not isinstance(repo, str) or not re.fullmatch(r"hanzoai/[A-Za-z0-9_.-]+", repo):
+                rep.error("SM001", where, f"repository {repo!r} must be a public hanzoai/<repo> identifier")
+            lhips = layer.get("hips")
+            if not isinstance(lhips, list) or not lhips:
+                rep.error("SM001", where, "hips must be a non-empty list of 4-digit HIP strings")
+                continue
+            for h in lhips:
+                if not isinstance(h, str) or not re.fullmatch(r"\d{4}", h):
+                    rep.error("SM001", where, f"hips entry {h!r} is not a 4-digit HIP string")
+                elif int(h) not in known:
+                    rep.error("SM001", where, f"hips names HIP-{h}, which does not exist in HIPs/")
 
 
 def main() -> int:

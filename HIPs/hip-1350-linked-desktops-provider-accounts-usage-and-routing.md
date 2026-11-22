@@ -11,7 +11,7 @@ created: 2026-11-20
 requires: HIP-0026, HIP-0106, HIP-0114, HIP-1330
 ---
 
-# HIP-1350: Linked Sources
+# HIP-1350: Linked Sources — Desktops and Browsers, Provider Accounts, Usage and Routing for Hanzo Dev
 
 ## Abstract
 
@@ -38,7 +38,11 @@ projections of the same typed ops.
 | Usage | What a desktop reports about runs on its providers | cloud, per user and org |
 | Route | Which desktop or key a web session executes through | `/v1/dev` session field |
 
-## The one rule: credentials do not move
+## Specification
+
+The sections below define the normative credential boundary, provider routing policy, source registry, usage reporting, and session routing across linked desktops and browsers.
+
+### The one rule: credentials do not move
 
 A **subscription login** (an OAuth token or CLI session for a consumer plan) stays on
 the desktop that created it. It is never sent to cloud, never stored in KMS, never

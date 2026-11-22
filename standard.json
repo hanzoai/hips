@@ -7,16 +7,21 @@
     "1400",
     "1401",
     "1402",
-    "1403"
+    "1403",
+    "1404"
   ],
   "layers": {
     "specification": {
       "repository": "hanzoai/hips",
       "hips": ["0000", "1400"]
     },
+    "daemon": {
+      "repository": "hanzoai/node",
+      "hips": ["1325", "1330", "1350", "1400"]
+    },
     "harness": {
       "repository": "hanzoai/kata",
-      "hips": ["1400", "1401"]
+      "hips": ["1400", "1401", "1404"]
     },
     "engine": {
       "repository": "hanzoai/gen",
@@ -36,7 +41,7 @@
     },
     "research": {
       "repository": "hanzoai/research",
-      "hips": ["1145", "1334", "1401", "1403"]
+      "hips": ["1145", "1334", "1401", "1403", "1404"]
     }
   }
 }
