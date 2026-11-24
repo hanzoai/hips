@@ -25,6 +25,37 @@ app they work in by installing a listing or by writing one.
 The noun is **listing** (the market's own). No new word is introduced for the four kinds; each is
 a value of `kind`.
 
+## Motivation
+
+The platform already offers capabilities through several catalogs, but discovery and installation
+remain different experiences across them. The measurements documented in this HIP on 2026-10-26
+include 50,589 MCP servers, 754 connectors, 722 skills and 9 public market listings. A member
+looking for a capability can encounter different manifests, permissions and installation paths.
+The HIP introduces `mod` and `plugin` listings while preserving the distinct meanings of the
+existing kinds.
+
+A shared listing contract addresses three related problems:
+
+1. **Understandable consent.** Members and organizations need a consistent way to inspect
+   requested permissions and determine what was installed, by whom and under which grants.
+2. **Reviewable changes.** A common manifest and installation ledger make it possible to
+   associate reviewed versions with installed versions and identify changes after review.
+3. **Scoped credential handling.** Without a common rule, separately integrated extensions
+   can encourage unnecessarily broad access. Installers should authorize connections through
+   their own permission and connection boundaries rather than sharing credentials with publishers.
+
+These requirements matter particularly when listings are sold: the purchaser needs an
+auditable record of the artifact or service, its version and its permissions. One marketplace
+can provide that record without forcing every kind into the same installation mechanism.
+For example, skills and authored plugins are installed into the relevant organizational
+store, an MCP service can be registered by URL, and apps and mods use their own documented
+installation destinations and ledger records. Existing agent and tool kinds retain their
+defined semantics.
+
+The result is a consistent discovery, authorization and audit experience for people and
+authorized agents, while retaining the execution and installation differences described
+throughout this specification.
+
 ## Specification
 
 ### Kinds
