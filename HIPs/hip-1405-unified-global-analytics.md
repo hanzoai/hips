@@ -595,6 +595,33 @@ Transitioning from legacy `MemoLedger` fleet folds and transitional `hanzo.fleet
 - Retire transitional `hanzo.fleet_*` tables once zero readers remain.
 - Enable all §7.3 Release Qualification Gates as mandatory blocking checks in CI/CD.
 
+#### 8.6 Unified Global Schema Bridge (`hanzoai/orm/schema` + ZAP + Zip)
+
+To permanently eliminate schema drift across operational SQL tables, ClickHouse analytical DDL, wire protocols, and API/MCP catalogs, canonical Hanzo entities are declared once in `github.com/hanzoai/orm/schema` (`hanzoai/orm#22`) via typed Go structs (`Reflect[T]` / `RegisterStruct[T]`) or ZAP `.zap` IDL (`ParseZAP`) and deterministically compiled to:
+
+1. **Hanzo SQL (`hanzoai/sql`) DDL** — PostgreSQL and SQLite parity, `CHECK ("org" <> '')`, forced PostgreSQL Row-Level Security (`ENABLE`/`FORCE ROW LEVEL SECURITY`), and direct `ToTenantTable()` integration with `orm/tenant`.
+2. **Hanzo Datastore (`hanzoai/datastore`) ClickHouse 26.2-Safe DDL** — L0 `ReplacingMergeTree(version)`/`MergeTree` tables, L1 `AggregatingMergeTree`/`SummingMergeTree` rollups + `MaterializedView`s, L3 `ReplacingMergeTree(refreshed_at)` serving snapshots, and compile-time static validation (`CheckClickHouse262Safety`, zero floats on financial entities, HIP-1405 §4.1 invariant blocking `ReplacingMergeTree` -> `SummingMergeTree` MVs, zero raw `event.*` scans in L3 snapshots).
+3. **Bidirectional ZAP `.zap` IDL** — emits both `zap/go/idl` (`zapgen`) and `zapc-rs` (Rust) wire schemas with lossless round-trip back to SQL and ClickHouse DDL.
+4. **Governance & Analytics Catalog Projection** — OpenAPI 3.1 / JSON Schema / Unified MCP metadata with domain, units, accuracy, freshness SLAs, and PII tags.
+
+#### 8.7 Phase II Production Qualification Receipts (2026-11-25)
+
+Every qualification gate is tracked honestly against live `datastore-0` (ClickHouse `26.2.7`, 2-core CFS limit, `12 GiB` RAM), the Go `/v1/analytics/*` qualification suite (`apps/analytics/qualification_test.go`), and live production deployment state. Untested or pending-rollout gates remain explicitly marked **PENDING PROD VERIFY**.
+
+| Release Gate | Target | Measured Receipt | Status |
+|---|---|---|---|
+| **Global KPI Query Latency** (`serving_global_overview`, live `datastore-0`, `N=500`, `c=4`) | p95 <= 20ms | **p50 = 3ms, p90 = 9ms, p95 = 16ms** (4 rows read; down from pre-L3 view p50 = 62ms / p95 = 121ms) | **PASS (Live `datastore-0`)** |
+| **Model & Provider Economics** (`serving_model_performance` / `serving_provider_economics`, `N=500`, `c=4`) | p95 <= 20ms | **p50 = 2ms, p90 = 4ms, p95 = 7ms** (down from pre-L3 p95 = 95ms / 51ms) | **PASS (Live `datastore-0`)** |
+| **100K & 1M Organizations Under Concurrent Writes** (`N=500`, `c=4`, 2,000 rows/sec bg mutations, isolated temp tables) | p95 <= 20ms | L3 `serving_global_overview` @ 1M orgs: **p50 = 6ms, p90 = 14ms, p95 = 20ms** (`index_granularity=64`, `max_threads=1`); 100K org point lookup: **p50 = 4ms, p95 = 17ms** | **PASS (Live `datastore-0`)** |
+| **Real-Time MV Freshness** (`N=50` sequential insert -> MV read on live `datastore-0` + live `rollup_o11y_minute`/`rollup_ai_minute`) | p95 <= 2,000ms | **p50 = 113ms, p95 = 141ms, max = 165ms** (includes 2x CLI spawn; live `rollup_o11y_minute` streaming 2,918 spans/2m) | **PASS (Live `datastore-0`)** |
+| **1,000 & 10,000 Concurrent Viewers** (`TestHIP1405Qualification1KAnd10KConcurrentViewers`, 50 stalled slow consumers) | Coalesced O(1) DS, bounded heap, p95 <= 50ms | 1K viewers: **1,000x coalesce, p50 = 3.18ms, p95 = 3.81ms, heap = 5.5 MiB**; 10K viewers: **10,000x coalesce, p50 = 2.24ms, p95 = 6.84ms, heap = 26.8 MiB** | **PASS (Suite Verified)** |
+| **Analytics HTTP API & Cold KV** (`TestHIP1405QualificationAPILatencyAndColdKV`, `N=500`, `c=16`, 3ms L3 backend) | p95 <= 50ms (warm & cold KV) | Warm KV: **p50 = 0.09ms, p95 = 2.10ms**; Cold/Down KV: **p50 = 3.37ms, p95 = 3.66ms, max = 5.27ms** | **PASS (Suite) / PENDING PROD ROLLOUT** |
+| **Exact Financial Reconciliation & Idempotent Replay** (`datastore/analytics_reconcile_test.go`, `apps/commerce/fleet_mirror_test.go`) | 0 duplicate effects, 0 minor-unit drift | Unit/race tests PASS for concurrent debits, refunds (`sign=-1`), multi-currency, duplicate `entry_id`, out-of-order `version` | **PASS (Suite) / PENDING PROD SHADOW RUN** |
+| **Zero Per-Org RPC Fan-Out on Interactive Reads** | 0 per-org RPCs | Removed interactive delta/fallback sweeps in `fleet_datastore.go`; live `cloud` CPU `-70.2%` (`5,270m -> 1,573m`), `sql-2` CPU `-84.7%` (`4,093m -> 628m`) | **PASS (Code) / PENDING PROD ROLLOUT** |
+| **Strict Cross-Tenant Isolation** (`TestStrictTenantIsolation`) | 0 cross-org leakage | Unauth -> 401, no-org -> 403, non-super cross-org/global -> 403 across HTTP, planner, KV keys, and SSE | **PASS (Suite) / PENDING PROD VERIFY** |
+
+Merged implementation artifacts: Hanzo Cloud analytics plane & Phase II L3 qualification (`v8.5.1428+` live & release train); `hanzoai/admin#35` (live), `#36`; `hanzoai/orm#22`; `hanzoai/o11y#46`, `#47`; `hanzoai/sql#6`; `hanzoai/kv#14`; `hanzoai/docdb#23`.
+
 ## Rationale
 
 - **ClickHouse-Native Streaming Rollups over Batch ETL or SQL Materialized Views**: Materialized views in PostgreSQL cannot aggregate across thousands of isolated per-org schemas without cross-schema polling, and scheduled batch ETL warehouses cannot satisfy a 2-second freshness target. ClickHouse `SummingMergeTree` and `AggregatingMergeTree` MVs aggregate incrementally on insert with native mergeable t-digest percentiles and HyperLogLog distinct sketches while reusing existing raw Datastore tables without copying 1.77B+ historical rows.
