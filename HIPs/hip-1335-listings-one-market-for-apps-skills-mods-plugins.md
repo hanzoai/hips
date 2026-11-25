@@ -25,6 +25,36 @@ app they work in by installing a listing or by writing one.
 The noun is **listing** (the market's own). No new word is introduced for the four kinds; each is
 a value of `kind`.
 
+## Motivation
+
+The platform already holds many things an organization could install, but each lives in its own
+catalog with its own meaning of "install". Measured on 2026-10-26, the MCP shelf held 50,589
+servers, the connector catalog 754, the skills catalogue 722 `SKILL.md` files, and the market's
+shop 9 public listings (§The catalog is curated). A member looking for a capability searches
+several places, and what happens on install depends on where they found it: a skill is copied,
+an MCP server is registered, a connector is configured. Mods and plugins, the two ways a member or
+an agent changes the app they work in, are not market kinds at all.
+
+Without one manifest, one permission vocabulary and one install ledger, three things break:
+
+1. **Consent cannot be read.** An installer cannot see, in one form, what a listing will be
+   allowed to do, and an org cannot answer which version of what was installed, by whom, with
+   which grants.
+2. **Review cannot hold.** Nothing ties the reviewed bytes to the installed bytes, so a listing
+   can change after review without the buyer knowing.
+3. **Credential handling has no common rule.** If each kind wires up access its own way, nothing
+   guarantees that a publisher's code runs under the installer's own connection with a narrower
+   grant rather than receiving the installer's token.
+
+Selling makes each of these worse: a price on a listing that can change after review, or that
+installs without a ledger row, charges for something nobody can audit.
+
+This HIP fixes the shape before the market grows: every kind is a value of `kind` on one listing,
+installed through one endpoint with the semantics its kind requires (a copy into the installer's own
+store for a skill or plugin, a registered URL for an MCP server, a ledger row for a mod or app),
+recorded in one ledger, under grants drawn from the authorization vocabulary that already exists. Agents get the same path through four tools, so
+an agent that installs or writes an extension is held to the same consent and review as a person.
+
 ## Specification
 
 ### Kinds
