@@ -32,12 +32,13 @@ This proposal defines the `$AI` coin, Hanzo Network's native Layer-1 cryptocurre
 | Mainnet Chain ID | `36963` |
 | Testnet Chain ID | `36962` |
 
-### Genesis Reference-Price Schedule (`$AI Genesis`)
+### Genesis Reference-Price & Daily Supply Schedule (`$AI Genesis`)
 
-A public-sale inventory ceiling drawn from the 1T DAO allocation is distinct from the protocol's 2T maximum native supply.
+The public-sale pool is drawn from the `1,000,000,000,000 $AI` (`1T`) DAO allocation (distinct from the protocol's `2T` hard supply cap). Unsold daily supply never rolls over into subsequent windows.
 
 | Parameter | Canonical Value |
 | --- | --- |
+| Public-sale pool ceiling | `1,000,000,000,000 $AI` (`1T` DAO allocation) |
 | Initial reference price (Day 0) | `$0.00001` per `$AI` (`1e13` USD18) |
 | Initial allocation per USD | `100,000 $AI` |
 | Initial implied FDV (arithmetic) | `$20M` |
@@ -45,6 +46,9 @@ A public-sale inventory ceiling drawn from the 1T DAO allocation is distinct fro
 | Pricing windows | `369` (Day `0` through Day `368`) |
 | Final reference price (Day 368) | `$0.0000468` per `$AI` (`468e11` USD18) |
 | Final implied FDV (arithmetic) | `$93.6M` |
+| Day 0 supply cap | `10%` of sale pool (`100B $AI`; `$1,000,000` USD cap at Day 0 price) |
+| Days 1–368 supply curve | Remaining `90%` (`900B $AI`) via inverse-price taper (`~5.79B` on Day 1 → `~1.25B` on Day 368; steady `~$58,465/day` USD cap; zero rollover) |
+| Resale restriction / lockup | Fixed `182` days (`26` weeks) per independent delivery tranche; locked `$AI` may be spent directly on allowlisted Hanzo compute billing contracts while peer transfers remain blocked |
 
 *Note: Implied FDV figures are arithmetic products of the scheduled reference price and the 2T hard supply cap; they are not independently established market valuations or projected returns. Secondary markets trade independently in parallel.*
 
