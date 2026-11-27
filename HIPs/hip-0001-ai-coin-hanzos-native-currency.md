@@ -1,68 +1,65 @@
 ---
 hip: "0001"
-title: AI Token - Hanzo's Native Currency
+title: AI Coin - Hanzo Network's Native Currency
 author: Hanzo AI Team
 type: Standards Track
 category: Core
 status: Final
 created: 2024-12-20
-updated: 2026-07-08
+updated: 2026-11-27
 ---
 
 
-# HIP-0001: AI Token - Hanzo's Native Currency
+# HIP-0001: AI Coin - Hanzo Network's Native Currency
 
 ## Abstract
 
-This proposal defines the $AI token, Hanzo's native cryptocurrency that powers the AI compute economy. The $AI token incentivizes compute providers, rewards model training, enables AI service payments, and governs the Hanzo network through a Proof of Compute consensus mechanism.
+This proposal defines the `$AI` coin, Hanzo Network's native Layer-1 cryptocurrency that powers the open AI compute economy. `$AI` serves as native gas and settlement currency on Hanzo Network (`Chain ID 36963` mainnet / `36962` testnet), incentivizes compute providers and validators via Proof of AI (PoAI), enables AI service payments, and governs the Hanzo Network protocol.
 
-**Trading**: [$AI on Lux Exchange](https://lux.exchange/trade/AI)
+**Canonical Tokenomics (Reconciled November 16, 2026)**: The earlier draft parameter of `1,000,000,000 $AI` (1B) on an L2 ERC-20 is superseded by the canonical native L1 supply specification below (`2,000,000,000,000 $AI` hard cap = `1T` DAO + `1T` Proof of AI mining and validator rewards).
 
 ## Specification
 
-### Token Parameters
+### Canonical Tokenomics Parameters
+
+| Parameter | Canonical Value |
+| --- | --- |
+| Symbol | `$AI` |
+| Asset type | Native Hanzo Network L1 coin (18 decimals) |
+| Maximum protocol supply | `2,000,000,000,000` (2T `$AI`, hard-capped) |
+| DAO allocation | `1,000,000,000,000` (1T `$AI`, fixed at genesis; never mined) |
+| Proof of AI mining & validator allocation | `1,000,000,000,000` (1T `$AI`, earned strictly by proved work) |
+| Mainnet Chain ID | `36963` |
+| Testnet Chain ID | `36962` |
+
+### Genesis Reference-Price Schedule (`$AI Genesis`)
+
+A public-sale inventory ceiling drawn from the 1T DAO allocation is distinct from the protocol's 2T maximum native supply.
+
+| Parameter | Canonical Value |
+| --- | --- |
+| Initial reference price (Day 0) | `$0.00001` per `$AI` (`1e13` USD18) |
+| Initial allocation per USD | `100,000 $AI` |
+| Initial implied FDV (arithmetic) | `$20M` |
+| Daily price increment | `+$0.0000001` (`+1%` of initial reference price per day, simple) |
+| Pricing windows | `369` (Day `0` through Day `368`) |
+| Final reference price (Day 368) | `$0.0000468` per `$AI` (`468e11` USD18) |
+| Final implied FDV (arithmetic) | `$93.6M` |
+
+*Note: Implied FDV figures are arithmetic products of the scheduled reference price and the 2T hard supply cap; they are not independently established market valuations or projected returns. Secondary markets trade independently in parallel.*
+
+### Protocol Issuance & Distribution
 
 ```yaml
-Token Name: AI
-Token Symbol: $AI
-Total Supply: 1,000,000,000 $AI
-Decimals: 18
-Network: Hanzo L2 (EVM-compatible)
-Contract: 0x... (TBD at deployment)
-Exchange: lux.exchange/trade/AI
-```
+Protocol Supply (Hard Cap: 2,000,000,000,000 $AI):
+  DAO Allocation: 50% (1,000,000,000,000 $AI)
+    - Fixed at genesis; can never be mined
+    - Funds public genesis distribution (sub-allocation ceiling distinct from 2T max supply),
+      ecosystem grants, liquidity, and protocol treasury under Hanzo DAO governance
 
-### Token Distribution
-
-```yaml
-Initial Distribution:
-  Compute Mining: 30% (300M $AI)
-    - Released via Proof of Compute mining
-    - Rewards for GPU/TPU providers
-    
-  Training Rewards: 20% (200M $AI)
-    - User interaction rewards
-    - Model improvement incentives
-    
-  Ecosystem Fund: 15% (150M $AI)
-    - Developer grants
-    - Partnership incentives
-    
-  Community Treasury: 15% (150M $AI)
-    - DAO-controlled funds
-    - Community initiatives
-    
-  Team & Advisors: 10% (100M $AI)
-    - 4-year vesting with 1-year cliff
-    - 25% unlock annually after cliff
-    
-  Public Sale: 5% (50M $AI)
-    - Initial token offering
-    - Price discovery mechanism
-    
-  Liquidity: 5% (50M $AI)
-    - DEX liquidity pools
-    - HMM initial liquidity
+  Proof of AI Mining & Validator Pool: 50% (1,000,000,000,000 $AI)
+    - Earned strictly via verifiable compute, training, and validator work
+    - Halving eras (4-year nominal era length; Era k cap = POOL * 2^-(k+1))
 ```
 
 ### Token Utility
